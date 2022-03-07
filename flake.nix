@@ -16,11 +16,6 @@
     in {
       devShell = forAllSystems (system: self.devShells.${system}.default);
 
-      ciNix = flake-compat-ci.lib.recurseIntoFlakeWith {
-        flake = self;
-        systems = [ "x86_64-linux" ];
-      };
-
       devShells = forAllSystems (system:
         let
           pkgs = nixpkgsFor."${system}";
@@ -39,8 +34,22 @@
             name = "dUSD";
             buildInputs = [
               latexEnv
+              pkgs.entr
             ];
           };
         });
+
+      apps = forAllSystems (system:
+      let
+        pkgs = nixpkgsFor."${system}";
+      in
+      {
+        feedback-loop = {
+          type = "app";
+          program = "${pkgs.writeShellScript "feedback-loop" ''
+            echo "test-plan.tex" | ${pkgs.entr}/bin/entr latexmk -pdf test-plan.tex
+          ''}";
+        };
+      });
   };
 }
