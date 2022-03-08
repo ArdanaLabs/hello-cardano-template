@@ -59,9 +59,7 @@ datumHash :: Gen DatumHash
 datumHash = hexString
 
 value :: Gen Value
-value =
-  mconcat <$> list (linear 1 64) singletonValue
-  -- mconcat <$> list (linear 0 64) singletonValue
+value = mconcat <$> list (linear 0 64) singletonValue
 
 singletonValue :: Gen Value
 singletonValue =
