@@ -21,7 +21,7 @@ data VaultModel = VaultModel { balance :: Value , vault :: TxOut }
 
 data VaultProp
   = Matches
-  | ValidVault
+  | ValidVault -- TODO figure out what valid vault datum should actually be
   deriving stock (Eq,Ord,Enum,Show,Bounded)
   --deriving anyclass Enumerable
 
