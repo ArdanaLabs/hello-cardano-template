@@ -3,3 +3,4 @@
 *.aux
 *.fdb_latexmk
 *.fls
+dist-newstyle
