@@ -110,40 +110,40 @@
 
      # devShell = perSystem (system: self.devShells.${system}.default);
 
-     # devShells = perSystem (system:
-     #   let
-     #     pkgs = (perSystem nixpkgsFor)."${system}";
+    #  devShells = perSystem (system:
+    #    let
+    #      pkgs = (perSystem nixpkgsFor)."${system}";
 
-     #     latexEnv = with pkgs; texlive.combine {
-     #       inherit
-     #         (texlive)
-     #         scheme-basic
-     #         latexmk
-     #         ;
-     #       };
+    #      latexEnv = with pkgs; texlive.combine {
+    #        inherit
+    #          (texlive)
+    #          scheme-basic
+    #          latexmk
+    #          ;
+    #        };
 
-     #   in rec
-     #   {
-     #     default = pkgs.mkShell {
-     #       name = "dUSD";
-     #       buildInputs = [
-     #         latexEnv
-     #         pkgs.entr
-     #       ];
-     #     };
-     #   });
+    #    in rec
+    #    {
+    #      default = pkgs.mkShell {
+    #        name = "dUSD";
+    #        buildInputs = [
+    #          latexEnv
+    #          pkgs.entr
+    #        ];
+    #      };
+    #    });
 
-     apps = perSystem (system:
-     let
-       pkgs = (perSystem nixpkgsFor)."${system}";
-     in
-     {
-       feedback-loop = {
-         type = "app";
-         program = "${pkgs.writeShellScript "feedback-loop" ''
-           echo "test-plan.tex" | ${pkgs.entr}/bin/entr latexmk -pdf test-plan.tex
-         ''}";
-       };
-     });
+    # apps = perSystem (system:
+    #   let
+    #     pkgs = (perSystem nixpkgsFor)."${system}";
+    #   in
+    #   {
+    #     feedback-loop = {
+    #       type = "app";
+    #       program = "${pkgs.writeShellScript "feedback-loop" ''
+    #         echo "test-plan.tex" | ${pkgs.entr}/bin/entr latexmk -pdf test-plan.tex
+    #       ''}";
+    #     };
+    #   });
   };
 }

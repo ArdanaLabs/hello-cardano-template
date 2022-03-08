@@ -77,8 +77,6 @@ library
     base,
     plutarch,
     plutus-core,
-    containers,
-    generics-sop,
 
 test-suite tests
   import:         lang
@@ -93,14 +91,5 @@ test-suite tests
     apropos,
     apropos-tx,
     plutarch,
-    dUSD,
-    tasty,
-    tasty-hedgehog,
-    hedgehog,
-    plutus-ledger-api,
-    plutus-core,
-    text,
-    containers,
-    mtl
-
+    dUSD
 
