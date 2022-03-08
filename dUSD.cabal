@@ -87,6 +87,7 @@ test-suite tests
   other-modules:
     Tests
     Models.Vault
+    Models.Auction
     Gen
 
   build-depends:

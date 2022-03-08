@@ -28,7 +28,7 @@ spec = do
   -- TODO figure out value retry problem
   -- and enable this test
   xdescribe "vault model" $ do
-    fromHedgehogGroup $ runGeneratorTestsWhere (Apropos :: VaultModel :+ VaultProp) "" Yes
+    fromHedgehogGroup $ runGeneratorTestsWhere (Apropos :: VaultModel :+ VaultProp) "generator" Yes
 
 
 data VaultModel = VaultModel { balance :: Value , vault :: TxOut }
