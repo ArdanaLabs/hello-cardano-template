@@ -26,6 +26,14 @@
 
       projectFor = system:
         let
+          latexEnv = with pkgs; texlive.combine {
+                      inherit
+                        (texlive)
+                        scheme-basic
+                        latexmk
+                        ;
+                      };
+
           deferPluginErrors = true;
           pkgs = nixpkgsFor system;
 
@@ -58,7 +66,7 @@
 
             # We use the ones from Nixpkgs, since they are cached reliably.
             # Eventually we will probably want to build these with haskell.nix.
-            nativeBuildInputs = [ pkgs.cabal-install pkgs.hlint pkgs.haskellPackages.fourmolu ];
+            nativeBuildInputs = [ latexEnv pkgs.entr pkgs.cabal-install pkgs.hlint pkgs.haskellPackages.fourmolu ];
 
             additional = ps: [
               ps.apropos
@@ -108,42 +116,17 @@
 
       devShell = perSystem (system: self.flake.${system}.devShell);
 
-     # devShell = perSystem (system: self.devShells.${system}.default);
-
-    #  devShells = perSystem (system:
-    #    let
-    #      pkgs = (perSystem nixpkgsFor)."${system}";
-
-    #      latexEnv = with pkgs; texlive.combine {
-    #        inherit
-    #          (texlive)
-    #          scheme-basic
-    #          latexmk
-    #          ;
-    #        };
-
-    #    in rec
-    #    {
-    #      default = pkgs.mkShell {
-    #        name = "dUSD";
-    #        buildInputs = [
-    #          latexEnv
-    #          pkgs.entr
-    #        ];
-    #      };
-    #    });
-
-    # apps = perSystem (system:
-    #   let
-    #     pkgs = (perSystem nixpkgsFor)."${system}";
-    #   in
-    #   {
-    #     feedback-loop = {
-    #       type = "app";
-    #       program = "${pkgs.writeShellScript "feedback-loop" ''
-    #         echo "test-plan.tex" | ${pkgs.entr}/bin/entr latexmk -pdf test-plan.tex
-    #       ''}";
-    #     };
-    #   });
+      apps = perSystem (system:
+        let
+          pkgs = (perSystem nixpkgsFor)."${system}";
+        in
+        {
+          feedback-loop = {
+            type = "app";
+            program = "${pkgs.writeShellScript "feedback-loop" ''
+              echo "test-plan.tex" | ${pkgs.entr}/bin/entr latexmk -pdf test-plan.tex
+            ''}";
+          };
+        });
   };
 }
