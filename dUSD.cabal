@@ -93,7 +93,7 @@ test-suite tests
     apropos,
     apropos-tx,
     plutarch,
-    DUSD,
+    dUSD,
     tasty,
     tasty-hedgehog,
     hedgehog,

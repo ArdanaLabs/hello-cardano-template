@@ -68,11 +68,11 @@
           };
           sha256map = {
             "https://github.com/mlabs-haskell/apropos"."2b2c2e01f9a3d40a3db2dfcbdb24683d584f808d"
-              = "sha256-1111111111111111111111111111111111111111111=";
+              = "sha256-o9bEo9LTTfM5f/yapqLzXhxFF6XVbLTUKx1GvzJmfE0=";
             "https://github.com/mlabs-haskell/apropos-tx"."d5a90656ad77a48d2291748e1bb5ae072c85eaa4"
-              = "sha256-1111111111111111111111111111111111111111111=";
+              = "sha256-SkWvW7EyI94BoFWvzyk+MsTNd3eomRlwaBovIQtI71o=";
             "https://github.com/Plutonomicon/plutarch"."aecc2050eb63ff0041576473aa3193070fe91314"
-              = "sha256-2222222222222222222222222222222222222222222=";
+              = "sha256-pVvSa4fBoKXCdCu/NGduoKhr1/gGESCmj/Tr9Y5l9B4=";
             "https://github.com/input-output-hk/plutus.git"."6d8d25d1e84b2a4278da1036aab23da4161b8df8"
               = "o8m86TkI1dTo74YbE9CPPNrBfSDSrf//DMq+v2+woEY=";
             "https://github.com/Quid2/flat.git"."ee59880f47ab835dbd73bea0847dab7869fc20d8"
@@ -110,7 +110,7 @@
 
       devShells = perSystem (system:
         let
-          pkgs = nixpkgsFor."${system}";
+          pkgs = (perSystem nixpkgsFor)."${system}";
 
           latexEnv = with pkgs; texlive.combine {
             inherit
@@ -131,17 +131,17 @@
           };
         });
 
-      apps = perSystem (system:
-      let
-        pkgs = self.flake.${system}.apps; #nixpkgsFor."${system}";
-      in
-      {
-        feedback-loop = {
-          type = "app";
-          program = "${pkgs.writeShellScript "feedback-loop" ''
-            echo "test-plan.tex" | ${pkgs.entr}/bin/entr latexmk -pdf test-plan.tex
-          ''}";
-        };
-      });
+     apps = perSystem (system:
+     let
+       pkgs = (perSystem nixpkgsFor)."${system}";
+     in
+     {
+       feedback-loop = {
+         type = "app";
+         program = "${pkgs.writeShellScript "feedback-loop" ''
+           echo "test-plan.tex" | ${pkgs.entr}/bin/entr latexmk -pdf test-plan.tex
+         ''}";
+       };
+     });
   };
 }
