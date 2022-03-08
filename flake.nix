@@ -51,11 +51,10 @@
       {
         feedback-loop = {
           type = "app";
-          program = "${pkgs.writeShellScript "feedback-loop" ''
-            echo "test-plan.tex" | ${pkgs.entr}/bin/entr latexmk -pdf test-plan.tex
-          ''}";
+          program = "${pkgs.callPackage ./nix/apps/feedback-loop{}}/bin/feedback-loop";
         };
-      });
+    });
+
       ciNix = flake-compat-ci.lib.recurseIntoFlakeWith {
         flake = self;
         systems = [ "x86_64-linux" ];
