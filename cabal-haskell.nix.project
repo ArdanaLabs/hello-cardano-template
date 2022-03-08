@@ -126,3 +126,30 @@ source-repository-package
   type: git
   location: https://github.com/input-output-hk/Win32-network
   tag: 3825d3abf75f83f406c1f7161883c438dac7277d
+
+
+source-repository-package
+  type: git
+  location: https://github.com/Srid/autodocodec
+  tag: 42b42a7407f33c6c74fa4e8c84906aebfed28daf
+  subdir:
+    autodocodec
+    autodocodec-yaml
+    autodocodec-schema
+
+source-repository-package
+  type: git
+  location: https://github.com/Srid/validity
+  tag: f7982549b95d0ab727950dc876ca06b1862135ba
+  subdir:
+    validity
+    validity-aeson
+
+source-repository-package
+  type: git
+  location: https://github.com/Srid/sydtest
+  subdir:
+    sydtest
+    sydtest-discover
+    sydtest-hedgehog
+  tag: 9c6c7678f7aabe22e075aab810a6a2e304591d24

@@ -83,6 +83,7 @@ test-suite tests
   type:           exitcode-stdio-1.0
   main-is:        Main.hs
   hs-source-dirs: tests
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
   other-modules:
     Tests
     Models.Vault
@@ -95,5 +96,6 @@ test-suite tests
     plutarch,
     plutus-ledger-api,
     hedgehog,
-    dUSD
-
+    sydtest,
+    sydtest-hedgehog,
+    dUSD,

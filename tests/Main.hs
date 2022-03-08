@@ -1,4 +1,8 @@
 module Main ( main ) where
 
+import qualified Models.Vault as Vault (spec)
+import Test.Syd (sydTest)
+
 main :: IO ()
-main = putStrLn "testing testing 1, 2, 3..."
+main = sydTest $ do
+  Vault.spec

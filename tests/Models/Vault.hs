@@ -1,11 +1,20 @@
-module Models.Vault () where
+module Models.Vault (spec) where
 
 import Apropos
+
+import Gen
 
 import Plutus.V1.Ledger.Api
 import Data.Maybe
 
-import Gen
+import Test.Syd
+import Test.Syd.Hedgehog (fromHedgehogGroup)
+
+spec :: Spec
+spec = do
+  describe "vault model" $ do
+    fromHedgehogGroup $ runGeneratorTestsWhere (Apropos :: VaultModel :+ VaultProp) "" Yes
+
 
 data VaultModel = VaultModel { balance :: Value , vault :: TxOut }
   deriving stock (Eq,Show)
@@ -34,21 +43,20 @@ instance HasParameterisedGenerator VaultProp VaultModel where
   parameterisedGenerator s =
     let var p = p `elem` s
     in
-      if var ValidVault
+      if var Matches
          then do
-           adr <- address
-           val1 <- value
-           val2 <- value
-           pure $ VaultModel val1 (TxOut adr val2 Nothing)
-         else if var Matches
-           then do
            adr <- address
            val <- value
            pure $ VaultModel val (TxOut adr val Nothing)
+         else if var ValidVault
+           then do
+           adr <- address
+           val1 <- value
+           val2 <- genFilter (/= val1) value
+           pure $ VaultModel val1 (TxOut adr val2 Nothing)
            else do
              adr <- address
              val1 <- value
-             val2 <- value
-             mdh <- maybeOf datumHash
+             val2 <- genFilter (/= val1) value
+             mdh <- Just <$> datumHash
              pure $ VaultModel val1 (TxOut adr val2 mdh)
-
