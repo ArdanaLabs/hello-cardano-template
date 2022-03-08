@@ -106,30 +106,32 @@
         } "touch $out"
       );
 
-      devShell = perSystem (system: self.devShells.${system}.default);
+      devShell = perSystem (system: self.flake.${system}.devShell);
 
-      devShells = perSystem (system:
-        let
-          pkgs = (perSystem nixpkgsFor)."${system}";
+     # devShell = perSystem (system: self.devShells.${system}.default);
 
-          latexEnv = with pkgs; texlive.combine {
-            inherit
-              (texlive)
-              scheme-basic
-              latexmk
-              ;
-            };
+     # devShells = perSystem (system:
+     #   let
+     #     pkgs = (perSystem nixpkgsFor)."${system}";
 
-        in rec
-        {
-          default = pkgs.mkShell {
-            name = "dUSD";
-            buildInputs = [
-              latexEnv
-              pkgs.entr
-            ];
-          };
-        });
+     #     latexEnv = with pkgs; texlive.combine {
+     #       inherit
+     #         (texlive)
+     #         scheme-basic
+     #         latexmk
+     #         ;
+     #       };
+
+     #   in rec
+     #   {
+     #     default = pkgs.mkShell {
+     #       name = "dUSD";
+     #       buildInputs = [
+     #         latexEnv
+     #         pkgs.entr
+     #       ];
+     #     };
+     #   });
 
      apps = perSystem (system:
      let
