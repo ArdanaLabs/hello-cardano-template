@@ -60,7 +60,7 @@ datumHash = hexString
 
 value :: Gen Value
 value =
-   mconcat <$> list (linear 1 64) singletonValue
+  mconcat <$> list (linear 1 64) singletonValue
   -- mconcat <$> list (linear 0 64) singletonValue
 
 singletonValue :: Gen Value
@@ -84,7 +84,4 @@ integer :: Gen Integer
 integer = fromIntegral <$> int (linear (-1_000_000) 1_000_000)
 
 pos :: Gen Integer
-pos =
-  element [0..10]
-  -- fromIntegral <$> int (linear 1 10)
-  --fromIntegral <$> int (linear 1 1_000_000)
+pos = fromIntegral <$> int (linear 1 1_000_000)

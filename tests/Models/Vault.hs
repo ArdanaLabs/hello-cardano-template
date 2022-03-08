@@ -9,6 +9,9 @@ import Data.Maybe
 
 import Test.Syd
 import Test.Syd.Hedgehog (fromHedgehogGroup)
+import Control.Monad
+
+import Debug.Trace
 
 spec :: Spec
 spec = do
@@ -40,23 +43,20 @@ instance HasLogicalModel VaultProp VaultModel where
     = isNothing $ txOutDatumHash vault
 
 instance HasParameterisedGenerator VaultProp VaultModel where
-  parameterisedGenerator s =
+  parameterisedGenerator s = do
     let var p = p `elem` s
-    in
-      if var Matches
-         then do
-           adr <- address
-           val <- value
-           pure $ VaultModel val (TxOut adr val Nothing)
-         else if var ValidVault
-           then do
-           adr <- address
-           val1 <- value
-           val2 <- genFilter (/= val1) value
-           pure $ VaultModel val1 (TxOut adr val2 Nothing)
-           else do
-             adr <- address
-             val1 <- value
-             val2 <- genFilter (/= val1) value
-             mdh <- Just <$> datumHash
-             pure $ VaultModel val1 (TxOut adr val2 mdh)
+    adr <- address
+    (val1,val2) <- if var Matches
+                      then do
+                        val <- value
+                        return (val,val)
+                      else do
+                        val1 <- value
+                        val2 <-  value
+                        traceShow (val1,val2) $ return ()
+                        when (val1 == val2) retry
+                        return (val1,val2)
+    mdh <- if var ValidVault
+               then pure Nothing
+               else Just <$> datumHash
+    pure $ VaultModel val1 (TxOut adr val2 mdh)
