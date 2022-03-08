@@ -85,11 +85,15 @@ test-suite tests
   hs-source-dirs: tests
   other-modules:
     Tests
+    Models.Vault
+    Gen
 
   build-depends:
     base,
     apropos,
     apropos-tx,
     plutarch,
+    plutus-ledger-api,
+    hedgehog,
     dUSD
 
