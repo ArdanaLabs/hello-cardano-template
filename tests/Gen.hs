@@ -12,6 +12,7 @@ module Gen (
   stakingCredential,
   rational,
   integer,
+  datum,
            ) where
 
 import Apropos ( choice, element, int, list, linear, Gen )
@@ -26,7 +27,11 @@ import Plutus.V1.Ledger.Api
       DatumHash,
       TokenName,
       Value,
-      singleton )
+      Datum(Datum),
+      singleton,
+    )
+import PlutusTx.IsData.Class (ToData(toBuiltinData))
+
 import Data.String ( IsString(..) )
 import Data.Ratio
 import Control.Monad (replicateM)
@@ -95,3 +100,9 @@ pos = fromIntegral <$> int (linear 1 1_000_000)
 
 rational :: Gen Rational
 rational = (%) <$> integer <*> pos
+
+datum :: Gen Datum
+datum = choice [datumOf integer,datumOf value]
+
+datumOf :: ToData a => Gen a -> Gen Datum
+datumOf g = Datum . toBuiltinData <$> g

@@ -3,18 +3,28 @@ module Models.Vault (spec) where
 import Apropos
     ( retry,
       runGeneratorTestsWhere,
+      choice,
       HasLogicalModel(satisfiesProperty),
       HasParameterisedGenerator(parameterisedGenerator),
       LogicalModel(..),
       Enumerable(..),
       Formula(Yes, Var, (:->:)),
       type (:+),
-      Apropos(Apropos) )
+      Apropos(Apropos) ,
+    )
 
-import Gen ( address, datumHash, value )
+import Gen ( address, assetClass, datum, datumHash, value )
 
 import Plutus.V1.Ledger.Api
-    ( TxOut(TxOut, txOutValue, txOutDatumHash), Value )
+    ( TxOut(TxOut, txOutValue, txOutDatumHash),
+      Datum,
+      DatumHash,
+    )
+
+import Plutus.V1.Ledger.Value (
+  AssetClass,
+  Value,
+  )
 import Data.Maybe ( isNothing )
 
 import Test.Syd ( xdescribe, Spec )
@@ -31,7 +41,7 @@ spec = do
     fromHedgehogGroup $ runGeneratorTestsWhere (Apropos :: VaultModel :+ VaultProp) "generator" Yes
 
 
-data VaultModel = VaultModel { balance :: Value , vault :: TxOut }
+data VaultModel = VaultModel { balance :: Value , vault :: TxOut, asset :: AssetClass , datumEntry :: (Datum,DatumHash) }
   deriving stock (Eq,Show)
 
 data VaultProp
@@ -69,7 +79,10 @@ instance HasParameterisedGenerator VaultProp VaultModel where
                           traceShow (val1,val2) $ return ()
                           retry
                         return (val1,val2)
+    asset <- assetClass
+    d <- datum
+    dh <- datumHash
     mdh <- if var ValidVault
-               then pure Nothing
-               else Just <$> datumHash
-    pure $ VaultModel val1 (TxOut adr val2 mdh)
+               then choice [ pure Nothing , Just <$> datumHash ] -- todo can't == dh
+               else pure $ Just dh
+    pure $ VaultModel val1 (TxOut adr val2 mdh) asset (d,dh)

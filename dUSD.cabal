@@ -100,3 +100,4 @@ test-suite tests
     sydtest,
     sydtest-hedgehog,
     dUSD,
+    plutus-tx,
