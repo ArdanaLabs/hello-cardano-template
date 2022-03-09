@@ -21,16 +21,38 @@ Finally, the "Tests" section provide a non-exhaustive list of the way we plan to
 
 \subsection{Any User}
 
+\subsubsection{Collect information on the user's vaults}
+
+As a user, I want to be able to collect information on my vaults. By "my
+vaults", we mean the vaults created by the user. They can only be used by that
+user (except for the liquidation procedure, see below).
+
+\subsubsection{Initialize vault}
+
+As a user, I want to be able to open a new vault.
+
 \subsubsection{Deposit}
 
-As a User, I want to be able to deposit ADA into a Vault, so that I may take out a loan of dUSD (see below).
+As a user, I want to be able to deposit ADA into a vault, so that I may take out
+a loan of dUSD (see below).
 
 \subsubsection{Withdrawal}
 
+As a user, I want to be able to withdraw ADA from a vault.
+
 \subsubsection{Take out loan}
+
+As a user, I want to be able to take out a loan in dUSD against the collateral I
+put into one of my vaults.
 
 \subsubsection{Pay back loan}
 
+As a user, I want to be able to pay back (part of) a loan in dUSD I created in
+one of my vaults. In doing so, I am paying a stability fee to the buffer.
+
+\subsubsection{Liquidate someone else's vault}
+
+...
 
 \subsection{Admin}
 
@@ -44,27 +66,159 @@ As a User, I want to be able to deposit ADA into a Vault, so that I may take out
 
 \subsubsection{Set liquidation ratio}
 
-\subsubsection{Set minimum collateralisation ratio}
-
-\subsubsection{Set daily savings rate}
+\subsubsection{Set minimum collateralization ratio}
 
 \subsubsection{Set stability fee}
 
 \subsubsection{Set list of price oracles to consider in OSM}
 
+\subsubsection{Set the time interval the OSM waits before using a price update}
 
 \section{Acceptance criteria}
 
-\subsection{Deposit}
+\subsection{Vaults}
 
-\subsubsection{Interface}
+Each user should have access to a website at "www.ardana-vaults.com". This
+website must be able to connect to their wallet to find out who they are and
+allow them to set up vaults and interact with their existing vaults. \\
 
-When a user wants to deposit ADA, they must be able to visit a website at "https://deposit.dusd.com".
-On this website, they should see ...
-% \todo{Should it be a website? should it be an app?}
+Decisions to be made:
+\begin{itemize}
+  \item Do we want the interface to be a website or an app?
+  \item Which domain name will the website live at?
+\end{itemize}
+
+\subsubsection{Collect information on the user's vaults}
+
+The vault website looks up the requested information and displays it in an
+aesthetic and clear overview. \\
+
+Requested information: How many vaults does the user have, how much collateral
+and debt do they each have, what are their collateralization ratios, how
+dangerous is it to have that collateralization ratio? \\
+
+Decisions to be made:
+\begin{itemize}
+  \item Is the list of requested information correct? Anything to be added,
+    removed or updated?
+\end{itemize}
+
+\subsubsection{Initialize}
+
+The vault website should have a button to open a new vault.
+
+\subsubsection{Deposit}
+
+The vault website has a form that allows each user to pick one of their vaults
+and deposit ADA into it. \\
+
+Restrictions:
+\begin{itemize}
+  \item You have at least the amount of ADA in your wallet that you would like
+    to deposit.
+\end{itemize}
+
+Decisions to be made:
+\begin{itemize}
+  \item Do we want to implement a maximum amount of collateral? MakerDAO has
+    this, not sure why.
+  \item Do we want to implement a mininum amount of collateral? If so, is this
+    in total per vault, or per deposit?
+\end{itemize}
+
+Questions:
+\begin{itemize}
+  \item How will we figure out from which UTXO in your wallet to take the ADA?
+\end{itemize}
+
+\subsubsection{Withdrawal}
+
+The vault website has a form that allows each user to pick one of their vaults
+and withdraw ADA from it. \\
+
+Restrictions:
+\begin{itemize}
+  \item Withdrawing this amount of ADA from that vault doesn't sink its
+    collateralization ratio below the minimum collateralization ratio.
+\end{itemize}
+
+\subsubsection{Take out loan}
+
+The vault website has a form that allows a user to pick one of their vaults and
+take out a dUSD loan in it, against his collateral. \\
+
+Restrictions:
+\begin{itemize}
+  \item This transaction doesn't make the collateralization ratio drop below the
+    minimum collateralization ratio.
+\end{itemize}
+
+Design decisions:
+\begin{itemize}
+  \item What should the minimum collateralization ratio be?
+  \item Should the minimum collateralization ratio be different from the
+    liquidation ratio??
+  \item Should there be a minimum amount one can take out as a loan? If so, is
+    this per vault or per loan transaction?
+\end{itemize}
+
+\subsubsection{Pay back loan}
+
+The vault website has a form that allows a user to pick one of their vaults and
+pack back a (part of a) dUSD loan in it. \\
+
+Restrictions:
+\begin{itemize}
+  \item The amount of dUSD paid back by the user is equal to or smaller than the
+    amount of dUSD debt in the vault.
+  \item The stability fee for the part of loan that is paid back, is sent to the
+    buffer as community profit
+\end{itemize}
+
+Design decisions:
+\begin{itemize}
+  \item What should the minimum collateralization ratio be?
+  \item Should the minimum collateralization ratio be different from the
+    liquidation ratio??
+  \item Should there be a minimum amount one can take out as a loan? If so, is
+    this per vault or per loan transaction?
+\end{itemize}
+
+\subsubsection{Liquidate someone else's vault}
+
+...
+
+\subsection{Admin}
+
+\subsubsection{Trigger surplus auction (sick vault)}
+
+\subsubsection{Trigger surplus auction (buy back dana)}
+
+\subsubsection{Trigger debt auction}
+
+\subsubsection{Set liquidation fee}
+
+\subsubsection{Set liquidation ratio}
+
+\subsubsection{Set minimum collateralization ratio}
+
+\subsubsection{Set stability fee}
+
+\subsubsection{Set list of price oracles to consider in OSM}
+
+\subsubsection{Set the time interval the OSM waits before using a price update}
+
 
 \section{Implementation details}
 
 \section{Tests}
+
+% \section{Remarks}
+% 
+% - Test for Cardano network congestion
+% - Test what happens if someone hacks one or more price oracles
+% - Other attack vectors which are not specific to our application, should be
+%   listed and tested for
+
 
 \end{document}
