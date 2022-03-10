@@ -85,11 +85,16 @@ test-suite tests
   hs-source-dirs: tests
   other-modules:
     Tests
+    Apropos.Plutus.SingletonValue
 
   build-depends:
     base,
     apropos,
     apropos-tx,
     plutarch,
+    plutus-ledger-api,
+    hedgehog,
+    tasty,
+    tasty-hedgehog,
     dUSD
 

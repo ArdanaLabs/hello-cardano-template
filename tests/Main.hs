@@ -1,4 +1,9 @@
 module Main ( main ) where
+import qualified Apropos.Plutus.SingletonValue as SingletonValue
+import Test.Tasty
 
 main :: IO ()
-main = putStrLn "testing testing 1, 2, 3..."
+main =
+  defaultMain $ testGroup "Plutus" [
+    SingletonValue.singletonValueGenSelfTests
+                ]
