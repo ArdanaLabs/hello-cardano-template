@@ -17,7 +17,7 @@ data SingletonValueProp
   | IsZero
   | IsLarge
   | IsSmall
---  | IsAda
+  | IsAda
 --  | IsOther
   deriving stock (Eq, Ord, Enum, Show, Bounded)
 
@@ -36,6 +36,7 @@ instance HasLogicalModel SingletonValueProp SingletonValue where
   satisfiesProperty IsZero     (_,_,i) = i == 0
   satisfiesProperty IsLarge    (_,_,i) = i > 10 || i < -10
   satisfiesProperty IsSmall    (_,_,i) = i <= 10 && i >= -10
+  satisfiesProperty IsAda      (c,t,_) = c == "" && t == ""
 
 instance HasPermutationGenerator SingletonValueProp SingletonValue where
   generators =
