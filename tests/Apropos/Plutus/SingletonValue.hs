@@ -1,5 +1,7 @@
 module Apropos.Plutus.SingletonValue (
   singletonValueGenSelfTests,
+  SingletonValue,
+  SingletonValueProp,
   ) where
 import Apropos
 import Test.Tasty (TestTree, testGroup)
