@@ -20,7 +20,7 @@ data SingletonValueProp
   | IsLarge
   | IsSmall
   | IsAda
---  | IsOther
+  | IsOther
   deriving stock (Eq, Ord, Enum, Show, Bounded)
 
 instance Enumerable SingletonValueProp where
@@ -30,6 +30,7 @@ instance LogicalModel SingletonValueProp where
   logic =
     ExactlyOne [Var IsNegative, Var IsPositive, Var IsZero]
       :&&: ExactlyOne [Var IsLarge, Var IsSmall]
+      :&&: ExactlyOne [Var IsAda,Var IsOther]
       :&&: (Var IsZero :->: Var IsSmall)
 
 instance HasLogicalModel SingletonValueProp SingletonValue where
@@ -38,7 +39,8 @@ instance HasLogicalModel SingletonValueProp SingletonValue where
   satisfiesProperty IsZero     (_,_,i) = i == 0
   satisfiesProperty IsLarge    (_,_,i) = i > 10 || i < -10
   satisfiesProperty IsSmall    (_,_,i) = i <= 10 && i >= -10
-  satisfiesProperty IsAda      (c,t,_) = c == "" && t == ""
+  satisfiesProperty IsAda      (c,t,_) = (c,t) == ("","")
+  satisfiesProperty IsOther    (c,t,_) = (c,t) /= ("","")
 
 instance HasPermutationGenerator SingletonValueProp SingletonValue where
   generators =
@@ -78,7 +80,7 @@ instance HasPermutationGenerator SingletonValueProp SingletonValue where
     , Morphism
       { name = "Adafy"
       , match = Not $ Var IsAda
-      , contract = add IsAda
+      , contract = remove IsOther >> add IsAda
       -- TODO once other currencies have props this will need to remove them
       -- if we're going to need to distinguish amount properties
       -- from asset properties should we just model this as
@@ -88,7 +90,7 @@ instance HasPermutationGenerator SingletonValueProp SingletonValue where
     , Morphism
       { name = "UnAdafy"
       , match = Var IsAda
-      , contract = remove IsAda
+      , contract = remove IsAda >> add IsOther
       , morphism = \(_,_,i) -> do
           cs <- nonAdaName
           tn <- nonAdaName

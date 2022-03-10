@@ -7,10 +7,11 @@ import Test.Tasty
 --import Test.Syd (sydTest)
 import qualified Models.Vault as Vault (hedge)
 import Test.Tasty.Hedgehog ( fromGroup )
+import Main.Utf8 (withUtf8)
 
 -- TODO should we use sydtest-discover?
 main :: IO ()
-main =
+main = withUtf8 $ -- TODO this seems to break the histograms a bit
   defaultMain $ testGroup "Plutus"
     [ SingletonValue.singletonValueGenSelfTests
     , fromGroup Vault.hedge
