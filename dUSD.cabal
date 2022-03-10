@@ -109,4 +109,5 @@ test-suite tests
     tasty-hedgehog,
     dUSD,
     with-utf8,
+    lens,
 
