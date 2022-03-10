@@ -1,4 +1,5 @@
 \documentclass{article} % Use the custom invoice class (invoice.cls)
+\usepackage{todonotes}
 
 \title{dUSD Test Plan}
 \begin{document}
@@ -153,14 +154,11 @@ Restrictions:
     minimum collateralization ratio.
 \end{itemize}
 
-Design decisions:
-\begin{itemize}
-  \item What should the minimum collateralization ratio be?
-  \item Should the minimum collateralization ratio be different from the
-    liquidation ratio??
-  \item Should there be a minimum amount one can take out as a loan? If so, is
-    this per vault or per loan transaction?
-\end{itemize}
+\todo{What should the minimum collateralization ratio be?}
+\todo{Should the minimum collateralization ratio be different from the
+liquidation ratio??}
+\todo{Should there be a minimum amount one can take out as a loan? If so, is
+this per vault or per loan transaction?}
 
 \subsubsection{Pay back loan}
 
