@@ -89,6 +89,7 @@ test-suite tests
     Models.Vault
     Models.Auction
     Gen
+    Apropos.Plutus.SingletonValue
 
   build-depends:
     base,
@@ -101,3 +102,8 @@ test-suite tests
     sydtest-hedgehog,
     dUSD,
     plutus-tx,
+    plutus-ledger-api,
+    hedgehog,
+    tasty,
+    tasty-hedgehog,
+    dUSD

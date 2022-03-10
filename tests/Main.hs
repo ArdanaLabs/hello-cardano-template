@@ -1,15 +1,17 @@
 module Main ( main ) where
+import qualified Apropos.Plutus.SingletonValue as SingletonValue
+import Test.Tasty
 
 --import qualified Models.Vault as Vault (spec)
 --import qualified Models.Auction as Auction (spec)
 --import Test.Syd (sydTest)
 import qualified Models.Vault as Vault (hedge)
-import Hedgehog
-import Control.Monad (void)
+import Test.Tasty.Hedgehog ( fromGroup )
 
 -- TODO should we use sydtest-discover?
 main :: IO ()
-main = void $ checkParallel Vault.hedge
---  sydTest $ do
---  Vault.spec
---  Auction.spec
+main =
+  defaultMain $ testGroup "Plutus"
+    [ SingletonValue.singletonValueGenSelfTests
+    , fromGroup Vault.hedge
+                ]
