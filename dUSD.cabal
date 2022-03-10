@@ -94,6 +94,7 @@ test-suite tests
 
   build-depends:
     base,
+    containers,
     apropos,
     apropos-tx,
     plutarch,

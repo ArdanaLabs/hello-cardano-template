@@ -6,10 +6,12 @@ module Apropos.Plutus.Value (
   ) where
 
 import Apropos
+import Apropos.LogicalModel.Formula
 
 import Apropos.Plutus.SingletonValue
 import Control.Monad (join)
-import Control.Lens(Lens,lens)
+import Control.Lens(Lens,lens,each)
+import qualified Data.Map as M
 
 type MultiValue = [SingletonValue]
 
@@ -55,8 +57,17 @@ instance HasLogicalModel prop m => HasLogicalModel (ListModel prop) [m] where
 
   satisfiesProperty (AtRest m) xs = all (satisfiesProperty m) (drop 3 xs)
 
-instance HasPermutationGenerator prop model => HasPermutationGenerator (ListModel prop) [model] where
+instance (HasPermutationGenerator prop model
+         ,HasParameterisedGenerator prop model
+         )=> HasPermutationGenerator (ListModel prop) [model] where
   generators = let
+    satSubVars :: [prop]
+    -- TODO this should really use solve but it's not currently exposed
+    satSubVars = case solveAll (logic :: Formula prop) of
+                   (sol:_) -> M.keys . M.filter id $ sol
+                   [] -> error "subModel for list couldn't be solved"
+    satSubForm :: Formula prop
+    satSubForm = foldl (:&&:) Yes (Var <$> satSubVars)
     at0 :: Abstraction prop model (ListModel prop) [model]
     at0 = Abstraction
       { abstractionName = "At0"
@@ -80,15 +91,11 @@ instance HasPermutationGenerator prop model => HasPermutationGenerator (ListMode
       { abstractionName = "AtRest"
       , propertyAbstraction = abstractsProperties AtRest
       , modelAbstraction = undefined
-          --shouldBeSomethingLike =
-           -- lens (drop 3) (\xs ys -> take 3 xs ++ ys)
-           -- this lens part isn't quite right
-           -- . each
-           -- this requires applicative
-           -- this may be easiest to make work
-           -- by changing apropos
+        -- TODO needs to be something like each but only affect elements after the first 3
       }
-    -- TODO
+    addMorphism = \xs -> do
+      x <- genSatisfying satSubForm
+      pure $ xs ++ [x]
     lengthMorphisms =
       [ Morphism
         { name = "empty"
@@ -99,12 +106,29 @@ instance HasPermutationGenerator prop model => HasPermutationGenerator (ListMode
       , Morphism
         { name = "add0"
         , match = Var Empty
-        , contract = remove Empty >> add Len1
-        -- TODO At0 properties
-        -- and actual morphism
-        , morphism = undefined
+        , contract = remove Empty >> add Len1 >> addAll (At0 <$> satSubVars)
+        , morphism = addMorphism
         }
-        -- TODO add1 add2 and addRest edges
+      , Morphism
+        { name = "add1"
+        , match = Var Len1
+        , contract = remove Len1 >> add Len2 >> addAll (At1 <$> satSubVars)
+        , morphism = addMorphism
+        }
+      , Morphism
+        { name = "add2"
+        , match = Var Len2
+        , contract = remove Len2 >> add Len3 >> addAll (At2 <$> satSubVars)
+        , morphism = addMorphism
+        }
+      , Morphism
+        { name = "addRest"
+        , match = Var Len3
+        , contract = remove Len3 >> add Long >> addAll (AtRest <$> satSubVars)
+        , morphism = \xs -> do
+          ys <- list (linear 1 100) (genSatisfying satSubForm)
+          pure $ xs ++ ys
+        }
       ]
                 in join [abstract abstraction <$> generators
                         | abstraction <- [at0,at1,at2,atRest] ]
@@ -115,7 +139,9 @@ at' :: Int -> Lens [a] [a] a a
 at' n = lens (!! n) (\xs x -> take (n-1) xs ++ [x] ++ drop n xs)
 
 
-instance HasPermutationGenerator prop model => HasParameterisedGenerator (ListModel prop) [model] where
+instance (HasPermutationGenerator prop model
+         ,HasParameterisedGenerator prop model
+         )=> HasParameterisedGenerator (ListModel prop) [model] where
   parameterisedGenerator = buildGen baseGen
     where
       baseGen :: Gen [model]
