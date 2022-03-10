@@ -10,7 +10,7 @@ import Plutus.V1.Ledger.Value (AssetClass,assetClassValue)
 
 spec :: Spec
 spec = do
-  xdescribe "auction model" $ do
+  describe "auction model" $ do
     fromHedgehogGroup $ runGeneratorTestsWhere (Apropos :: AuctionModel :+ AuctionProp) "generator" Yes
 
 data AuctionProp

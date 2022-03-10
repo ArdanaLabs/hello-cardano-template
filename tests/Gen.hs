@@ -49,7 +49,9 @@ credential =
     ]
 
 hexString :: IsString s => Gen s
-hexString = fromString <$> list (linear 0 64) hexit
+hexString = do
+  len <- (2*) <$> int (linear 0 32)
+  fromString <$> replicateM len hexit
 
 hexStringName :: IsString s => Gen s
 hexStringName = fromString <$> choice [ pure "" , replicateM 64 hexit]

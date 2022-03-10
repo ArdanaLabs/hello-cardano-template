@@ -77,8 +77,8 @@
             ];
           };
           sha256map = {
-            "https://github.com/mlabs-haskell/apropos"."2b2c2e01f9a3d40a3db2dfcbdb24683d584f808d"
-              = "sha256-o9bEo9LTTfM5f/yapqLzXhxFF6XVbLTUKx1GvzJmfE0=";
+            "https://github.com/mlabs-haskell/apropos"."5d98c585168af9063f27ffbbe2787529bc846efc"
+              = "sha256-qJvhg8E9McOSq/eJyqd6CD99LYSyW+esmELqbMoRlNU=";
             "https://github.com/mlabs-haskell/apropos-tx"."d5a90656ad77a48d2291748e1bb5ae072c85eaa4"
               = "sha256-SkWvW7EyI94BoFWvzyk+MsTNd3eomRlwaBovIQtI71o=";
             "https://github.com/Plutonomicon/plutarch"."aecc2050eb63ff0041576473aa3193070fe91314"
