@@ -1,5 +1,2 @@
-*.pdf
-*.dvi
-*.aux
-*.fdb_latexmk
-*.fls
+docs/test-plan/
+dist-newstyle
