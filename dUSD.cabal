@@ -90,6 +90,7 @@ test-suite tests
     Models.Auction
     Gen
     Apropos.Plutus.SingletonValue
+    Apropos.Plutus.List
     Apropos.Plutus.Value
 
   build-depends:
