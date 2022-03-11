@@ -1,5 +1,5 @@
 module Apropos.Plutus.Value (
-  --valueGenSelfTests,
+  valueGenSelfTests,
   MultiValueProp,
   MultiValue,
   ListModel(..),
@@ -11,7 +11,11 @@ import Apropos.LogicalModel.Formula
 import Apropos.Plutus.SingletonValue
 import Control.Monad (join)
 import Control.Lens(Lens,lens,each)
+import Test.Tasty (TestTree, testGroup)
 import qualified Data.Map as M
+import Test.Tasty.Hedgehog (fromGroup)
+import Debug.Trace
+import Data.Maybe ( listToMaybe )
 
 type MultiValue = [SingletonValue]
 
@@ -62,10 +66,9 @@ instance (HasPermutationGenerator prop model
          )=> HasPermutationGenerator (ListModel prop) [model] where
   generators = let
     satSubVars :: [prop]
-    -- TODO this should really use solve but it's not currently exposed
-    satSubVars = case solveAll (logic :: Formula prop) of
-                   (sol:_) -> M.keys . M.filter id $ sol
-                   [] -> error "subModel for list couldn't be solved"
+    satSubVars = trace "satVarsCall" $ case listToMaybe (solveAll (logic :: Formula prop)) of
+                   Just sol -> trace "sat call" $ M.keys . M.filter id $ sol
+                   Nothing -> error "subModel for list couldn't be solved"
     satSubForm :: Formula prop
     satSubForm = foldl (:&&:) Yes (Var <$> satSubVars)
     at0 :: Abstraction prop model (ListModel prop) [model]
@@ -90,8 +93,7 @@ instance (HasPermutationGenerator prop model
     atRest = Abstraction
       { abstractionName = "AtRest"
       , propertyAbstraction = abstractsProperties AtRest
-      , modelAbstraction = undefined
-        -- TODO needs to be something like each but only affect elements after the first 3
+      , modelAbstraction = lens (drop 3) (\xs ys -> take 3 xs ++ ys) . each
       }
     addMorphism = \xs -> do
       x <- genSatisfying satSubForm
@@ -143,7 +145,16 @@ instance (HasPermutationGenerator prop model
          ,HasParameterisedGenerator prop model
          )=> HasParameterisedGenerator (ListModel prop) [model] where
   parameterisedGenerator = buildGen baseGen
-    where
-      baseGen :: Gen [model]
-      baseGen = pure []
+
+baseGen :: Gen [model]
+baseGen = pure []
+
+valueGenSelfTests :: TestTree
+valueGenSelfTests =
+  testGroup "valueGenSelfTests" $
+    fromGroup
+      <$> permutationGeneratorSelfTest
+        True
+        (const @Bool @(Morphism (ListModel SingletonValueProp) [SingletonValue]) True)
+        baseGen
 
