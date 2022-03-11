@@ -1,14 +1,12 @@
 module Apropos.Plutus.List (
-  ListModel
+  ListModel,
+  Satable(sats),
   ) where
 
 import Apropos
-import Apropos.LogicalModel.Formula
 
 import Control.Monad (join)
 import Control.Lens(Lens,lens,each)
-import qualified Data.Map as M
-import Data.Maybe ( listToMaybe )
 
 -- TODO can/should this use Nats?
 data ListModel subModel
@@ -28,13 +26,28 @@ instance Enumerable a => Enumerable (ListModel a) where
 
 instance LogicalModel model => LogicalModel (ListModel model) where
   logic =
-    ExactlyOne
-    [ Var Empty
-    , Var Len1 :&&: (At0 <$> logic)
-    , Var Len2 :&&: (At0 <$> logic) :&&: (At1 <$> logic)
-    , Var Len3 :&&: (At0 <$> logic) :&&: (At1 <$> logic) :&&: (At2 <$> logic)
-    , Var Long :&&: (At0 <$> logic) :&&: (At1 <$> logic) :&&: (At2 <$> logic) :&&: (AtRest <$> logic)
-    ]
+    ExactlyOne [ Var Empty , Var Len1 , Var Len2 , Var Len3 , Var Long ]
+    :&&: (Var Empty :->:
+              None [ Var (at s) | at <- [At0,At1,At2,AtRest] , s <- enumerated ]
+         )
+    :&&: (Var Len1 :->:
+            (All [at <$> logic | at <- [At0]]
+            :&&: None [ Var (at s) | at <- [At1,At2,AtRest] , s <- enumerated ]
+          ))
+    :&&: (Var Len2 :->:
+            (All [at <$> logic | at <- [At0,At1]]
+            :&&: None [ Var (at s) | at <- [At2,AtRest] , s <- enumerated ]
+          ))
+    :&&: (Var Len3 :->:
+            (All [at <$> logic | at <- [At0,At1,At2]]
+            :&&: None [ Var (at s) | at <- [AtRest] , s <- enumerated ]
+          ))
+    :&&: (Var Long :->:
+            All [at <$> logic | at <- [At0,At1,At2,AtRest]]
+         )
+
+class LogicalModel a => Satable a where
+  sats :: [a]
 
 instance HasLogicalModel prop m => HasLogicalModel (ListModel prop) [m] where
   satisfiesProperty Empty xs = null xs
@@ -51,14 +64,18 @@ instance HasLogicalModel prop m => HasLogicalModel (ListModel prop) [m] where
 
   satisfiesProperty (AtRest m) xs = all (satisfiesProperty m) (drop 3 xs)
 
-instance (HasPermutationGenerator prop model
+instance (Satable prop
+         ,HasPermutationGenerator prop model
          ,HasParameterisedGenerator prop model
          )=> HasPermutationGenerator (ListModel prop) [model] where
   generators = let
     satSubVars :: [prop]
-    satSubVars = case listToMaybe (solveAll (logic :: Formula prop)) of
+    satSubVars = sats
+                {-
+                case listToMaybe (solveAll (logic :: Formula prop)) of
                    Just sol -> M.keys . M.filter id $ sol
                    Nothing -> error "subModel for list couldn't be solved"
+                  -}
     satSubForm :: Formula prop
     satSubForm = foldl (:&&:) Yes (Var <$> satSubVars)
     at0 :: Abstraction prop model (ListModel prop) [model]
@@ -131,7 +148,8 @@ at' :: Int -> Lens [a] [a] a a
 at' n = lens (!! n) (\xs x -> take (n-1) xs ++ [x] ++ drop n xs)
 
 
-instance (HasPermutationGenerator prop model
+instance (Satable prop
+         ,HasPermutationGenerator prop model
          ,HasParameterisedGenerator prop model
          )=> HasParameterisedGenerator (ListModel prop) [model] where
   parameterisedGenerator = buildGen baseGen

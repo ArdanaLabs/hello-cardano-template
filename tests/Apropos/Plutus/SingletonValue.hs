@@ -8,6 +8,7 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.Hedgehog (fromGroup)
 import Control.Monad ( replicateM )
 import Data.String (IsString(..))
+import Apropos.Plutus.List
 import Plutus.V1.Ledger.Api
   ( CurrencySymbol
   , TokenName
@@ -34,6 +35,9 @@ instance LogicalModel SingletonValueProp where
       :&&: ExactlyOne [Var IsLarge, Var IsSmall]
       :&&: ExactlyOne [Var IsAda,Var IsOther]
       :&&: (Var IsZero :->: Var IsSmall)
+
+instance Satable SingletonValueProp where
+  sats =  [IsNegative,IsLarge,IsAda]
 
 instance HasLogicalModel SingletonValueProp SingletonValue where
   satisfiesProperty IsNegative (_,_,i) = i < 0
