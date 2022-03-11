@@ -1,5 +1,6 @@
 \documentclass{article} % Use the custom invoice class (invoice.cls)
 \usepackage{todonotes}
+\setuptodonotes{inline}
 
 \title{dUSD Test Plan}
 \begin{document}
@@ -209,7 +210,24 @@ Design decisions:
 
 \section{Implementation details}
 
+% What do we need in order to make this happen?
+
+\subsection{Price oracle}
+
+\todo{What will the price oracle store? Suggestion: The last 48h of data.}
+
+A price oracle is a timeline of UTXOs \todo{Nick: Describe what this means}. In
+order to be able to uniquely identify and track each UTXO, we put an NFT into
+it. The price oracle contains the public hash key of the wallet which created
+it. It has two endpoints:
+\begin{itemize}
+  \item Read: This reads all the price values of the given asset class stored
+  \item Write: Write a new price value. Only the initializer of the price oracle
+    is allowed to do this.
+\end{itemize}
+
 \section{Tests}
+
 
 % \section{Remarks}
 % 
