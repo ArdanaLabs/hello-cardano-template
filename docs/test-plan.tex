@@ -20,6 +20,79 @@ Finally, the "Tests" section provide a non-exhaustive list of the way we plan to
 
 \section{Interactions}
 
+\subsection{Price oracle}
+
+\todo{What will the price oracle store? Suggestion: The last 48h of data. \\
+The reason to store more than only the most recent price, is such that the OSM
+can be used to determine how long a vault has been in a disasterous state (i.e.
+collateralization ratio smaller than $1$), which is useful to determine when to
+bind the vault to the buffer and mint dUSD in order to pay back the debt.}
+
+A price oracle is a timeline of UTXOs\footnote{
+  In the blockchain industry, people often talk about concepts like price
+  oracles and DEX pools. However, within the EUTXO system built by Cardano, the
+  fundamental concept we are dealing is the UTXO. This means that we are dealing
+  with a `state' of a price oracle as the fundamental concept, not the price
+  oracle itself. Now, Plutus scripts like price oracles, between being created
+  and destroyed, basically only allow to be updated and read. This means that
+  one can draw a `timeline' through a series of UTXO, each one disappearing into
+  a transaction that produces the next. This set of UTXOs is what is referred to
+  as ``the price oracle''.
+}
+which stores the price of a given asset (e.g. ADA) in terms of a reference
+currency (USD). \\
+
+A number of price oracles will be created for each asset of interest.
+The person creating each price oracle will connect it to a price feed coming
+from some CEX/DEX. \\
+
+Next, an Oracle Security Module (OSM) will be implemented.
+This is another ``timeline of UTXOs'', which allows admin to select a number of
+price oracles as trusted price feeds and combines their prices in a secure way.
+The resulting price is exposed to the blockchain ecosystem.
+
+\subsubsection{Read}
+
+The OSM can read all the pricing data stored in the price oracle.
+
+\subsubsection{Write}
+
+The owner/creator of the price oracle can write a new price value to the oracle.
+
+\subsection{Oracle security module}
+
+\subsubsection{Read the `current' price}
+
+\todo{How current do we want the price to be? \\
+MakerDAO puts a $1$ hour delay here, to avoid the price oracles from messing
+with the system for arbitrage purposes. The problem with that approach is that
+it requires governance to react within $1$ hour, and that it endangers vault
+liquidation by not making it interesting for liquidators to liquidate a vault
+quickly enough. \\
+Alternatively, we could build in robustness against some price oracle owners
+trying to hack the system by allowing the OSM to shut down the system if the
+values different price oracles proclaim, are too widely spread. \\
+If we want there to be a time delay in the OSM price, we have to implement an
+extra interaction allowing admin to update this value.}
+
+Transactions in the dUSD protocol will read the `current' price of ADA relative
+to USD from the OSM.
+
+\todo{Should the OSM shut down the protocol if it has not been updated for too
+long?}
+
+\subsubsection{Update}
+
+Anyone can create a transaction to connect the OSM to all of the price oracles
+it currently accepts, and update its own datum based on their information.
+This is to be rewarded (a little).
+
+\subsubsection{Update list of accepted price oracles}
+
+Admin/governance can update the list of price oracles accepted by the OSM.
+
+\todo{Should the OSM (temporarily) unaccept a price oracle if its price has not
+been updated for too long?}
 
 \subsection{Any User}
 
@@ -72,11 +145,29 @@ one of my vaults. In doing so, I am paying a stability fee to the buffer.
 
 \subsubsection{Set stability fee}
 
-\subsubsection{Set list of price oracles to consider in OSM}
-
-\subsubsection{Set the time interval the OSM waits before using a price update}
-
 \section{Acceptance criteria}
+
+\subsection{Price oracle}
+
+\begin{itemize}
+  \item Only the owner can write to the oracle
+  \item Anyone can read the price data
+  \item Writing a price values removes outdated price values (older than 48
+    hours) from the datum.
+\end{itemize}
+
+\subsection{Oracle security module}
+
+\begin{itemize}
+  \item Admin (and only admin) can update the list of accepted price oracles
+  \item The OSM's price information cannot be updated without linking to all
+    accepted price oracles
+  \item The price oracles are read-only inputs to the ``update OSM'' endpoint
+  \item Reading the current price after updating the OSM's price information and
+    waiting for the given time delay, leads to the predicted `current' price
+    \todo{What is the current price given the list of price oracles? The
+    median?}
+\end{itemize}
 
 \subsection{Vaults}
 
@@ -214,17 +305,11 @@ Design decisions:
 
 \subsection{Price oracle}
 
-\todo{What will the price oracle store? Suggestion: The last 48h of data.}
+Each price oracle will carry an NFT used as a unique identifier.
+In addition, each price oracle contains the public hash key of the wallet which
+created it, so as to only allow the creator to update the oracle.
 
-A price oracle is a timeline of UTXOs \todo{Nick: Describe what this means}. In
-order to be able to uniquely identify and track each UTXO, we put an NFT into
-it. The price oracle contains the public hash key of the wallet which created
-it. It has two endpoints:
-\begin{itemize}
-  \item Read: This reads all the price values of the given asset class stored
-  \item Write: Write a new price value. Only the initializer of the price oracle
-    is allowed to do this.
-\end{itemize}
+\subsection{Oracle security module}
 
 \section{Tests}
 
