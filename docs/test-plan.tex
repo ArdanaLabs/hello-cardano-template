@@ -5,7 +5,6 @@
 \title{dUSD Test Plan}
 \begin{document}
 
-
 \maketitle
 
 \section{Introduction}
@@ -22,12 +21,6 @@ Finally, the "Tests" section provide a non-exhaustive list of the way we plan to
 
 \subsection{Price oracle}
 
-\todo{What will the price oracle store? Suggestion: The last 48h of data. \\
-The reason to store more than only the most recent price, is such that the OSM
-can be used to determine how long a vault has been in a disasterous state (i.e.
-collateralization ratio smaller than $1$), which is useful to determine when to
-bind the vault to the buffer and mint dUSD in order to pay back the debt.}
-
 A price oracle is a timeline of UTXOs\footnote{
   In the blockchain industry, people often talk about concepts like price
   oracles and DEX pools. However, within the EUTXO system built by Cardano, the
@@ -39,12 +32,15 @@ A price oracle is a timeline of UTXOs\footnote{
   a transaction that produces the next. This set of UTXOs is what is referred to
   as ``the price oracle''.
 }
-which stores the price of a given asset (e.g. ADA) in terms of a reference
-currency (USD). \\
+which stores the price information of a given asset (e.g. ADA) in terms of a
+reference currency (USD).
 
-A number of price oracles will be created for each asset of interest.
-The person creating each price oracle will connect it to a price feed coming
-from some CEX/DEX. \\
+Each price oracle will store $48$ hours worth of price data, and be updatable
+once every few minutes.
+
+A number of price oracles will be created for each asset of interest.  The
+person creating each price oracle will connect it to a price feed coming from
+some CEX/DEX.
 
 Next, an Oracle Security Module (OSM) will be implemented.
 This is another ``timeline of UTXOs'', which allows admin to select a number of
@@ -164,9 +160,10 @@ one of my vaults. In doing so, I am paying a stability fee to the buffer.
     accepted price oracles
   \item The price oracles are read-only inputs to the ``update OSM'' endpoint
   \item Reading the current price after updating the OSM's price information and
-    waiting for the given time delay, leads to the predicted `current' price
-    \todo{What is the current price given the list of price oracles? The
-    median?}
+    waiting for the given time delay, leads to the predicted `current' price.
+    This is the median over all price oracles of the price averaged over the
+    values in the last hour. (This smearing prevents flash drops on some
+    exchanges from making the OSM's result crash and many vaults liquidate.)
 \end{itemize}
 
 \subsection{Vaults}
@@ -280,6 +277,11 @@ Design decisions:
 
 \subsection{Admin}
 
+One important acceptance criterium is that the protocol can be updated without
+requiring users to update their vaults or dUSD becoming a new currency.
+
+Any updates to the protocol will be decided on by admin, and later governance.
+
 \subsubsection{Trigger surplus auction (sick vault)}
 
 \subsubsection{Trigger surplus auction (buy back dana)}
@@ -307,7 +309,15 @@ Design decisions:
 
 Each price oracle will carry an NFT used as a unique identifier.
 In addition, each price oracle contains the public hash key of the wallet which
-created it, so as to only allow the creator to update the oracle.
+created it, so as to only allow the creator to update the oracle. \\
+
+To avoid datum overflow, we need to add a rule to only allow a price oracle to
+be updated once every $X$ minutes.
+\todo{Choose the value of $X$.}
+
+We will start with $3-5$ price oracles.
+Three of them will be linked to price feeds coming from binance, coinbase and
+kraken.
 
 \subsection{Oracle security module}
 
