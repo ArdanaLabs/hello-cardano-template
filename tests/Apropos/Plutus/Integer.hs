@@ -1,5 +1,5 @@
 module Apropos.Plutus.Integer
-  ( IntegerProp
+  ( IntegerProp(..)
   , integerGenSelfTest
   ) where
 
@@ -70,6 +70,10 @@ instance HasPermutationGenerator IntegerProp Integer where
         , morphism = pure . negate
         }
     ]
+
+
+instance HasParameterisedGenerator IntegerProp Integer where
+  parameterisedGenerator = buildGen $ pure 0
 
 integerGenSelfTest :: TestTree
 integerGenSelfTest =
