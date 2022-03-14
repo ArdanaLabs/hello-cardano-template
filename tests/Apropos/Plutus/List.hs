@@ -6,7 +6,7 @@ module Apropos.Plutus.List (
 import Apropos
 
 import Control.Monad (join)
-import Control.Lens(Lens,lens,each)
+import Control.Lens(Lens,lens)
 
 -- TODO can/should this use Nats?
 data ListModel subModel
@@ -100,7 +100,9 @@ instance (Satable prop
     atRest = Abstraction
       { abstractionName = "AtRest"
       , propertyAbstraction = abstractsProperties AtRest
-      , modelAbstraction = lens (drop 3) (\xs ys -> take 3 xs ++ ys) . each
+      , modelAbstraction = undefined
+        -- TODO this can work with upstream change
+        --lens (drop 3) (\xs ys -> take 3 xs ++ ys) . each
       }
     addMorphism = \xs -> do
       x <- genSatisfying satSubForm
