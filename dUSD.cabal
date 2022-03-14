@@ -90,6 +90,8 @@ test-suite tests
     Models.Auction
     Gen
     Apropos.Plutus.SingletonValue
+    Apropos.Plutus.AssetClass
+    Apropos.Plutus.Integer
     Apropos.Plutus.List
     Apropos.Plutus.Value
 

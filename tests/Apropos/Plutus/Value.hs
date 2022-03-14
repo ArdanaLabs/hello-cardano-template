@@ -1,9 +1,10 @@
 module Apropos.Plutus.Value (
-  valueGenSelfTests,
-  MultiValueProp,
-  MultiValue,
+  --valueGenSelfTests,
+  --MultiValueProp,
+  --MultiValue,
   ) where
 
+{-
 import Apropos
 
 import Apropos.Plutus.SingletonValue (SingletonValueProp,SingletonValue)
@@ -15,8 +16,8 @@ import Test.Tasty.Hedgehog (fromGroup)
 type MultiValue = [SingletonValue]
 type MultiValueProp = ListModel SingletonValue
 
-valueGenSelfTests :: TestTree
-valueGenSelfTests =
+_valueGenSelfTests :: TestTree
+_valueGenSelfTests =
   testGroup "valueGenSelfTests" $
     fromGroup
       <$> permutationGeneratorSelfTest
@@ -24,3 +25,4 @@ valueGenSelfTests =
         (const @Bool @(Morphism (ListModel SingletonValueProp) [SingletonValue]) True)
         (pure [])
 
+-}

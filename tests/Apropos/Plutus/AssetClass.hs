@@ -1,0 +1,87 @@
+module Apropos.Plutus.AssetClass
+  ( AssetClassProp(..)
+  , assetClassGenSelfTest
+  ) where
+
+import Apropos
+import Plutus.V1.Ledger.Value
+import Data.Maybe (mapMaybe)
+import Control.Monad ( replicateM )
+import Data.String
+import Test.Tasty (TestTree, testGroup)
+import Test.Tasty.Hedgehog (fromGroup)
+
+data AssetClassProp
+  = IsAda
+  | IsDana
+  | IsDUSD
+  | IsLiquidity
+  | IsOther
+  deriving stock (Eq, Ord, Enum, Show, Bounded)
+
+instance Enumerable AssetClassProp where
+  enumerated = [minBound .. maxBound]
+
+specialAC :: AssetClassProp -> Maybe AssetClass
+specialAC IsAda = Just $ AssetClass ("","")
+-- Placeholder hashes
+specialAC IsDana = Just $
+  AssetClass ("0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+specialAC IsDUSD = Just $
+  AssetClass ("1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+specialAC IsLiquidity = Just $
+  AssetClass ("2aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+specialAC IsOther = Nothing
+
+specialTokens :: [AssetClass]
+specialTokens = mapMaybe specialAC enumerated
+
+instance LogicalModel AssetClassProp where
+  logic = ExactlyOne [ Var IsAda, Var IsDana, Var IsDUSD, Var IsLiquidity, Var IsOther]
+
+instance HasLogicalModel AssetClassProp AssetClass where
+  satisfiesProperty prop ac = case specialAC prop of
+                                Just ac' -> ac == ac'
+                                Nothing -> ac `notElem` specialTokens
+
+instance HasPermutationGenerator AssetClassProp AssetClass where
+  generators =
+    Morphism
+      { name = "IsOther"
+      , match = Not $ Var IsOther
+      , contract = clear >> add IsOther
+      , morphism = \_ -> genFilter (`notElem` specialTokens) baseGen
+      }
+    :
+    [ Morphism
+      { name = "SetToken" ++ show prop
+      , match = Not $ Var prop
+      , contract = clear >> add prop
+      , morphism = \_ -> pure ac
+      }
+    | prop <- enumerated , Just ac <- pure $ specialAC prop ]
+
+baseGen :: Gen AssetClass
+baseGen = choice
+  [ (\c -> AssetClass (fromString c,fromString c)) <$> constString
+  , fmap AssetClass . (,) <$> hexString <*> hexString
+  ]
+    where
+      hexString :: IsString s => Gen s
+      hexString = fromString <$> replicateM 64 hexIt
+      constString :: Gen String
+      constString = replicate 64 <$> hexIt
+      hexIt :: Gen Char
+      hexIt = element "01234567890abcdef"
+
+instance HasParameterisedGenerator AssetClassProp AssetClass where
+  parameterisedGenerator = buildGen baseGen
+
+assetClassGenSelfTest :: TestTree
+assetClassGenSelfTest =
+  testGroup "assetClassGenSelfTest" $
+    fromGroup
+      <$> permutationGeneratorSelfTest
+        True
+        (\(_ :: Morphism AssetClassProp assetClassGenSelfTest) -> True)
+        baseGen
