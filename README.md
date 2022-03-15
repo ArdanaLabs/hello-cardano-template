@@ -1,5 +1,6 @@
 # dUSD
-The ardana-dollar stablecoin.
+
+The Ardana Dollar Stablecoin
 
 ## test-plan document
 `./docs/test-plan/test-plan.pdf` documents design decisions, testing, and acceptance criteria for the project.
