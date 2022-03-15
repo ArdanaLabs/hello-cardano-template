@@ -85,15 +85,15 @@ test-suite tests
   hs-source-dirs: tests
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
   other-modules:
-    Tests
-    Models.Vault
-    Models.Auction
-    Gen
-    Apropos.Plutus.SingletonValue
     Apropos.Plutus.AssetClass
+    Apropos.Plutus.Auction
     Apropos.Plutus.Integer
     Apropos.Plutus.List
+    Apropos.Plutus.SingletonValue
     Apropos.Plutus.Value
+    Apropos.Plutus.Vault
+    Gen
+    Tests
 
   build-depends:
     base,

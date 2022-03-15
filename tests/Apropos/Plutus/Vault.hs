@@ -1,4 +1,4 @@
-module Models.Vault (spec,hedge) where
+module Apropos.Plutus.Vault (spec,hedge) where
 
 import Apropos
     ( retry,

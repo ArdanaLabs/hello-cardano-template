@@ -5,15 +5,14 @@ import qualified Apropos.Plutus.AssetClass as AssetClass
 import qualified Apropos.Plutus.Integer as Integer
 import qualified Apropos.Plutus.Value as Value
 
-import Test.Tasty ( defaultMain, testGroup )
-import Main.Utf8 (withUtf8)
+import Test.Syd
 
--- TODO use sydtest-discover?
+-- TODO use sydtest-discover once nix stabalizes a bit more
+
 main :: IO ()
-main = withUtf8 $ do -- TODO this seems to break the histograms a bit
-  defaultMain $ testGroup "Plutus"
-    [ AssetClass.assetClassGenSelfTest
-    , Integer.integerGenSelfTest
-    , SingletonValue.singletonValueGenSelfTests
-    , Value.valueGenSelfTests
-    ]
+main = sydTest $
+  describe "plutus" $ do
+    AssetClass.spec
+    Integer.spec
+    SingletonValue.spec
+    Value.spec

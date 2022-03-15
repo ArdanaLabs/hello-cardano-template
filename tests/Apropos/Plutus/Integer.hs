@@ -1,11 +1,12 @@
 module Apropos.Plutus.Integer
   ( IntegerProp(..)
-  , integerGenSelfTest
+  , spec
   ) where
 
 import Apropos
-import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.Hedgehog (fromGroup)
+
+import Test.Syd
+import Test.Syd.Hedgehog
 
 data IntegerProp
   = IsNegative
@@ -75,11 +76,11 @@ instance HasPermutationGenerator IntegerProp Integer where
 instance HasParameterisedGenerator IntegerProp Integer where
   parameterisedGenerator = buildGen $ pure 0
 
-integerGenSelfTest :: TestTree
-integerGenSelfTest =
-  testGroup "integerGenSelfTest" $
-    fromGroup
-      <$> permutationGeneratorSelfTest
+spec :: Spec
+spec = do
+  describe "integerGenSelfTest" $
+    mapM_ fromHedgehogGroup $
+      permutationGeneratorSelfTest
         True
         (\(_ :: Morphism IntegerProp integerGenSelfTest) -> True)
         (pure (0 :: Integer))

@@ -1,6 +1,6 @@
 module Apropos.Plutus.AssetClass
   ( AssetClassProp(..)
-  , assetClassGenSelfTest
+  , spec
   ) where
 
 import Apropos
@@ -8,8 +8,8 @@ import Plutus.V1.Ledger.Value
 import Data.Maybe (mapMaybe)
 import Control.Monad ( replicateM )
 import Data.String
-import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.Hedgehog (fromGroup)
+import Test.Syd
+import Test.Syd.Hedgehog
 
 data AssetClassProp
   = IsAda
@@ -40,7 +40,7 @@ instance LogicalModel AssetClassProp where
   logic = ExactlyOne [ Var IsAda, Var IsDana, Var IsDUSD, Var IsLiquidity, Var IsOther]
 
 instance HasLogicalModel AssetClassProp AssetClass where
-  satisfiesProperty prop ac = case specialAC prop of
+  satisfiesProperty property ac = case specialAC property of
                                 Just ac' -> ac == ac'
                                 Nothing -> ac `notElem` specialTokens
 
@@ -54,12 +54,12 @@ instance HasPermutationGenerator AssetClassProp AssetClass where
       }
     :
     [ Morphism
-      { name = "SetToken" ++ show prop
-      , match = Not $ Var prop
-      , contract = clear >> add prop
+      { name = "SetToken" ++ show property
+      , match = Not $ Var property
+      , contract = clear >> add property
       , morphism = \_ -> pure ac
       }
-    | prop <- enumerated , Just ac <- pure $ specialAC prop ]
+    | property <- enumerated , Just ac <- pure $ specialAC property ]
 
 baseGen :: Gen AssetClass
 baseGen = choice
@@ -77,11 +77,11 @@ baseGen = choice
 instance HasParameterisedGenerator AssetClassProp AssetClass where
   parameterisedGenerator = buildGen baseGen
 
-assetClassGenSelfTest :: TestTree
-assetClassGenSelfTest =
-  testGroup "assetClassGenSelfTest" $
-    fromGroup
-      <$> permutationGeneratorSelfTest
+spec :: Spec
+spec = do
+  describe "assetClassGenSelfTest" $
+    mapM_ fromHedgehogGroup $
+      permutationGeneratorSelfTest
         True
         (\(_ :: Morphism AssetClassProp assetClassGenSelfTest) -> True)
         baseGen

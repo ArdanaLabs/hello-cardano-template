@@ -1,4 +1,4 @@
-module Models.Auction (spec) where
+module Apropos.Plutus.Auction (spec) where
 
 import Apropos
 import Gen

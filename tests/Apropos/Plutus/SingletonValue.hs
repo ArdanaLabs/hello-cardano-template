@@ -1,16 +1,17 @@
 module Apropos.Plutus.SingletonValue (
-  singletonValueGenSelfTests,
+  spec,
   SingletonValue,
   SingletonValueProp(..),
   ) where
 import Apropos
-import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.Hedgehog (fromGroup)
 import Plutus.V1.Ledger.Value (AssetClass)
 import Apropos.Plutus.AssetClass (AssetClassProp)
 import Apropos.Plutus.Integer (IntegerProp)
 import Control.Monad (join)
 import Control.Lens
+
+import Test.Syd
+import Test.Syd.Hedgehog
 
 type SingletonValue = (AssetClass,Integer)
 
@@ -55,11 +56,11 @@ baseGen =
     <*> genSatisfying @IntegerProp Yes
 
 
-singletonValueGenSelfTests :: TestTree
-singletonValueGenSelfTests =
-  testGroup "singletonValueGenSelfTests" $
-    fromGroup
-      <$> permutationGeneratorSelfTest
+spec :: Spec
+spec = do
+  describe "singletonValueGenSelfTests" $
+    mapM_ fromHedgehogGroup
+      $ permutationGeneratorSelfTest
         True
         (\(_ :: Morphism SingletonValueProp singletonValueGenSelfTests) -> True)
         baseGen

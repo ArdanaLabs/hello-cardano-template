@@ -1,23 +1,33 @@
 module Apropos.Plutus.Value (
-  valueGenSelfTests,
+  spec,
   MultiValueProp,
   MultiValue,
   ) where
 
 import Apropos
 
-import Apropos.Plutus.AssetClass
-import Apropos.Plutus.Integer
-import Apropos.Plutus.SingletonValue
+import Apropos.Plutus.AssetClass (
+    AssetClassProp(IsOther, IsAda, IsDana),
+                                 )
+import Apropos.Plutus.Integer (
+    IntegerProp(IsPositive),
+                              )
+import Apropos.Plutus.SingletonValue (
+    SingletonValue,
+    SingletonValueProp(..),
+    )
 
-import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.Hedgehog (fromGroup)
---import Plutus.V1.Ledger.Value (AssetClass)
+import Data.List(sort)
+
+import Test.Syd
+import Test.Syd.Hedgehog
 
 type MultiValue = [SingletonValue]
 
 data MultiValueProp
   = HasSomeAda
+  | HasSomeDana
+  | HasSomeJunk
   deriving stock (Eq,Ord,Show,Enum,Bounded)
 
 instance Enumerable MultiValueProp where
@@ -26,11 +36,18 @@ instance Enumerable MultiValueProp where
 instance LogicalModel MultiValueProp where
   logic = Yes
 
-propsFor :: MultiValueProp -> [SingletonValueProp]
-propsFor HasSomeAda = [AC IsAda,Amt IsPositive]
+data PropMeaning
+  = Any (Formula SingletonValueProp)
+  | Every (Formula SingletonValueProp)
+
+propsFor :: MultiValueProp -> PropMeaning
+propsFor HasSomeAda = Any (All [Var $ AC IsAda,Var $ Amt IsPositive])
+propsFor HasSomeDana = Any (All [Var $ AC IsDana,Var $ Amt IsPositive])
+propsFor HasSomeJunk = Any (Var $ AC IsOther)
 
 instance HasLogicalModel MultiValueProp MultiValue where
-  satisfiesProperty p = any $ satisfiesAll (propsFor p)
+  satisfiesProperty (propsFor -> Any props) = any $ satisfiesExpression props
+  satisfiesProperty (propsFor -> Every props) = all $ satisfiesExpression props
 
 instance HasPermutationGenerator MultiValueProp MultiValue where
   generators =
@@ -39,28 +56,28 @@ instance HasPermutationGenerator MultiValueProp MultiValue where
         , match = Yes
         , contract = add p
         , morphism = \xs -> do
-            x <- genSatisfying $ All (Var <$> propsFor p)
-            return $ x:xs
+            ys <- list (linear 1 10) $ genSatisfying props
+            pure $ sort $ ys ++ xs
         }
-    | p <- enumerated ]
+    | p <- enumerated , Any props <- pure $ propsFor p ]
     ++
     [ Morphism
         { name = "Remove " ++ show p
         , match = Var p
         , contract = remove p
-        , morphism = return . filter (not . satisfiesAll (propsFor p))
+        , morphism = return . sort . filter (not . satisfiesExpression props)
         }
-    | p <- enumerated ]
+    | p <- enumerated , Any props <- pure $ propsFor p ]
 
 instance HasParameterisedGenerator MultiValueProp MultiValue where
   parameterisedGenerator = buildGen $ pure []
-  -- TODO better base gen
+  -- TODO better base gen?
 
-valueGenSelfTests :: TestTree
-valueGenSelfTests =
-  testGroup "valueGenSelfTests" $
-    fromGroup
-      <$> permutationGeneratorSelfTest
+spec :: Spec
+spec = do
+  describe "valueGenSelfTests" $
+    mapM_ fromHedgehogGroup $
+      permutationGeneratorSelfTest
         True
         (const @Bool @(Morphism MultiValueProp MultiValue) True)
         (pure [])
