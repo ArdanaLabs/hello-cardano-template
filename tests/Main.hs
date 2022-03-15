@@ -4,6 +4,8 @@ import qualified Apropos.Plutus.SingletonValue as SingletonValue
 import qualified Apropos.Plutus.AssetClass as AssetClass
 import qualified Apropos.Plutus.Integer as Integer
 import qualified Apropos.Plutus.Value as Value
+import qualified Apropos.Plutus.Vault as Vault
+import qualified Apropos.Plutus.Auction as Auction
 
 import Test.Syd
 
@@ -16,3 +18,5 @@ main = sydTest $
     Integer.spec
     SingletonValue.spec
     Value.spec
+    Vault.spec
+    Auction.spec
