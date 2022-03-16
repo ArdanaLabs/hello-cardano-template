@@ -77,12 +77,15 @@
           ];
           shell = {
             withHoogle = true;
+            tools = {
+              haskell-language-server = { };
+            };
 
             exactDeps = true;
 
             # We use the ones from Nixpkgs, since they are cached reliably.
             # Eventually we will probably want to build these with haskell.nix.
-            nativeBuildInputs = [ latexEnv pkgs.entr pkgs.cabal-install pkgs.hlint pkgs.haskellPackages.fourmolu pkgs.haskell-language-server ];
+            nativeBuildInputs = [ latexEnv pkgs.entr pkgs.cabal-install pkgs.hlint pkgs.haskellPackages.fourmolu ];
 
             additional = ps: [
               ps.apropos
@@ -113,6 +116,7 @@
           flake = self;
           systems = [ "x86_64-linux" ];
         };
+
 
         project = perSystem projectFor;
         flake = perSystem (system: (projectFor system).flake { });

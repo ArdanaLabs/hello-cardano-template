@@ -1,6 +1,10 @@
 module Apropos.Plutus.AssetClass (
     AssetClassProp (..),
     spec,
+    ada,
+    dana,
+    dusd,
+    liquidityAC,
 ) where
 
 import Apropos
@@ -23,18 +27,25 @@ instance Enumerable AssetClassProp where
     enumerated = [minBound .. maxBound]
 
 specialAC :: AssetClassProp -> Maybe AssetClass
-specialAC IsAda = Just $ AssetClass ("", "")
--- Placeholder hashes
-specialAC IsDana =
-    Just $
-        AssetClass ("0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-specialAC IsDUSD =
-    Just $
-        AssetClass ("1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-specialAC IsLiquidity =
-    Just $
-        AssetClass ("2aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+specialAC IsAda = Just ada
+specialAC IsDana = Just dana
+specialAC IsDUSD = Just dusd
+specialAC IsLiquidity = Just liquidityAC
 specialAC IsOther = Nothing
+
+-- Placeholder hashes
+ada :: AssetClass
+ada = AssetClass ("", "")
+
+dana :: AssetClass
+dana = AssetClass ("0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+
+dusd :: AssetClass
+dusd = AssetClass ("1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+
+liquidityAC :: AssetClass
+liquidityAC = AssetClass ("2aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+
 
 specialTokens :: [AssetClass]
 specialTokens = mapMaybe specialAC enumerated

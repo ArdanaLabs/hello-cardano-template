@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 module Apropos.Plutus.SingletonValue (
     spec,
     SingletonValue,
@@ -21,8 +22,9 @@ data SingletonValueProp
     | Amt IntegerProp
     deriving stock (Eq, Ord, Show)
 
-instance Enumerable SingletonValueProp where
-    enumerated = (AC <$> enumerated) <> (Amt <$> enumerated)
+$(genEnumerable ''SingletonValueProp)
+--instance Enumerable SingletonValueProp where
+--    enumerated = (AC <$> enumerated) <> (Amt <$> enumerated)
 
 -- TemplateHaskell breaks my hls so I wrote it by hand for now
 

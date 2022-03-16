@@ -13,6 +13,7 @@ module Gen (
     rational,
     integer,
     datum,
+    txOut,
 ) where
 
 import Apropos (Gen, choice, element, int, linear, list)
@@ -28,7 +29,7 @@ import Plutus.V1.Ledger.Api (
     TokenName,
     ValidatorHash,
     Value,
-    singleton,
+    singleton, TxOut
  )
 import PlutusTx.IsData.Class (ToData (toBuiltinData))
 
@@ -108,3 +109,6 @@ datum = choice [datumOf integer, datumOf value]
 
 datumOf :: ToData a => Gen a -> Gen Datum
 datumOf g = Datum . toBuiltinData <$> g
+
+txOut :: Gen TxOut
+txOut = undefined

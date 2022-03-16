@@ -1,38 +1,24 @@
-module Apropos.Plutus.Vault (spec, hedge) where
+module Apropos.Plutus.Vault (spec) where
 
-import Apropos (
-    Apropos (Apropos),
-    Enumerable (..),
-    Formula (Var, Yes, (:->:)),
-    HasLogicalModel (satisfiesProperty),
-    HasParameterisedGenerator (parameterisedGenerator),
-    LogicalModel (..),
-    choice,
-    genFilter,
-    retry,
-    runGeneratorTestsWhere,
-    type (:+),
- )
+import Apropos
 
-import Gen (address, assetClass, datum, datumHash, value)
+import Gen
 
 import Plutus.V1.Ledger.Api (
-    Datum,
+    Datum(..),
     DatumHash,
-    TxOut (TxOut, txOutDatumHash, txOutValue),
+    TxOut,
+    toBuiltinData,
  )
 
+import Apropos.Plutus.AssetClass (ada,dusd)
 import Plutus.V1.Ledger.Value (
-    AssetClass,
     Value,
  )
 
-import Control.Monad (when)
-import Hedgehog (Group)
 import Test.Syd (Spec, xdescribe)
 import Test.Syd.Hedgehog (fromHedgehogGroup)
-
-import Debug.Trace (traceShow)
+import Apropos.Plutus.SingletonValue (SingletonValue)
 
 spec :: Spec
 spec = do
@@ -41,15 +27,24 @@ spec = do
     xdescribe "vault model" $ do
         fromHedgehogGroup $ runGeneratorTestsWhere (Apropos :: VaultModel :+ VaultProp) "generator" Yes
 
-hedge :: Group
-hedge = runGeneratorTestsWhere (Apropos :: VaultModel :+ VaultProp) "generator" Yes
-
-data VaultModel = VaultModel {balance :: Value, vault :: TxOut, asset :: AssetClass, datumEntry :: (Datum, DatumHash)}
+data VaultModel = VaultModel
+  { colatoral :: SingletonValue
+  , debt :: SingletonValue
+  , vault :: TxOut
+  , datumEntry :: (Datum, DatumHash)
+  , balance :: Value
+  }
     deriving stock (Eq, Show)
 
+makeVaultDatum :: SingletonValue -> SingletonValue -> Datum
+makeVaultDatum colatoral debt = Datum $ toBuiltinData (colatoral,debt)
+
+-- TODO real hashes
+hashDatum :: Datum -> DatumHash
+hashDatum _ = "a"
+
 data VaultProp
-    = Matches
-    | ValidVault -- TODO figure out what valid vault datum should actually be
+    = HasCorrectDatum
     deriving stock (Eq, Ord, Enum, Show, Bounded)
 
 --deriving anyclass Enumerable
@@ -59,35 +54,37 @@ instance Enumerable VaultProp where
     enumerated = [minBound .. maxBound]
 
 instance LogicalModel VaultProp where
-    logic = Var Matches :->: Var ValidVault
+    logic = Yes
 
 instance HasLogicalModel VaultProp VaultModel where
-    satisfiesProperty Matches VaultModel{vault = vault, balance = balance} =
-        txOutValue vault == balance
-    satisfiesProperty ValidVault VaultModel{vault = vault, datumEntry = datumEntry} =
-        txOutDatumHash vault == Just (snd datumEntry)
+  satisfiesProperty HasCorrectDatum vm = fst (datumEntry vm) == makeVaultDatum (colatoral vm) (debt vm)
+
+instance HasPermutationGenerator VaultProp VaultModel where
+  generators =
+    [ Morphism
+      { name = "Fix Datum"
+      , match = Not $ Var HasCorrectDatum
+      , contract = add HasCorrectDatum
+      , morphism = \vm -> do
+        let vaultDatum = makeVaultDatum (colatoral vm) (debt vm)
+        pure $ vm {datumEntry = (vaultDatum,hashDatum vaultDatum)}
+      }
+    ]
 
 instance HasParameterisedGenerator VaultProp VaultModel where
-    parameterisedGenerator s = do
-        let var p = p `elem` s
-        adr <- address
-        (val1, val2) <-
-            if var Matches
-                then do
-                    val <- value
-                    return (val, val)
-                else do
-                    val1 <- value
-                    val2 <- value
-                    when (val1 == val2) $ do
-                        traceShow (val1, val2) $ return ()
-                        retry
-                    return (val1, val2)
-        asset <- assetClass
-        d <- datum
-        dh <- datumHash
-        mdh <-
-            if var ValidVault
-                then pure $ Just dh
-                else choice [pure Nothing, Just <$> genFilter (/= dh) datumHash]
-        pure $ VaultModel val1 (TxOut adr val2 mdh) asset (d, dh)
+    parameterisedGenerator = buildGen baseGen
+
+baseGen :: Gen VaultModel
+baseGen = do
+  let colatoral = (ada,0)
+      debt = (dusd,0)
+      vaultDatum = makeVaultDatum colatoral debt
+  -- TODO add datum enrty to txout
+  vault <- txOut
+  return $ VaultModel
+    { colatoral = colatoral
+    , debt = debt
+    , balance = mempty
+    , vault = vault
+    , datumEntry = (vaultDatum,hashDatum vaultDatum)
+    }

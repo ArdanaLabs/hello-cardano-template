@@ -17,7 +17,7 @@ data IntegerProp
     deriving stock (Show, Eq, Ord, Enum, Bounded)
 
 instance Enumerable IntegerProp where
-    enumerated = [minBound .. maxBound]
+  enumerated = [minBound .. maxBound ]
 
 instance LogicalModel IntegerProp where
     logic =
