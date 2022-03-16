@@ -47,6 +47,10 @@ This is another ``timeline of UTXOs'', which allows admin to select a number of
 price oracles as trusted price feeds and combines their prices in a secure way.
 The resulting price is exposed to the blockchain ecosystem.
 
+Note: In this document, off-chain entities containing information about the
+price will be referred to as price feeds (not price oracles), e.g. the Coinbase
+website.
+
 \subsubsection{Read}
 
 The OSM can read all the pricing data stored in the price oracle.
@@ -246,13 +250,13 @@ Restrictions:
 \todo{What should the minimum collateralization ratio be?}
 \todo{Should the minimum collateralization ratio be different from the
 liquidation ratio??}
-\todo{Should there be a minimum amount one can take out as a loan? If so, is
-this per vault or per loan transaction?}
+\todo{What should the minimum amount be one can take out as a loan? Is this per
+vault or per loan transaction?}
 
 \subsubsection{Pay back loan}
 
 The vault website has a form that allows a user to pick one of their vaults and
-pack back a (part of a) dUSD loan in it. \\
+pay back a (part of a) dUSD loan in it. \\
 
 Restrictions:
 \begin{itemize}
