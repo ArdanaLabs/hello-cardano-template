@@ -16,16 +16,14 @@ import Plutus.V1.Ledger.Value (
     Value,
  )
 
-import Test.Syd (Spec, xdescribe)
+import Test.Syd
 import Test.Syd.Hedgehog (fromHedgehogGroup)
 import GHC.Generics (Generic)
 import Apropos.Plutus.SingletonValue (SingletonValue)
 
 spec :: Spec
 spec = do
-    -- TODO figure out value retry problem
-    -- and enable this test
-    xdescribe "vault model" $ do
+    describe "vault model" $ do
         fromHedgehogGroup $ runGeneratorTestsWhere (Apropos :: VaultModel :+ VaultProp) "generator" Yes
 
 data VaultModel = VaultModel
@@ -65,6 +63,15 @@ instance HasPermutationGenerator VaultProp VaultModel where
         let vaultDatum = makeVaultDatum (colatoral vm) (debt vm)
         pure $ vm {datumEntry = (vaultDatum,hashDatum vaultDatum)}
       }
+    , Morphism
+      { name = "Break Datum"
+      , match = Var HasCorrectDatum
+      , contract = remove HasCorrectDatum
+      , morphism = \vm -> do
+        let vaultDatum = makeVaultDatum (colatoral vm) (debt vm)
+        wrongDatum <- genFilter (/= vaultDatum) datum
+        pure $ vm {datumEntry = (wrongDatum,hashDatum wrongDatum)}
+      }
     ]
 
 instance HasParameterisedGenerator VaultProp VaultModel where
@@ -75,7 +82,6 @@ baseGen = do
   let colatoral = (ada,0)
       debt = (dusd,0)
       vaultDatum = makeVaultDatum colatoral debt
-  -- TODO add datum enrty to txout
   vault <- txOut
   return $ VaultModel
     { colatoral = colatoral

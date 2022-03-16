@@ -29,7 +29,8 @@ import Plutus.V1.Ledger.Api (
     TokenName,
     ValidatorHash,
     Value,
-    singleton, TxOut
+    singleton,
+    TxOut(..),
  )
 import PlutusTx.IsData.Class (ToData (toBuiltinData))
 
@@ -111,4 +112,5 @@ datumOf :: ToData a => Gen a -> Gen Datum
 datumOf g = Datum . toBuiltinData <$> g
 
 txOut :: Gen TxOut
-txOut = undefined
+txOut = TxOut <$> address <*> value <*> maybeOf datumHash
+
