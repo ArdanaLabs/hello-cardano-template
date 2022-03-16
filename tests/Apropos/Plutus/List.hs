@@ -7,6 +7,7 @@ import Apropos
 
 import Control.Lens (Lens, lens)
 import Control.Monad (join)
+import GHC.Generics ( Generic )
 
 -- TODO can/should this use Nats?
 data ListModel subModel
@@ -19,10 +20,8 @@ data ListModel subModel
     | At1 subModel
     | At2 subModel
     | AtRest subModel
-    deriving stock (Eq, Ord, Show)
-
-instance Enumerable a => Enumerable (ListModel a) where
-    enumerated = [Empty, Len1, Len2, Len3, Long] ++ [c v | v <- enumerated, c <- [At0, At1, At2, AtRest]]
+    deriving stock (Eq, Ord, Show, Generic)
+    deriving anyclass Enumerable
 
 instance LogicalModel model => LogicalModel (ListModel model) where
     logic =

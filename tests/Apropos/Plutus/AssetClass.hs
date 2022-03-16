@@ -12,6 +12,7 @@ import Control.Monad (replicateM)
 import Data.Maybe (mapMaybe)
 import Data.String
 import Plutus.V1.Ledger.Value
+import GHC.Generics
 import Test.Syd
 import Test.Syd.Hedgehog
 
@@ -21,10 +22,8 @@ data AssetClassProp
     | IsDUSD
     | IsLiquidity
     | IsOther
-    deriving stock (Eq, Ord, Enum, Show, Bounded)
-
-instance Enumerable AssetClassProp where
-    enumerated = [minBound .. maxBound]
+    deriving stock (Eq, Ord, Enum, Show, Bounded, Generic)
+    deriving anyclass Enumerable
 
 specialAC :: AssetClassProp -> Maybe AssetClass
 specialAC IsAda = Just ada

@@ -18,6 +18,7 @@ import Plutus.V1.Ledger.Value (
 
 import Test.Syd (Spec, xdescribe)
 import Test.Syd.Hedgehog (fromHedgehogGroup)
+import GHC.Generics (Generic)
 import Apropos.Plutus.SingletonValue (SingletonValue)
 
 spec :: Spec
@@ -45,13 +46,8 @@ hashDatum _ = "a"
 
 data VaultProp
     = HasCorrectDatum
-    deriving stock (Eq, Ord, Enum, Show, Bounded)
-
---deriving anyclass Enumerable
-
--- TODO switch this for anyclass once pr goes through
-instance Enumerable VaultProp where
-    enumerated = [minBound .. maxBound]
+    deriving stock (Eq, Ord, Enum, Show, Bounded, Generic)
+    deriving anyclass Enumerable
 
 instance LogicalModel VaultProp where
     logic = Yes

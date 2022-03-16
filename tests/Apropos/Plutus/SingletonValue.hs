@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 module Apropos.Plutus.SingletonValue (
     spec,
     SingletonValue,
@@ -10,6 +9,7 @@ import Apropos.Plutus.AssetClass (AssetClassProp)
 import Apropos.Plutus.Integer (IntegerProp)
 import Control.Lens
 import Control.Monad (join)
+import GHC.Generics ( Generic )
 import Plutus.V1.Ledger.Value (AssetClass)
 
 import Test.Syd
@@ -20,13 +20,8 @@ type SingletonValue = (AssetClass, Integer)
 data SingletonValueProp
     = AC AssetClassProp
     | Amt IntegerProp
-    deriving stock (Eq, Ord, Show)
-
-$(genEnumerable ''SingletonValueProp)
---instance Enumerable SingletonValueProp where
---    enumerated = (AC <$> enumerated) <> (Amt <$> enumerated)
-
--- TemplateHaskell breaks my hls so I wrote it by hand for now
+    deriving stock (Eq, Ord, Show, Generic)
+    deriving anyclass Enumerable
 
 instance LogicalModel SingletonValueProp where
     logic = (AC <$> logic) :&&: (Amt <$> logic)

@@ -18,6 +18,7 @@ import Apropos.Plutus.SingletonValue (
  )
 
 import Data.List (sort)
+import GHC.Generics ( Generic )
 
 import Test.Syd
 import Test.Syd.Hedgehog
@@ -28,10 +29,8 @@ data MultiValueProp
     = HasSomeAda
     | HasSomeDana
     | HasSomeJunk
-    deriving stock (Eq, Ord, Show, Enum, Bounded)
-
-instance Enumerable MultiValueProp where
-    enumerated = [minBound .. maxBound]
+    deriving stock (Eq, Ord, Show, Enum, Bounded, Generic)
+    deriving anyclass Enumerable
 
 instance LogicalModel MultiValueProp where
     logic = Yes
