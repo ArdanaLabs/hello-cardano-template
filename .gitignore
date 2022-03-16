@@ -1,8 +1,3 @@
-*.pdf
-*.dvi
-*.aux
-*.fdb_latexmk
-*.fls
-*.log
+docs/test-plan/
 dist-newstyle
 
