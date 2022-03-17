@@ -1,6 +1,7 @@
 {
   description = "dUSD";
   inputs = {
+    danalib.url = "github:ardanalabs/danalib";
     haskell-nix.url = "github:input-output-hk/haskell.nix";
     nixpkgs.follows = "haskell-nix/nixpkgs-unstable";
     haskell-nix.inputs.nixpkgs.follows = "haskell-nix/nixpkgs-2105";
@@ -20,6 +21,7 @@
       plutus,
       flake-compat,
       flake-compat-ci,
+      danalib,
     }
     @ inputs:
     let
@@ -108,7 +110,23 @@
         flake = forAllSystems (system: (projectFor system).flake { });
 
         # this could be done automatically, but would reduce readability
-        packages = forAllSystems (system: self.flake.${system}.packages);
+        packages = forAllSystems (system:
+        let pkgs = (forAllSystems nixpkgsFor)."${system}";
+        in self.flake.${system}.packages // {
+          test-plan = pkgs.stdenv.mkDerivation {
+            name = "test-plan";
+            src = self;
+            buildInputs = with pkgs; [ (texlive.combine { inherit ( texlive ) scheme-basic latexmk todonotes metafont; }) ];
+            doCheck = false;
+            buildPhase = ''
+              HOME=$TMP latexmk -output-directory="$out" -pdf ./docs/test-plan.tex
+              ls -lah
+            '';
+            installPhase = ''
+              ls -lah
+            '';
+          };
+        });
         checks = forAllSystems (system: self.flake.${system}.checks);
         check = forAllSystems (
           system:
