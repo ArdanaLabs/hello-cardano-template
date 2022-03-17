@@ -27,7 +27,7 @@
       supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
 
       # Helper function to generate an attrset '{ x86_64-linux = f "x86_64-linux"; ... }'.
-      perSystem = nixpkgs.lib.genAttrs supportedSystems;
+      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
 
       # Nixpkgs instantiated for supported system types.
       nixpkgsFor = system:
@@ -99,23 +99,23 @@
           systems = [ "x86_64-linux" ];
         };
 
-        project = perSystem projectFor;
-        flake = perSystem (system: (projectFor system).flake { });
+        project = forAllSystems projectFor;
+        flake = forAllSystems (system: (projectFor system).flake { });
 
         # this could be done automatically, but would reduce readability
-        packages = perSystem (system: self.flake.${system}.packages);
-        checks = perSystem (system: self.flake.${system}.checks);
-        check = perSystem (
+        packages = forAllSystems (system: self.flake.${system}.packages);
+        checks = forAllSystems (system: self.flake.${system}.checks);
+        check = forAllSystems (
           system:
             (nixpkgsFor system).runCommand "combined-test" {
               nativeBuildInputs = builtins.attrValues self.checks.${system};
             } "touch $out"
         );
 
-        devShell = perSystem (system: self.flake.${system}.devShell);
+        devShell = forAllSystems (system: self.flake.${system}.devShell);
 
-        apps = perSystem (system: let
-          pkgs = (perSystem nixpkgsFor)."${system}";
+        apps = forAllSystems (system: let
+          pkgs = (forAllSystems nixpkgsFor)."${system}";
         in
           {
             feedback-loop = {
