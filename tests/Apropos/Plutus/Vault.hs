@@ -1,25 +1,23 @@
 module Apropos.Plutus.Vault (spec) where
 
 import Apropos
-
 import Gen
 
-import Plutus.V1.Ledger.Api (
-    Datum(..),
-    DatumHash,
-    TxOut,
-    toBuiltinData,
- )
-
 import Apropos.Plutus.AssetClass (ada,dusd)
-import Plutus.V1.Ledger.Value (
-    Value,
- )
+import Apropos.Plutus.SingletonValue (SingletonValue)
+import Control.Monad ( when )
+import Data.Ratio
+import GHC.Generics (Generic)
+import Plutus.V1.Ledger.Api (
+  Datum(..),
+  DatumHash,
+  TxOut,
+  toBuiltinData,
+                            )
+import Plutus.V1.Ledger.Value (Value)
 
 import Test.Syd
 import Test.Syd.Hedgehog (fromHedgehogGroup)
-import GHC.Generics (Generic)
-import Apropos.Plutus.SingletonValue (SingletonValue)
 
 spec :: Spec
 spec = do
@@ -35,15 +33,19 @@ data VaultModel = VaultModel
   }
     deriving stock (Eq, Show)
 
+liquidityRatio :: Rational
+liquidityRatio = 3%2
+
 makeVaultDatum :: SingletonValue -> SingletonValue -> Datum
 makeVaultDatum colatoral debt = Datum $ toBuiltinData (colatoral,debt)
 
 -- TODO real hashes
 hashDatum :: Datum -> DatumHash
-hashDatum _ = "a"
+hashDatum _ = "aa"
 
 data VaultProp
     = HasCorrectDatum
+    | CanLiquidate
     deriving stock (Eq, Ord, Enum, Show, Bounded, Generic)
     deriving anyclass Enumerable
 
@@ -52,6 +54,7 @@ instance LogicalModel VaultProp where
 
 instance HasLogicalModel VaultProp VaultModel where
   satisfiesProperty HasCorrectDatum vm = fst (datumEntry vm) == makeVaultDatum (colatoral vm) (debt vm)
+  satisfiesProperty CanLiquidate vm = fromIntegral (snd (colatoral vm)) < liquidityRatio * fromIntegral (snd (debt vm))
 
 instance HasPermutationGenerator VaultProp VaultModel where
   generators =
@@ -72,6 +75,29 @@ instance HasPermutationGenerator VaultProp VaultModel where
         wrongDatum <- genFilter (/= vaultDatum) datum
         pure $ vm {datumEntry = (wrongDatum,hashDatum wrongDatum)}
       }
+    , Morphism
+      { name = "increase debt"
+      , match = Not $ Var CanLiquidate
+      , contract = add CanLiquidate >> remove HasCorrectDatum
+      , morphism = \vm -> do
+        -- TODO do these morphisms need to use fromIntegral?
+        let minDebt = fromIntegral $ 3*snd (colatoral vm) `div` 2 +1
+        debt' <- int  (linear minDebt (max 1_000_00 (2*minDebt)))
+        let vm' = vm{debt=(fst $ debt vm,fromIntegral debt')}
+        when (satisfiesProperty HasCorrectDatum vm') retry
+        pure vm'
+      }
+    , Morphism
+      { name = "reduce debt"
+      , match = Var CanLiquidate
+      , contract = remove CanLiquidate >> remove HasCorrectDatum
+      , morphism = \vm -> do
+        let maxDebt = fromIntegral $ 3*snd (colatoral vm) `div` 2
+        debt' <- int  (linear 0 maxDebt)
+        let vm' = vm{debt=(fst $ debt vm,fromIntegral debt')}
+        when (satisfiesProperty HasCorrectDatum vm') retry
+        pure vm'
+      }
     ]
 
 instance HasParameterisedGenerator VaultProp VaultModel where
@@ -90,3 +116,4 @@ baseGen = do
     , vault = vault
     , datumEntry = (vaultDatum,hashDatum vaultDatum)
     }
+

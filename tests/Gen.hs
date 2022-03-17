@@ -52,9 +52,10 @@ credential =
 
 hexString :: IsString s => Gen s
 hexString = do
-    len <- (2 *) <$> int (linear 0 32)
+    len <- (2 *) <$> int (linear 1 32)
     fromString <$> replicateM len hexit
 
+-- specific to tokenName and currencySymbol which can both be only 0 or 64 chars
 hexStringName :: IsString s => Gen s
 hexStringName = fromString <$> choice [pure "", replicateM 64 hexit]
 
