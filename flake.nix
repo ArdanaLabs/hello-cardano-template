@@ -27,7 +27,7 @@
       supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
 
       # Helper function to generate an attrset '{ x86_64-linux = f "x86_64-linux"; ... }'.
-      perSystem = nixpkgs.lib.genAttrs supportedSystems;
+      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
 
       # Nixpkgs instantiated for supported system types.
       nixpkgsFor = system:
@@ -38,16 +38,6 @@
         };
 
       projectFor = system: let
-        latexEnv =
-          with pkgs;
-          texlive.combine {
-            inherit
-              (texlive)
-              scheme-basic
-              latexmk
-              ;
-          };
-
         deferPluginErrors = true;
         pkgs = nixpkgsFor system;
 
@@ -82,7 +72,7 @@
 
             # We use the ones from Nixpkgs, since they are cached reliably.
             # Eventually we will probably want to build these with haskell.nix.
-            nativeBuildInputs = [ latexEnv pkgs.entr pkgs.cabal-install pkgs.hlint pkgs.haskellPackages.fourmolu ];
+            nativeBuildInputs = [ pkgs.cabal-install pkgs.hlint pkgs.haskellPackages.fourmolu ];
 
             additional = ps: [
               ps.apropos
@@ -109,32 +99,28 @@
           systems = [ "x86_64-linux" ];
         };
 
-        project = perSystem projectFor;
-        flake = perSystem (system: (projectFor system).flake { });
+        project = forAllSystems projectFor;
+        flake = forAllSystems (system: (projectFor system).flake { });
 
         # this could be done automatically, but would reduce readability
-        packages = perSystem (system: self.flake.${system}.packages);
-        checks = perSystem (system: self.flake.${system}.checks);
-        check = perSystem (
+        packages = forAllSystems (system: self.flake.${system}.packages);
+        checks = forAllSystems (system: self.flake.${system}.checks);
+        check = forAllSystems (
           system:
             (nixpkgsFor system).runCommand "combined-test" {
               nativeBuildInputs = builtins.attrValues self.checks.${system};
             } "touch $out"
         );
 
-        devShell = perSystem (system: self.flake.${system}.devShell);
+        devShell = forAllSystems (system: self.flake.${system}.devShell);
 
-        apps = perSystem (system: let
-          pkgs = (perSystem nixpkgsFor)."${system}";
+        apps = forAllSystems (system: let
+          pkgs = (forAllSystems nixpkgsFor)."${system}";
         in
           {
             feedback-loop = {
               type = "app";
-              program = "${
-                pkgs.writeShellScript "feedback-loop" ''
-                  echo "test-plan.tex" | ${pkgs.entr}/bin/entr latexmk -pdf test-plan.tex
-                ''
-              }";
+              program = "${ pkgs.callPackage ./nix/apps/feedback-loop { } }/bin/feedback-loop";
             };
           });
       };
