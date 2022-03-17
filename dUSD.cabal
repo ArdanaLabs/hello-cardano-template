@@ -88,7 +88,6 @@ test-suite tests
     Apropos.Plutus.AssetClass
     Apropos.Plutus.Auction
     Apropos.Plutus.Integer
-    Apropos.Plutus.List
     Apropos.Plutus.SingletonValue
     Apropos.Plutus.Value
     Apropos.Plutus.Vault

@@ -36,17 +36,17 @@ instance LogicalModel MultiValueProp where
     logic = Yes
 
 data PropMeaning
-    = Any (Formula SingletonValueProp)
-    | Every (Formula SingletonValueProp)
+    = AnyElem (Formula SingletonValueProp)
+    | AllElems (Formula SingletonValueProp)
 
 propsFor :: MultiValueProp -> PropMeaning
-propsFor HasSomeAda = Any (All [Var $ AC IsAda, Var $ Amt IsPositive])
-propsFor HasSomeDana = Any (All [Var $ AC IsDana, Var $ Amt IsPositive])
-propsFor HasSomeJunk = Any (Var $ AC IsOther)
+propsFor HasSomeAda = AnyElem (All [Var $ AC IsAda, Var $ Amt IsPositive])
+propsFor HasSomeDana = AnyElem (All [Var $ AC IsDana, Var $ Amt IsPositive])
+propsFor HasSomeJunk = AnyElem (Var $ AC IsOther)
 
 instance HasLogicalModel MultiValueProp MultiValue where
-    satisfiesProperty (propsFor -> Any props) = any $ satisfiesExpression props
-    satisfiesProperty (propsFor -> Every props) = all $ satisfiesExpression props
+    satisfiesProperty (propsFor -> AnyElem  props) = any $ satisfiesExpression props
+    satisfiesProperty (propsFor -> AllElems props) = all $ satisfiesExpression props
 
 instance HasPermutationGenerator MultiValueProp MultiValue where
     generators =
@@ -59,17 +59,17 @@ instance HasPermutationGenerator MultiValueProp MultiValue where
                 pure $ sort $ ys ++ xs
             }
         | p <- enumerated
-        , Any props <- pure $ propsFor p
-        ]
-            ++ [ Morphism
-                { name = "Remove " ++ show p
-                , match = Var p
-                , contract = remove p
-                , morphism = return . sort . filter (not . satisfiesExpression props)
-                }
-               | p <- enumerated
-               , Any props <- pure $ propsFor p
-               ]
+        , AnyElem props <- pure $ propsFor p
+        ] ++
+        [ Morphism
+          { name = "Remove " ++ show p
+          , match = Var p
+          , contract = remove p
+          , morphism = return . sort . filter (not . satisfiesExpression props)
+          }
+         | p <- enumerated
+         , AnyElem props <- pure $ propsFor p
+         ]
 
 instance HasParameterisedGenerator MultiValueProp MultiValue where
     parameterisedGenerator = buildGen $ pure []

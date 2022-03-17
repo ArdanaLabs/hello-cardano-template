@@ -11,10 +11,10 @@ import GHC.Generics (Generic)
 import Plutus.V1.Ledger.Api (
   Datum(..),
   DatumHash,
-  TxOut,
+  TxOut(..),
   toBuiltinData,
                             )
-import Plutus.V1.Ledger.Value (Value)
+import Plutus.V1.Ledger.Value (Value,assetClassValue)
 
 import Test.Syd
 import Test.Syd.Hedgehog (fromHedgehogGroup)
@@ -64,7 +64,8 @@ instance HasPermutationGenerator VaultProp VaultModel where
       , contract = add HasCorrectDatum
       , morphism = \vm -> do
         let vaultDatum = makeVaultDatum (colatoral vm) (debt vm)
-        pure $ vm {datumEntry = (vaultDatum,hashDatum vaultDatum)}
+        let vaultDatumHash = hashDatum vaultDatum
+        pure $ vm {datumEntry = (vaultDatum,vaultDatumHash),vault=(vault vm){txOutDatumHash = Just vaultDatumHash}}
       }
     , Morphism
       { name = "Break Datum"
@@ -73,7 +74,8 @@ instance HasPermutationGenerator VaultProp VaultModel where
       , morphism = \vm -> do
         let vaultDatum = makeVaultDatum (colatoral vm) (debt vm)
         wrongDatum <- genFilter (/= vaultDatum) datum
-        pure $ vm {datumEntry = (wrongDatum,hashDatum wrongDatum)}
+        let wrongDatumHash = hashDatum wrongDatum
+        pure $ vm {datumEntry = (wrongDatum,wrongDatumHash),vault=(vault vm){txOutDatumHash=Just wrongDatumHash}}
       }
     , Morphism
       { name = "increase debt"
@@ -108,7 +110,9 @@ baseGen = do
   let colatoral = (ada,0)
       debt = (dusd,0)
       vaultDatum = makeVaultDatum colatoral debt
-  vault <- txOut
+  adr <- address
+  let val = assetClassValue ada 0
+  let vault = TxOut adr val (Just $ hashDatum vaultDatum)
   return $ VaultModel
     { colatoral = colatoral
     , debt = debt

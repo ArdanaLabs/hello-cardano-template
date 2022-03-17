@@ -95,8 +95,8 @@ instance HasParameterisedGenerator AssetClassProp AssetClass where
 spec :: Spec
 spec = do
     describe "assetClassGenSelfTest" $
-        mapM_ fromHedgehogGroup $
-            permutationGeneratorSelfTest
-                True
-                (\(_ :: Morphism AssetClassProp assetClassGenSelfTest) -> True)
-                baseGen
+      mapM_ fromHedgehogGroup $
+        permutationGeneratorSelfTest
+          True
+          (\(_ :: Morphism AssetClassProp assetClassGenSelfTest) -> True)
+          baseGen
