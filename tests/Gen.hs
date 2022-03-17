@@ -1,14 +1,12 @@
 module Gen (
     address,
     assetClass,
-    credential,
     currencySymbol,
     tokenName,
     pubKeyHash,
     validatorHash,
     datumHash,
     maybeOf,
-    stakingCredential,
     rational,
     integer,
     datum,
@@ -37,15 +35,24 @@ import Data.String (IsString (..))
 import Plutus.V1.Ledger.Value (AssetClass)
 import qualified Plutus.V1.Ledger.Value as Value
 
+
+-- TODO address should get it's own apropos model
 address :: Gen Address
 address = Address <$> credential <*> maybeOf stakingCredential
+  where
+    stakingCredential :: Gen StakingCredential
+    stakingCredential =
+        choice
+            [ StakingHash <$> credential
+            , StakingPtr <$> integer <*> integer <*> integer
+            ]
 
-credential :: Gen Credential
-credential =
-    choice
-        [ PubKeyCredential <$> pubKeyHash
-        , ScriptCredential <$> validatorHash
-        ]
+    credential :: Gen Credential
+    credential =
+        choice
+            [ PubKeyCredential <$> pubKeyHash
+            , ScriptCredential <$> validatorHash
+            ]
 
 hexString :: IsString s => Gen s
 hexString = do
@@ -73,23 +80,12 @@ validatorHash = hexString
 datumHash :: Gen DatumHash
 datumHash = hexString
 
-
-singletonValue :: Gen Value
-singletonValue =
-    singleton <$> currencySymbol <*> tokenName <*> pos
-
 hexit :: Gen Char
 hexit = element $ ['0' .. '9'] ++ ['a' .. 'f']
 
 maybeOf :: Gen a -> Gen (Maybe a)
 maybeOf g = choice [pure Nothing, Just <$> g]
 
-stakingCredential :: Gen StakingCredential
-stakingCredential =
-    choice
-        [ StakingHash <$> credential
-        , StakingPtr <$> integer <*> integer <*> integer
-        ]
 
 integer :: Gen Integer
 integer = fromIntegral <$> int (linear (-1_000_000) 1_000_000)
@@ -105,6 +101,9 @@ datum = choice [datumOf integer, datumOf value]
   where
     value :: Gen Value
     value = mconcat <$> list (linear 0 64) singletonValue
+    singletonValue :: Gen Value
+    singletonValue =
+        singleton <$> currencySymbol <*> tokenName <*> pos
 
 datumOf :: ToData a => Gen a -> Gen Datum
 datumOf g = Datum . toBuiltinData <$> g
