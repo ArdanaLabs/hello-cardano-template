@@ -38,16 +38,6 @@
         };
 
       projectFor = system: let
-        latexEnv =
-          with pkgs;
-          texlive.combine {
-            inherit
-              (texlive)
-              scheme-basic
-              latexmk
-              ;
-          };
-
         deferPluginErrors = true;
         pkgs = nixpkgsFor system;
 
@@ -82,7 +72,7 @@
 
             # We use the ones from Nixpkgs, since they are cached reliably.
             # Eventually we will probably want to build these with haskell.nix.
-            nativeBuildInputs = [ latexEnv pkgs.entr pkgs.cabal-install pkgs.hlint pkgs.haskellPackages.fourmolu ];
+            nativeBuildInputs = [ pkgs.cabal-install pkgs.hlint pkgs.haskellPackages.fourmolu ];
 
             additional = ps: [
               ps.apropos
@@ -130,11 +120,7 @@
           {
             feedback-loop = {
               type = "app";
-              program = "${
-                pkgs.writeShellScript "feedback-loop" ''
-                  echo "test-plan.tex" | ${pkgs.entr}/bin/entr latexmk -pdf test-plan.tex
-                ''
-              }";
+              program = "${ pkgs.callPackage ./nix/apps/feedback-loop { } }/bin/feedback-loop";
             };
           });
       };
