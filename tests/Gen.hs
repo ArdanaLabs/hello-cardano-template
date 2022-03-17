@@ -7,7 +7,6 @@ module Gen (
     pubKeyHash,
     validatorHash,
     datumHash,
-    value,
     maybeOf,
     stakingCredential,
     rational,
@@ -74,8 +73,6 @@ validatorHash = hexString
 datumHash :: Gen DatumHash
 datumHash = hexString
 
-value :: Gen Value
-value = mconcat <$> list (linear 0 64) singletonValue
 
 singletonValue :: Gen Value
 singletonValue =
@@ -105,6 +102,9 @@ rational = (%) <$> integer <*> pos
 
 datum :: Gen Datum
 datum = choice [datumOf integer, datumOf value]
+  where
+    value :: Gen Value
+    value = mconcat <$> list (linear 0 64) singletonValue
 
 datumOf :: ToData a => Gen a -> Gen Datum
 datumOf g = Datum . toBuiltinData <$> g

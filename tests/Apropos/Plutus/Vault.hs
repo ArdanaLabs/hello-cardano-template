@@ -14,7 +14,7 @@ import Apropos (
     type (:+),
  )
 
-import Gen (address, assetClass, datum, datumHash, value)
+import Gen (address, assetClass, datum, datumHash)
 
 import Plutus.V1.Ledger.Api (
     Datum,
@@ -74,11 +74,11 @@ instance HasParameterisedGenerator VaultProp VaultModel where
         (val1, val2) <-
             if var Matches
                 then do
-                    val <- value
+                    val <- undefined
                     return (val, val)
                 else do
-                    val1 <- value
-                    val2 <- value
+                    val1 <- undefined
+                    val2 <- undefined
                     when (val1 == val2) $ do
                         traceShow (val1, val2) $ return ()
                         retry
