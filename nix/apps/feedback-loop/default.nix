@@ -11,6 +11,6 @@ writeShellApplication
     runtimeInputs = [ entr latexEnv ];
     text =
       ''
-      echo "test-plan.tex" | entr latexmk -pdf test-plan.tex
+      echo "docs/test-plan.tex" | entr latexmk -output-directory="./docs/test-plan/" -pdf docs/test-plan.tex
       '';
   }

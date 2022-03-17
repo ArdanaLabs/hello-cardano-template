@@ -1,22 +1,11 @@
 # dUSD
+
 The Ardana Dollar Stablecoin
 
-## Architecture docs
-See `./architecture`
+## test-plan document
+`./docs/test-plan/test-plan.pdf` documents design decisions, testing, and acceptance criteria for the project.
 
-## Technologies
-On chain code will be developed in Plutarch.
-
-## Testing
-Testing of on chain code will be done with apropos logical specifications.
-
-## Latex test plan documentation
-
-You can set up a feedback loop through
-```
-echo "test-plan.tex" | entr latexmk -pdf test-plan.tex
-```
-within a nix shell (`nix develop`), or by running
+When editing the docuement `./docs/test-plan.tex` you can set up a latex pdf rendering feedback loop by running
 ```
 nix run .#feedback-loop
 ```
