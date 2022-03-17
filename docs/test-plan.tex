@@ -1,9 +1,8 @@
 \documentclass{article} % Use the custom invoice class (invoice.cls)
-\usepackage{todonotes}
-\setuptodonotes{inline}
 
 \title{dUSD Test Plan}
 \begin{document}
+
 
 \maketitle
 
@@ -19,115 +18,19 @@ Finally, the "Tests" section provide a non-exhaustive list of the way we plan to
 
 \section{Interactions}
 
-\subsection{Price oracle}
-
-A price oracle is a timeline of UTXOs\footnote{
-  In the blockchain industry, people often talk about concepts like price
-  oracles and DEX pools. However, within the EUTXO system built by Cardano, the
-  fundamental concept we are dealing is the UTXO. This means that we are dealing
-  with a `state' of a price oracle as the fundamental concept, not the price
-  oracle itself. Now, Plutus scripts like price oracles, between being created
-  and destroyed, basically only allow to be updated and read. This means that
-  one can draw a `timeline' through a series of UTXO, each one disappearing into
-  a transaction that produces the next. This set of UTXOs is what is referred to
-  as ``the price oracle''.
-}
-which stores the price information of a given asset (e.g. ADA) in terms of a
-reference currency (USD).
-
-Each price oracle will store $48$ hours worth of price data, and be updatable
-once every few minutes.
-
-A number of price oracles will be created for each asset of interest.  The
-person creating each price oracle will connect it to a price feed coming from
-some CEX/DEX.
-
-Next, an Oracle Security Module (OSM) will be implemented.
-This is another ``timeline of UTXOs'', which allows admin to select a number of
-price oracles as trusted price feeds and combines their prices in a secure way.
-The resulting price is exposed to the blockchain ecosystem.
-
-Note: In this document, off-chain entities containing information about the
-price will be referred to as price feeds (not price oracles), e.g. the Coinbase
-website.
-
-\subsubsection{Read}
-
-The OSM can read all the pricing data stored in the price oracle.
-
-\subsubsection{Write}
-
-The owner/creator of the price oracle can write a new price value to the oracle.
-
-\subsection{Oracle security module}
-
-\subsubsection{Read the `current' price}
-
-\todo{How current do we want the price to be? \\
-MakerDAO puts a $1$ hour delay here, to avoid the price oracles from messing
-with the system for arbitrage purposes. The problem with that approach is that
-it requires governance to react within $1$ hour, and that it endangers vault
-liquidation by not making it interesting for liquidators to liquidate a vault
-quickly enough. \\
-Alternatively, we could build in robustness against some price oracle owners
-trying to hack the system by allowing the OSM to shut down the system if the
-values different price oracles proclaim, are too widely spread. \\
-If we want there to be a time delay in the OSM price, we have to implement an
-extra interaction allowing admin to update this value.}
-
-Transactions in the dUSD protocol will read the `current' price of ADA relative
-to USD from the OSM.
-
-\todo{Should the OSM shut down the protocol if it has not been updated for too
-long?}
-
-\subsubsection{Update}
-
-Anyone can create a transaction to connect the OSM to all of the price oracles
-it currently accepts, and update its own datum based on their information.
-This is to be rewarded (a little).
-
-\subsubsection{Update list of accepted price oracles}
-
-Admin/governance can update the list of price oracles accepted by the OSM.
-
-\todo{Should the OSM (temporarily) unaccept a price oracle if its price has not
-been updated for too long?}
 
 \subsection{Any User}
 
-\subsubsection{Collect information on the user's vaults}
-
-As a user, I want to be able to collect information on my vaults. By "my
-vaults", we mean the vaults created by the user. They can only be used by that
-user (except for the liquidation procedure, see below).
-
-\subsubsection{Initialize vault}
-
-As a user, I want to be able to open a new vault.
-
 \subsubsection{Deposit}
 
-As a user, I want to be able to deposit ADA into a vault, so that I may take out
-a loan of dUSD (see below).
+As a User, I want to be able to deposit ADA into a Vault, so that I may take out a loan of dUSD (see below).
 
 \subsubsection{Withdrawal}
 
-As a user, I want to be able to withdraw ADA from a vault.
-
 \subsubsection{Take out loan}
-
-As a user, I want to be able to take out a loan in dUSD against the collateral I
-put into one of my vaults.
 
 \subsubsection{Pay back loan}
 
-As a user, I want to be able to pay back (part of) a loan in dUSD I created in
-one of my vaults. In doing so, I am paying a stability fee to the buffer.
-
-\subsubsection{Liquidate someone else's vault}
-
-...
 
 \subsection{Admin}
 
@@ -141,199 +44,27 @@ one of my vaults. In doing so, I am paying a stability fee to the buffer.
 
 \subsubsection{Set liquidation ratio}
 
-\subsubsection{Set minimum collateralization ratio}
+\subsubsection{Set minimum collateralisation ratio}
 
-\subsubsection{Set stability fee}
-
-\section{Acceptance criteria}
-
-\subsection{Price oracle}
-
-\begin{itemize}
-  \item Only the owner can write to the oracle
-  \item Anyone can read the price data
-  \item Writing a price values removes outdated price values (older than 48
-    hours) from the datum.
-\end{itemize}
-
-\subsection{Oracle security module}
-
-\begin{itemize}
-  \item Admin (and only admin) can update the list of accepted price oracles
-  \item The OSM's price information cannot be updated without linking to all
-    accepted price oracles
-  \item The price oracles are read-only inputs to the ``update OSM'' endpoint
-  \item Reading the current price after updating the OSM's price information and
-    waiting for the given time delay, leads to the predicted `current' price.
-    This is the median over all price oracles of the price averaged over the
-    values in the last hour. (This smearing prevents flash drops on some
-    exchanges from making the OSM's result crash and many vaults liquidate.)
-\end{itemize}
-
-\subsection{Vaults}
-
-Each user should have access to a website at "www.ardana-vaults.com". This
-website must be able to connect to their wallet to find out who they are and
-allow them to set up vaults and interact with their existing vaults. \\
-
-Decisions to be made:
-\begin{itemize}
-  \item Do we want the interface to be a website or an app?
-  \item Which domain name will the website live at?
-\end{itemize}
-
-\subsubsection{Collect information on the user's vaults}
-
-The vault website looks up the requested information and displays it in an
-aesthetic and clear overview. \\
-
-Requested information: How many vaults does the user have, how much collateral
-and debt do they each have, what are their collateralization ratios, how
-dangerous is it to have that collateralization ratio? \\
-
-Decisions to be made:
-\begin{itemize}
-  \item Is the list of requested information correct? Anything to be added,
-    removed or updated?
-\end{itemize}
-
-\subsubsection{Initialize}
-
-The vault website should have a button to open a new vault.
-
-\subsubsection{Deposit}
-
-The vault website has a form that allows each user to pick one of their vaults
-and deposit ADA into it. \\
-
-Restrictions:
-\begin{itemize}
-  \item You have at least the amount of ADA in your wallet that you would like
-    to deposit.
-\end{itemize}
-
-Decisions to be made:
-\begin{itemize}
-  \item Do we want to implement a maximum amount of collateral? MakerDAO has
-    this, not sure why.
-  \item Do we want to implement a mininum amount of collateral? If so, is this
-    in total per vault, or per deposit?
-\end{itemize}
-
-Questions:
-\begin{itemize}
-  \item How will we figure out from which UTXO in your wallet to take the ADA?
-\end{itemize}
-
-\subsubsection{Withdrawal}
-
-The vault website has a form that allows each user to pick one of their vaults
-and withdraw ADA from it. \\
-
-Restrictions:
-\begin{itemize}
-  \item Withdrawing this amount of ADA from that vault doesn't sink its
-    collateralization ratio below the minimum collateralization ratio.
-\end{itemize}
-
-\subsubsection{Take out loan}
-
-The vault website has a form that allows a user to pick one of their vaults and
-take out a dUSD loan in it, against his collateral. \\
-
-Restrictions:
-\begin{itemize}
-  \item This transaction doesn't make the collateralization ratio drop below the
-    minimum collateralization ratio.
-\end{itemize}
-
-\todo{What should the minimum collateralization ratio be?}
-\todo{Should the minimum collateralization ratio be different from the
-liquidation ratio??}
-\todo{What should the minimum amount be one can take out as a loan? Is this per
-vault or per loan transaction?}
-
-\subsubsection{Pay back loan}
-
-The vault website has a form that allows a user to pick one of their vaults and
-pay back a (part of a) dUSD loan in it. \\
-
-Restrictions:
-\begin{itemize}
-  \item The amount of dUSD paid back by the user is equal to or smaller than the
-    amount of dUSD debt in the vault.
-  \item The stability fee for the part of loan that is paid back, is sent to the
-    buffer as community profit
-\end{itemize}
-
-Design decisions:
-\begin{itemize}
-  \item What should the minimum collateralization ratio be?
-  \item Should the minimum collateralization ratio be different from the
-    liquidation ratio??
-  \item Should there be a minimum amount one can take out as a loan? If so, is
-    this per vault or per loan transaction?
-\end{itemize}
-
-\subsubsection{Liquidate someone else's vault}
-
-...
-
-\subsection{Admin}
-
-One important acceptance criterium is that the protocol can be updated without
-requiring users to update their vaults or dUSD becoming a new currency.
-
-Any updates to the protocol will be decided on by admin, and later governance.
-
-\subsubsection{Trigger surplus auction (sick vault)}
-
-\subsubsection{Trigger surplus auction (buy back dana)}
-
-\subsubsection{Trigger debt auction}
-
-\subsubsection{Set liquidation fee}
-
-\subsubsection{Set liquidation ratio}
-
-\subsubsection{Set minimum collateralization ratio}
+\subsubsection{Set daily savings rate}
 
 \subsubsection{Set stability fee}
 
 \subsubsection{Set list of price oracles to consider in OSM}
 
-\subsubsection{Set the time interval the OSM waits before using a price update}
 
+\section{Acceptance criteria}
+
+\subsection{Deposit}
+
+\subsubsection{Interface}
+
+When a user wants to deposit ADA, they must be able to visit a website at "https://deposit.dusd.com".
+On this website, they should see ...
+% \todo{Should it be a website? should it be an app?}
 
 \section{Implementation details}
 
-% What do we need in order to make this happen?
-
-\subsection{Price oracle}
-
-Each price oracle will carry an NFT used as a unique identifier.
-In addition, each price oracle contains the public hash key of the wallet which
-created it, so as to only allow the creator to update the oracle. \\
-
-To avoid datum overflow, we need to add a rule to only allow a price oracle to
-be updated once every $X$ minutes.
-\todo{Choose the value of $X$.}
-
-We will start with $3-5$ price oracles.
-Three of them will be linked to price feeds coming from binance, coinbase and
-kraken.
-
-\subsection{Oracle security module}
-
 \section{Tests}
-
-
-% \section{Remarks}
-% 
-% - Test for Cardano network congestion
-% - Test what happens if someone hacks one or more price oracles
-% - Other attack vectors which are not specific to our application, should be
-%   listed and tested for
-
 
 \end{document}
