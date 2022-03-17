@@ -1,38 +1,334 @@
 \documentclass{article} % Use the custom invoice class (invoice.cls)
+\usepackage{todonotes}
+\setuptodonotes{inline}
+\setlength{\parindent}{0em}
 
 \title{dUSD Test Plan}
 \begin{document}
-
 
 \maketitle
 
 \section{Introduction}
 
 \textbf{The purpose of this document is to let the dUSD team decide whether we are ready to deploy.}
-It is a living document that serves as a forcing function for discussions around, and agreement on, decisions.
+It is a living document that serves as a forcing function for discussions
+around, and agreement on, decisions. \\
 
-The document starts with the "Interactions" section, a user-centric perspective on what service we would like to offer.
-Next come descriptions of requirements we have on those interactions in the "Acceptance criteria" section.
-Any important implementation details that will be relevant for building such a system are detailed in the section after that.
-Finally, the "Tests" section provide a non-exhaustive list of the way we plan to falsify whether we should deploy.
+The document starts with the ``Interactions'' section, a user-centric
+perspective on what service we would like to offer.
+Next come descriptions of requirements we have on those interactions in the
+``Acceptance criteria'' section.
+Any important implementation details that will be relevant for building such a
+system are detailed in the section after that.
+Finally, the ``Tests'' section provide a non-exhaustive list of the way we plan
+to falsify whether we should deploy. \\
+
+Note: Every subsection that contain `TBD' in the title is not fully agreed upon
+yet.
+The other sections are considered law.
 
 \section{Interactions}
 
+\subsection{Discover market prices (MVP version)}
 
-\subsection{Any User}
+For the MVP version, we implement a simplified, centralized market price
+discovery mechanism.
+This mechanism involves only a single on-chain component, called the Price
+Module (PM).
+This module contains $48$ hours of price data, aggregated off-chain and put
+on-chain by admin.
+
+\subsubsection{Price module: Write}
+
+Admin can update the price information in the PM's datum by adding one more
+price point.
+When doing so, any price points older than $48$ hours are removed.
+This endpoint can be called once per hour.
+
+\subsubsection{Price module: Read}
+
+Anyone can use the price module as a read-only input UTXO to their transactions
+in order to discover the last $48$ hours of price information, one price point
+per hour.
+
+% The V2 version is left here in comments, for now.
+% \subsection{Discover market prices (V2)}
+% 
+% A price oracle is a timeline of UTXOs\footnote{
+%   In the blockchain industry, people often talk about concepts like price
+%   oracles and DEX pools. However, within the EUTXO system built by Cardano, the
+%   fundamental concept we are dealing is the UTXO. This means that we are dealing
+%   with a `state' of a price oracle as the fundamental concept, not the price
+%   oracle itself. Now, Plutus scripts like price oracles, between being created
+%   and destroyed, basically only allow to be updated and read. This means that
+%   one can draw a `timeline' through a series of UTXO, each one disappearing into
+%   a transaction that produces the next. This set of UTXOs is what is referred to
+%   as ``the price oracle''.
+% }
+% which stores the price information of a given asset (e.g. ADA) in terms of a
+% reference currency (USD).
+% Each price oracle will store $48$ hours worth of price data, and be updatable
+% once every few minutes.
+% A number of price oracles will be created for each asset of interest.  The
+% person creating each price oracle will connect it to a price feed coming from
+% some CEX/DEX.
+% Next, an Oracle Security Module (OSM) will be implemented.
+% This is another ``timeline of UTXOs'', which allows admin to select a number of
+% price oracles as trusted price feeds and combines their prices in a secure way.
+% The resulting price is exposed to the blockchain ecosystem.
+% 
+% Note: In this document, off-chain entities containing information about the
+% price will be referred to as price feeds (not price oracles), e.g. the Coinbase
+% website.
+% 
+% Note: We will build price oracles both for ADA and dUSD.
+% 
+% \subsubsection{Price oracle: Read}
+% 
+% The OSM can read all the pricing data stored in the price oracle.
+% 
+% \subsubsection{Write}
+% 
+% The owner/creator of the price oracle can write a new price value to the oracle.
+% 
+% \subsection{Oracle security module}
+% 
+% \subsubsection{Read the `current' price}
+% 
+% Anyone can use the OSM as a read-only input UTXO to discover the price
+% information of the last $48$ hours of some currency (e.g. ADA or dUSD relative
+% to USD).
+% 
+% \subsubsection{Update}
+% 
+% The OSM is updated once per hour.
+% Anyone can do this by connecting the OSM to all accepted price oracles.
+% 
+% \subsubsection{Update list of accepted price oracles}
+% 
+% Admin/governance can update the list of price oracles accepted by the OSM.
+% 
+\subsection{Vault (TBD)}
+
+\subsubsection{Collect vault information}
+
+As a user, I can collect information on my vaults, i.e. the vaults I created.
+
+\subsubsection{Initialize vault}
+
+As a user, I can open a new vault.
 
 \subsubsection{Deposit}
 
-As a User, I want to be able to deposit ADA into a Vault, so that I may take out a loan of dUSD (see below).
+As a user, I can deposit ADA into a vault, so that I may take out a loan of dUSD
+(see below).
 
 \subsubsection{Withdrawal}
 
+As a user, I can withdraw ADA from a vault.
+
 \subsubsection{Take out loan}
+
+As a user, I can take out a loan in dUSD against the collateral I put into one
+of my vaults.
 
 \subsubsection{Pay back loan}
 
+As a user, I can pay back (part of) a loan in dUSD I created in one of my
+vaults. In doing so, I am paying a stability fee to the buffer.
 
-\subsection{Admin}
+\subsubsection{Liquidate vault}
+
+Any user can detect that a vault is in an unhealthy state, and buy part of the
+collateral in the vault at a discount (compared to market prices).
+
+If after liquidating all the collateral, a vault has remaining debt, the vault
+is destroyed and the debt with it.
+This is an exceptional situation to be avoided, since it endangers the idea
+behind the protocol.
+
+\subsection{Buffer (TBD)}
+
+All profits will be kept in a UTXO referred to as the buffer.
+In addition to holding the profits, the buffer will be responsible for setting
+the protocol-wide parameters, and for enacting debt and surplus auctions.
+
+\subsubsection{Trigger surplus auction (buy back DANA)}
+
+\subsubsection{Trigger debt auction (sell off DANA)}
+
+\subsubsection{Set liquidation fee}
+
+\subsubsection{Set liquidation ratio}
+
+\subsubsection{Set minimum collateralization ratio}
+
+\todo{Do we want to have an on-chain enforced minimum collateralization ratio?}
+
+\subsubsection{Set stability fee}
+
+\section{Acceptance criteria}
+
+\subsection{Price module (MVP)}
+
+Off-chain and on-chain criteria:
+\begin{itemize}
+  \item Only admin can create a price module
+  \item Only admin can write to the oracle
+  \item Writing a price value removes price values older than 48 hours from the
+    datum
+  \item Writing the price value cannot be done more than once per hour
+  \item Reading the price data after writing a new price point successfully,
+    works
+  \item Anyone can read the price data
+\end{itemize}
+
+Price feed bot:
+\begin{itemize}
+  \item Always collects information from at least three sources successfully
+  \item Running the systemd service makes the UTXO get updated by at least three
+    sources at least once every two hours
+\end{itemize}
+
+% The version 2 price discovery mechanism is stored in these comments:
+% \subsection{Price oracle}
+% 
+% \begin{itemize}
+%   \item Only the owner can write to the oracle
+%   \item Anyone can read the price data
+%   \item Writing a price values removes outdated price values (older than 48
+%     hours) from the datum.
+% \end{itemize}
+% 
+% \subsection{Oracle security module}
+% 
+% \begin{itemize}
+%   \item Admin (and only admin) can update the list of accepted price oracles
+%   \item The OSM's price information cannot be updated without linking to all
+%     accepted price oracles
+%   \item The price oracles are read-only inputs to the ``update OSM'' endpoint
+%   \item Reading the current price after updating the OSM's price information and
+%     waiting for the given time delay, leads to the predicted `current' price.
+%     This is the median over all price oracles of the price averaged over the
+%     values in the last hour. (This smearing prevents flash drops on some
+%     exchanges from making the OSM's result crash and many vaults liquidate.)
+% \end{itemize}
+% 
+\subsection{Vaults (TBD)}
+
+Each user should have access to a website at "www.ardana-vaults.com". This
+website must be able to connect to their wallet to find out who they are and
+allow them to set up vaults and interact with their existing vaults. \\
+
+Decisions to be made:
+\begin{itemize}
+  \item Do we want the interface to be a website or an app?
+  \item Which domain name will the website live at?
+\end{itemize}
+
+\subsubsection{Collect information on the user's vaults}
+
+The vault website looks up the requested information and displays it in an
+aesthetic and clear overview. \\
+
+Requested information: How many vaults does the user have, how much collateral
+and debt do they each have, what are their collateralization ratios, how
+dangerous is it to have that collateralization ratio? \\
+
+Decisions to be made:
+\begin{itemize}
+  \item Is the list of requested information correct? Anything to be added,
+    removed or updated?
+\end{itemize}
+
+\subsubsection{Initialize}
+
+The vault website should have a button to open a new vault.
+
+\subsubsection{Deposit}
+
+The vault website has a form that allows each user to pick one of their vaults
+and deposit ADA into it. \\
+
+Restrictions:
+\begin{itemize}
+  \item You have at least the amount of ADA in your wallet that you would like
+    to deposit.
+\end{itemize}
+
+Decisions to be made:
+\begin{itemize}
+  \item Do we want to implement a maximum amount of collateral? MakerDAO has
+    this, not sure why.
+  \item Do we want to implement a mininum amount of collateral? If so, is this
+    in total per vault, or per deposit?
+\end{itemize}
+
+Questions:
+\begin{itemize}
+  \item How will we figure out from which UTXO in your wallet to take the ADA?
+\end{itemize}
+
+\subsubsection{Withdrawal}
+
+The vault website has a form that allows each user to pick one of their vaults
+and withdraw ADA from it. \\
+
+Restrictions:
+\begin{itemize}
+  \item Withdrawing this amount of ADA from that vault doesn't sink its
+    collateralization ratio below the minimum collateralization ratio.
+\end{itemize}
+
+\subsubsection{Take out loan}
+
+The vault website has a form that allows a user to pick one of their vaults and
+take out a dUSD loan in it, against his collateral. \\
+
+Restrictions:
+\begin{itemize}
+  \item This transaction doesn't make the collateralization ratio drop below the
+    minimum collateralization ratio.
+\end{itemize}
+
+\todo{What should the minimum collateralization ratio be?}
+\todo{Should the minimum collateralization ratio be different from the
+liquidation ratio??}
+\todo{What should the minimum amount be one can take out as a loan? Is this per
+vault or per loan transaction?}
+
+\subsubsection{Pay back loan}
+
+The vault website has a form that allows a user to pick one of their vaults and
+pay back a (part of a) dUSD loan in it. \\
+
+Restrictions:
+\begin{itemize}
+  \item The amount of dUSD paid back by the user is equal to or smaller than the
+    amount of dUSD debt in the vault.
+  \item The stability fee for the part of loan that is paid back, is sent to the
+    buffer as community profit
+\end{itemize}
+
+Design decisions:
+\begin{itemize}
+  \item What should the minimum collateralization ratio be?
+  \item Should the minimum collateralization ratio be different from the
+    liquidation ratio??
+  \item Should there be a minimum amount one can take out as a loan? If so, is
+    this per vault or per loan transaction?
+\end{itemize}
+
+\subsubsection{Liquidate someone else's vault}
+
+...
+
+\subsection{Buffer (TBD)}
+
+One important acceptance criterium is that the protocol can be updated without
+requiring users to update their vaults or dUSD becoming a new currency.
+
+Any updates to the protocol will be decided on by admin, and later governance.
 
 \subsubsection{Trigger surplus auction (sick vault)}
 
@@ -44,27 +340,100 @@ As a User, I want to be able to deposit ADA into a Vault, so that I may take out
 
 \subsubsection{Set liquidation ratio}
 
-\subsubsection{Set minimum collateralisation ratio}
-
-\subsubsection{Set daily savings rate}
+\subsubsection{Set minimum collateralization ratio}
 
 \subsubsection{Set stability fee}
 
 \subsubsection{Set list of price oracles to consider in OSM}
 
+\subsubsection{Set the time interval the OSM waits before using a price update}
 
-\section{Acceptance criteria}
-
-\subsection{Deposit}
-
-\subsubsection{Interface}
-
-When a user wants to deposit ADA, they must be able to visit a website at "https://deposit.dusd.com".
-On this website, they should see ...
-% \todo{Should it be a website? should it be an app?}
 
 \section{Implementation details}
 
+This section discusses what we need in order to implement the interactions
+mentioned above.
+
+\subsection{Price module (MVP, TBD)}
+
+The price module is a UTXO which can only be created by admin.
+It contains in its datum a map from timestamps (POSIX time) to the price value.
+An off-chain bot will be written which aggregates price information from at
+least five sources (CEXes and DEXes) and applies the appropriate calculations on
+this information in order to conclude what the most accurate current price is.
+This current price will then be submitted as a transaction to the price module
+using one of the admin keys.
+
+Off-chain bot:
+\begin{itemize}
+  \item Before collecting any price information, the script reads out the
+    relevant UTXO's datum and checks if it is time yet to submit an update. If
+    not, it will terminate (successfully) right away.
+  \item Haskell script that collects information and submits a transaction
+  \item The script is ran through a systemd service, running it once every five
+    minutes
+\end{itemize}
+
+Price module:
+\begin{itemize}
+  \item The on-chain code will be written in Plutarch
+  \item The off-chain code will be built as a PAB
+\end{itemize}
+
+Note: The off-chain bot will combine the price feeds through two operations:
+\begin{enumerate}
+  \item For each price feed, average the price over the values from the last
+    hour
+  \item Take the median of the resulting values
+\end{enumerate}
+
+% \subsection{Price oracle}
+% 
+% Each price oracle will carry an NFT used as a unique identifier.
+% In addition, each price oracle contains the public key associated with the
+% wallet which created it, so that only the creator of the oracle can update it.
+% The price oracle can be updated once every hour.
+% We will start with $3-5$ price oracles. \\
+% 
+% The OSM can be updated once every hour, and this transaction can be created by
+% anyone.
+% When it does, it pulls in the price information from all accepted price oracles
+% and applies two calculations to that feed.
+% First, it only retains the $70\%$ of price oracles that have most recently been
+% updated, to assure obtaining the most recent price available.
+% Secondly, it takes the median of the resulting price values.
+% 
+% \todo{How will price oracle updates and the OSM updates be rewarded? With a
+% slight fee every time, coming from the profits stored in the buffer? Or should
+% using a price oracle or OSM cost money, also to dUSD protocol users?}
+% 
+% If the OSM has not been updated for at least two hours, it stops spreading price
+% information, thereby shutting down vault liquidations as well as creating new
+% loans until the OSM is updated.
+% This is a measure which will only kick in in the case of very serious resource
+% contention, in which case once the system starts up again, we want to ensure
+% that updating the OSM is the first transaction that happens.
+% 
+% \todo{Should the price oracles and the OSM all be combined into one UTXO, or
+% be split into separate UTXOs?}
+% 
+\subsection{Vault}
+
+Liquidation only becomes allowed when both the current price and the price of an
+hour ago state that the current collateralization ratio is below the liquidation
+ratio.
+This is a measure taken to allow vault owners a chance to add collateral or pay
+back some of the debt whenever the price of the collateral dropped.
+
 \section{Tests}
+
+
+% \section{Remarks}
+% 
+% - Test for Cardano network congestion
+% - Test what happens if someone hacks one or more price oracles
+% - Other attack vectors which are not specific to our application, should be
+%   listed and tested for
+
 
 \end{document}
