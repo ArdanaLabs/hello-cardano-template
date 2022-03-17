@@ -10,6 +10,7 @@ import qualified Apropos.Plutus.Vault as Vault
 import Test.Syd
 
 -- TODO use sydtest-discover once nix stabalizes a bit more
+-- TODO figure out why sydtest breaks the histograms and fix it
 
 main :: IO ()
 main = sydTest $

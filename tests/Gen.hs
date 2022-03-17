@@ -35,7 +35,6 @@ import Data.String (IsString (..))
 import Plutus.V1.Ledger.Value (AssetClass)
 import qualified Plutus.V1.Ledger.Value as Value
 
-
 -- TODO address should get it's own apropos model
 address :: Gen Address
 address = Address <$> credential <*> maybeOf stakingCredential
