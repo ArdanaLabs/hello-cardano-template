@@ -83,13 +83,34 @@ test-suite tests
   type:           exitcode-stdio-1.0
   main-is:        Main.hs
   hs-source-dirs: tests
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
   other-modules:
+    Apropos.Plutus.AssetClass
+    Apropos.Plutus.Auction
+    Apropos.Plutus.Integer
+    Apropos.Plutus.SingletonValue
+    Apropos.Plutus.Value
+    Apropos.Plutus.Vault
+    Gen
     Tests
 
   build-depends:
     base,
+    containers,
     apropos,
     apropos-tx,
     plutarch,
-    dUSD
+    plutus-ledger-api,
+    hedgehog,
+    sydtest,
+    sydtest-hedgehog,
+    dUSD,
+    plutus-tx,
+    plutus-ledger-api,
+    hedgehog,
+    tasty,
+    tasty-hedgehog,
+    dUSD,
+    with-utf8,
+    lens,
 
