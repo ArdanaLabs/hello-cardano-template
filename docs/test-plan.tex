@@ -43,7 +43,6 @@ on-chain by admin.
 Admin can update the price information in the PM's datum by adding one more
 price point.
 When doing so, any price points older than $48$ hours are removed.
-This endpoint can be called once per hour.
 
 \subsubsection{Price module: Read}
 
@@ -90,6 +89,7 @@ per hour.
 % \subsubsection{Write}
 % 
 % The owner/creator of the price oracle can write a new price value to the oracle.
+% This endpoint can be called once per hour.
 % 
 % \subsection{Oracle security module}
 % 
@@ -177,7 +177,7 @@ Off-chain and on-chain criteria:
   \item Only admin can write to the oracle
   \item Writing a price value removes price values older than 48 hours from the
     datum
-  \item Writing the price value cannot be done more than once per hour
+%   \item Writing the price value cannot be done more than once per hour
   \item Reading the price data after writing a new price point successfully,
     works
   \item Anyone can read the price data
