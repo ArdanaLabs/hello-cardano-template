@@ -29,7 +29,7 @@ The other sections are considered law.
 
 \section{Interactions}
 
-\subsection{Discover market prices (MVP version)}
+\subsection{Discover market prices}
 
 For the MVP version, we implement a simplified, centralized market price
 discovery mechanism.
@@ -108,15 +108,19 @@ per hour.
 % 
 % Admin/governance can update the list of price oracles accepted by the OSM.
 % 
-\subsection{Vault (TBD)}
+\subsection{Vault}
 
 \subsubsection{Collect vault information}
 
 As a user, I can collect information on my vaults, i.e. the vaults I created.
+This is an off-chain endpoint.
 
 \subsubsection{Initialize vault}
 
 As a user, I can open a new vault.
+
+\todo{Do we want to make it possible to combine multiple transactions into one,
+to help users avoid gas fees?}
 
 \subsubsection{Deposit}
 
@@ -125,27 +129,60 @@ As a user, I can deposit ADA into a vault, so that I may take out a loan of dUSD
 
 \subsubsection{Withdrawal}
 
-As a user, I can withdraw ADA from a vault.
+As a user, I can withdraw ADA from a vault, as long as my collateralization
+ratio is above the liquidation ratio.
+In the frontend, a "minimum collateralization ratio" will be built in that
+prevents users from transacting with their vault in such a way that their
+collateralization ratio drops below the minimum collateralization ratio.
+
+\todo{Do we want a minimum collateralization ratio built into the frontend, to
+protect our users?}
 
 \subsubsection{Take out loan}
 
-As a user, I can take out a loan in dUSD against the collateral I put into one
-of my vaults.
+As a user, I can take out a loan in dUSD if I have enough collateral.
+There is a minimum and maximum size for dUSD loans.
 
 \subsubsection{Pay back loan}
 
 As a user, I can pay back (part of) a loan in dUSD I created in one of my
-vaults. In doing so, I am paying a stability fee to the buffer.
+vaults.
+In doing so, I am paying a stability fee to the buffer.
 
 \subsubsection{Liquidate vault}
 
-Any user can detect that a vault is in an unhealthy state, and buy part of the
-collateral in the vault at a discount (compared to market prices).
+A vault is considered in an unhealthy state if its collateralization ratio is
+below the liquidation ratio, both according to the current price and the price
+from one hour ago.
+The reason for this last part (using two prices) is that the vault owner should
+get an hour after a new price gets published to fix his vault before allowing
+liquidators to jump into action.
+In addition, if a vault becomes sick through a very temporary ADA crash, but
+recovers within an hour, there is no reason to liquidate. \\
 
-If after liquidating all the collateral, a vault has remaining debt, the vault
-is destroyed and the debt with it.
-This is an exceptional situation to be avoided, since it endangers the idea
-behind the protocol.
+Any user can detect that a vault is in an unhealthy state, and buy part of the
+collateral in the vault at a $3\%$ discount compared to the market prices of
+both ADA and dUSD.
+Let us go through an example to explain how liquidation works.
+When buying e.g. $100$ USD worth of ADA, the ADA is offered at a price of $97$
+USD worth of dUSD.
+Anyone can come in and buy a part of the ADA at this discounted exchange rate.
+As time goes on, there are two options:
+\begin{enumerate}
+  \item By selling collateral at a discount, the collateralization ratio rises
+    above the liquidation ratio, and the vault returns to a healthy state.
+  \item All the collateral is sold but some dUSD debt remains in the vault.
+    This is an exceptional situation to be avoided, since it endangers the idea
+    behind the protocol.
+    It that can only be caused by a significant ADA price drop where liquidators
+    don't act on time.
+    The solution is dissolving the vault, and thereby the dUSD debt.
+\end{enumerate}
+
+In addition to the $3\%$ discount given to liquidators, the vault owner will be
+charged a $10\%$ liquidation fee for allowing his vault to become unhealthy.
+This means that only $90\%$ of the dUSD paid by the liquidators, is used to pay
+back debt, burning the rest.
 
 \subsection{Buffer (TBD)}
 
@@ -161,15 +198,11 @@ the protocol-wide parameters, and for enacting debt and surplus auctions.
 
 \subsubsection{Set liquidation ratio}
 
-\subsubsection{Set minimum collateralization ratio}
-
-\todo{Do we want to have an on-chain enforced minimum collateralization ratio?}
-
 \subsubsection{Set stability fee}
 
 \section{Acceptance criteria}
 
-\subsection{Price module (MVP)}
+\subsection{Price module}
 
 Off-chain and on-chain criteria:
 \begin{itemize}
@@ -214,114 +247,61 @@ Price feed bot:
 %     exchanges from making the OSM's result crash and many vaults liquidate.)
 % \end{itemize}
 % 
-\subsection{Vaults (TBD)}
+\subsection{Vault}
 
 Each user should have access to a website at "www.ardana-vaults.com". This
 website must be able to connect to their wallet to find out who they are and
-allow them to set up vaults and interact with their existing vaults. \\
+allow them to set up vaults and interact with their existing vaults.
 
-Decisions to be made:
+Acceptance criteria:
 \begin{itemize}
-  \item Do we want the interface to be a website or an app?
-  \item Which domain name will the website live at?
+  \item Anyone can create a vault, through a button on the website
+  \item Anyone can create multiple vaults
+  \item Vaults owned by the same person are independent, i.e. one of the
+    person's vaults being sick, doesn't influence his other vaults
+  \item There is a page that automatically connects to the user's wallet and
+    displays information about his vaults: How many vaults, and for each vault
+    the amount of collateral, debt, collateralization ratio, and how healthy the
+    vault is.
+  \item The vault overview is correct, clear and aesthetic
+  \item Users can deposit, withdraw, take out a loan and pay back a loan
+    (through forms on the website), as long as the collateralization ratio
+    doesn't drop below the liquidation ratio\footnote{
+      In the UX, the collateralization ratio is banned from dropping under the
+      minimum collateralization ratio.}
+  \item Users cannot withdraw or take out a loan that drops their
+    collateralization ratio below the liquidation ratio
+  \item When going through a sequence of transactions, stability fees are
+    calculated correctly
+  \item Only the owner of the vault can create transactions other than
+    liquidation
+  \item Anyone can liquidate a sick vault
+  \item Liquidation is possibly if and only if the vault is in an unhealthy
+    state
+  \item One can buy as much collateral as is needed to make the vault healthy
+    again, and not more
+  \item During liquidation, collateral is bought at a $3\%$ discount compared to
+    the most current price from the price module
+  \item $10\%$ of the dUSD paid by the liquidator, is burnt rather than used to
+    pay back the debt. This liquidation fee is meant to disincentivize users
+    from allowing their vaults to become sick.
+  \item The amount of dUSD paid back (when paying back a loan) is smaller than
+    (or equal to) the loan
 \end{itemize}
 
-\subsubsection{Collect information on the user's vaults}
+\todo{Which domain name will the website live at?}
 
-The vault website looks up the requested information and displays it in an
-aesthetic and clear overview. \\
+\todo{Is the list of requested information correct? Anything to be added,
+removed or updated?}
 
-Requested information: How many vaults does the user have, how much collateral
-and debt do they each have, what are their collateralization ratios, how
-dangerous is it to have that collateralization ratio? \\
+\todo{How much is the minimum loan (per loan, not per vault) and maximum amount
+of collateral?}
 
-Decisions to be made:
-\begin{itemize}
-  \item Is the list of requested information correct? Anything to be added,
-    removed or updated?
-\end{itemize}
+\todo{How will we figure out from which UTXO in your wallet to take the ADA?}
 
-\subsubsection{Initialize}
-
-The vault website should have a button to open a new vault.
-
-\subsubsection{Deposit}
-
-The vault website has a form that allows each user to pick one of their vaults
-and deposit ADA into it. \\
-
-Restrictions:
-\begin{itemize}
-  \item You have at least the amount of ADA in your wallet that you would like
-    to deposit.
-\end{itemize}
-
-Decisions to be made:
-\begin{itemize}
-  \item Do we want to implement a maximum amount of collateral? MakerDAO has
-    this, not sure why.
-  \item Do we want to implement a mininum amount of collateral? If so, is this
-    in total per vault, or per deposit?
-\end{itemize}
-
-Questions:
-\begin{itemize}
-  \item How will we figure out from which UTXO in your wallet to take the ADA?
-\end{itemize}
-
-\subsubsection{Withdrawal}
-
-The vault website has a form that allows each user to pick one of their vaults
-and withdraw ADA from it. \\
-
-Restrictions:
-\begin{itemize}
-  \item Withdrawing this amount of ADA from that vault doesn't sink its
-    collateralization ratio below the minimum collateralization ratio.
-\end{itemize}
-
-\subsubsection{Take out loan}
-
-The vault website has a form that allows a user to pick one of their vaults and
-take out a dUSD loan in it, against his collateral. \\
-
-Restrictions:
-\begin{itemize}
-  \item This transaction doesn't make the collateralization ratio drop below the
-    minimum collateralization ratio.
-\end{itemize}
+\todo{What should the liquidation ratio be?}
 
 \todo{What should the minimum collateralization ratio be?}
-\todo{Should the minimum collateralization ratio be different from the
-liquidation ratio??}
-\todo{What should the minimum amount be one can take out as a loan? Is this per
-vault or per loan transaction?}
-
-\subsubsection{Pay back loan}
-
-The vault website has a form that allows a user to pick one of their vaults and
-pay back a (part of a) dUSD loan in it. \\
-
-Restrictions:
-\begin{itemize}
-  \item The amount of dUSD paid back by the user is equal to or smaller than the
-    amount of dUSD debt in the vault.
-  \item The stability fee for the part of loan that is paid back, is sent to the
-    buffer as community profit
-\end{itemize}
-
-Design decisions:
-\begin{itemize}
-  \item What should the minimum collateralization ratio be?
-  \item Should the minimum collateralization ratio be different from the
-    liquidation ratio??
-  \item Should there be a minimum amount one can take out as a loan? If so, is
-    this per vault or per loan transaction?
-\end{itemize}
-
-\subsubsection{Liquidate someone else's vault}
-
-...
 
 \subsection{Buffer (TBD)}
 
@@ -354,7 +334,7 @@ Any updates to the protocol will be decided on by admin, and later governance.
 This section discusses what we need in order to implement the interactions
 mentioned above.
 
-\subsection{Price module (MVP, TBD)}
+\subsection{Price module (TBD)}
 
 The price module is a UTXO which can only be created by admin.
 It contains in its datum a map from timestamps (POSIX time) to the price value.
@@ -366,18 +346,19 @@ using one of the admin keys.
 
 Off-chain bot:
 \begin{itemize}
-  \item Before collecting any price information, the script reads out the
-    relevant UTXO's datum and checks if it is time yet to submit an update. If
-    not, it will terminate (successfully) right away.
   \item Haskell script that collects information and submits a transaction
-  \item The script is ran through a systemd service, running it once every five
-    minutes
+  \item Before collecting any price information, the script reads out the
+    relevant UTXO's datum and checks if it has been updated in the last hour. If
+    so, the script terminates successfully right away.
+  \item The script is ran once every five minutes through a systemd service
 \end{itemize}
 
 Price module:
 \begin{itemize}
   \item The on-chain code will be written in Plutarch
   \item The off-chain code will be built as a PAB
+  \item The datum will contain a map from timestamps (in POSIX time) to price
+    values, and three admin public keys
 \end{itemize}
 
 Note: The off-chain bot will combine the price feeds through two operations:
@@ -417,13 +398,15 @@ Note: The off-chain bot will combine the price feeds through two operations:
 % \todo{Should the price oracles and the OSM all be combined into one UTXO, or
 % be split into separate UTXOs?}
 % 
-\subsection{Vault}
+\subsection{Vault (TBD)}
 
-Liquidation only becomes allowed when both the current price and the price of an
-hour ago state that the current collateralization ratio is below the liquidation
+\todo{Fill in this section!}
+
+Liquidation only becomes allowed when the current price and the price of an hour
+ago both state that the current collateralization ratio is below the liquidation
 ratio.
-This is a measure taken to allow vault owners a chance to add collateral or pay
-back some of the debt whenever the price of the collateral dropped.
+This is a measure taken to allow vault owners a chance to make their vaults
+healthy whenever the price of the collateral dropped.
 
 \section{Tests}
 
