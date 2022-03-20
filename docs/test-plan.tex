@@ -425,17 +425,32 @@ Note: The off-chain bot will combine the price feeds through two operations:
 % 
 \subsection{Vault (TBD)}
 
-\todo{Fill in this section!}
+\begin{itemize}
+  \item On-chain code: Plutarch
+  \item Off-chain code: PAB, tested through our own testing framework (Maeserat)
+  \item Collecting information on one person's vaults as well as vaults in
+    general, are implemented as off-chain endpoints within the PAB, to avoid
+    having to build a separate backend for the dUSD system
+  \item A vault is a UTXO which holds an NFT, as a unique ID, and the collateral
+    assets
+  \item The vault's datum consists of three pieces of information: A timestamp
+    of its last update, the vault owner's public key, and the amount of dUSD
+    debt (including stability fee) calculated at the last time of update
+  \item Liquidation is only allowed if the current price and the price of an
+    hour ago both state that the current collateralization ratio is below the
+    liquidation ratio.
+    This is a measure taken to allow vault owners a chance to make their vaults
+    healthy whenever the price of the collateral dropped.
+\end{itemize}
 
-Collecting vault information on one person, as well as collecting vault
-information in general, are implemented as off-chain endpoint within the PAB, to
-avoid having to build a separate backend for the dUSD system. \\
+\todo{How will we extract timestamps from a transaction? \\
 
-Liquidation only becomes allowed when the current price and the price of an hour
-ago both state that the current collateralization ratio is below the liquidation
-ratio.
-This is a measure taken to allow vault owners a chance to make their vaults
-healthy whenever the price of the collateral dropped.
+This is difficult for two reasons. Firstly, transactions don't know when they
+get executed. The only time-related thing we have access to (by default) is a
+time interval they were executed within. The second reason is that it is
+possible a vault wasn't updated for a long time, and then the system's stability
+fee changes, which can instantly change the debt amount substantially in
+practice.}
 
 \section{Tests}
 
