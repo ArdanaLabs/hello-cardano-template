@@ -113,7 +113,6 @@ per hour.
 \subsubsection{Collect vault information}
 
 As a user, I can collect information on my vaults, i.e. the vaults I created.
-This is an off-chain endpoint.
 
 \subsubsection{Initialize vault}
 
@@ -401,6 +400,10 @@ Note: The off-chain bot will combine the price feeds through two operations:
 \subsection{Vault (TBD)}
 
 \todo{Fill in this section!}
+
+Collecting vault information on one person, as well as collecting vault
+information in general, are implemented as off-chain endpoint within the PAB, to
+avoid having to build a separate backend for the dUSD system. \\
 
 Liquidation only becomes allowed when the current price and the price of an hour
 ago both state that the current collateralization ratio is below the liquidation
