@@ -3,7 +3,7 @@
 , texlive
 }:
 let
-  latexEnv = texlive.combine { inherit ( texlive ) scheme-basic latexmk; };
+  latexEnv = texlive.combine { inherit ( texlive ) scheme-basic latexmk todonotes; };
 in
 writeShellApplication
   {

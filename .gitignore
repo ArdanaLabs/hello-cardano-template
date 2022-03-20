@@ -1,5 +1,6 @@
 docs/test-plan/
 dist-newstyle
+*.pdf
 
 # Dockerfiles, or docker-compose files are not how we build or deploy software.
 # Only Nix expressions are allowed.
