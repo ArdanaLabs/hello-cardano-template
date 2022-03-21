@@ -292,6 +292,22 @@ Acceptance criteria:
     doesn't drop below the liquidation ratio\footnote{
       In the UX (frontend only!), the collateralization ratio is banned from
       dropping under the minimum collateralization ratio.}
+  \item Users cannot take out a loan or pay one back that leaves the dUSD debt
+    above $0$ but below the debt floor\footnote{
+    The puprose of the debt floor is to ensure good debt is issued against a
+    vault to incentivize a liquidator to liquidate it should it become
+    under-collateralized.}
+% Comment for Version 2:
+%   \item Users cannot take out a loan that leaves the dUSD debt above the debt
+%     ceiling\footnote{
+%     The debt ceiling has two purposes:
+%     \begin{enumerate}
+%       \item Deprecating collateral types by lowering the debt ceiling to below
+%         the current amount of issued debt
+%       \item Stopping OSM timing attacks, where vault owners exploit the OSM time
+%         delay during a price crash, issuing a massive amount of debt thus
+%         cashing out on worthless collateral
+%     \end{enumerate}}
   \item Users cannot withdraw or take out a loan that drops their
     collateralization ratio below the liquidation ratio
   \item When going through a sequence of transactions, stability fees are
