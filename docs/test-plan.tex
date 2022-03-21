@@ -213,15 +213,17 @@ All profits will be kept in a UTXO referred to as the buffer.
 In addition to holding the profits, the buffer will be responsible for setting
 the protocol-wide parameters, and for enacting debt and surplus auctions.
 
-\subsubsection{Trigger surplus auction (buy back DANA)}
+\subsubsection{Trigger surplus auction (buy back dana)}
 
-\subsubsection{Trigger debt auction (sell off DANA)}
+\subsubsection{Trigger debt auction}
 
 \subsubsection{Set liquidation fee}
 
 \subsubsection{Set liquidation ratio}
 
 \subsubsection{Set stability fee}
+
+\subsubsection{Set debt floor}
 
 \section{Acceptance criteria}
 
@@ -288,10 +290,12 @@ Acceptance criteria:
     vault is.
   \item The vault overview is correct, clear and aesthetic
   \item Users can deposit, withdraw, take out a loan and pay back a loan
-    (through forms on the website), as long as the collateralization ratio
-    doesn't drop below the liquidation ratio\footnote{
+    (through forms on the website) only if the collateralization ratio doesn't
+    drop below the liquidation ratio\footnote{
       In the UX (frontend only!), the collateralization ratio is banned from
       dropping under the minimum collateralization ratio.}
+  \item No transaction can update the timestamp in the vault in a way that's
+    inaccurate by more than $12$ hours
   \item Users cannot take out a loan or pay one back that leaves the dUSD debt
     above $0$ but below the debt floor\footnote{
     The puprose of the debt floor is to ensure good debt is issued against a
@@ -458,21 +462,21 @@ Note: The off-chain bot will combine the price feeds through two operations:
     liquidation ratio.
     This is a measure taken to allow vault owners a chance to make their vaults
     healthy whenever the price of the collateral dropped.
+  \item All transactions must have a ``txInfoValidRange'' that's less than $12$
+    hours long, to provide sufficiently accurate temporal information. This is
+    enforced on-chain. The timestamp extracted from any transaction is the the
+    beginning of this interval.
 \end{itemize}
 
-\todo{How will we extract timestamps from a transaction? \\
+\subsection{Buffer}
 
-This is difficult for two reasons. Firstly, transactions don't know when they
-get executed. The only time-related thing we have access to (by default) is a
-time interval they were executed within. The second reason is that it is
-possible a vault wasn't updated for a long time, and then the system's stability
-fee changes, which can instantly change the debt amount substantially in
-practice. \\
-
-For the second point, we could store in the buffer a map from timestamp to
-stability fee, rather than just changing the stability fee.
-This would be a bit more complex to implement, since we need to prevent datum
-overflow as well.}
+The buffer will contain in its datum a map from timestamps to the stability fee
+set at that timestamp.
+The timestamp will be extracted from the transactions setting the stability fee
+as the beginning of the ``txInfoValidRange'' range, where the on-chain validator
+enforces this range to be less than $12$ hours long.
+The reason for this measure is to make sure that stability fee calculations are
+accurate even in vaults that haven't been updated for a long time.
 
 \section{Tests}
 
