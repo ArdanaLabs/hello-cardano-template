@@ -1,4 +1,5 @@
 \documentclass{article} % Use the custom invoice class (invoice.cls)
+\usepackage{hyperref}
 \usepackage{todonotes}
 \setuptodonotes{inline}
 \setlength{\parindent}{0em}
@@ -454,9 +455,11 @@ Note: The off-chain bot will combine the price feeds through two operations:
     having to build a separate backend for the dUSD system
   \item A vault is a UTXO which holds an NFT, as a unique ID, and the collateral
     assets
-  \item The vault's datum consists of three pieces of information: A timestamp
-    of its last update, the vault owner's public key, and the amount of dUSD
-    debt (including stability fee) calculated at the last time of update
+  \item The vault's address is dependent on the owner's public key. This ensures
+    the key cannot be changed by any transactions.
+  \item The vault's datum consists of two pieces of information: A timestamp of
+    its last update and the amount of dUSD debt (including stability fee)
+    calculated at that time
   \item Liquidation is only allowed if the current price and the price of an
     hour ago both state that the current collateralization ratio is below the
     liquidation ratio.
@@ -466,17 +469,45 @@ Note: The off-chain bot will combine the price feeds through two operations:
     hours long, to provide sufficiently accurate temporal information. This is
     enforced on-chain. The timestamp extracted from any transaction is the the
     beginning of this interval.
+  \item When a dUSD loan gets paid back, the dUSD coins get burned in the vault.
+    This means that the stability fee is burned as well, which drives up the
+    dUSD price and allows for surplus auctions (rewarding governance owners).
 \end{itemize}
+
+\todo{How do we ensure nobody copies the protocol? \\
+Proposal: We put an NFT in our buffer and price module when minting, and use
+those NFTs' names as arguments to the vault's Plutus script. This keeps our
+vaults separate from anyone starting a different protocol.}
 
 \subsection{Buffer}
 
 The buffer will contain in its datum a map from timestamps to the stability fee
-set at that timestamp.
-The timestamp will be extracted from the transactions setting the stability fee
-as the beginning of the ``txInfoValidRange'' range, where the on-chain validator
-enforces this range to be less than $12$ hours long.
-The reason for this measure is to make sure that stability fee calculations are
-accurate even in vaults that haven't been updated for a long time.
+set at that time.
+We use a map to make the stability fee calculations as accurate as
+possible.\footnote{
+  Imagine you open a vault, take out a loan and then leave the vault alone for
+  two years.
+  Just before you pay back the loan, governance decides to increase the
+  stability fee.
+  We want to use the stability fee that was applicable to the two year period
+  when calculating your stability fee wherever possible, rather than
+  retro-actively increasing your debt.
+}. \\
+
+This means we have to figure out the time of execution of the transaction that
+changes the stability fee, within that transaction itself.
+We do this by setting the timestamp to be the beginning of the
+``txInfoValidRange'' range\footnote{
+  \url{https://playground.plutus.iohkdev.io/doc/haddock/plutus-ledger-api/html/Plutus-V1-Ledger-Contexts.html}},
+where the on-chain validator enforces this range to be less than $12$ hours
+long. \\
+
+In order to prevent datum overflow\footnote{
+  This means we want to prevent the datum from becoming too big}
+we limit the size of the map to $20$ data points.
+This means that any transaction that changes the stability fee, will both add a
+new entry to the map, and remove the oldest entry in case there are more than
+$20$ entries.
 
 \section{Tests}
 
