@@ -140,7 +140,7 @@ protect our users?}
 \subsubsection{Take out loan}
 
 As a user, I can take out a loan in dUSD if I have enough collateral.
-There is a minimum and maximum size for dUSD loans.
+There is a minimum size for dUSD loans, called the ``debt floor''.
 
 \subsubsection{Pay back loan}
 
@@ -160,8 +160,10 @@ In addition, if a vault becomes sick through a very temporary ADA crash, but
 recovers within an hour, there is no reason to liquidate. \\
 
 Any user can detect that a vault is in an unhealthy state, and buy part of the
-collateral in the vault at a $3\%$ discount compared to the market prices of
-both ADA and dUSD.
+collateral in the vault at an admin-set discount rate compared to the market
+prices of both ADA and dUSD.
+This discount rate is called the liquidation discount, and will initially be
+$3\%$.
 Let us go through an example to explain how liquidation works.
 When buying e.g. $100$ USD worth of ADA, the ADA is offered at a price of $97$
 USD worth of dUSD.
@@ -178,10 +180,11 @@ As time goes on, there are two options:
     The solution is dissolving the vault, and thereby the dUSD debt.
 \end{enumerate}
 
-In addition to the $3\%$ discount given to liquidators, the vault owner will be
-charged a $10\%$ liquidation fee for allowing his vault to become unhealthy.
-This means that only $90\%$ of the dUSD paid by the liquidators, is used to pay
-back debt, burning the rest.
+In addition to the liquidation discount given to liquidators, the vault owner
+will be charged a liquidation fee for allowing his vault to become unhealthy.
+This means that only a part of the dUSD paid by the liquidators ($1 - $ the
+liquidation fee), is used to pay back debt, burning the rest.
+The liquidation fee is initially set to $10\%$.
 
 \subsection{Buffer (TBD)}
 
@@ -266,8 +269,8 @@ Acceptance criteria:
   \item Users can deposit, withdraw, take out a loan and pay back a loan
     (through forms on the website), as long as the collateralization ratio
     doesn't drop below the liquidation ratio\footnote{
-      In the UX, the collateralization ratio is banned from dropping under the
-      minimum collateralization ratio.}
+      In the UX (frontend only!), the collateralization ratio is banned from
+      dropping under the minimum collateralization ratio.}
   \item Users cannot withdraw or take out a loan that drops their
     collateralization ratio below the liquidation ratio
   \item When going through a sequence of transactions, stability fees are
@@ -279,8 +282,9 @@ Acceptance criteria:
     state
   \item One can buy as much collateral as is needed to make the vault healthy
     again, and not more
-  \item During liquidation, collateral is bought at a $3\%$ discount compared to
-    the most current price from the price module
+  \item During liquidation, collateral is bought at discount compared to the
+    most current price from the price module, where the discount is the
+    liquidation discount (set by admin)
   \item $10\%$ of the dUSD paid by the liquidator, is burnt rather than used to
     pay back the debt. This liquidation fee is meant to disincentivize users
     from allowing their vaults to become sick.
@@ -293,8 +297,13 @@ Acceptance criteria:
 \todo{Is the list of requested information correct? Anything to be added,
 removed or updated?}
 
-\todo{How much is the minimum loan (per loan, not per vault) and maximum amount
+\todo{How much is the minimum loan (per vault, not per loan) and maximum amount
 of collateral?}
+
+\todo{Do we want to put a ceiling on the amount of debt someone can take out on
+one vault, at MVP?
+There are reasons to do this (see ``debt ceiling'' in the comments in this
+document) for multi-collateral systems.}
 
 \todo{How will we figure out from which UTXO in your wallet to take the ADA?}
 
