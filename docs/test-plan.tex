@@ -450,7 +450,12 @@ get executed. The only time-related thing we have access to (by default) is a
 time interval they were executed within. The second reason is that it is
 possible a vault wasn't updated for a long time, and then the system's stability
 fee changes, which can instantly change the debt amount substantially in
-practice.}
+practice. \\
+
+For the second point, we could store in the buffer a map from timestamp to
+stability fee, rather than just changing the stability fee.
+This would be a bit more complex to implement, since we need to prevent datum
+overflow as well.}
 
 \section{Tests}
 
