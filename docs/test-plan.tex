@@ -167,7 +167,24 @@ $3\%$.
 Let us go through an example to explain how liquidation works.
 When buying e.g. $100$ USD worth of ADA, the ADA is offered at a price of $97$
 USD worth of dUSD.
-Anyone can come in and buy a part of the ADA at this discounted exchange rate.
+Anyone can come in and buy a part of the ADA at this discounted exchange
+rate\footnote{
+  There are two reasons we allow liquidators to buy a part of the collateral,
+  rather than forcing them to buy all of it.
+  \begin{enumerate}
+    \item Not forcing liquidators to buy all collateral makes the system less
+      complex. Once a (possibly partial) liquidation has occured, the vault is
+      still just a vault. If the collateralization ratio is still too low, a
+      second person can come along and liquidate some more. If not, there's no
+      reason a second person should be able to liquidate further.
+    \item Forcing liquidators to buy all collateral would slow down liquidation
+      arbitrage, since it requires one liquidity arbitrageur to have enough dUSD
+      to buy all the collateral at once.
+      Liquidation arbitrage is something we want to stimulate.
+      It also unnecessarily assures punishing the vault owner very harshly.
+  \end{enumerate}
+}.
+
 As time goes on, there are two options:
 \begin{enumerate}
   \item By selling collateral at a discount, the collateralization ratio rises
