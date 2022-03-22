@@ -472,6 +472,10 @@ Note: The off-chain bot will combine the price feeds through two operations:
   \item When a dUSD loan gets paid back, the dUSD coins get burned in the vault.
     This means that the stability fee is burned as well, which drives up the
     dUSD price and allows for surplus auctions (rewarding governance owners).
+    Note that the burning of the stability fees isn't directly linked to an
+    equal amount of dUSD being minted in the buffer.
+    Instead they are linked indirectly, through the former driving up the dUSD
+    price and hence triggering surplus auctions.
 \end{itemize}
 
 \todo{How do we ensure nobody copies the protocol? \\
@@ -494,9 +498,9 @@ possible.\footnote{
   retro-actively increasing your debt.
 }. \\
 
-This means we have to figure out the time of execution of the transaction that
-changes the stability fee, within that transaction itself.
-We do this by setting the timestamp to be the beginning of the
+We put together this map by figuring out the time of execution of the
+transaction that changes the stability fee, within that transaction itself.
+This is done by setting the timestamp to be the beginning of the
 ``txInfoValidRange'' range\footnote{
   \url{https://playground.plutus.iohkdev.io/doc/haddock/plutus-ledger-api/html/Plutus-V1-Ledger-Contexts.html}},
 where the on-chain validator enforces this range to be less than $12$ hours
