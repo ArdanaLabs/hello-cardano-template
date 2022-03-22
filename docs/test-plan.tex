@@ -24,8 +24,10 @@ system are detailed in the section after that.
 Finally, the ``Tests'' section provide a non-exhaustive list of the way we plan
 to falsify whether we should deploy. \\
 
-Note: Every subsection that contain `TBD' in the title is not fully agreed upon
-yet.
+Note: Every subsection that contain `TBD' (``to be determined'') in the title is
+not fully agreed upon yet.
+Every subsection containing `TBC' (``to be confirmed'', by Ryan) in the title is
+mostly agreed upon, but still requires last confirmation.
 The other sections are considered law.
 
 \section{Interactions}
@@ -273,7 +275,7 @@ Price feed bot:
 %     exchanges from making the OSM's result crash and many vaults liquidate.)
 % \end{itemize}
 % 
-\subsection{Vault}
+\subsection{Vault (TBC)}
 
 Each user should have access to a website at "www.ardana-vaults.com". This
 website must be able to connect to their wallet to find out who they are and
@@ -445,7 +447,7 @@ Note: The off-chain bot will combine the price feeds through two operations:
 % \todo{Should the price oracles and the OSM all be combined into one UTXO, or
 % be split into separate UTXOs?}
 % 
-\subsection{Vault}
+\subsection{Vault (TBC)}
 
 \begin{itemize}
   \item On-chain code: Plutarch
@@ -483,7 +485,7 @@ Proposal: We put an NFT in our buffer and price module when minting, and use
 those NFTs' names as arguments to the vault's Plutus script. This keeps our
 vaults separate from anyone starting a different protocol.}
 
-\subsection{Buffer}
+\subsection{Buffer (TBC)}
 
 The buffer will contain in its datum a map from timestamps to the stability fee
 set at that time.
