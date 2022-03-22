@@ -86,7 +86,6 @@ hexit = element $ ['0' .. '9'] ++ ['a' .. 'f']
 maybeOf :: Gen a -> Gen (Maybe a)
 maybeOf g = choice [pure Nothing, Just <$> g]
 
-
 integer :: Gen Integer
 integer = fromIntegral <$> int (linear (-1_000_000) 1_000_000)
 
@@ -107,4 +106,3 @@ datum = choice [datumOf integer, datumOf value]
 
 datumOf :: ToData a => Gen a -> Gen Datum
 datumOf g = Datum . toBuiltinData <$> g
-

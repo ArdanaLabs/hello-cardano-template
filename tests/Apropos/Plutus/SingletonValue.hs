@@ -9,7 +9,7 @@ import Apropos.Plutus.AssetClass (AssetClassProp)
 import Apropos.Plutus.Integer (IntegerProp)
 import Control.Lens
 import Control.Monad (join)
-import GHC.Generics ( Generic )
+import GHC.Generics (Generic)
 import Plutus.V1.Ledger.Value (AssetClass)
 
 import Test.Syd
@@ -21,7 +21,7 @@ data SingletonValueProp
     = AC AssetClassProp
     | Amt IntegerProp
     deriving stock (Eq, Ord, Show, Generic)
-    deriving anyclass Enumerable
+    deriving anyclass (Enumerable)
 
 instance LogicalModel SingletonValueProp where
     logic = (AC <$> logic) :&&: (Amt <$> logic)

@@ -15,9 +15,9 @@ import Test.Syd
 main :: IO ()
 main = sydTest $
     describe "plutus" $ do
-      AssetClass.spec
-      Integer.spec
-      SingletonValue.spec
-      Value.spec
-      Vault.spec
-      Auction.spec
+        AssetClass.spec
+        Integer.spec
+        SingletonValue.spec
+        Value.spec
+        Vault.spec
+        Auction.spec

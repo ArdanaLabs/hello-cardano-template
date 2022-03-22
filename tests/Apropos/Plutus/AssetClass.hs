@@ -11,8 +11,8 @@ import Apropos
 import Control.Monad (replicateM)
 import Data.Maybe (mapMaybe)
 import Data.String
-import Plutus.V1.Ledger.Value
 import GHC.Generics
+import Plutus.V1.Ledger.Value
 import Test.Syd
 import Test.Syd.Hedgehog
 
@@ -23,7 +23,7 @@ data AssetClassProp
     | IsLiquidity
     | IsOther
     deriving stock (Eq, Ord, Enum, Show, Bounded, Generic)
-    deriving anyclass Enumerable
+    deriving anyclass (Enumerable)
 
 specialAC :: AssetClassProp -> Maybe AssetClass
 specialAC IsAda = Just ada
@@ -44,7 +44,6 @@ dusd = AssetClass ("1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 liquidityAC :: AssetClass
 liquidityAC = AssetClass ("2aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-
 
 specialTokens :: [AssetClass]
 specialTokens = mapMaybe specialAC enumerated
@@ -95,8 +94,8 @@ instance HasParameterisedGenerator AssetClassProp AssetClass where
 spec :: Spec
 spec = do
     describe "assetClassGenSelfTest" $
-      mapM_ fromHedgehogGroup $
-        permutationGeneratorSelfTest
-          True
-          (\(_ :: Morphism AssetClassProp assetClassGenSelfTest) -> True)
-          baseGen
+        mapM_ fromHedgehogGroup $
+            permutationGeneratorSelfTest
+                True
+                (\(_ :: Morphism AssetClassProp assetClassGenSelfTest) -> True)
+                baseGen

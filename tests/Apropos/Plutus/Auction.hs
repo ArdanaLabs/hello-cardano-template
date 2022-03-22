@@ -1,10 +1,10 @@
 module Apropos.Plutus.Auction (spec) where
 
 import Apropos
+import GHC.Generics (Generic)
 import Gen
 import Plutus.V1.Ledger.Api
 import Plutus.V1.Ledger.Value (AssetClass, assetClassValue)
-import GHC.Generics ( Generic )
 import Test.Syd
 import Test.Syd.Hedgehog (fromHedgehogGroup)
 
@@ -17,8 +17,7 @@ data AuctionProp
     = Valid
     -- TODO real properties
     deriving stock (Eq, Ord, Enum, Show, Bounded, Generic)
-    deriving anyclass Enumerable
-
+    deriving anyclass (Enumerable)
 
 data AuctionModel = AuctionModel
     { auction :: TxOut

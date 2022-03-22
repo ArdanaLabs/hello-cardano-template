@@ -18,7 +18,7 @@ import Apropos.Plutus.SingletonValue (
  )
 
 import Data.List (sort)
-import GHC.Generics ( Generic )
+import GHC.Generics (Generic)
 
 import Test.Syd
 import Test.Syd.Hedgehog
@@ -30,7 +30,7 @@ data MultiValueProp
     | HasSomeDana
     | HasSomeJunk
     deriving stock (Eq, Ord, Show, Enum, Bounded, Generic)
-    deriving anyclass Enumerable
+    deriving anyclass (Enumerable)
 
 instance LogicalModel MultiValueProp where
     logic = Yes
@@ -45,7 +45,7 @@ propsFor HasSomeDana = AnyElem (All [Var $ AC IsDana, Var $ Amt IsPositive])
 propsFor HasSomeJunk = AnyElem (Var $ AC IsOther)
 
 instance HasLogicalModel MultiValueProp MultiValue where
-    satisfiesProperty (propsFor -> AnyElem  props) = any $ satisfiesExpression props
+    satisfiesProperty (propsFor -> AnyElem props) = any $ satisfiesExpression props
     satisfiesProperty (propsFor -> AllElems props) = all $ satisfiesExpression props
 
 instance HasPermutationGenerator MultiValueProp MultiValue where
@@ -60,16 +60,16 @@ instance HasPermutationGenerator MultiValueProp MultiValue where
             }
         | p <- enumerated
         , AnyElem props <- pure $ propsFor p
-        ] ++
-        [ Morphism
-          { name = "Remove " ++ show p
-          , match = Var p
-          , contract = remove p
-          , morphism = return . sort . filter (not . satisfiesExpression props)
-          }
-         | p <- enumerated
-         , AnyElem props <- pure $ propsFor p
-         ]
+        ]
+            ++ [ Morphism
+                { name = "Remove " ++ show p
+                , match = Var p
+                , contract = remove p
+                , morphism = return . sort . filter (not . satisfiesExpression props)
+                }
+               | p <- enumerated
+               , AnyElem props <- pure $ propsFor p
+               ]
 
 instance HasParameterisedGenerator MultiValueProp MultiValue where
     parameterisedGenerator = buildGen $ pure []
