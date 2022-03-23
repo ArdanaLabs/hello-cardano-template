@@ -227,7 +227,7 @@ The goal is to put more dUSD on the open market, increasing the supply and
 therefore decreasing its price, while taking DANA tokens off the market,
 increasing their price and rewarding governance holders. \\
 
-Anyone can trigger a surplus auction when the dUSD price module claim that the
+Anyone can trigger a surplus auction when the dUSD price module claims that the
 dUSD price lies above $1.01$ USD.
 
 \subsubsection{Trigger debt auction}
@@ -240,7 +240,7 @@ therefore increasing its price.
 The result is that DANA tokens are put back on the market, decreasing their
 price. \\
 
-Anyone can trigger a debt auction when the dUSD price module claim that the
+Anyone can trigger a debt auction when the dUSD price module claims that the
 dUSD price lies below $0.99$ USD.
 
 \subsubsection{Set liquidation discount}
@@ -261,7 +261,11 @@ on the Ardana Tenant.
 \todo{Do we want the liquidation ratio to be changeable within the protocol, or
 only when the protocol is updated? \\
 Proposal: We do not want it to be changeable.
-It would give admin/governance a dangerous amount of power, and bad incentives.}
+It would give admin/governance a dangerous amount of power, and bad incentives.
+In addition, the liquidation ratio should only change as the collateral types
+(ADA) become more or less stable, which is a process that takes many months,
+whereas the dUSD protocol will be updated regularly in the beginning.
+This decision should be reviewed at each protocol update.}
 
 \subsubsection{Set stability fee}
 
@@ -367,6 +371,10 @@ Acceptance criteria:
 %         delay during a price crash, issuing a massive amount of debt thus
 %         cashing out on worthless collateral
 %     \end{enumerate}}
+% 
+% Debt ceilings are not useful against OSM timing attacks, since users can
+% simply create multiple vaults.
+
   \item Users cannot withdraw or take out a loan that drops their
     collateralization ratio below the liquidation ratio
   \item When going through a sequence of transactions, stability fees are
@@ -396,11 +404,6 @@ removed or updated?}
 \todo{How much is the minimum loan (per vault, not per loan)? \\
 Proposal: 100 dUSD.}
 
-\todo{Do we want to put a ceiling on the amount of debt someone can take out on
-one vault, at MVP?
-There are reasons to do this (see ``debt ceiling'' in the comments in this
-document) for multi-collateral systems.}
-
 \todo{Frontend: How will we figure out from which UTXO in your wallet to take
 the ADA?}
 
@@ -418,7 +421,9 @@ the ADA?}
     overcorrecting the dUSD price.
   \item The starting amount of DANA in the buffer is enough to sustain the
     protocol through hardships with high probability
-    \todo{What does this mean in practice?}
+    \todo{What does this mean in practice? \\
+    Proposal: Put in a decent amount at initialization, and set up an endpoint
+    in the validator to add more later on.}
   \item The auctions are sized such that the dUSD price is controlled, i.e. it
     is eventually consistent with USD.
     This means that given any real world change in supply and demand, the dUSD
@@ -600,9 +605,22 @@ keys as the price module. \\
 Note: However we implement the auctions, we might want to prevent them from
 updating the buffer's UTXO, to avoid resource contention? \\
 
-\todo{Should the auctions be real auctions, discounted sales based on dUSD and
-DANA price modules or OSMs, or should we have a list of trusted CEX/DEXes where
-the transaction that triggers the auction, would sell the coins?}
+\todo{How should the surplus/debt ``auctions'' be implemented?}
+
+\begin{enumerate}
+  \item Classic auction: Highest bid in X blocks wins
+  \item Use a DANA price module to determine the market exchange rate between
+    dUSD and DANA, and put the dUSD/DANA to sell into a UTXO where anyone can
+    buy it instantly at a $2\%$ discount compared to that market exchange rate
+  \item Only allow the dUSD/DANA exchange to happen on one of a number of
+    trusted DEXes, incentivizing the broker with $1\%$ of the profits
+\end{enumerate}
+
+The main advantage of the price modules option, is that we always sell at a
+trusted price, without allowing as many opportunities for manipulations.
+(Classic auctions are vulnerable for manipulations through resource contention,
+DEXes through executing big transactions, e.g. sandwich attacks.)
+The trusted DEXes would be the fastest solution.
 
 \section{Tests}
 
