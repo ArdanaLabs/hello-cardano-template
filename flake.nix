@@ -1,17 +1,11 @@
 {
   description = "dUSD";
   inputs = {
-    danalib.url = "github:ardanalabs/danalib";
     haskell-nix.url = "github:input-output-hk/haskell.nix";
     nixpkgs.follows = "haskell-nix/nixpkgs-unstable";
     haskell-nix.inputs.nixpkgs.follows = "haskell-nix/nixpkgs-2105";
     plutus.url = "github:input-output-hk/plutus";
-    # used for libsodium-vrf
-    flake-compat-ci.url = "github:hercules-ci/flake-compat-ci";
-    flake-compat = {
-      url = "github:edolstra/flake-compat";
-      flake = false;
-    };
+    #   used for libsodium-vrf
   };
   outputs =
     {
@@ -19,14 +13,11 @@
       nixpkgs,
       haskell-nix,
       plutus,
-      flake-compat,
-      flake-compat-ci,
-      danalib,
     }
     @ inputs:
     let
       # System types to support.
-      supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
+      supportedSystems = [ "x86_64-linux" ]; #"aarch64-linux" ];
 
       # Helper function to generate an attrset '{ x86_64-linux = f "x86_64-linux"; ... }'.
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
@@ -101,11 +92,6 @@
         };
     in
       {
-        ciNix = flake-compat-ci.lib.recurseIntoFlakeWith {
-          flake = self;
-          systems = [ "x86_64-linux" ];
-        };
-
         project = forAllSystems projectFor;
         flake = forAllSystems (system: (projectFor system).flake { });
 
@@ -136,7 +122,7 @@
         );
 
         devShell = forAllSystems (system: self.flake.${system}.devShell);
-
+        defaultPackage = forAllSystems (system: self.packages.${system}."dUSD:test:tests");
         apps = forAllSystems (system: let
           pkgs = (forAllSystems nixpkgsFor)."${system}";
         in
