@@ -99,6 +99,26 @@
         "type": "github"
       }
     },
+    "danalib": {
+      "inputs": {
+        "flake-compat": "flake-compat",
+        "flake-compat-ci": "flake-compat-ci",
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1646800070,
+        "narHash": "sha256-L0lIKU1lc4PTyrUOH0mDc+NHe4DGxhwxmnTdexypKN4=",
+        "owner": "ardanalabs",
+        "repo": "danalib",
+        "rev": "36498e9fc64ed7e879f067dd0c0e5497a525f8e5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ardanalabs",
+        "repo": "danalib",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -127,6 +147,37 @@
       "original": {
         "owner": "hercules-ci",
         "repo": "flake-compat-ci",
+        "type": "github"
+      }
+    },
+    "flake-compat-ci_2": {
+      "locked": {
+        "lastModified": 1646664117,
+        "narHash": "sha256-AX2VewPcS9eRsoirVHfnk07MHAOH6CTDiD10XtRaZbk=",
+        "owner": "hercules-ci",
+        "repo": "flake-compat-ci",
+        "rev": "e588637b2eec4261ed0d36335c83a117f2744dea",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-compat-ci",
+        "type": "github"
+      }
+    },
+    "flake-compat_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1641205782,
+        "narHash": "sha256-4jY7RCWUoZ9cKD8co0/4tFARpWB+57+r1bLLvXNJliY=",
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "rev": "b7547d3eed6f32d06102ead8991ec52ab0a4f1a7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "edolstra",
+        "repo": "flake-compat",
         "type": "github"
       }
     },
@@ -329,18 +380,17 @@
       }
     },
     "nixpkgs": {
-      "flake": false,
       "locked": {
-        "lastModified": 1645493675,
-        "narHash": "sha256-9xundbZQbhFodsQRh6QMN1GeSXfo3y/5NL0CZcJULz0=",
-        "owner": "NixOS",
+        "lastModified": 1639161226,
+        "narHash": "sha256-75Y08ynJDTq6HHGIF+8IADBJSVip0UyWQH7jqSFnRR8=",
+        "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "74b10859829153d5c5d50f7c77b86763759e8654",
+        "rev": "573095944e7c1d58d30fc679c81af63668b54056",
         "type": "github"
       },
       "original": {
-        "owner": "NixOS",
-        "ref": "nixpkgs-unstable",
+        "owner": "nixos",
+        "ref": "nixos-21.11",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -409,6 +459,23 @@
         "type": "github"
       }
     },
+    "nixpkgs_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1645493675,
+        "narHash": "sha256-9xundbZQbhFodsQRh6QMN1GeSXfo3y/5NL0CZcJULz0=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "74b10859829153d5c5d50f7c77b86763759e8654",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "old-ghc-nix": {
       "flake": false,
       "locked": {
@@ -434,7 +501,7 @@
         "haskell-language-server": "haskell-language-server",
         "haskell-nix": "haskell-nix_2",
         "iohk-nix": "iohk-nix",
-        "nixpkgs": "nixpkgs",
+        "nixpkgs": "nixpkgs_2",
         "pre-commit-hooks-nix": "pre-commit-hooks-nix",
         "sphinxcontrib-haddock": "sphinxcontrib-haddock",
         "stackage-nix": "stackage-nix"
@@ -471,8 +538,9 @@
     },
     "root": {
       "inputs": {
-        "flake-compat": "flake-compat",
-        "flake-compat-ci": "flake-compat-ci",
+        "danalib": "danalib",
+        "flake-compat": "flake-compat_2",
+        "flake-compat-ci": "flake-compat-ci_2",
         "haskell-nix": "haskell-nix",
         "nixpkgs": [
           "haskell-nix",
