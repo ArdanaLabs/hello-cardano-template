@@ -1,23 +1,29 @@
-module Apropos.Plutus.Vault (spec) where
+module Apropos.Plutus.Vault (
+  spec,
+  VaultProp,
+  makeVaultDatum,
+                            ) where
 
 import Apropos
-import Gen
 
-import Apropos.Plutus.AssetClass (ada, dusd)
-import Apropos.Plutus.SingletonValue (SingletonValue)
-import Control.Monad (when)
-import Data.Ratio
+import Apropos.Plutus.AssetClass (AssetClassProp(..))
+import Apropos.Plutus.SingletonValue (SingletonValue,SingletonValueProp(..))
+import Apropos.Plutus.Integer (IntegerProp(..))
 import GHC.Generics (Generic)
 import Plutus.V1.Ledger.Api (
     Datum (..),
-    DatumHash,
-    TxOut (..),
-    toBuiltinData,
  )
-import Plutus.V1.Ledger.Value (Value, assetClassValue)
+import Plutus.V1.Ledger.Value (AssetClass(..))
+import Control.Lens (lens)
 
 import Test.Syd
 import Test.Syd.Hedgehog (fromHedgehogGroup)
+
+import Plutarch ( (#), PCon(pcon) )
+import Plutarch.Lift ( pconstant, plift )
+import Plutarch.Builtin
+    ( PIsData(pdata), pforgetData, ppairDataBuiltin )
+import Plutarch.Api.V1 ( PDatum(PDatum) )
 
 spec :: Spec
 spec = do
@@ -25,99 +31,69 @@ spec = do
         fromHedgehogGroup $ runGeneratorTestsWhere (Apropos :: VaultModel :+ VaultProp) "generator" Yes
 
 data VaultModel = VaultModel
-    { colatoral :: SingletonValue
+    { collateral :: SingletonValue
     , debt :: SingletonValue
-    , vault :: TxOut
-    , datumEntry :: (Datum, DatumHash)
-    , balance :: Value
+    -- TODO add address model
     }
     deriving stock (Eq, Show)
 
-liquidityRatio :: Rational
-liquidityRatio = 3 % 2
-
-makeVaultDatum :: SingletonValue -> SingletonValue -> Datum
-makeVaultDatum colatoral debt = Datum $ toBuiltinData (colatoral, debt)
-
--- TODO real hashes
-hashDatum :: Datum -> DatumHash
-hashDatum _ = "aa"
-
 data VaultProp
-    = HasCorrectDatum
-    | CanLiquidate
-    deriving stock (Eq, Ord, Enum, Show, Bounded, Generic)
+    = DebtProp SingletonValueProp
+    | CollateralProp SingletonValueProp
+    deriving stock (Eq, Ord, Show, Generic)
     deriving anyclass (Enumerable)
 
 instance LogicalModel VaultProp where
-    logic = Yes
+    logic = abstractionLogic @VaultModel
+      -- logic for performance
+      :&&: Var (CollateralProp (AC IsAda))
+      :&&: Var (DebtProp (AC IsDUSD))
+      :&&: Not (Var (CollateralProp (Amt IsNegative)))
+      :&&: Not (Var (DebtProp (Amt IsNegative)))
 
 instance HasLogicalModel VaultProp VaultModel where
-    satisfiesProperty HasCorrectDatum vm = fst (datumEntry vm) == makeVaultDatum (colatoral vm) (debt vm)
-    satisfiesProperty CanLiquidate vm = fromIntegral (snd (colatoral vm)) < liquidityRatio * fromIntegral (snd (debt vm))
+    satisfiesProperty (DebtProp p) vm = satisfiesProperty p (debt vm)
+    satisfiesProperty (CollateralProp p) vm = satisfiesProperty p (collateral vm)
+
+instance HasAbstractions VaultProp VaultModel where
+  abstractions =
+    [ WrapAbs $
+      ProductAbstraction
+        { abstractionName = "debt"
+        , propertyAbstraction = abstractsProperties DebtProp
+        , productModelAbstraction = lens debt (\vm debt' -> vm{debt=debt'})
+        }
+    , WrapAbs $
+      ProductAbstraction
+        { abstractionName = "collateral"
+        , propertyAbstraction = abstractsProperties CollateralProp
+        , productModelAbstraction = lens collateral (\vm collateral' -> vm{collateral=collateral'})
+        }
+    ]
 
 instance HasPermutationGenerator VaultProp VaultModel where
-    generators =
-        [ Morphism
-            { name = "Fix Datum"
-            , match = Not $ Var HasCorrectDatum
-            , contract = add HasCorrectDatum
-            , morphism = \vm -> do
-                let vaultDatum = makeVaultDatum (colatoral vm) (debt vm)
-                let vaultDatumHash = hashDatum vaultDatum
-                pure $ vm{datumEntry = (vaultDatum, vaultDatumHash), vault = (vault vm){txOutDatumHash = Just vaultDatumHash}}
-            }
-        , Morphism
-            { name = "Break Datum"
-            , match = Var HasCorrectDatum
-            , contract = remove HasCorrectDatum
-            , morphism = \vm -> do
-                let vaultDatum = makeVaultDatum (colatoral vm) (debt vm)
-                wrongDatum <- genFilter (/= vaultDatum) datum
-                let wrongDatumHash = hashDatum wrongDatum
-                pure $ vm{datumEntry = (wrongDatum, wrongDatumHash), vault = (vault vm){txOutDatumHash = Just wrongDatumHash}}
-            }
-        , Morphism
-            { name = "increase debt"
-            , match = Not $ Var CanLiquidate
-            , contract = add CanLiquidate >> remove HasCorrectDatum
-            , morphism = \vm -> do
-                -- TODO do these morphisms need to use fromIntegral?
-                let minDebt = fromIntegral $ 3 * snd (colatoral vm) `div` 2 + 1
-                debt' <- int (linear minDebt (max 1_000_00 (2 * minDebt)))
-                let vm' = vm{debt = (fst $ debt vm, fromIntegral debt')}
-                when (satisfiesProperty HasCorrectDatum vm') retry
-                pure vm'
-            }
-        , Morphism
-            { name = "reduce debt"
-            , match = Var CanLiquidate
-            , contract = remove CanLiquidate >> remove HasCorrectDatum
-            , morphism = \vm -> do
-                let maxDebt = fromIntegral $ 3 * snd (colatoral vm) `div` 2
-                debt' <- int (linear 0 maxDebt)
-                let vm' = vm{debt = (fst $ debt vm, fromIntegral debt')}
-                when (satisfiesProperty HasCorrectDatum vm') retry
-                pure vm'
-            }
-        ]
+  generators = abstractionMorphisms
 
 instance HasParameterisedGenerator VaultProp VaultModel where
     parameterisedGenerator = buildGen baseGen
 
 baseGen :: Gen VaultModel
-baseGen = do
-    let colatoral = (ada, 0)
-        debt = (dusd, 0)
-        vaultDatum = makeVaultDatum colatoral debt
-    adr <- address
-    let val = assetClassValue ada 0
-    let vault = TxOut adr val (Just $ hashDatum vaultDatum)
-    return $
-        VaultModel
-            { colatoral = colatoral
-            , debt = debt
-            , balance = mempty
-            , vault = vault
-            , datumEntry = (vaultDatum, hashDatum vaultDatum)
-            }
+baseGen = VaultModel
+  <$> genSatisfying (Not (Var (Amt IsNegative)) :&&: Var (AC IsAda))
+  <*> genSatisfying (Not (Var (Amt IsNegative)) :&&: Var (AC IsDUSD))
+
+makeVaultDatum :: VaultModel -> Datum
+makeVaultDatum VaultModel{collateral=(AssetClass (collateralCs,collateralTn),collateralAmt),debt=(AssetClass (debtCs,debtTn),debtAmt)} =
+    -- TODO we may want to change the way the vault datum is encoded
+    plift $ pcon $ PDatum $ pforgetData $ pdata $
+      ppairDataBuiltin
+        # pdata ( ppairDataBuiltin
+            # pdata (ppairDataBuiltin # pdata (pconstant collateralCs) # pdata (pconstant collateralTn))
+            # pdata (pconstant collateralAmt)
+          )
+        # pdata ( ppairDataBuiltin
+            # pdata (ppairDataBuiltin # pdata (pconstant debtCs) # pdata (pconstant debtTn))
+            # pdata (pconstant debtAmt)
+          )
+
+-- TODO makeVaultTxout

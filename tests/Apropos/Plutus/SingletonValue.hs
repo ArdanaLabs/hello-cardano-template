@@ -33,16 +33,16 @@ instance HasLogicalModel SingletonValueProp SingletonValue where
 instance HasPermutationGenerator SingletonValueProp SingletonValue where
     generators =
         let l =
-                Abstraction
+                ProductAbstraction
                     { abstractionName = "assetClass"
                     , propertyAbstraction = abstractsProperties AC
-                    , modelAbstraction = _1
+                    , productModelAbstraction = _1
                     }
             r =
-                Abstraction
+                ProductAbstraction
                     { abstractionName = "amt"
                     , propertyAbstraction = abstractsProperties Amt
-                    , modelAbstraction = _2
+                    , productModelAbstraction = _2
                     }
          in join [abstract l <$> generators, abstract r <$> generators]
 
