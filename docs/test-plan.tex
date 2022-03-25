@@ -139,10 +139,13 @@ In the frontend, a "minimum collateralization ratio" will be built in that
 prevents users from transacting with their vault in such a way that their
 collateralization ratio drops below the minimum collateralization ratio.
 
-\todo{Do we want a minimum collateralization ratio built into the frontend, to
-protect our users? \\
-Proposal: Yes. There are regular reports of people starting to use the MakerDAO
-system as experimentation, and losing thousands of dollars on day one.}
+\todo{Do we want a minimum collateralization ratio to protect our users? Where
+will we implement it? \\
+Proposal: Yes, since there are regular reports of people starting to use the
+MakerDAO system as experimentation, and losing thousands of dollars on day one.
+We will implement this in the frontend, not on-chain or off-chain.
+This allows anyone to circumvent the child safety lock rather easily by using
+our off-chain PAB without going through our frontend.}
 
 \subsubsection{Take out loan}
 
@@ -206,27 +209,80 @@ As time goes on, there are two options:
 
 In addition to the liquidation discount given to liquidators, the vault owner
 will be charged a liquidation fee for allowing his vault to become unhealthy.
-This means that only a part of the dUSD paid by the liquidators ($1 - $ the
-liquidation fee), is used to pay back debt, burning the rest.
 The liquidation fee is initially set to $10\%$.
+This means that only a part of the dUSD paid by the liquidators (in the initial
+setup, $90\%$), is used to pay back debt, burning the rest.
 
-\subsection{Buffer (TBD)}
+\subsection{Buffer}
 
-All profits will be kept in a UTXO referred to as the buffer.
-In addition to holding the profits, the buffer will be responsible for setting
-the protocol-wide parameters, and for enacting debt and surplus auctions.
+The buffer is a UTXO responsible for setting the protocol-wide parameters,
+holding the protocol's profits and launching surplus and debt auctions.
 
-\subsubsection{Trigger surplus auction (buy back dana)}
+\subsubsection{Trigger surplus auction (buy back DANA)}
+
+A surplus auction is an auction where the buffer mints a certain amount of dUSD,
+and sells it off in exchange for DANA tokens.
+The DANA tokens are stored in the buffer.
+The goal is to put more dUSD on the open market, increasing the supply and
+therefore decreasing its price, while taking DANA tokens off the market,
+increasing their price and rewarding governance holders. \\
+
+Anyone can trigger a surplus auction when the dUSD price module claims that the
+dUSD price lies above $1.01$ USD.
 
 \subsubsection{Trigger debt auction}
 
+A debt auction is the opposite of a surplus auction:
+It is an auction where the buffer sells some of the DANA tokens it stores in
+exchange for dUSD, and burns the dUSD.
+The goal is to take some dUSD off the open market, decreasing the supply and
+therefore increasing its price.
+The result is that DANA tokens are put back on the market, decreasing their
+price. \\
+
+Anyone can trigger a debt auction when the dUSD price module claims that the
+dUSD price lies below $0.99$ USD.
+
+\subsubsection{Set liquidation discount}
+
+The admin user can set the liquidation discount, through running a `curl'
+command on the Ardana Tenant.
+
 \subsubsection{Set liquidation fee}
+
+The admin user can set the liquidation fee, through running a `curl' command on
+the Ardana Tenant.
 
 \subsubsection{Set liquidation ratio}
 
+The admin user can set the liquidation ratio, through running a `curl' command
+on the Ardana Tenant.
+
+\todo{Do we want the liquidation ratio to be changeable within the protocol, or
+only when the protocol is updated? \\
+Proposal: We do not want it to be changeable.
+It would give admin/governance a dangerous amount of power, and bad incentives.
+In addition, the liquidation ratio should only change as the collateral types
+(ADA) become more or less stable, which is a process that takes many months,
+whereas the dUSD protocol will be updated regularly in the beginning.
+This decision should be reviewed at each protocol update.}
+
 \subsubsection{Set stability fee}
 
+The admin user can set the stability fee (in percentage per year), through
+running a `curl' command on the Ardana Tenant.
+
 \subsubsection{Set debt floor}
+
+The admin user can set the debt floor (in dUSD), through running a `curl'
+command on the Ardana Tenant.
+
+\subsection{Update mechanism for the protocol (TBD)}
+
+One important acceptance criterium is that the protocol can be updated without
+requiring users to update their vaults or dUSD becoming a new currency.
+
+Any updates to the protocol will be decided on by admin, and later governance.
 
 \section{Acceptance criteria}
 
@@ -315,6 +371,10 @@ Acceptance criteria:
 %         delay during a price crash, issuing a massive amount of debt thus
 %         cashing out on worthless collateral
 %     \end{enumerate}}
+% 
+% Debt ceilings are not useful against OSM timing attacks, since users can
+% simply create multiple vaults.
+
   \item Users cannot withdraw or take out a loan that drops their
     collateralization ratio below the liquidation ratio
   \item When going through a sequence of transactions, stability fees are
@@ -341,42 +401,46 @@ Acceptance criteria:
 \todo{Is the list of requested information correct? Anything to be added,
 removed or updated?}
 
-\todo{How much is the minimum loan (per vault, not per loan) and maximum amount
-of collateral?}
+\todo{How much is the minimum loan (per vault, not per loan)? \\
+Proposal: 100 dUSD.}
 
-\todo{Do we want to put a ceiling on the amount of debt someone can take out on
-one vault, at MVP?
-There are reasons to do this (see ``debt ceiling'' in the comments in this
-document) for multi-collateral systems.}
-
-\todo{How will we figure out from which UTXO in your wallet to take the ADA?}
+\todo{Frontend: How will we figure out from which UTXO in your wallet to take
+the ADA?}
 
 \todo{What should the liquidation ratio be?}
 
 \todo{What should the minimum collateralization ratio be?}
 
-\subsection{Buffer (TBD)}
+\subsection{Buffer (TBC)}
 
-One important acceptance criterium is that the protocol can be updated without
-requiring users to update their vaults or dUSD becoming a new currency.
+\begin{itemize}
+  \item Anyone can trigger a surplus or debt auction when the dUSD price
+    deviates from USD by more than $1\%$
+  \item When auctions can be triggered, they are triggered within minutes.
+    Auctions cannot be triggered more than once per hour, to prevent
+    overcorrecting the dUSD price.
+  \item The starting amount of DANA in the buffer is enough to sustain the
+    protocol through hardships with high probability
+    \todo{What does this mean in practice? \\
+    Proposal: Put in a decent amount at initialization, and set up an endpoint
+    in the validator to add more later on.}
+  \item The auctions are sized such that the dUSD price is controlled, i.e. it
+    is eventually consistent with USD.
+    This means that given any real world change in supply and demand, the dUSD
+    price eventually converges back to within $1\%$ of USD.
+    \todo{Can we somehow define ``and it does this without overcorrections'' in
+    this acceptance criterium?
+    I.e. we want to make sure that no auctions get triggered which bring the
+    price to the other side of the USD value.}
+  \item Admin and only admin can set the protocol-wide parameters (stability
+    fee, liquidation discount, liquidation fee, liquidation ratio and debt
+    floor)
+  \item If the protocol-wide parameters are changed, this change is immediately
+    and correctly seen in liquidations and when taking out loans
+  % Comment for Version 2: Add debt ceiling to the protocol-wide parameters
+\end{itemize}
 
-Any updates to the protocol will be decided on by admin, and later governance.
-
-\subsubsection{Trigger surplus auction (buy back dana)}
-
-\subsubsection{Trigger debt auction}
-
-\subsubsection{Set liquidation fee}
-
-\subsubsection{Set liquidation ratio}
-
-\subsubsection{Set stability fee}
-
-\subsubsection{Set debt floor}
-
-% Comment for Version 2:
-% \subsubsection{Set debt ceiling}
-
+\subsection{Update mechanism for the protocol (TBD)}
 
 \section{Implementation details}
 
@@ -407,7 +471,14 @@ Price module:
   \item The on-chain code will be written in Plutarch
   \item The off-chain code will be built as a PAB
   \item The datum will contain a map from timestamps (in POSIX time) to price
-    values, and three admin public keys
+    values
+  \item The script address will be dependent on three admin public keys
+    \todo{Will these admin keys be updatable? \\
+    Proposal: No. Can only be updated when the protocol is updated.
+    That should be often enough for all practical purposes, and avoids having to
+    write more code as well as avoiding the possibility of certain
+    vulnerabilities. This decision can be enforced by using the keys to
+    determine the script address, rather than putting them into the datum.}
 \end{itemize}
 
 Note: The off-chain bot will combine the price feeds through two operations:
@@ -483,7 +554,12 @@ Note: The off-chain bot will combine the price feeds through two operations:
 \todo{How do we ensure nobody copies the protocol? \\
 Proposal: We put an NFT in our buffer and price module when minting, and use
 those NFTs' names as arguments to the vault's Plutus script. This keeps our
-vaults separate from anyone starting a different protocol.}
+vaults separate from anyone starting a different protocol. \\
+In addition, we can make it mandatory to put a certain number of DANA tokens
+into the buffer at creation.}
+
+Note: The frontend code will set the minimum collateralization ratio, which will
+be adjustable by Ardana itself.
 
 \subsection{Buffer (TBC)}
 
@@ -513,7 +589,38 @@ In order to prevent datum overflow\footnote{
 we limit the size of the map to $20$ data points.
 This means that any transaction that changes the stability fee, will both add a
 new entry to the map, and remove the oldest entry in case there are more than
-$20$ entries.
+$20$ entries. \\
+
+The buffer will be a UTXO that includes in its datum the following:
+\begin{itemize}
+  \item Map from timestamps to stability fees
+  \item Liquidation discount
+  \item Liquidation fee
+  \item Liquidation ratio
+  \item Debt floor
+\end{itemize}
+The buffer's script address will be dependent on the same three admin public
+keys as the price module. \\
+
+Note: However we implement the auctions, we might want to prevent them from
+updating the buffer's UTXO, to avoid resource contention? \\
+
+\todo{How should the surplus/debt ``auctions'' be implemented?}
+
+\begin{enumerate}
+  \item Classic auction: Highest bid in X blocks wins
+  \item Use a DANA price module to determine the market exchange rate between
+    dUSD and DANA, and put the dUSD/DANA to sell into a UTXO where anyone can
+    buy it instantly at a $2\%$ discount compared to that market exchange rate
+  \item Only allow the dUSD/DANA exchange to happen on one of a number of
+    trusted DEXes, incentivizing the broker with $1\%$ of the profits
+\end{enumerate}
+
+The main advantage of the price modules option, is that we always sell at a
+trusted price, without allowing as many opportunities for manipulations.
+(Classic auctions are vulnerable for manipulations through resource contention,
+DEXes through executing big transactions, e.g. sandwich attacks.)
+The trusted DEXes would be the fastest solution.
 
 \section{Tests}
 

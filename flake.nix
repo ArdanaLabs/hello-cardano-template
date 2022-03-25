@@ -5,12 +5,7 @@
     nixpkgs.follows = "haskell-nix/nixpkgs-unstable";
     haskell-nix.inputs.nixpkgs.follows = "haskell-nix/nixpkgs-2105";
     plutus.url = "github:input-output-hk/plutus";
-    # used for libsodium-vrf
-    flake-compat-ci.url = "github:hercules-ci/flake-compat-ci";
-    flake-compat = {
-      url = "github:edolstra/flake-compat";
-      flake = false;
-    };
+    #   used for libsodium-vrf
   };
   outputs =
     {
@@ -18,13 +13,11 @@
       nixpkgs,
       haskell-nix,
       plutus,
-      flake-compat,
-      flake-compat-ci,
     }
     @ inputs:
     let
       # System types to support.
-      supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
+      supportedSystems = [ "x86_64-linux" ]; #"aarch64-linux" ];
 
       # Helper function to generate an attrset '{ x86_64-linux = f "x86_64-linux"; ... }'.
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
@@ -102,16 +95,27 @@
         };
     in
       {
-        ciNix = flake-compat-ci.lib.recurseIntoFlakeWith {
-          flake = self;
-          systems = [ "x86_64-linux" ];
-        };
-
         project = forAllSystems projectFor;
         flake = forAllSystems (system: (projectFor system).flake { });
 
         # this could be done automatically, but would reduce readability
-        packages = forAllSystems (system: self.flake.${system}.packages);
+        packages = forAllSystems (system:
+        let pkgs = (forAllSystems nixpkgsFor)."${system}";
+        in self.flake.${system}.packages // {
+          test-plan = pkgs.stdenv.mkDerivation {
+            name = "test-plan";
+            src = self;
+            buildInputs = with pkgs; [ (texlive.combine { inherit ( texlive ) scheme-basic latexmk todonotes metafont; }) ];
+            doCheck = false;
+            buildPhase = ''
+              HOME=$TMP latexmk -output-directory="$out" -pdf ./docs/test-plan.tex
+              ls -lah
+            '';
+            installPhase = ''
+              ls -lah
+            '';
+          };
+        });
         checks = forAllSystems (system: self.flake.${system}.checks);
         check = forAllSystems (
           system:
@@ -121,7 +125,7 @@
         );
 
         devShell = forAllSystems (system: self.flake.${system}.devShell);
-
+        defaultPackage = forAllSystems (system: self.packages.${system}."dUSD:test:tests");
         apps = forAllSystems (system: let
           pkgs = (forAllSystems nixpkgsFor)."${system}";
         in
