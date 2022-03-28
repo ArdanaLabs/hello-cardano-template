@@ -28,3 +28,6 @@ ci
 # Prevents Nix results from `nix build`, etc, from being checked in
 # accidentally.
 *result*
+
+# Ignore direnv cache
+.direnv
