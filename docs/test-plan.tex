@@ -121,11 +121,6 @@ As a user, I can collect information on my vaults, i.e. the vaults I created.
 
 As a user, I can open a new vault.
 
-\todo{Do we want to make it possible to combine multiple transactions into one,
-to help users avoid gas fees? \\
-Proposal: No, this is too complex for an MVP, and once Orbis launches, gas fees
-will be very low.}
-
 \subsubsection{Deposit}
 
 As a user, I can deposit ADA into a vault, so that I may take out a loan of dUSD
@@ -135,22 +130,21 @@ As a user, I can deposit ADA into a vault, so that I may take out a loan of dUSD
 
 As a user, I can withdraw ADA from a vault, as long as my collateralization
 ratio is above the liquidation ratio.
-In the frontend, a "minimum collateralization ratio" will be built in that
+In the frontend, a ``minimum collateralization ratio'' will be built that
 prevents users from transacting with their vault in such a way that their
 collateralization ratio drops below the minimum collateralization ratio.
+The reason for this is that many people use the MakerDAO system as
+experimentation and lose thousands of dollars on day one.
+Power users can easily circumvent this by running our PAB directly. \\
 
-\todo{Do we want a minimum collateralization ratio to protect our users? Where
-will we implement it? \\
-Proposal: Yes, since there are regular reports of people starting to use the
-MakerDAO system as experimentation, and losing thousands of dollars on day one.
-We will implement this in the frontend, not on-chain or off-chain.
-This allows anyone to circumvent the child safety lock rather easily by using
-our off-chain PAB without going through our frontend.}
+Note: The liquidation ratio can only be changed when the protocol is updated.
 
 \subsubsection{Take out loan}
 
 As a user, I can take out a loan in dUSD if I have enough collateral.
-There is a minimum size for dUSD loans, called the ``debt floor''.
+There is a minimum size for dUSD loans, called the ``debt floor''\footnote{
+  This is an on-chain mechanism, which means it is enforced on everyone.
+}.
 
 \subsubsection{Pay back loan}
 
@@ -253,20 +247,6 @@ command on the Ardana Tenant.
 The admin user can set the liquidation fee, through running a `curl' command on
 the Ardana Tenant.
 
-\subsubsection{Set liquidation ratio}
-
-The admin user can set the liquidation ratio, through running a `curl' command
-on the Ardana Tenant.
-
-\todo{Do we want the liquidation ratio to be changeable within the protocol, or
-only when the protocol is updated? \\
-Proposal: We do not want it to be changeable.
-It would give admin/governance a dangerous amount of power, and bad incentives.
-In addition, the liquidation ratio should only change as the collateral types
-(ADA) become more or less stable, which is a process that takes many months,
-whereas the dUSD protocol will be updated regularly in the beginning.
-This decision should be reviewed at each protocol update.}
-
 \subsubsection{Set stability fee}
 
 The admin user can set the stability fee (in percentage per year), through
@@ -331,11 +311,11 @@ Price feed bot:
 %     exchanges from making the OSM's result crash and many vaults liquidate.)
 % \end{itemize}
 % 
-\subsection{Vault (TBC)}
+\subsection{Vault}
 
-Each user should have access to a website at "www.ardana-vaults.com". This
-website must be able to connect to their wallet to find out who they are and
-allow them to set up vaults and interact with their existing vaults.
+Each user should have access to a website at "www.vault.ardana.com".
+This website must be able to connect to their wallet to find out who they are
+and allow them to set up vaults and interact with their existing vaults.
 
 Acceptance criteria:
 \begin{itemize}
@@ -394,24 +374,15 @@ Acceptance criteria:
     from allowing their vaults to become sick.
   \item The amount of dUSD paid back (when paying back a loan) is smaller than
     (or equal to) the loan
+  \item Unless in the case of resource contention, any vault is liquidated
+    within $1$ hour of becoming sick
+    \todo{Improve this acceptance criterium.
+    How do we test whether our liquidation bot works appropriately?
+    What about ``Any vault that becomes sick, is noticed by our liquidation
+    script within X minutes''?}
 \end{itemize}
 
-\todo{Which domain name will the website live at?}
-
-\todo{Is the list of requested information correct? Anything to be added,
-removed or updated?}
-
-\todo{How much is the minimum loan (per vault, not per loan)? \\
-Proposal: 100 dUSD.}
-
-\todo{Frontend: How will we figure out from which UTXO in your wallet to take
-the ADA?}
-
-\todo{What should the liquidation ratio be?}
-
-\todo{What should the minimum collateralization ratio be?}
-
-\subsection{Buffer (TBC)}
+\subsection{Buffer}
 
 \begin{itemize}
   \item Anyone can trigger a surplus or debt auction when the dUSD price
@@ -428,12 +399,10 @@ the ADA?}
     is eventually consistent with USD.
     This means that given any real world change in supply and demand, the dUSD
     price eventually converges back to within $1\%$ of USD.
-    \todo{Can we somehow define ``and it does this without overcorrections'' in
-    this acceptance criterium?
-    I.e. we want to make sure that no auctions get triggered which bring the
-    price to the other side of the USD value.}
+    \todo{Phrase this criterium properly.
+    How can we test if the auction sizes are chosen appropriately?}
   \item Admin and only admin can set the protocol-wide parameters (stability
-    fee, liquidation discount, liquidation fee, liquidation ratio and debt
+    fee, liquidation discount, liquidation fee and debt
     floor)
   \item If the protocol-wide parameters are changed, this change is immediately
     and correctly seen in liquidations and when taking out loans
@@ -455,7 +424,7 @@ An off-chain bot will be written which aggregates price information from at
 least five sources (CEXes and DEXes) and applies the appropriate calculations on
 this information in order to conclude what the most accurate current price is.
 This current price will then be submitted as a transaction to the price module
-using one of the admin keys.
+using one of the admin keys. \\
 
 Off-chain bot:
 \begin{itemize}
@@ -472,13 +441,12 @@ Price module:
   \item The off-chain code will be built as a PAB
   \item The datum will contain a map from timestamps (in POSIX time) to price
     values
-  \item The script address will be dependent on three admin public keys
-    \todo{Will these admin keys be updatable? \\
-    Proposal: No. Can only be updated when the protocol is updated.
-    That should be often enough for all practical purposes, and avoids having to
-    write more code as well as avoiding the possibility of certain
-    vulnerabilities. This decision can be enforced by using the keys to
-    determine the script address, rather than putting them into the datum.}
+  \item The script address will be dependent on three admin public
+    keys\footnote{
+      These admin keys can only be updated when the protocol is updated.
+      This decision will be enforced by using the keys to determine the script
+      address, rather than putting them into the datum.
+    }
 \end{itemize}
 
 Note: The off-chain bot will combine the price feeds through two operations:
@@ -518,11 +486,26 @@ Note: The off-chain bot will combine the price feeds through two operations:
 % \todo{Should the price oracles and the OSM all be combined into one UTXO, or
 % be split into separate UTXOs?}
 % 
-\subsection{Vault (TBC)}
+\subsection{Vault}
 
 \begin{itemize}
   \item On-chain code: Plutarch
-  \item Off-chain code: PAB, tested through our own testing framework (Maeserat)
+  \item Off-chain code: PAB, tested through our own testing framework
+    (Maeserat). This means that users will use the frontend to contact our
+    remote wallet PAB\footnote{
+      The following statement is still being verified by Dan Firth's research.
+      The protocol implementation as outlined in this document requires us to
+      run two separate PABs.
+      One PAB, referred to as the ``admin PAB'', will be connected to a wallet
+      running locally on the Ardana Tenant.
+      This admin PAB will be used to sign and submit admin transactions.
+      On the other hand, the ``remote PAB'' will use Cardano's remote wallet
+      implementation in order to generate the unsigned tranasctions our users
+      need and yield them.
+      These unsigned transactions will be sent to the user, where locally
+      running javascript will connect to their wallet in order to sign and
+      submit the transactions.
+    }, which will generate the unsigned transaction they need.
   \item Collecting information on one person's vaults as well as vaults in
     general, are implemented as off-chain endpoints within the PAB, to avoid
     having to build a separate backend for the dUSD system
@@ -551,17 +534,39 @@ Note: The off-chain bot will combine the price feeds through two operations:
     price and hence triggering surplus auctions.
 \end{itemize}
 
-\todo{How do we ensure nobody copies the protocol? \\
-Proposal: We put an NFT in our buffer and price module when minting, and use
-those NFTs' names as arguments to the vault's Plutus script. This keeps our
-vaults separate from anyone starting a different protocol. \\
-In addition, we can make it mandatory to put a certain number of DANA tokens
-into the buffer at creation.}
+Notes:
+\begin{itemize}
+  \item We do not want to make it possible to combine multiple transactions into
+    one, as MakerDAO does.
+    This is too complex a feature for an MVP, and once Orbis launches, gas fees
+    will be very low.
+  \item The names of the NFTs carried in the buffer and price modules, will be
+    used as arguments to the vault's Plutus script.
+    This ensures the vaults connect with the correct protocol setup.
+  \item The frontend code will set the minimum collateralization ratio, which
+    will be adjustable by Ardana itself.
+\end{itemize}
 
-Note: The frontend code will set the minimum collateralization ratio, which will
-be adjustable by Ardana itself.
+In addition to the vault itself, we need a liquidation bot in order to liquidate
+sick vaults as quickly as possible.
+This liquidation bot will be a Haskell script running once every $10$ minutes on
+the Ardana Tenant, as a systemd service.
+The script will connect to a separate contract instance (set up specifically for
+this script) of the dUSD admin PAB to collect information on all dUSD vaults,
+and determine which ones are sick\footnote{
+  This will be done by querying the ChainIndex.
+  \todo{Figure out how to do this efficiently.
+    Can we specifically find the vaults by checking the ADA price module's
+    history?
+  }
+}.
+For each sick vault, the script will set up a transaction through the admin DEX.
+This transaction connects the vault to a trusted DEX (initially: a Minswap DEX
+trading dUSD for ADA), liquidating the vault to the extend necessary.
+In brokering this transaction, the liquidation bot earns profits, which are
+stored in the admin wallet and used for protocol development.
 
-\subsection{Buffer (TBC)}
+\subsection{Buffer}
 
 The buffer will contain in its datum a map from timestamps to the stability fee
 set at that time.
@@ -632,5 +637,14 @@ The trusted DEXes would be the fastest solution.
 % - Other attack vectors which are not specific to our application, should be
 %   listed and tested for
 
+\section{To be determined}
+
+\begin{itemize}
+  \item Liquidation ratio upon initialization
+  \item Liquidation fee upon initialization
+  \item Liquidation discount upon initialization
+  \item Minimum collateralization ratio upon initialization
+  \item Debt floor
+\end{itemize}
 
 \end{document}
