@@ -1,11 +1,21 @@
-module ApiUtils(getContinuingOutputs,findDatum) where
+module ApiUtils (getContinuingOutputs, findDatum) where
 
-import Plutarch
 import Plutarch.Prelude
 
-import Plutarch.Api.V1
+import Plutarch.Api.V1 (
+  PAddress,
+  PDatum,
+  PDatumHash,
+  PScriptContext (..),
+  PScriptPurpose (PSpending),
+  PTuple,
+  PTxInInfo (..),
+  PTxInfo (..),
+  PTxOut,
+  PTxOutRef (..),
+ )
 
-import MonadUtils
+import MonadUtils (tlet, tletField, tmatch, tmatchField)
 
 getContinuingOutputs :: Term s (PScriptContext :--> PBuiltinList PTxOut)
 getContinuingOutputs = phoistAcyclic $
@@ -25,8 +35,6 @@ getContinuingOutputs = phoistAcyclic $
       plam $ \adr txOut -> unTermCont $ do
         outAdr <- tletField @"address" txOut
         pure $ adr #== outAdr
-
-
 
 findOwnInput :: Term s (PScriptContext :--> PMaybe PTxInInfo)
 findOwnInput = phoistAcyclic $

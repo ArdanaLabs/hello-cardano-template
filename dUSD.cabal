@@ -70,10 +70,11 @@ common lang
 library
   import:          lang
   exposed-modules:
+    ApiUtils
     DUSD
     Hello
-    ApiUtils
     MonadUtils
+
   hs-source-dirs:  src
   build-depends:
     , base

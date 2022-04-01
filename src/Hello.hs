@@ -1,17 +1,15 @@
+module Hello (helloScript) where
 
-module Hello(helloScript) where
-
-import Plutarch
+import Plutarch (ClosedTerm, compile)
 import Plutarch.Prelude
 
 import Plutus.V1.Ledger.Scripts (Script)
 
-import Plutarch.Api.V1
+import Plutarch.Api.V1 (PMaybeData (PDJust), PScriptContext)
 import Plutarch.Builtin (pforgetData)
 
-import ApiUtils
-import MonadUtils
-
+import ApiUtils (findDatum, getContinuingOutputs)
+import MonadUtils (tlet, tletField, tmatch, tmatchField)
 
 helloScript :: Script
 helloScript = compile validator
@@ -28,9 +26,6 @@ validator = plam $ \n _unit sc -> unTermCont $ do
   datumAsData <- tlet $ pforgetData $ pdata datum
   pure $
     pif
-      (pforgetData (pdata (n+1)) #== datumAsData)
+      (pforgetData (pdata (n + 1)) #== datumAsData)
       (pcon PUnit)
       perror
-
--- TODO I think we'er pointing to old plutarch and hopefully some of this was upstreamed
-
