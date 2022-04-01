@@ -72,8 +72,8 @@ library
   exposed-modules:
     DUSD
     Hello
-    Plutarch.Local.Api
-    Plutarch.Local.Monad
+    Plutarch.Extensions.Api
+    Plutarch.Extensions.Monad
 
   hs-source-dirs:  src
   build-depends:

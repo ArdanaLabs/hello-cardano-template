@@ -7,8 +7,8 @@ import Plutarch (ClosedTerm, compile)
 import Plutarch.Prelude
 import Plutarch.Unsafe ( punsafeCoerce )
 import Plutarch.Api.V1 (PDatum(PDatum),PMaybeData (PDJust), PScriptContext)
-import Plutarch.Local.Api (findDatum, getContinuingOutputs)
-import Plutarch.Local.Monad (tlet, tletField, tmatch, tmatchField)
+import Plutarch.Extensions.Api (findDatum, getContinuingOutputs)
+import Plutarch.Extensions.Monad (tlet, tletField, tmatch, tmatchField)
 
 import Codec.Serialise (serialise)
 import Data.ByteString.Lazy (ByteString)
