@@ -1,13 +1,14 @@
 module Main (main) where
 
-import qualified Apropos.Plutus.AssetClass as AssetClass
-import qualified Apropos.Plutus.Auction as Auction
-import qualified Apropos.Plutus.Integer as Integer
-import qualified Apropos.Plutus.SingletonValue as SingletonValue
-import qualified Apropos.Plutus.Value as Value
-import qualified Apropos.Plutus.Vault as Vault
+import Apropos.Plutus.AssetClass qualified as AssetClass
+import Apropos.Plutus.Auction qualified as Auction
+import Apropos.Plutus.Integer qualified as Integer
+import Apropos.Plutus.SingletonValue qualified as SingletonValue
+import Apropos.Plutus.Value qualified as Value
+import Apropos.Plutus.Vault qualified as Vault
 
 import Test.Syd
+
 --import Apropos
 --import Apropos.LogicalModel
 --import Apropos.Plutus.Vault
@@ -20,9 +21,9 @@ main =
   --print (length $ solveAll (logic :: Formula VaultProp))
   sydTest $
     describe "plutus" $ do
-        AssetClass.spec
-        Integer.spec
-        SingletonValue.spec
-        Value.spec
-        Vault.spec
-        Auction.spec
+      AssetClass.spec
+      Integer.spec
+      SingletonValue.spec
+      Value.spec
+      Vault.spec
+      Auction.spec

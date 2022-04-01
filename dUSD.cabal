@@ -34,6 +34,7 @@ common lang
     GeneralisedNewtypeDeriving
     HexFloatLiterals
     ImplicitPrelude
+    ImportQualifiedPost
     InstanceSigs
     KindSignatures
     LambdaCase
@@ -64,19 +65,16 @@ common lang
   ghc-options:
     -Wall -Wcompat -Wincomplete-uni-patterns -Wredundant-constraints
     -Wmissing-export-lists -Werror -Wincomplete-record-updates
-    -Wno-partial-type-signatures
-    -Wmissing-deriving-strategies
+    -Wno-partial-type-signatures -Wmissing-deriving-strategies
 
 library
   import:          lang
-  exposed-modules:
-    DUSD
-
+  exposed-modules: DUSD
   hs-source-dirs:  src
   build-depends:
-    base,
-    plutarch,
-    plutus-core,
+    , base
+    , plutarch
+    , plutus-core
 
 test-suite tests
   import:         lang
@@ -95,22 +93,18 @@ test-suite tests
     Tests
 
   build-depends:
-    base,
-    containers,
-    apropos,
-    apropos-tx,
-    plutarch,
-    plutus-ledger-api,
-    hedgehog,
-    sydtest,
-    sydtest-hedgehog,
-    dUSD,
-    plutus-tx,
-    plutus-ledger-api,
-    hedgehog,
-    tasty,
-    tasty-hedgehog,
-    dUSD,
-    with-utf8,
-    lens,
-
+    , apropos
+    , apropos-tx
+    , base
+    , containers
+    , dUSD
+    , hedgehog
+    , lens
+    , plutarch
+    , plutus-ledger-api
+    , plutus-tx
+    , sydtest
+    , sydtest-hedgehog
+    , tasty
+    , tasty-hedgehog
+    , with-utf8
