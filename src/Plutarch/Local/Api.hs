@@ -1,4 +1,4 @@
-module ApiUtils (getContinuingOutputs, findDatum) where
+module Plutarch.Local.Api (getContinuingOutputs, findDatum) where
 
 import Plutarch.Prelude
 
@@ -15,7 +15,7 @@ import Plutarch.Api.V1 (
   PTxOutRef (..),
  )
 
-import MonadUtils (tlet, tletField, tmatch, tmatchField)
+import Plutarch.Local.Monad (tlet, tletField, tmatch, tmatchField)
 
 getContinuingOutputs :: Term s (PScriptContext :--> PBuiltinList PTxOut)
 getContinuingOutputs = phoistAcyclic $

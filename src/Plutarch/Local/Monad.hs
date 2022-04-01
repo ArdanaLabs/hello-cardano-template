@@ -1,7 +1,7 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module MonadUtils (tlet, tletField, tmatch, tmatchField) where
+module Plutarch.Local.Monad (tlet, tletField, tmatch, tmatchField) where
 
 import Plutarch.Prelude
 

@@ -8,10 +8,10 @@ import Plutus.V1.Ledger.Scripts (Script)
 import Plutarch.Api.V1 (PMaybeData (PDJust), PScriptContext)
 import Plutarch.Builtin (pforgetData)
 
-import ApiUtils (findDatum, getContinuingOutputs)
 import Codec.Serialise (serialise)
 import Data.ByteString.Lazy (ByteString)
-import MonadUtils (tlet, tletField, tmatch, tmatchField)
+import Plutarch.Local.Api (findDatum, getContinuingOutputs)
+import Plutarch.Local.Monad (tlet, tletField, tmatch, tmatchField)
 
 helloScriptBytes :: ByteString
 helloScriptBytes = serialise helloScript
