@@ -1,10 +1,10 @@
 module Apropos.Plutus.AssetClass (
-    AssetClassProp (..),
-    spec,
-    ada,
-    dana,
-    dusd,
-    liquidityAC,
+  AssetClassProp (..),
+  spec,
+  ada,
+  dana,
+  dusd,
+  liquidityAC,
 ) where
 
 import Apropos
@@ -17,13 +17,13 @@ import Test.Syd
 import Test.Syd.Hedgehog
 
 data AssetClassProp
-    = IsAda
-    | IsDana
-    | IsDUSD
-    | IsLiquidity
-    | IsOther
-    deriving stock (Eq, Ord, Enum, Show, Bounded, Generic)
-    deriving anyclass (Enumerable)
+  = IsAda
+  | IsDana
+  | IsDUSD
+  | IsLiquidity
+  | IsOther
+  deriving stock (Eq, Ord, Enum, Show, Bounded, Generic)
+  deriving anyclass (Enumerable)
 
 specialAC :: AssetClassProp -> Maybe AssetClass
 specialAC IsAda = Just ada
@@ -49,37 +49,37 @@ specialTokens :: [AssetClass]
 specialTokens = mapMaybe specialAC enumerated
 
 instance LogicalModel AssetClassProp where
-    logic = ExactlyOne [Var IsAda, Var IsDana, Var IsDUSD, Var IsLiquidity, Var IsOther]
+  logic = ExactlyOne [Var IsAda, Var IsDana, Var IsDUSD, Var IsLiquidity, Var IsOther]
 
 instance HasLogicalModel AssetClassProp AssetClass where
-    satisfiesProperty property ac = case specialAC property of
-        Just ac' -> ac == ac'
-        Nothing -> ac `notElem` specialTokens
+  satisfiesProperty property ac = case specialAC property of
+    Just ac' -> ac == ac'
+    Nothing -> ac `notElem` specialTokens
 
 instance HasPermutationGenerator AssetClassProp AssetClass where
-    generators =
-        Morphism
-            { name = "IsOther"
-            , match = Not $ Var IsOther
-            , contract = clear >> add IsOther
-            , morphism = \_ -> genFilter (`notElem` specialTokens) baseGen
-            } :
-            [ Morphism
-                { name = "SetToken" ++ show property
-                , match = Not $ Var property
-                , contract = clear >> add property
-                , morphism = \_ -> pure ac
-                }
-            | property <- enumerated
-            , Just ac <- pure $ specialAC property
-            ]
+  generators =
+    Morphism
+      { name = "IsOther"
+      , match = Not $ Var IsOther
+      , contract = clear >> add IsOther
+      , morphism = \_ -> genFilter (`notElem` specialTokens) baseGen
+      } :
+      [ Morphism
+        { name = "SetToken" ++ show property
+        , match = Not $ Var property
+        , contract = clear >> add property
+        , morphism = \_ -> pure ac
+        }
+      | property <- enumerated
+      , Just ac <- pure $ specialAC property
+      ]
 
 baseGen :: Gen AssetClass
 baseGen =
-    choice
-        [ (\c -> AssetClass (fromString c, fromString c)) <$> constString
-        , fmap AssetClass . (,) <$> hexString <*> hexString
-        ]
+  choice
+    [ (\c -> AssetClass (fromString c, fromString c)) <$> constString
+    , fmap AssetClass . (,) <$> hexString <*> hexString
+    ]
   where
     hexString :: IsString s => Gen s
     hexString = fromString <$> replicateM 64 hexIt
@@ -89,13 +89,13 @@ baseGen =
     hexIt = element "01234567890abcdef"
 
 instance HasParameterisedGenerator AssetClassProp AssetClass where
-    parameterisedGenerator = buildGen baseGen
+  parameterisedGenerator = buildGen baseGen
 
 spec :: Spec
 spec = do
-    describe "assetClassGenSelfTest" $
-        mapM_ fromHedgehogGroup $
-            permutationGeneratorSelfTest
-                True
-                (\(_ :: Morphism AssetClassProp assetClassGenSelfTest) -> True)
-                baseGen
+  describe "assetClassGenSelfTest" $
+    mapM_ fromHedgehogGroup $
+      permutationGeneratorSelfTest
+        True
+        (\(_ :: Morphism AssetClassProp assetClassGenSelfTest) -> True)
+        baseGen
