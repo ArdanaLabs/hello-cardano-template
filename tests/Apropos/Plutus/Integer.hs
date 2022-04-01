@@ -51,8 +51,7 @@ instance HasPermutationGenerator IntegerProp Integer where
         , Morphism
             { name = "MakeSmall"
             , match = Not $ Var IsSmall
-            , -- TODO filtered clear might be nicer than addIf
-              contract = clear >> addAll [IsSmall, IsPositive]
+            , contract = clear >> addAll [IsSmall, IsPositive]
             , morphism = \_ -> do
                 i <- int (linear 1 10)
                 pure $ fromIntegral i

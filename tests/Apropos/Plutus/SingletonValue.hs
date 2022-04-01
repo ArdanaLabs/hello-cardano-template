@@ -9,6 +9,7 @@ import Apropos.Plutus.AssetClass (AssetClassProp)
 import Apropos.Plutus.Integer (IntegerProp)
 import Control.Lens
 import Control.Monad (join)
+import GHC.Generics (Generic)
 import Plutus.V1.Ledger.Value (AssetClass)
 
 import Test.Syd
@@ -19,12 +20,8 @@ type SingletonValue = (AssetClass, Integer)
 data SingletonValueProp
     = AC AssetClassProp
     | Amt IntegerProp
-    deriving stock (Eq, Ord, Show)
-
-instance Enumerable SingletonValueProp where
-    enumerated = (AC <$> enumerated) <> (Amt <$> enumerated)
-
--- TemplateHaskell breaks my hls so I wrote it by hand for now
+    deriving stock (Eq, Ord, Show, Generic)
+    deriving anyclass (Enumerable)
 
 instance LogicalModel SingletonValueProp where
     logic = (AC <$> logic) :&&: (Amt <$> logic)
@@ -36,16 +33,16 @@ instance HasLogicalModel SingletonValueProp SingletonValue where
 instance HasPermutationGenerator SingletonValueProp SingletonValue where
     generators =
         let l =
-                Abstraction
+                ProductAbstraction
                     { abstractionName = "assetClass"
                     , propertyAbstraction = abstractsProperties AC
-                    , modelAbstraction = _1
+                    , productModelAbstraction = _1
                     }
             r =
-                Abstraction
+                ProductAbstraction
                     { abstractionName = "amt"
                     , propertyAbstraction = abstractsProperties Amt
-                    , modelAbstraction = _2
+                    , productModelAbstraction = _2
                     }
          in join [abstract l <$> generators, abstract r <$> generators]
 
