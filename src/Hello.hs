@@ -1,14 +1,13 @@
 module Hello (helloScriptBytes, helloScript) where
 
-
 import Plutus.V1.Ledger.Scripts (Script)
 
 import Plutarch (ClosedTerm, compile)
-import Plutarch.Prelude
-import Plutarch.Unsafe ( punsafeCoerce )
-import Plutarch.Api.V1 (PDatum(PDatum),PMaybeData (PDJust), PScriptContext)
+import Plutarch.Api.V1 (PDatum (PDatum), PMaybeData (PDJust), PScriptContext)
 import Plutarch.Extensions.Api (findDatum, getContinuingOutputs)
 import Plutarch.Extensions.Monad (tlet, tletField, tmatch, tmatchField)
+import Plutarch.Prelude
+import Plutarch.Unsafe (punsafeCoerce)
 
 import Codec.Serialise (serialise)
 import Data.ByteString.Lazy (ByteString)
@@ -44,4 +43,3 @@ unsingleton list = unTermCont $ do
   PCons x xs <- tmatch list
   PNil <- tmatch xs
   pure x
-
