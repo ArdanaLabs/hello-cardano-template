@@ -10,5 +10,10 @@ When editing the docuement `./docs/test-plan.tex` you can set up a latex pdf ren
 nix run .#feedback-loop
 ```
 
+## Development workflow
 
+To auto-format the project tree, run:
 
+```sh-session
+nix run .#format
+```

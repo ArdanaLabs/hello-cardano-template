@@ -4,8 +4,14 @@
     haskell-nix.url = "github:input-output-hk/haskell.nix";
     nixpkgs.follows = "haskell-nix/nixpkgs-unstable";
     haskell-nix.inputs.nixpkgs.follows = "haskell-nix/nixpkgs-2105";
-    plutus.url = "github:input-output-hk/plutus";
     #   used for libsodium-vrf
+    plutus.url = "github:input-output-hk/plutus";
+    lint-utils = {
+      type = "git";
+      url = "https://gitlab.homotopic.tech/nix/lint-utils.git";
+      ref = "spec-type";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs =
     {
@@ -13,6 +19,7 @@
       nixpkgs,
       haskell-nix,
       plutus,
+      lint-utils
     }
     @ inputs:
     let
@@ -93,6 +100,15 @@
             "https://github.com/Srid/validity"."f7982549b95d0ab727950dc876ca06b1862135ba" = "sha256-dpMIu08qXMzy8Kilk/2VWpuwIsfqFtpg/3mkwt5pdjA=";
           };
         };
+
+        lintSpec = {
+          cabal-fmt = {};
+          fourmolu = {
+            ghcOpts = "-o-XTypeApplications -o-XImportQualifiedPost";
+          };
+          # Enable after https://github.com/ArdanaLabs/dUSD/issues/8
+          # nixpkgs-fmt = {};
+        };
     in
       {
         project = forAllSystems projectFor;
@@ -116,7 +132,14 @@
             '';
           };
         });
-        checks = forAllSystems (system: self.flake.${system}.checks);
+        checks = forAllSystems (system: 
+          self.flake.${system}.checks // 
+            (lint-utils.mkChecks.${system} lintSpec ./.)
+        );
+        # We need this attribute because `nix flake check` won't work for Haskell
+        # projects: https://nixos.wiki/wiki/Import_From_Derivation#IFD_and_Haskell
+        #
+        # Instead, run: `nix build .#check.x86_64-linux` (replace with your system)
         check = forAllSystems (
           system:
             (nixpkgsFor system).runCommand "combined-test" {
@@ -134,6 +157,7 @@
               type = "app";
               program = "${ pkgs.callPackage ./nix/apps/feedback-loop { } }/bin/feedback-loop";
             };
+            format =  lint-utils.mkApp.${system} lintSpec;
           });
       };
 }
