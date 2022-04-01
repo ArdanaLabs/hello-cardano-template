@@ -29,6 +29,22 @@ nix run .#feedback-loop
 
 ## Development workflow
 
+### Dev shells
+
+The onchain and offchain code have different dependencies, thus different dev shells. To launch a shell for onchain dev, run:
+
+```
+nix develop .#onchain
+```
+
+For offchain, run:
+
+```
+nix develop .#offchain
+```
+
+### Formatting
+
 To auto-format the project tree, run:
 
 ```sh-session
