@@ -78,9 +78,11 @@ library
   hs-source-dirs:  src
   build-depends:
     , base
+    , bytestring
     , plutarch
     , plutus-core
     , plutus-ledger-api
+    , serialise
 
 test-suite tests
   import:         lang
