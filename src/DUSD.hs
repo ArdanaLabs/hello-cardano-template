@@ -1,9 +1,8 @@
 module DUSD (main) where
 
 import Hello (helloScript)
-import Plutus.V1.Ledger.Scripts (Script (Script))
+import Plutarch (printScript)
 
 main :: IO ()
 main = do
-  let (Script hs) = helloScript
-  print hs
+  putStrLn $ printScript helloScript
