@@ -1,11 +1,12 @@
-module Plutarch.Extensions.Api (getContinuingDatum,passert) where
+module Plutarch.Extensions.Api (getContinuingDatum, passert) where
 
 import Plutarch.Prelude
 
 import Plutarch.Api.V1 (
   PAddress,
-  PDatum(..),
+  PDatum (..),
   PDatumHash,
+  PMaybeData (..),
   PScriptContext (..),
   PScriptPurpose (PSpending),
   PTuple,
@@ -13,7 +14,6 @@ import Plutarch.Api.V1 (
   PTxInfo (..),
   PTxOut,
   PTxOutRef (..),
-  PMaybeData(..),
  )
 import Plutarch.Extensions.Monad (tlet, tletField, tmatch, tmatchField)
 import Plutarch.Unsafe (punsafeCoerce)
@@ -87,8 +87,6 @@ getContinuingDatum sc = do
   PJust datum <- tmatch $ findDatum # (pfield @"_0" # datumHash) # txinfo
   PDatum dat <- tmatch datum
   pure $ pfromData (punsafeCoerce dat)
-
-
 
 -- Probably belongs in list not api
 -- should also be more polymorphic
