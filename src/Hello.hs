@@ -24,5 +24,4 @@ validator = plam $ \dn dunit dsc -> validator' # pfromData dn # pfromData dunit 
 
 validator' :: ClosedTerm (PInteger :--> PUnit :--> PScriptContext :--> PUnit)
 validator' = plam $ \n _unit sc ->
-  unTermCont $
-    getContinuingDatum sc >>= passert "int was not correct" . ((n + 1) #==)
+  unTermCont $ passert "int was not correct" <$> (n + 1 #==) =<< getContinuingDatum sc
