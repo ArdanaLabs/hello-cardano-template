@@ -1,10 +1,10 @@
-module Plutarch.Extensions.Api (getContinuingOutputs, findDatum) where
+module Plutarch.Extensions.Api (getContinuingDatum,passert) where
 
 import Plutarch.Prelude
 
 import Plutarch.Api.V1 (
   PAddress,
-  PDatum,
+  PDatum(..),
   PDatumHash,
   PScriptContext (..),
   PScriptPurpose (PSpending),
@@ -13,9 +13,10 @@ import Plutarch.Api.V1 (
   PTxInfo (..),
   PTxOut,
   PTxOutRef (..),
+  PMaybeData(..),
  )
-
 import Plutarch.Extensions.Monad (tlet, tletField, tmatch, tmatchField)
+import Plutarch.Unsafe (punsafeCoerce)
 
 getContinuingOutputs :: Term s (PScriptContext :--> PBuiltinList PTxOut)
 getContinuingOutputs = phoistAcyclic $
@@ -77,3 +78,25 @@ findDatum = phoistAcyclic $
         tupe <- tlet $ pfromData dataTupe
         pure $
           dh #== pfromData (pfield @"_0" # tupe)
+
+getContinuingDatum :: PIsData p => Term s PScriptContext -> TermCont s (Term s p)
+getContinuingDatum sc = do
+  txinfo <- tletField @"txInfo" sc
+  out <- unsingleton <$> tlet (getContinuingOutputs # sc)
+  PDJust datumHash <- tmatchField @"datumHash" out
+  PJust datum <- tmatch $ findDatum # (pfield @"_0" # datumHash) # txinfo
+  PDatum dat <- tmatch datum
+  pure $ pfromData (punsafeCoerce dat)
+
+
+
+-- Probably belongs in list not api
+-- should also be more polymorphic
+unsingleton :: PLift a => Term s (PBuiltinList a) -> Term s a
+unsingleton list = unTermCont $ do
+  PCons x xs <- tmatch list
+  PNil <- tmatch xs
+  pure x
+
+passert :: Term s PString -> Term s PBool -> TermCont s (Term s PUnit)
+passert msg bool = pure $ pif bool (pcon PUnit) (ptraceError msg)
