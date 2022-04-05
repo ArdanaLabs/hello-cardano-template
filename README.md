@@ -17,10 +17,12 @@ To avoid compiling any output of the flake.nix of this project from source, you 
 You can ensure that the Cachix is being used by trying to build one of the outputs and observing that everything is downloaded, and that nothing needs to be compiled from source.
 
 
-## test-plan document
+## test-plan & hello world documentation
 `./docs/test-plan/test-plan.pdf` documents design decisions, testing, and acceptance criteria for the project.
 
-When editing the docuement `./docs/test-plan.tex` you can set up a latex pdf rendering feedback loop by running
+`./docs/test-plan/hello-world.pdf` documents the hello world application. A simple test project to get you up and running. 
+
+When editing any documents within ./docs/test-plan you can set up a latex pdf rendering feedback loop by running
 ```
 nix run .#feedback-loop
 ```
