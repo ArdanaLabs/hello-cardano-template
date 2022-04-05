@@ -1,4 +1,4 @@
-module Hello (helloScriptBytes, helloScript) where
+module Hello (helloScript) where
 
 import Plutus.V1.Ledger.Scripts (Script)
 
@@ -6,12 +6,6 @@ import Plutarch (ClosedTerm, compile)
 import Plutarch.Api.V1 (PScriptContext)
 import Plutarch.Extensions.Api (getContinuingDatum, passert)
 import Plutarch.Prelude
-
-import Codec.Serialise (serialise)
-import Data.ByteString.Lazy (ByteString)
-
-helloScriptBytes :: ByteString
-helloScriptBytes = serialise helloScript
 
 helloScript :: Script
 helloScript = compile validator
