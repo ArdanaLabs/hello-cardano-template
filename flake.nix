@@ -118,13 +118,13 @@
         packages = forAllSystems (system:
         let pkgs = (forAllSystems nixpkgsFor)."${system}";
         in self.flake.${system}.packages // {
-          test-plan = pkgs.stdenv.mkDerivation {
+          build-docs = pkgs.stdenv.mkDerivation {
             name = "test-plan";
             src = self;
             buildInputs = with pkgs; [ (texlive.combine { inherit ( texlive ) scheme-basic latexmk todonotes metafont; }) ];
             doCheck = false;
             buildPhase = ''
-              HOME=$TMP latexmk -output-directory="$out" -pdf ./docs/test-plan.tex
+              HOME=$TMP latexmk -output-directory="$out" -pdf ./docs/*.tex
               ls -lah
             '';
             installPhase = ''
@@ -132,8 +132,8 @@
             '';
           };
         });
-        checks = forAllSystems (system: 
-          self.flake.${system}.checks // 
+        checks = forAllSystems (system:
+          self.flake.${system}.checks //
             (lint-utils.mkChecks.${system} lintSpec ./.)
         );
         # We need this attribute because `nix flake check` won't work for Haskell
