@@ -124,8 +124,9 @@
             buildInputs = with pkgs; [ (texlive.combine { inherit ( texlive ) scheme-basic latexmk todonotes metafont; }) ];
             doCheck = false;
             buildPhase = ''
-              HOME=$TMP latexmk -output-directory="$out" -pdf ./docs/*.tex
-              ls -lah
+              HOME=$TMP latexmk -output-directory="tmp" -pdf ./docs/*.tex
+              mkdir $out -p
+              cp tmp/*.pdf $out
             '';
             installPhase = ''
               ls -lah
