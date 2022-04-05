@@ -62,13 +62,20 @@
     \item increment from 0 to 1
     \item increment from 1 to 2
   \end{itemize}
-  \item \todo{end-to-end testing with maeserat? What will be tested in there?}
+  \item Maesarat
+  \begin{itemize}
+    \item Given an end-to-end test, Maesarat will benchmark the test and return the results. We can assert that certain time/memory requirements are met.
+  \end{itemize}
   \item \todo{end-to-end testing including the front-end in nixos test}
   \begin{itemize}
     \item \todo{selenium?}
     \item \todo{Lighthouse, to check website performance?}
   \end{itemize}
-  \item \todo{contract model tests? (Syd: yes please), dependent on PAB question}
+  \item Contract Model Tests with PAB
+  \begin{itemize}
+    \item Wallet signs and submits a transaction
+    \item Transactions are submitted by separate wallets (i.e. determine atomicity constraints)
+  \end{itemize}
   \item \todo{end-to-end tests with the Cardano test net?}
   \item \todo{actually deploy to main net and run manual tests?}
 \end{itemize}
