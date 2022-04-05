@@ -1,4 +1,9 @@
-module Plutarch.Extensions.Api (getContinuingDatum, passert) where
+module Plutarch.Extensions.Api (
+  getContinuingDatum,
+  findOwnInput,
+  findDatum,
+  passert,
+) where
 
 import Plutarch.Prelude
 
@@ -15,9 +20,13 @@ import Plutarch.Api.V1 (
   PTxOut,
   PTxOutRef (..),
  )
+import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extensions.Monad (tlet, tletField, tmatch, tmatchField)
 import Plutarch.Unsafe (punsafeCoerce)
 
+{- | gets a list of continuing outputs by finding
+ - its own input and  returning a list of outputs with the same outAddress
+-}
 getContinuingOutputs :: Term s (PScriptContext :--> PBuiltinList PTxOut)
 getContinuingOutputs = phoistAcyclic $
   plam $ \sc -> unTermCont $ do
@@ -37,6 +46,9 @@ getContinuingOutputs = phoistAcyclic $
         outAdr <- tletField @"address" txOut
         pure $ adr #== outAdr
 
+{- | tries to finds the transaction's input
+ - by looking for a txininfo in the inputs coresponding to the TxOutRef which the script purpose is spending
+-}
 findOwnInput :: Term s (PScriptContext :--> PMaybe PTxInInfo)
 findOwnInput = phoistAcyclic $
   plam $ \sc -> unTermCont $ do
@@ -62,6 +74,7 @@ findOwnInput = phoistAcyclic $
         pure $
           outRefId #== inOutRefId
 
+-- | Looks up a datum by it's hash from the PTxInfo
 findDatum :: Term s (PDatumHash :--> PTxInfo :--> PMaybe PDatum)
 findDatum = phoistAcyclic $
   plam $ \dh txinfo -> unTermCont $ do
@@ -79,6 +92,9 @@ findDatum = phoistAcyclic $
         pure $
           dh #== pfromData (pfield @"_0" # tupe)
 
+{- | enfroces that there is a unique continuing output gets it's Datum
+ - and converts it to the desired type via pfromData
+-}
 getContinuingDatum :: PIsData p => Term s PScriptContext -> TermCont s (Term s p)
 getContinuingDatum sc = do
   txinfo <- tletField @"txInfo" sc
@@ -88,13 +104,6 @@ getContinuingDatum sc = do
   PDatum dat <- tmatch datum
   pure $ pfromData (punsafeCoerce dat)
 
--- Probably belongs in list not api
--- should also be more polymorphic
-unsingleton :: PLift a => Term s (PBuiltinList a) -> Term s a
-unsingleton list = unTermCont $ do
-  PCons x xs <- tmatch list
-  PNil <- tmatch xs
-  pure x
-
+-- | fails with provided message if the bool is false otherwise returns unit
 passert :: Term s PString -> Term s PBool -> TermCont s (Term s PUnit)
 passert msg bool = pure $ pif bool (pcon PUnit) (ptraceError msg)

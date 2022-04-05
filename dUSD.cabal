@@ -73,6 +73,7 @@ library
     DUSD
     Hello
     Plutarch.Extensions.Api
+    Plutarch.Extensions.List
     Plutarch.Extensions.Monad
 
   hs-source-dirs:  src
