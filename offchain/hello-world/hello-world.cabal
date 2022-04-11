@@ -26,6 +26,7 @@ common lang
     GADTSyntax
     GeneralisedNewtypeDeriving
     HexFloatLiterals
+    ImportQualifiedPost
     InstanceSigs
     KindSignatures
     LambdaCase
@@ -51,7 +52,7 @@ common lang
 
 library
   import:          lang
-  exposed-modules: Lib
+  exposed-modules: HelloWorld.Contract
   hs-source-dirs:  src
   build-depends:
     , base                       >=4.7 && <5
