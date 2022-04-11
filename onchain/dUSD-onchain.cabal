@@ -1,5 +1,5 @@
 cabal-version:      3.0
-name:               dUSD
+name:               dUSD-onchain
 version:            1.0
 extra-source-files: CHANGELOG.md
 
@@ -106,7 +106,7 @@ test-suite tests
     , apropos-tx
     , base
     , containers
-    , dUSD
+    , dUSD-onchain
     , hedgehog
     , lens
     , plutarch
