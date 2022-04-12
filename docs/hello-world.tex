@@ -4,7 +4,7 @@
 \setuptodonotes{inline}
 \setlength{\parindent}{0em}
 
-\title{Test plan: Hello World Deployment}
+\title{Spec: Hello World Deployment}
 \begin{document}
 
 \maketitle
@@ -28,56 +28,63 @@
 \begin{itemize}
   \item This all happens in the dUSD repo
   \item On-chain code written in Plutarch
-  \item \todo{How does one connect Plutarch code with PAB/cardano-browser-tx?}
-  \item Off-chain code:
-  \begin{itemize}
-    \item Problem with pab: transaction balancing can currently only happen with wallet other than user wallet. If we pick the PAB, set up a plan for balancing transactions.
-    \item Problem with pab: unmaintained (?(!))
-    \item Problem with cardano-browser-tx: it compiles to JS
-    \item Problem with cardano-browser-tx: it’s not haskell, so some transpilation of types will need to happen
-    \item \todo{PAB vs cardano-browser-tx meeting}
-    \begin{itemize}
-      \item Ben Hart
-      \item Dan Firth
-    \end{itemize}
-  \end{itemize}
+  \item Off-chain code written in PAB
+  \item Plutarch code gets compiled into a ByteString, which can be included in
+    the PAB transactions as it would for PlutusTx
   \item Front-end
   \begin{itemize}
     \item Static and comes from cloudflare
     \item Mostly html/css, some typescript as necessary
-    \item User wallet: let’s try Nami and see if that works, then consider supporting Daedalus and Yoroi.
+    \item User wallet: Nami (for first version)
   \end{itemize}
-\item Once we’re done, we can `git tag` the commit where that’s done and then upgrade this to the price module implementation in-place.
+  \item Once we’re done, we can `git tag' the commit where that’s done and then
+    upgrade this to the price module implementation in-place.
+  \item How to balance transactions? \todo{This is a research project!}
 \end{itemize}
 
 \section{Tests}
 
 \begin{itemize}
   \item Apropos-tx testing for the on-chain code
-  \begin{itemize}
-    \item \todo{Spec for behaviour}
-  \end{itemize}
+    \todo{@Fraser Spec for behaviour}
   \item Unit test for on-chain code:
   \begin{itemize}
     \item increment from 0 to 1
     \item increment from 1 to 2
   \end{itemize}
-  \item Maesarat
+  \item E2E frontend testing: Set up NixOS VM, launch browser, connect to Nami
   \begin{itemize}
-    \item Given an end-to-end test, Maesarat will benchmark the test and return the results. We can assert that certain time/memory requirements are met.
-  \end{itemize}
-  \item \todo{end-to-end testing including the front-end in nixos test}
-  \begin{itemize}
-    \item \todo{selenium?}
-    \item \todo{Lighthouse, to check website performance?}
+    \item Selenium
+      \begin{itemize}
+        \item Check that when the server is initialized, the website shows the
+          number $0$
+        \item Check that incrementing works: $0$ to $1$, $1$ to $2$
+        \item Open two browsers, connected to two separate wallets, and check
+          that incrementing on one updates the number on the other after
+          refresh: $0$ to $1$, $1$ to $2$
+        \item Launch the two browsers in separate VMs. \todo{Does this
+          require/allow setting up separate nodes, with Nami?}
+      \end{itemize}
+    \item Lighthouse score above $90$, to check website performance
   \end{itemize}
   \item Contract Model Tests with PAB
   \begin{itemize}
     \item Wallet signs and submits a transaction
-    \item Transactions are submitted by separate wallets (i.e. determine atomicity constraints)
+    \item Transactions are submitted by separate wallets (i.e. determine
+      atomicity constraints)
+    \item \todo{@Dan: Which tests do we want to run? `noFundsLocked'?}
   \end{itemize}
-  \item \todo{end-to-end tests with the Cardano test net?}
-  \item \todo{actually deploy to main net and run manual tests?}
+  \item \todo{@Syd: End-to-end tests with the Cardano test net?}
+  \item \todo{@Syd: Actually deploy to main net and run manual tests?}
+\end{itemize}
+
+\section{Features to be added}
+
+\begin{itemize}
+  \item Frontend integration with Yoroi, Daedelus. Anything else?
+  \item Replace datum from something builtin, to test encoding/decoding match
+    between on-chain and off-chain
+  \item Maeserat: Volume tests, benchmarks for time and memory consumption
 \end{itemize}
 
 \end{document}
