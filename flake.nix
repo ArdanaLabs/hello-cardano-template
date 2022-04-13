@@ -207,6 +207,8 @@
           system:
             (nixpkgsFor system).runCommand "combined-test" {
               checksss = builtins.attrValues self.checks.${system}
+              # This allows us to cache nix-shell (nix develop)
+              # https://nixos.wiki/wiki/Caching_nix_shell_build_inputs
               ++ [
                 self.devShells.${system}.onchain.inputDerivation
                 self.devShells.${system}.offchain.inputDerivation
