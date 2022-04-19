@@ -17,5 +17,6 @@ validator = plam $ \dn dunit dsc -> validator' # pfromData dn # pfromData dunit 
 -- test shareing newtypes/datatypes with apps
 
 validator' :: ClosedTerm (PInteger :--> PUnit :--> PScriptContext :--> PUnit)
-validator' = plam $ \n _unit sc ->
-  unTermCont $ passert "int was not correct" <$> (n + 1 #==) =<< getContinuingDatum sc
+validator' = plam $ \n _unit sc -> unTermCont $ do
+  datum <- getContinuingDatum @PInteger sc
+  pure $ passert "int was not correct" $ n + 1 #== datum

@@ -95,7 +95,7 @@ findDatum = phoistAcyclic $
 {- | enfroces that there is a unique continuing output gets it's Datum
  - and converts it to the desired type via pfromData
 -}
-getContinuingDatum :: PIsData p => Term s PScriptContext -> TermCont s (Term s p)
+getContinuingDatum :: forall p s. PIsData p => Term s PScriptContext -> TermCont s (Term s p)
 getContinuingDatum sc = do
   txinfo <- tletField @"txInfo" sc
   out <- unsingleton <$> tlet (getContinuingOutputs # sc)
@@ -105,5 +105,5 @@ getContinuingDatum sc = do
   pure $ pfromData (punsafeCoerce dat)
 
 -- | fails with provided message if the bool is false otherwise returns unit
-passert :: Term s PString -> Term s PBool -> TermCont s (Term s PUnit)
-passert msg bool = pure $ pif bool (pcon PUnit) (ptraceError msg)
+passert :: Term s PString -> Term s PBool -> Term s PUnit
+passert msg bool = pif bool (pcon PUnit) (ptraceError msg)
