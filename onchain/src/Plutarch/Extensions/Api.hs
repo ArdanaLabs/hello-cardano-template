@@ -22,24 +22,21 @@ import Plutarch.TryFrom (PTryFrom)
 pgetContinuingDatum :: forall p s. (PTryFrom PData (PAsData p)) => Term s PScriptContext -> TermCont s (Term s (PAsData p))
 pgetContinuingDatum ctx = do
   ctxF <- tcont $ pletFields @["txInfo", "purpose"] ctx
-  pmatchC (getField @"purpose" ctxF) >>= \case
-    PSpending outRef -> do
-      txInfoF <- tcont $ pletFields @["inputs", "outputs", "datums"] $ getField @"txInfo" ctxF
-      let out =
-            unsingleton $
-              pgetContinuingOutputs
-                # getField @"inputs" txInfoF
-                # getField @"outputs" txInfoF
-                # (pfield @"_0" # outRef)
-      PDJust datumHash <- pmatchFieldC @"datumHash" out
-      PJust datum <-
-        pmatchC $
-          pparseDatum @p
-            # (pfield @"_0" # datumHash)
-            # getField @"datums" txInfoF
-      pure datum
-    _ ->
-      pure perror
+  txInfoF <- tcont $ pletFields @["inputs", "outputs", "datums"] $ getField @"txInfo" ctxF
+  PSpending outRef <- pmatchC $ getField @"purpose" ctxF
+  let out =
+        unsingleton $
+          pgetContinuingOutputs
+            # getField @"inputs" txInfoF
+            # getField @"outputs" txInfoF
+            # (pfield @"_0" # outRef)
+  PDJust datumHash <- pmatchFieldC @"datumHash" out
+  PJust datum <-
+    pmatchC $
+      pparseDatum @p
+        # (pfield @"_0" # datumHash)
+        # getField @"datums" txInfoF
+  pure datum
 
 -- | fails with provided message if the bool is false otherwise returns unit
 passert :: Term s PString -> Term s PBool -> TermCont s (Term s PUnit)
