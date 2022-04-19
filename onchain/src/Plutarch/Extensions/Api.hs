@@ -78,7 +78,7 @@ findOwnInput = phoistAcyclic $
 findDatum :: Term s (PDatumHash :--> PTxInfo :--> PMaybe PDatum)
 findDatum = phoistAcyclic $
   plam $ \dh txinfo -> unTermCont $ do
-    txInfoData <- tletField @"data" txinfo
+    txInfoData <- tletField @"datums" txinfo
     maybeEnt <- tlet $ pfind # (matches # dh) # txInfoData
     pure $
       pmatch maybeEnt $ \case
