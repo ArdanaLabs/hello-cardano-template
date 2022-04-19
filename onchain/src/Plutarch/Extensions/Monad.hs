@@ -22,7 +22,7 @@ tletField ::
   ) =>
   Term s p ->
   TermCont s (Term s a)
-tletField t = pletC $ pfromData $ pfield @name # t
+tletField t = pletC $ pfield @name # t
 
 tmatchField ::
   forall name p s a as n.
@@ -36,4 +36,4 @@ tmatchField ::
   ) =>
   Term s p ->
   TermCont s (a s)
-tmatchField t = pmatchC $ pfromData $ pfield @name # t
+tmatchField t = pmatchC $ pfield @name # t
