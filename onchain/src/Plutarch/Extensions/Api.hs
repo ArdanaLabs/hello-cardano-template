@@ -21,7 +21,7 @@ import Plutarch.Api.V1 (
   PTxOutRef (..),
  )
 import Plutarch.Extensions.List (unsingleton)
-import Plutarch.Extensions.Monad (tletField, tmatchField)
+import Plutarch.Extensions.Monad (pletFieldC, pmatchFieldC)
 import Plutarch.Extra.TermCont (pletC, pmatchC)
 import Plutarch.Unsafe (punsafeCoerce)
 
@@ -31,20 +31,20 @@ import Plutarch.Unsafe (punsafeCoerce)
 getContinuingOutputs :: Term s (PScriptContext :--> PBuiltinList PTxOut)
 getContinuingOutputs = phoistAcyclic $
   plam $ \sc -> unTermCont $ do
-    txinfo <- tletField @"txInfo" sc
-    outs <- tletField @"outputs" txinfo
+    txinfo <- pletFieldC @"txInfo" sc
+    outs <- pletFieldC @"outputs" txinfo
     pure $
       pmatch (findOwnInput # sc) $ \case
         PJust te -> unTermCont $ do
-          resolved <- tletField @"resolved" te
-          outAdr <- tletField @"address" resolved
+          resolved <- pletFieldC @"resolved" te
+          outAdr <- pletFieldC @"address" resolved
           pure $ pfilter # (matches # outAdr) #$ pmap # plam pfromData # outs
         PNothing -> ptraceError "can't get any continuing outputs"
   where
     matches :: Term s (PAddress :--> PTxOut :--> PBool)
     matches = phoistAcyclic $
       plam $ \adr txOut -> unTermCont $ do
-        outAdr <- tletField @"address" txOut
+        outAdr <- pletFieldC @"address" txOut
         pure $ adr #== outAdr
 
 {- | tries to finds the transaction's input
@@ -57,8 +57,8 @@ findOwnInput = phoistAcyclic $
     pure $
       pmatch (pfromData $ pfield @"purpose" # te) $ \case
         PSpending outRef' -> unTermCont $ do
-          outRef <- tletField @"_0" outRef'
-          PTxInfo txinfo <- tmatchField @"txInfo" te
+          outRef <- pletFieldC @"_0" outRef'
+          PTxInfo txinfo <- pmatchFieldC @"txInfo" te
           is <- pletC $ pmap # plam pfromData #$ pfromData $ pfield @"inputs" # txinfo
           pure $
             pfind # (matches # outRef) # is
@@ -68,10 +68,10 @@ findOwnInput = phoistAcyclic $
     matches = phoistAcyclic $
       plam $ \outref txininfo -> unTermCont $ do
         PTxOutRef outref' <- pmatchC outref
-        outRefId <- tletField @"id" outref'
+        outRefId <- pletFieldC @"id" outref'
         PTxInInfo txininfo' <- pmatchC txininfo
-        PTxOutRef inOutRef <- tmatchField @"outRef" txininfo'
-        inOutRefId <- tletField @"id" inOutRef
+        PTxOutRef inOutRef <- pmatchFieldC @"outRef" txininfo'
+        inOutRefId <- pletFieldC @"id" inOutRef
         pure $
           outRefId #== inOutRefId
 
@@ -79,7 +79,7 @@ findOwnInput = phoistAcyclic $
 findDatum :: Term s (PDatumHash :--> PTxInfo :--> PMaybe PDatum)
 findDatum = phoistAcyclic $
   plam $ \dh txinfo -> unTermCont $ do
-    txInfoData <- tletField @"datums" txinfo
+    txInfoData <- pletFieldC @"datums" txinfo
     maybeEnt <- pletC $ pfind # (matches # dh) # txInfoData
     pure $
       pmatch maybeEnt $ \case
@@ -98,9 +98,9 @@ findDatum = phoistAcyclic $
 -}
 getContinuingDatum :: forall p s. PIsData p => Term s PScriptContext -> TermCont s (Term s p)
 getContinuingDatum sc = do
-  txinfo <- tletField @"txInfo" sc
+  txinfo <- pletFieldC @"txInfo" sc
   out <- unsingleton <$> pletC (getContinuingOutputs # sc)
-  PDJust datumHash <- tmatchField @"datumHash" out
+  PDJust datumHash <- pmatchFieldC @"datumHash" out
   PJust datum <- pmatchC $ findDatum # (pfield @"_0" # datumHash) # txinfo
   PDatum dat <- pmatchC datum
   pure $ pfromData (punsafeCoerce dat)
