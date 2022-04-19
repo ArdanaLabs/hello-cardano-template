@@ -21,7 +21,8 @@ import Plutarch.Api.V1 (
   PTxOutRef (..),
  )
 import Plutarch.Extensions.List (unsingleton)
-import Plutarch.Extensions.Monad (tlet, tletField, tmatch, tmatchField)
+import Plutarch.Extensions.Monad (tletField, tmatchField)
+import Plutarch.Extra.TermCont (pletC, pmatchC)
 import Plutarch.Unsafe (punsafeCoerce)
 
 {- | gets a list of continuing outputs by finding
@@ -52,13 +53,13 @@ getContinuingOutputs = phoistAcyclic $
 findOwnInput :: Term s (PScriptContext :--> PMaybe PTxInInfo)
 findOwnInput = phoistAcyclic $
   plam $ \sc -> unTermCont $ do
-    PScriptContext te <- tmatch sc
+    PScriptContext te <- pmatchC sc
     pure $
       pmatch (pfromData $ pfield @"purpose" # te) $ \case
         PSpending outRef' -> unTermCont $ do
           outRef <- tletField @"_0" outRef'
           PTxInfo txinfo <- tmatchField @"txInfo" te
-          is <- tlet $ pmap # plam pfromData #$ pfromData $ pfield @"inputs" # txinfo
+          is <- pletC $ pmap # plam pfromData #$ pfromData $ pfield @"inputs" # txinfo
           pure $
             pfind # (matches # outRef) # is
         _ -> pcon PNothing
@@ -66,9 +67,9 @@ findOwnInput = phoistAcyclic $
     matches :: Term s (PTxOutRef :--> PTxInInfo :--> PBool)
     matches = phoistAcyclic $
       plam $ \outref txininfo -> unTermCont $ do
-        PTxOutRef outref' <- tmatch outref
+        PTxOutRef outref' <- pmatchC outref
         outRefId <- tletField @"id" outref'
-        PTxInInfo txininfo' <- tmatch txininfo
+        PTxInInfo txininfo' <- pmatchC txininfo
         PTxOutRef inOutRef <- tmatchField @"outRef" txininfo'
         inOutRefId <- tletField @"id" inOutRef
         pure $
@@ -79,7 +80,7 @@ findDatum :: Term s (PDatumHash :--> PTxInfo :--> PMaybe PDatum)
 findDatum = phoistAcyclic $
   plam $ \dh txinfo -> unTermCont $ do
     txInfoData <- tletField @"datums" txinfo
-    maybeEnt <- tlet $ pfind # (matches # dh) # txInfoData
+    maybeEnt <- pletC $ pfind # (matches # dh) # txInfoData
     pure $
       pmatch maybeEnt $ \case
         PNothing -> pcon PNothing
@@ -88,7 +89,7 @@ findDatum = phoistAcyclic $
     matches :: Term s (PDatumHash :--> PAsData (PTuple PDatumHash PDatum) :--> PBool)
     matches = phoistAcyclic $
       plam $ \dh dataTupe -> unTermCont $ do
-        tupe <- tlet $ pfromData dataTupe
+        tupe <- pletC $ pfromData dataTupe
         pure $
           dh #== pfromData (pfield @"_0" # tupe)
 
@@ -98,10 +99,10 @@ findDatum = phoistAcyclic $
 getContinuingDatum :: forall p s. PIsData p => Term s PScriptContext -> TermCont s (Term s p)
 getContinuingDatum sc = do
   txinfo <- tletField @"txInfo" sc
-  out <- unsingleton <$> tlet (getContinuingOutputs # sc)
+  out <- unsingleton <$> pletC (getContinuingOutputs # sc)
   PDJust datumHash <- tmatchField @"datumHash" out
-  PJust datum <- tmatch $ findDatum # (pfield @"_0" # datumHash) # txinfo
-  PDatum dat <- tmatch datum
+  PJust datum <- pmatchC $ findDatum # (pfield @"_0" # datumHash) # txinfo
+  PDatum dat <- pmatchC datum
   pure $ pfromData (punsafeCoerce dat)
 
 -- | fails with provided message if the bool is false otherwise returns unit
