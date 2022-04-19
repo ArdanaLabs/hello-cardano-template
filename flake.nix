@@ -128,6 +128,7 @@
                 ps.apropos
                 ps.apropos-tx
                 ps.plutarch
+                ps.plutarch-extra
                 ps.sydtest
                 ps.sydtest-hedgehog
               ];

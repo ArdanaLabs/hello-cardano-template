@@ -14,6 +14,9 @@ source-repository-package
   type: git
   location: https://github.com/Plutonomicon/plutarch
   tag: cae000584f5492daa2e13a08632ea69221a8c147
+  subdir:
+    .
+    plutarch-extra
 
 source-repository-package
   type: git
