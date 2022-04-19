@@ -1,6 +1,6 @@
 module Plutarch.Extensions.Api (
-  pgetContinuingDatumC,
-  passertC,
+  pgetContinuingDatum,
+  passert,
 ) where
 
 import Plutarch.Prelude
@@ -19,8 +19,8 @@ import Plutarch.TryFrom (PTryFrom)
 {- | enfroces that there is a unique continuing output gets it's Datum
  - and converts it to the desired type via pfromData
 -}
-pgetContinuingDatumC :: forall p s. (PTryFrom PData (PAsData p)) => Term s PScriptContext -> TermCont s (Term s (PAsData p))
-pgetContinuingDatumC ctx = do
+pgetContinuingDatum :: forall p s. (PTryFrom PData (PAsData p)) => Term s PScriptContext -> TermCont s (Term s (PAsData p))
+pgetContinuingDatum ctx = do
   ctxF <- tcont $ pletFields @["txInfo", "purpose"] ctx
   pmatchC (getField @"purpose" ctxF) >>= \case
     PSpending outRef -> do
@@ -42,5 +42,5 @@ pgetContinuingDatumC ctx = do
       pure perror
 
 -- | fails with provided message if the bool is false otherwise returns unit
-passertC :: Term s PString -> Term s PBool -> TermCont s (Term s PUnit)
-passertC msg bool = pure $ pif bool (pcon PUnit) (ptraceError msg)
+passert :: Term s PString -> Term s PBool -> TermCont s (Term s PUnit)
+passert msg bool = pure $ pif bool (pcon PUnit) (ptraceError msg)

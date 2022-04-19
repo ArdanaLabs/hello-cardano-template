@@ -4,7 +4,7 @@ import Plutus.V1.Ledger.Scripts (Script)
 
 import Plutarch (compile)
 import Plutarch.Api.V1 (PScriptContext)
-import Plutarch.Extensions.Api (passertC, pgetContinuingDatumC)
+import Plutarch.Extensions.Api (passert, pgetContinuingDatum)
 import Plutarch.Prelude
 
 helloScript :: Script
@@ -18,5 +18,5 @@ validator = plam $ \dn dunit dsc -> validator' # pfromData dn # pfromData dunit 
 
 validator' :: ClosedTerm (PInteger :--> PUnit :--> PScriptContext :--> PUnit)
 validator' = plam $ \n _unit sc -> unTermCont $ do
-  datum <- pgetContinuingDatumC @PInteger sc
-  passertC "int was not correct" $ n + 1 #== pfromData datum
+  datum <- pgetContinuingDatum @PInteger sc
+  passert "int was not correct" $ n + 1 #== pfromData datum
