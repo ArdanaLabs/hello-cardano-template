@@ -36,14 +36,15 @@
           overlays = [ haskell-nix.overlay ];
           inherit (haskell-nix) config;
         };
-    in let
+
       # Derivation for a Haskell Plutus project that lives in the sub-directory of this mono repo.
       plutusProjectIn = 
-        { subdir       # The sub-directory name
+        { system
+        , subdir       # The sub-directory name
         , extraShell   # Extra 'shell' attributes used by haskell.nix
         , sha256map    # Extra sha256 hashes used by haskell.nix
-        }: rec {
-        projectFor = system: let
+        }: 
+        let
           deferPluginErrors = true;
           pkgs = nixpkgsFor system;
           fakeSrc = pkgs.runCommand "real-source-${subdir}" { } ''
@@ -51,66 +52,65 @@
             chmod u+w $out/cabal.project
             cat $out/cabal-haskell.nix.project >> $out/cabal.project
           '';
-          in
-            (nixpkgsFor system).haskell-nix.cabalProject' {
-              src = fakeSrc.outPath;
-              compiler-nix-name = "ghc8107";
-              cabalProjectFileName = "cabal.project";
-              modules = [
-                {
-                  packages = {
-                    marlowe.flags.defer-plugin-errors = deferPluginErrors;
-                    plutus-use-cases.flags.defer-plugin-errors = deferPluginErrors;
-                    plutus-ledger.flags.defer-plugin-errors = deferPluginErrors;
-                    plutus-contract.flags.defer-plugin-errors = deferPluginErrors;
-                    cardano-crypto-praos.components.library.pkgconfig =
-                      nixpkgs.lib.mkForce [ [ (import plutus { inherit system; }).pkgs.libsodium-vrf ] ];
-                    cardano-crypto-class.components.library.pkgconfig =
-                      nixpkgs.lib.mkForce [ [ (import plutus { inherit system; }).pkgs.libsodium-vrf ] ];
-                  };
-                }
-              ];
-              shell = {
-                withHoogle = true;
-                tools = {
-                  haskell-language-server = { };
+        in
+          (nixpkgsFor system).haskell-nix.cabalProject' {
+            src = fakeSrc.outPath;
+            compiler-nix-name = "ghc8107";
+            cabalProjectFileName = "cabal.project";
+            modules = [
+              {
+                packages = {
+                  marlowe.flags.defer-plugin-errors = deferPluginErrors;
+                  plutus-use-cases.flags.defer-plugin-errors = deferPluginErrors;
+                  plutus-ledger.flags.defer-plugin-errors = deferPluginErrors;
+                  plutus-contract.flags.defer-plugin-errors = deferPluginErrors;
+                  cardano-crypto-praos.components.library.pkgconfig =
+                    nixpkgs.lib.mkForce [ [ (import plutus { inherit system; }).pkgs.libsodium-vrf ] ];
+                  cardano-crypto-class.components.library.pkgconfig =
+                    nixpkgs.lib.mkForce [ [ (import plutus { inherit system; }).pkgs.libsodium-vrf ] ];
                 };
-                exactDeps = true;
-                # We use the ones from Nixpkgs, since they are cached reliably.
-                # Eventually we will probably want to build these with haskell.nix.
-                nativeBuildInputs = [ pkgs.cabal-install pkgs.hlint pkgs.haskellPackages.fourmolu ];
-              } // extraShell;
-              inherit sha256map;
-            };
+              }
+            ];
+            shell = {
+              withHoogle = true;
+              tools = {
+                haskell-language-server = { };
+              };
+              exactDeps = true;
+              # We use the ones from Nixpkgs, since they are cached reliably.
+              # Eventually we will probably want to build these with haskell.nix.
+              nativeBuildInputs = [ pkgs.cabal-install pkgs.hlint pkgs.haskellPackages.fourmolu ];
+            } // extraShell;
+            inherit sha256map;
+          } ;
+
+      lintSpec = {
+        cabal-fmt = {};
+        fourmolu = {
+          ghcOpts = "-o-XTypeApplications -o-XImportQualifiedPost";
         };
+        # Enable after https://github.com/ArdanaLabs/dUSD/issues/8
+        # nixpkgs-fmt = {};
+      };
 
-        lintSpec = {
-          cabal-fmt = {};
-          fourmolu = {
-            ghcOpts = "-o-XTypeApplications -o-XImportQualifiedPost";
-          };
-          # Enable after https://github.com/ArdanaLabs/dUSD/issues/8
-          # nixpkgs-fmt = {};
-        };
+      # Checks the shell script using ShellCheck
+      checkedShellScript = system: name: text:
+        ((nixpkgsFor system).writeShellApplication {
+          inherit name text;
+        }) + "/bin/${name}";
 
-        # Checks the shell script using ShellCheck
-        checkedShellScript = system: name: text:
-          ((nixpkgsFor system).writeShellApplication {
-            inherit name text;
-          }) + "/bin/${name}";
-
-        # Take a flake app (identified as the key in the 'apps' set), and return a
-        # derivation that runs it in the compile phase.
-        #
-        # In effect, this allows us to run an 'app' as part of the build process (eg: in CI).
-        flakeApp2Derivation = system: appName:
-          (nixpkgsFor system).runCommand appName { } "${self.apps.${system}.${appName}.program} | tee $out";
+      # Take a flake app (identified as the key in the 'apps' set), and return a
+      # derivation that runs it in the compile phase.
+      #
+      # In effect, this allows us to run an 'app' as part of the build process (eg: in CI).
+      flakeApp2Derivation = system: appName:
+        (nixpkgsFor system).runCommand appName { } "${self.apps.${system}.${appName}.program} | tee $out";
     in
       {
         onchain-scripts = forAllSystems (system: (nixpkgsFor system).stdenv.mkDerivation {
           name = "onchain-scripts";
           src = self;
-          buildInputs = [ (self.onchain.project.${system}.flake {}).packages."dUSD-onchain:exe:scripts" ];
+          buildInputs = [ self.onchain.${system}.flake.packages."dUSD-onchain:exe:scripts" ];
           doCheck = false;
           installPhase = ''
             scripts "$out"
@@ -120,8 +120,9 @@
             '';
         });
 
-        onchain = rec {
-          project = forAllSystems (system: (plutusProjectIn {
+        onchain = forAllSystems (system: rec {
+          project = plutusProjectIn {
+            inherit system;
             subdir = "onchain";
             extraShell = {
               additional = ps: [
@@ -147,12 +148,13 @@
               "https://github.com/Srid/autodocodec"."42b42a7407f33c6c74fa4e8c84906aebfed28daf" = "sha256-X1TNZlmO2qDFk3OL4Z1v/gzvd3ouoACAiMweutsYek4=";
               "https://github.com/Srid/validity"."f7982549b95d0ab727950dc876ca06b1862135ba" = "sha256-dpMIu08qXMzy8Kilk/2VWpuwIsfqFtpg/3mkwt5pdjA=";
             };
-          }).projectFor system);
-          flake = forAllSystems (system: project.${system}.flake { });
-        };
+          };
+          flake = project.flake { };
+        });
 
-        offchain = rec {
-          project = forAllSystems (system: (plutusProjectIn {
+        offchain = forAllSystems (system: rec {
+          project = plutusProjectIn {
+            inherit system;
             subdir = "offchain";
             extraShell = {
               additional = ps: [
@@ -169,24 +171,25 @@
               "https://github.com/input-output-hk/cardano-prelude"."fd773f7a58412131512b9f694ab95653ac430852" = "BtbT5UxOAADvQD4qTPNrGfnjQNgbYNO4EAJwH2ZsTQo=";
               "https://github.com/input-output-hk/Win32-network"."3825d3abf75f83f406c1f7161883c438dac7277d" = "Hesb5GXSx0IwKSIi42ofisVELcQNX6lwHcoZcbaDiqc=";
             };
-          }).projectFor system);
-          flake = forAllSystems (system: project.${system}.flake { });
-        };
+          };
+          flake = project.flake { };
+        });
 
         # this could be done automatically, but would reduce readability
         packages = forAllSystems (system:
           let pkgs = (forAllSystems nixpkgsFor)."${system}";
-          in self.onchain.flake.${system}.packages
-          // self.offchain.flake.${system}.packages
+          in self.onchain.${system}.flake.packages
+          // self.offchain.${system}.flake.packages
           // {
-            test-plan = pkgs.stdenv.mkDerivation {
-              name = "test-plan";
+            build-docs = pkgs.stdenv.mkDerivation {
+              name = "build-docs";
               src = self;
               buildInputs = with pkgs; [ (texlive.combine { inherit ( texlive ) scheme-basic latexmk todonotes metafont; }) ];
               doCheck = false;
               buildPhase = ''
-                HOME=$TMP latexmk -output-directory="$out" -pdf ./docs/test-plan.tex
-                ls -lah
+                HOME=$TMP latexmk -output-directory="tmp" -pdf ./docs/*.tex
+                mkdir $out -p
+                cp tmp/*.pdf $out
               '';
               installPhase = ''
                 ls -lah
@@ -195,7 +198,7 @@
         });
 
         checks = forAllSystems (system:
-             self.onchain.flake.${system}.checks
+             self.onchain.${system}.flake.checks
           // { offchain-test = flakeApp2Derivation system "offchain-test";
              }
           // (lint-utils.mkChecks.${system} lintSpec ./.)
@@ -221,8 +224,8 @@
         );
 
         devShells = forAllSystems (system: {
-          onchain = self.onchain.flake.${system}.devShell;
-          offchain = self.offchain.flake.${system}.devShell;
+          onchain = self.onchain.${system}.flake.devShell;
+          offchain = self.offchain.${system}.flake.devShell;
         });
         defaultPackage = forAllSystems (system:
              self.packages.${system}."dUSD-onchain:test:tests"
