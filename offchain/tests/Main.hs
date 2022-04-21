@@ -10,7 +10,7 @@ main :: IO ()
 main = do
   s <- getEnv "DUSD_SCRIPTS" >>= BSL.readFile . (++ "/hello_world.plc")
   let (sc :: Script) = deserialise s
-  if scriptSize sc == 524
+  if scriptSize sc == 459
     then exitSuccess
     else do
       print $ scriptSize sc

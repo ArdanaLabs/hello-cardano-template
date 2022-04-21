@@ -1,7 +1,7 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Plutarch.Extensions.Monad (tlet, tletField, tmatch, tmatchField) where
+module Plutarch.Extensions.Monad (pletFieldC, pmatchFieldC) where
 
 import Plutarch.Prelude
 
@@ -9,11 +9,9 @@ import GHC.TypeLits (KnownNat)
 import Plutarch.DataRepr (PDataFields (PFields))
 import Plutarch.DataRepr.Internal (PLabelIndex, PUnLabel)
 import Plutarch.DataRepr.Internal.HList (IndexList)
+import Plutarch.Extra.TermCont (pletC, pmatchC)
 
-tlet :: Term s a -> TermCont s (Term s a)
-tlet = tcont . plet
-
-tletField ::
+pletFieldC ::
   forall name p s a as n.
   ( PDataFields p
   , as ~ PFields p
@@ -24,12 +22,9 @@ tletField ::
   ) =>
   Term s p ->
   TermCont s (Term s a)
-tletField t = tlet $ pfromData $ pfield @name # t
+pletFieldC t = pletC $ pfield @name # t
 
-tmatch :: PMatch a => Term s a -> TermCont s (a s)
-tmatch = tcont . pmatch
-
-tmatchField ::
+pmatchFieldC ::
   forall name p s a as n.
   ( PDataFields p
   , as ~ PFields p
@@ -41,4 +36,4 @@ tmatchField ::
   ) =>
   Term s p ->
   TermCont s (a s)
-tmatchField t = tmatch $ pfromData $ pfield @name # t
+pmatchFieldC t = pmatchC $ pfield @name # t
