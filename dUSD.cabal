@@ -69,12 +69,21 @@ common lang
 
 library
   import:          lang
-  exposed-modules: DUSD
+  exposed-modules:
+    DUSD
+    Hello
+    Plutarch.Extensions.Api
+    Plutarch.Extensions.List
+    Plutarch.Extensions.Monad
+
   hs-source-dirs:  src
   build-depends:
     , base
+    , bytestring
     , plutarch
     , plutus-core
+    , plutus-ledger-api
+    , serialise
 
 test-suite tests
   import:         lang
