@@ -1,5 +1,5 @@
 cabal-version:      3.0
-name:               dUSD
+name:               dUSD-onchain
 version:            1.0
 extra-source-files: CHANGELOG.md
 
@@ -85,6 +85,18 @@ library
     , plutus-ledger-api
     , serialise
 
+executable scripts
+  import:         lang
+  type:           exitcode-stdio-1.0
+  main-is:        Main.hs
+  hs-source-dirs: scripts
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+    , base
+    , bytestring
+    , dUSD-onchain
+    , serialise
+
 test-suite tests
   import:         lang
   type:           exitcode-stdio-1.0
@@ -106,7 +118,7 @@ test-suite tests
     , apropos-tx
     , base
     , containers
-    , dUSD
+    , dUSD-onchain
     , hedgehog
     , lens
     , plutarch
