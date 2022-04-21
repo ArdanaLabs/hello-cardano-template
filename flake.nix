@@ -178,14 +178,15 @@
           in self.onchain.flake.${system}.packages
           // self.offchain.flake.${system}.packages
           // {
-            test-plan = pkgs.stdenv.mkDerivation {
-              name = "test-plan";
+            build-docs = pkgs.stdenv.mkDerivation {
+              name = "build-docs";
               src = self;
               buildInputs = with pkgs; [ (texlive.combine { inherit ( texlive ) scheme-basic latexmk todonotes metafont; }) ];
               doCheck = false;
               buildPhase = ''
-                HOME=$TMP latexmk -output-directory="$out" -pdf ./docs/test-plan.tex
-                ls -lah
+                HOME=$TMP latexmk -output-directory="tmp" -pdf ./docs/*.tex
+                mkdir $out -p
+                cp tmp/*.pdf $out
               '';
               installPhase = ''
                 ls -lah

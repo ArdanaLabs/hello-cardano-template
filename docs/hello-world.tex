@@ -1,0 +1,90 @@
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage{todonotes}
+\setuptodonotes{inline}
+\setlength{\parindent}{0em}
+
+\title{Hello World specification}
+\begin{document}
+
+\maketitle
+
+\section{Interactions}
+
+\begin{itemize}
+  \item UTXO with a datum that is an int
+  \item Website shows the int
+  \item Website lets you increment the int
+\end{itemize}
+
+\section{Acceptance Criteria}
+
+\begin{itemize}
+  \item Anyone can increment the int (no authentication)
+\end{itemize}
+
+\section{Implementation Details}
+
+\begin{itemize}
+  \item This all happens in the dUSD repo
+  \item On-chain code written in Plutarch
+  \item Off-chain code written in PAB
+  \item Plutarch code gets compiled into a ByteString, which can be included in
+    the PAB transactions as it would for PlutusTx
+  \item Front-end
+  \begin{itemize}
+    \item Static and comes from cloudflare
+    \item Mostly html/css, some typescript as necessary
+    \item User wallet: Nami (for first version)
+  \end{itemize}
+  \item Once we’re done, we can `git tag' the commit where that’s done and then
+    upgrade this to the price module implementation in-place.
+  \item How to balance transactions? \todo{This is a research project!}
+\end{itemize}
+
+\section{Tests}
+
+\begin{itemize}
+  \item Apropos-tx testing for the on-chain code
+    \todo{@Fraser Spec for behaviour}
+  \item Unit test for on-chain code:
+  \begin{itemize}
+    \item increment from 0 to 1
+    \item increment from 1 to 2
+  \end{itemize}
+  \item E2E frontend testing: Set up NixOS VM, launch browser, connect to Nami
+  \begin{itemize}
+    \item Selenium
+      \begin{itemize}
+        \item Check that when the server is initialized, the website shows the
+          number $0$
+        \item Check that incrementing works: $0$ to $1$, $1$ to $2$
+        \item Open two browsers, connected to two separate wallets, and check
+          that incrementing on one updates the number on the other after
+          refresh: $0$ to $1$, $1$ to $2$
+        \item Launch the two browsers in separate VMs. \todo{Does this
+          require/allow setting up separate nodes, with Nami?}
+      \end{itemize}
+    \item Lighthouse score above $90$, to check website performance
+  \end{itemize}
+  \item Contract Model Tests with PAB
+  \begin{itemize}
+    \item Wallet signs and submits a transaction
+    \item Transactions are submitted by separate wallets (i.e. determine
+      atomicity constraints)
+    \item \todo{@Dan: Which tests do we want to run? `noFundsLocked'?}
+  \end{itemize}
+  \item \todo{@Syd: End-to-end tests with the Cardano test net?}
+  \item \todo{@Syd: Actually deploy to main net and run manual tests?}
+\end{itemize}
+
+\section{Features to be added}
+
+\begin{itemize}
+  \item Frontend integration with Yoroi, Daedelus. Anything else?
+  \item Replace datum from something builtin, to test encoding/decoding match
+    between on-chain and off-chain
+  \item Maeserat: Volume tests, benchmarks for time and memory consumption
+\end{itemize}
+
+\end{document}
