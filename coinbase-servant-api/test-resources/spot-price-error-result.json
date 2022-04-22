@@ -1,0 +1,8 @@
+{
+  "errors": [
+    {
+      "id": "invalid_request",
+      "message": "Invalid date (2022/01/01)- use format YYYY-MM-DD"
+    }
+  ]
+}
