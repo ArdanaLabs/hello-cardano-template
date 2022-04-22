@@ -1,0 +1,16 @@
+index-state: 2022-01-22T00:00:00Z
+
+packages:
+    kraken-servant-api
+    kraken-mock-servant-server
+    kraken-servant-client
+    coinbase-servant-api
+    coinbase-mock-servant-server
+    coinbase-servant-client
+          
+-- Always build tests and benchmarks.
+tests: true
+benchmarks: true
+
+-- The only sensible test display option
+test-show-details: direct
