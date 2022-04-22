@@ -1,0 +1,58 @@
+cabal-version:      2.4
+name:               kraken-servant-client
+version:            0.1.0.0
+
+-- A short (one-line) description of the package.
+-- synopsis:
+
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+-- The license under which the package is released.
+-- license:
+author:             Marijan Petričević
+maintainer:         marijan.petricevic94@gmail.com
+
+-- A copyright notice.
+-- copyright:
+-- category:
+extra-source-files: CHANGELOG.md
+
+library
+    exposed-modules:  Network.Kraken.Client
+
+    -- Modules included in this library but not exported.
+    -- other-modules:
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    ghc-options: -Wall -Werror
+    build-depends:
+        base
+      , containers
+      , kraken-servant-api
+      , mtl
+      , servant-client
+      , text
+      , unliftio
+    hs-source-dirs:   src
+    default-language: Haskell2010
+
+test-suite kraken-servant-client-test
+    ghc-options: -Wall -Werror
+    default-language: Haskell2010
+    type:             exitcode-stdio-1.0
+    main-is:          Main.hs
+    other-modules:
+        Network.Kraken.ClientSpec
+    build-depends:
+        base
+      , kraken-servant-api
+      , kraken-servant-client
+      , kraken-mock-servant-server
+      , sydtest
+      , sydtest-servant
+    hs-source-dirs:   test
