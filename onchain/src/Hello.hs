@@ -1,4 +1,4 @@
-module Hello (helloScript) where
+module Hello (helloScript, helloLogic) where
 
 import Plutus.V1.Ledger.Scripts (Script)
 
@@ -19,4 +19,7 @@ validator = plam $ \dn dunit dsc -> validator' # pfromData dn # pfromData dunit 
 validator' :: ClosedTerm (PInteger :--> PUnit :--> PScriptContext :--> PUnit)
 validator' = plam $ \n _unit sc -> unTermCont $ do
   datum <- pgetContinuingDatum @PInteger sc
-  passert "int was not correct" $ n + 1 #== pfromData datum
+  pure $ helloLogic # n # pfromData datum
+
+helloLogic :: ClosedTerm (PInteger :--> PInteger :--> PUnit)
+helloLogic = plam $ \n m -> unTermCont $ passert "int was not correct" $ n + 1 #== m
