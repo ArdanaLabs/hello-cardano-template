@@ -1,21 +1,24 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Network.Kraken.API (KrakenResponse(..), AssetTickerInfoUnsafe(..), AssetTickerInfo(..), marketDataAPIProxy, eitherDouble, findLast) where
+module Network.Kraken.API (MarketDataAPI, KrakenResponse(..), AssetTickerInfoResponseUnsafe(..), AssetTickerInfoUnsafe(..), OHLCResponseUnsafe(..), marketDataAPIProxy, findLast) where
 
 import Data.Aeson
+import Data.Aeson.Types
 import Data.Proxy
 import Data.Char (isUpper, toLower)
 import qualified Data.Text as T
-import Data.Text.Read (double)
+import Data.Time.Clock.POSIX (POSIXTime)
 import Data.Monoid
 import Data.Maybe
-import qualified Data.Map as Map
+import qualified Data.Map as M
 import GHC.Generics
 import Servant.API
+
+import qualified Data.HashMap.Lazy as HML
 
 findLast :: Foldable t => (a -> Bool) -> t a -> Maybe a
 findLast p = getLast . foldMap (\x -> if p x
@@ -29,46 +32,26 @@ dropLeadingUnderscoreOptions :: Options
 dropLeadingUnderscoreOptions = defaultOptions {fieldLabelModifier = drop 1}
 
 
-type MarketDataAPI = "public" :> TickerInformationAPI
+type MarketDataAPI = "public" :> (TickerInformationAPI
+                            :<|>  OHLCAPI
+                      )
 
 marketDataAPIProxy :: Proxy MarketDataAPI
 marketDataAPIProxy = Proxy
 
-newtype Price = Price Double deriving (Eq, Fractional, Generic, Num, Ord, Read, Show, FromJSON, ToJSON)
-newtype LotVolume = LotVolume Double deriving (Eq, Fractional, Generic, Num, Ord, Read, Show, FromJSON, ToJSON)
-
-data AssetTickerInfo = AssetTickerInfo {
-  _ask :: (Price, Integer, LotVolume)
-, _bid :: (Price, Integer, LotVolume)
-, _lastTradeClosed :: (Price, LotVolume)
-, _volume :: (Double, Double)
-, _volumeWeightedAveragePrice :: (Price, Price)
-, _numberOfTrades :: (Integer, Integer)
-, _low :: (Price, Price)
-, _high :: (Price, Price)
-, _todaysOpeningPrice :: Price
-} deriving (Eq, Generic, Ord, Show)
-
-eitherDouble :: T.Text -> Either String Double
-eitherDouble text = do
-  res <- double text
-  case res of
-    (x, "") -> Right x
-    (_, remainder) -> Left $ "Unable to read " <> (T.unpack remainder) <> " from input " <> (T.unpack text)
-
--- toAssetTickerInfo :: AssetTickerInfoUnsafe -> Either String AssetTickerInfo
--- toAssetTickerInfo assetTickerInfoUnsafe = do
---   askPrice <- eitherDouble $ _unsafeAsk assetTickerInfoUnsafe
---   askWholeLotVolume <- eitherDouble $ _unsafeAsk assetTickerInfoUnsafe
+-- https://docs.kraken.com/rest/#operation/getTickerInformation
+type TickerInformationAPI = "Ticker" :> QueryParam "pair" T.Text :> Get '[JSON] (KrakenResponse AssetTickerInfoResponseUnsafe)
 
 data KrakenResponse a = KrakenResponse {
   _error :: [ T.Text ]
-, _result :: Map.Map T.Text a
+, _result :: a
 } deriving (Eq, Generic, Ord, Show)
 instance FromJSON a => FromJSON (KrakenResponse a) where
   parseJSON = genericParseJSON dropLeadingUnderscoreOptions
 instance ToJSON a => ToJSON (KrakenResponse a) where
   toJSON = genericToJSON dropLeadingUnderscoreOptions
+
+newtype AssetTickerInfoResponseUnsafe = AssetTickerInfoResponseUnsafe (M.Map T.Text AssetTickerInfoUnsafe) deriving (Eq, Generic, Ord, Show, FromJSON, ToJSON)
 
 data AssetTickerInfoUnsafe = AssetTickerInfoUnsafe {
   _unsafeAsk :: (T.Text, T.Text, T.Text)
@@ -87,5 +70,21 @@ instance FromJSON AssetTickerInfoUnsafe where
 instance ToJSON AssetTickerInfoUnsafe where
   toJSON = genericToJSON lastLowerCharFieldLabelModifier
 
--- https://docs.kraken.com/rest/#operation/getTickerInformation
-type TickerInformationAPI = "Ticker" :> QueryParam "pair" T.Text :> Get '[JSON] (KrakenResponse AssetTickerInfoUnsafe)
+-- OHLC - open-high-low-chart: https://docs.kraken.com/rest/#operation/getOHLCData
+type OHLCAPI = "OHLC" :> QueryParam "pair" T.Text :> QueryParam "interval" Integer :> QueryParam "since" POSIXTime :> Get '[JSON] (KrakenResponse OHLCResponseUnsafe)
+
+data OHLCResponseUnsafe = OHLCResponseUnsafe {
+  _ohlcResponseUnsafeLast :: POSIXTime
+, _ohlcResponseUnsafePairs :: M.Map T.Text [(POSIXTime, T.Text, T.Text, T.Text, T.Text, T.Text, T.Text, Integer)]
+} deriving (Eq, Generic, Ord, Show)
+
+instance FromJSON OHLCResponseUnsafe where
+    parseJSON = withObject "OHCLResponse" $ \objectMap -> do
+      _last <- objectMap .: "last"
+      let objectWithoutLast = Object $ HML.delete "last" objectMap
+      maybe (parseFail "No pairs found") (return . (OHLCResponseUnsafe _last)) $ parseMaybe parseJSON objectWithoutLast
+
+instance ToJSON OHLCResponseUnsafe where
+  toJSON (OHLCResponseUnsafe lastResult pairsResult) = object [ "last" .= toJSON lastResult ] `unionObjects` toJSON pairsResult
+    where unionObjects (Object x) (Object y) = Object $ x `HML.union` y
+          unionObjects _ _ = undefined

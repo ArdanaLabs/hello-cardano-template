@@ -1,14 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Network.Kraken.Client (krakenBaseUrl, getAssetTickerInformation) where
+module Network.Kraken.Client (krakenBaseUrl, getAssetTickerInformation, getOHLCData) where
 
+import Servant.API
 import Servant.Client
--- import Control.Monad.Reader (ReaderT, ask)
 import Data.Text
+import Data.Time.Clock.POSIX (POSIXTime)
 import qualified Data.Map as Map 
 import UnliftIO (MonadIO)
 import UnliftIO.Exception (fromEitherIO, throwString)
 
-import Network.Kraken.API (KrakenResponse(..), AssetTickerInfoUnsafe, marketDataAPIProxy)
+import Network.Kraken.API
+import Network.Kraken.Types (TickerData, toTickerData)
 
 krakenBaseUrl :: BaseUrl
 krakenBaseUrl = BaseUrl {
@@ -21,11 +23,25 @@ krakenBaseUrl = BaseUrl {
 getAssetTickerInformation :: MonadIO m => ClientEnv -> Text -> m AssetTickerInfoUnsafe
 getAssetTickerInformation clientEnv ticker = do
   -- TODO use retry on connection clienterror
-  krakenResponse <- fromEitherIO $ runClientM (client marketDataAPIProxy (Just ticker)) clientEnv
+  let (tickerInformationClient :<|> _) = client marketDataAPIProxy
+  krakenResponse <- fromEitherIO $ runClientM (tickerInformationClient (Just ticker)) clientEnv
   case krakenResponse of
-    (KrakenResponse [] tickerMap) -> do
+    (KrakenResponse [] (AssetTickerInfoResponseUnsafe tickerMap)) -> do
       maybe (throwString $ "The fetched asset ticker information doesn't contain the expected ticker: " ++ (unpack ticker))
             return $
             Map.lookup ticker tickerMap
     (KrakenResponse errors _) -> throwString $ show errors
 
+getOHLCData :: MonadIO m => ClientEnv -> Text -> Text -> Maybe Integer -> Maybe POSIXTime -> m [TickerData]
+getOHLCData clientEnv base currency interval since = do
+  let (_ :<|> ohlcDataClient) = client marketDataAPIProxy
+      currencyPair = base <> currency
+  krakenResponse <- fromEitherIO $ runClientM (ohlcDataClient (Just currencyPair) interval since) clientEnv
+  case krakenResponse of
+    (KrakenResponse [] (OHLCResponseUnsafe _last _pairs)) -> do
+      _tickerData <- maybe (throwString $ "The fetched asset ticker information doesn't contain the expected ticker: " ++ (unpack currencyPair))
+                      return $
+                      Map.lookup currencyPair _pairs
+      either throwString return (mapM toTickerData _tickerData)
+    (KrakenResponse errors _) -> throwString $ show errors
+      

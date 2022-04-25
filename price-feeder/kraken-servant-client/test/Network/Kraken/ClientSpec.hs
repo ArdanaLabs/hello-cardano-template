@@ -5,15 +5,17 @@ import Test.Syd
 import Test.Syd.Servant
 
 import Network.Kraken.API (AssetTickerInfoUnsafe(..), marketDataAPIProxy)
-import Network.Kraken.Client (getAssetTickerInformation)
-import Network.Kraken.Server.Mock (mockTickerInformationHandler)
+import Network.Kraken.Types (TickerData(..))
+import Network.Kraken.Client (getAssetTickerInformation, getOHLCData)
+import Network.Kraken.Server.Mock (marketDataServer)
 
 spec :: Spec
 spec = do
   testGetAssetTickerInformation
+  testGetOHLCData
 
 testGetAssetTickerInformation :: Spec
-testGetAssetTickerInformation = servantSpec marketDataAPIProxy mockTickerInformationHandler $ do
+testGetAssetTickerInformation = servantSpec marketDataAPIProxy marketDataServer $ do
   describe "requests with correct credentials" $ do
     it "gets zero at the start" $ \clientEnv -> do
       res <- liftIO $ getAssetTickerInformation clientEnv "hello"
@@ -27,3 +29,12 @@ testGetAssetTickerInformation = servantSpec marketDataAPIProxy mockTickerInforma
                       ("51513.90000", "51513.90000")
                       ("51513.90000", "51513.90000")
                       "52280.40000"
+
+testGetOHLCData :: Spec
+testGetOHLCData = servantSpec marketDataAPIProxy marketDataServer $ do
+  describe "testGetOHLCData" $ do
+    it "should fetch successfully" $ \clientEnv -> do
+      res <- liftIO $ getOHLCData clientEnv "BTC" "USD" Nothing Nothing
+      res `shouldBe` [ TickerData 1616662740 52591.9 52599.9 52599.9 52591.8 52599.1 0.11091626 5
+                     , TickerData 1616662980 52601.2 52599.9 52601.2 52599.9 52599.9 0.43748934 7
+                     ]
