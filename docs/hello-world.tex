@@ -46,7 +46,12 @@
 
 \begin{itemize}
   \item Apropos-tx testing for the on-chain code
-    \todo{@Fraser Spec for behaviour}
+  \begin{itemize}
+    \item The model will be very simple since there is not much logic in the validator
+    \item DONE: model for basic logic - does the increment Plutarch work across the Integers?
+    \item TODO: extend basic model to validator - does the validator behave correctly (inc tolerating bad input)?
+    \item TODO: extend validator model to Tx - do only the expected Txs validate?
+  \end{itemize}
   \item Unit test for on-chain code:
   \begin{itemize}
     \item increment from 0 to 1
@@ -85,6 +90,7 @@
   \item Replace datum from something builtin, to test encoding/decoding match
     between on-chain and off-chain
   \item Maeserat: Volume tests, benchmarks for time and memory consumption
+  \item Parameterise script by unique thread token.
 \end{itemize}
 
 \end{document}
