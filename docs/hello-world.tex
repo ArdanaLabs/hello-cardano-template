@@ -33,13 +33,14 @@
     the PAB transactions as it would for PlutusTx
   \item Front-end
   \begin{itemize}
-    \item Static and comes from cloudflare
-    \item Mostly html/css, some typescript as necessary
+    \item Foundations built in html/css, with Typescript where necessary to link
+      with the PAB and browser wallets
     \item User wallet: Nami (for first version)
   \end{itemize}
   \item Once we’re done, we can `git tag' the commit where that’s done and then
     upgrade this to the price module implementation in-place.
-  \item How to balance transactions? \todo{This is a research project!}
+  \item How to balance transactions? \todo{Waiting for Konstantinos from IOG to
+    build this.}
 \end{itemize}
 
 \section{Tests}
@@ -83,8 +84,8 @@
 \section{Features to be added}
 
 \begin{itemize}
-  \item Frontend integration with Yoroi, Daedelus. Anything else?
-  \item Replace datum from something builtin, to test encoding/decoding match
+  \item Frontend integration with Yoroi, Daedelus. Any other browser wallets?
+  \item Replace datum to something not-builtin, to test encoding/decoding match
     between on-chain and off-chain
   \item Maeserat: Volume tests, benchmarks for time and memory consumption
   \item Set up an NFT-system to persistently identify and track the Hello World
