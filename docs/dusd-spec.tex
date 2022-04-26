@@ -170,8 +170,8 @@ This discount rate is called the liquidation discount, and will initially be
 $3\%$.
 Let us go through an example to explain how liquidation works.
 When buying e.g. $100$ USD worth of ADA, the ADA is offered at a price of $97$
-USD worth of dUSD.
-Anyone can come in and buy a part of the ADA at this discounted exchange
+dUSD.
+Anyone can buy a part of the ADA at this discounted exchange
 rate\footnote{
   There are two reasons we allow liquidators to buy a part of the collateral,
   rather than forcing them to buy all of it.
@@ -210,32 +210,57 @@ setup, $90\%$), is used to pay back debt, burning the rest.
 \subsection{Buffer}
 
 The buffer is a UTXO responsible for setting the protocol-wide parameters,
-holding the protocol's profits and launching surplus and debt auctions.
+holding the protocol's profits and launching surplus and debt auctions. \\
 
-\subsubsection{Trigger surplus auction (buy back DANA)}
+Let's start by going through some general information on how the surplus and
+debt auctions will work.
+First of all, the purpose of surplus and debt auctions is to keep the peg in the
+short-term.
+More mid- to long-term, the stability fee is corrected to ensure the buffer's
+reserves aren't endangered, and there is plenty of buying and selling power for
+dUSD on the market. \\
 
-A surplus auction is an auction where the buffer mints a certain amount of dUSD,
-and sells it off in exchange for DANA tokens.
-The DANA tokens are stored in the buffer.
-The goal is to put more dUSD on the open market, increasing the supply and
-therefore decreasing its price, while taking DANA tokens off the market,
-increasing their price and rewarding governance holders. \\
+Now onto the structure of the auctions.
+The way to keep the peg, is by allowing anyone to trigger surplus/debt auctions
+whenever certain conditions are reached.
+Here, a surplus auction is one where the buffer mints dUSD and sells it for ADA,
+and a debt auction is one where the buffer sells ADA from its reserves to buy
+and burn dUSD.
+As mentioned before, the stability fee is used to set the peg in the mid- to
+long-term, and to ensure the buffer's reserves statistically increase rather
+than decrease. \\
 
-Anyone can trigger a surplus auction when the dUSD price module claims that the
-dUSD price lies above $1.01$ USD.
+As ADA is accumulated in the buffer, admin (and later: governance) can decide to
+share the value with the stakeholders (i.e. DANA token holders).
+This mechanism is still under development. \\
+
+Proposal: The conditions mentioned above under which one can trigger a `regular'
+surplus/debt auction (trading dUSD for ADA), are that dUSD diverges from the peg
+by more than $1\%$.
+
+\subsubsection{Trigger surplus auction}
+
+Anyone can trigger a dUSD $\leftrightarrow$ ADA surplus auction when certain
+conditions are met.
+Proposal: The conditions are that the dUSD price module claims the dUSD price
+lies above $1.01$ USD.
 
 \subsubsection{Trigger debt auction}
 
-A debt auction is the opposite of a surplus auction:
-It is an auction where the buffer sells some of the DANA tokens it stores in
-exchange for dUSD, and burns the dUSD.
-The goal is to take some dUSD off the open market, decreasing the supply and
-therefore increasing its price.
-The result is that DANA tokens are put back on the market, decreasing their
-price. \\
+Anyone can trigger a dUSD $\leftrightarrow$ ADA debt auction when certain
+conditions are met.
+Proposal: The conditions are that the dUSD price module claims the dUSD price
+lies below $0.99$ USD.
 
-Anyone can trigger a debt auction when the dUSD price module claims that the
-dUSD price lies below $0.99$ USD.
+\subsubsection{Trigger ADA sale auction}
+
+Admin can trigger an ADA $\leftrightarrow$ DANA sale auction of a given size
+i.e. a given amount of ADA from the buffer's reserves is sold for DANA.
+
+\subsubsection{Trigger DANA sale auction}
+
+Admin can trigger a DANA $\leftrightarrow$ ADA sale auction of a given size,
+i.e. a given amount of DANA from the buffer's reserves is sold for ADA.
 
 \subsubsection{Set liquidation discount}
 
@@ -385,16 +410,17 @@ Acceptance criteria:
 \subsection{Buffer}
 
 \begin{itemize}
-  \item Anyone can trigger a surplus or debt auction when the dUSD price
-    deviates from USD by more than $1\%$
+  \item Proposal: Anyone can trigger a surplus or debt auction when the dUSD
+    price deviates from USD by more than $1\%$
   \item When auctions can be triggered, they are triggered within minutes.
-    Auctions cannot be triggered more than once per hour, to prevent
-    overcorrecting the dUSD price.
-  \item The starting amount of DANA in the buffer is enough to sustain the
+    Auctions cannot be triggered more than once per hour, to give the auction
+    sizing algorithm time to adjust.
+  \item The starting amount of ADA in the buffer is enough to sustain the
     protocol through hardships with high probability
     \todo{What does this mean in practice? \\
     Proposal: Put in a decent amount at initialization, and set up an endpoint
-    in the validator to add more later on.}
+    in the validator to add more later on. \\
+    The stability fee will have a strong influence on this.}
   \item The auctions are sized such that the dUSD price is controlled, i.e. it
     is eventually consistent with USD.
     This means that given any real world change in supply and demand, the dUSD
@@ -407,6 +433,7 @@ Acceptance criteria:
   \item If the protocol-wide parameters are changed, this change is immediately
     and correctly seen in liquidations and when taking out loans
   % Comment for Version 2: Add debt ceiling to the protocol-wide parameters
+  \item Admin and only admin can trigger ADA and DANA sale auctions
 \end{itemize}
 
 \subsection{Update mechanism for the protocol (TBD)}
@@ -490,9 +517,9 @@ Note: The off-chain bot will combine the price feeds through two operations:
 
 \begin{itemize}
   \item On-chain code: Plutarch
-  \item Off-chain code: PAB, tested through our own testing framework
-    (Maeserat). This means that users will use the frontend to contact our
-    remote wallet PAB\footnote{
+  \item Off-chain code: PAB, tested through Maeserat and ContractModel tests.
+    This means that users will use the frontend to contact our remote wallet
+    PAB\footnote{
       The following statement is still being verified by Dan Firth's research.
       The protocol implementation as outlined in this document requires us to
       run two separate PABs.
@@ -511,8 +538,10 @@ Note: The off-chain bot will combine the price feeds through two operations:
     having to build a separate backend for the dUSD system
   \item A vault is a UTXO which holds an NFT, as a unique ID, and the collateral
     assets
-  \item The vault's address is dependent on the owner's public key. This ensures
-    the key cannot be changed by any transactions.
+  \item The vault's address is dependent on the owner's public key, ensuring the
+    key cannot be changed by any transactions
+  \item The vault's address is dependent on the three admin keys, ensuring the
+    vault is connected to the correct buffer and price modules
   \item The vault's datum consists of two pieces of information: A timestamp of
     its last update and the amount of dUSD debt (including stability fee)
     calculated at that time
@@ -610,22 +639,37 @@ keys as the price module. \\
 Note: However we implement the auctions, we might want to prevent them from
 updating the buffer's UTXO, to avoid resource contention? \\
 
-\todo{How should the surplus/debt ``auctions'' be implemented?}
+`Regular` surplus/debt auctions (dUSD $\leftrightarrow$ ADA) are implemented
+using an orderbook-style auction based on the price modules.
+They can be triggered by anyone whenever the necessary conditions are met.
+When they are triggered, the auction sizing algorithm determines how much
+dUSD/ADA is sold.
+That amount is put into a separate UTXO, which allows anyone to buy the tokens
+at a price determined by the ADA price module, where we act as if dUSD = USD in
+value.
+In doing so, whenever dUSD is trading above peg, we are selling dUSD at a
+discount, and whenever dUSD is trading below peg, we are selling ADA at a
+discount.
+This methodology also prevents us from overcorrecting by launching auctions
+which are too big. \\
 
-\begin{enumerate}
-  \item Classic auction: Highest bid in X blocks wins
-  \item Use a DANA price module to determine the market exchange rate between
-    dUSD and DANA, and put the dUSD/DANA to sell into a UTXO where anyone can
-    buy it instantly at a $2\%$ discount compared to that market exchange rate
-  \item Only allow the dUSD/DANA exchange to happen on one of a number of
-    trusted DEXes, incentivizing the broker with $1\%$ of the profits
-\end{enumerate}
+The ADA/DANA sales follow a similar model, using the ADA and DANA price modules,
+while giving a pre-set discount on the sale.
+\todo{Pick this discount. $5\%$?}
+\todo{Should this discount be set by the protocol, as an admin parameter, or set
+separately for each ADA/DANA sale?}
 
-The main advantage of the price modules option, is that we always sell at a
-trusted price, without allowing as many opportunities for manipulations.
+If any surplus/debt auction or ADA/DANA sale is not fulfilled within a given
+timeframe, the auction expires and an endpoint opens up to merge the tokens back
+into the buffer.
+\todo{Set the timeframe.}
+\todo{Should this timeframe be set by the protocol, as an admin parameter, or set
+separately for each auction/sale?}
+
+The main advantage of this price modules-based approach, is that we always sell
+at a trusted price, without allowing as many opportunities for manipulations.
 (Classic auctions are vulnerable for manipulations through resource contention,
 DEXes through executing big transactions, e.g. sandwich attacks.)
-The trusted DEXes would be the fastest solution.
 
 \section{Tests}
 
