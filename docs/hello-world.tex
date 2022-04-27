@@ -67,6 +67,9 @@
       \end{itemize}
     \item Lighthouse score above $90$, to check website performance
   \end{itemize}
+  \item PAB E2E testing: The same tests will be ran as for the frontend tests,
+    but using a second PAB to sign and submit transactions.
+    The tests will be ran against a local testnet set up through Maeserat.
   \item Contract Model Tests with PAB
   \begin{itemize}
     \item Wallet signs and submits a transaction
@@ -74,8 +77,7 @@
       atomicity constraints)
     \item \todo{@Dan: Which tests do we want to run? `noFundsLocked'?}
   \end{itemize}
-  \item \todo{@Syd: End-to-end tests with the Cardano test net?}
-  \item \todo{@Syd: Actually deploy to main net and run manual tests?}
+  \item This project will be deployed to mainnet to run manual tests
 \end{itemize}
 
 \section{Features to be added}
