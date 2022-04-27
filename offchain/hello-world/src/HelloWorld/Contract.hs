@@ -1,23 +1,18 @@
 -- | Provides the hello world contract
 module HelloWorld.Contract (
-  Schema,
+  HelloWorldSchema,
   contract,
 ) where
 
-import Codec.Serialise (deserialise)
+
 import Control.Monad (forever)
-import Control.Monad.IO.Class (liftIO)
-import Data.ByteString.Lazy qualified as BSL
-import Data.Map qualified as Map
 import Data.Text (Text)
-import System.Environment (getEnv)
 
 import Ledger.Constraints (adjustUnbalancedTx, otherScript, mustPayToTheScript)
 import Ledger.Tx (getCardanoTxId)
-import Ledger.Value (Value(..))
 import Ledger.Ada (adaValueOf)
 import Ledger.Typed.Scripts (ValidatorTypes(..))
-import Plutus.V2.Ledger.Api (Validator(..))
+
 import Plutus.Contract (
   AsContractError,
   Contract,
@@ -30,14 +25,12 @@ import Plutus.Contract (
  )
 import Plutus.Contract qualified as PContract
 
+import HelloWorld.ValidatorProxy (helloValidator)
+
 data Hello
 instance ValidatorTypes Hello where
   type instance RedeemerType Hello = ()
   type instance DatumType Hello = Integer
-
-getHelloValidator :: IO Validator
-getHelloValidator = do
-  Validator . deserialise <$> (getEnv "DUSD_SCRIPTS" >>= BSL.readFile . (++ "/hello_world.plc"))
 
 -- | REST schema
 type HelloWorldSchema =
@@ -47,7 +40,6 @@ type HelloWorldSchema =
 
 initialize :: AsContractError e => Integer -> Contract w s e ()
 initialize initialInt = do
-  helloValidator <- liftIO getHelloValidator
   let lookups = otherScript helloValidator
       tx = mustPayToTheScript initialInt (adaValueOf 0)
   adjustedTx <- adjustUnbalancedTx <$> mkTxConstraints @Hello lookups tx
