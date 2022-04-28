@@ -78,12 +78,12 @@ library
     , cardano-wallet-core              ^>=2022.1.18
     , cardano-wallet-core-integration  ^>=2022.1.8
     , cardano-wallet-launcher          ^>=2022.1.18
-    , contra-tracer                    ^>=0.1.0.0
     , containers
+    , contra-tracer                    ^>=0.1.0.0
     , data-default                     ^>=0.7.1.1
     , directory                        ^>=1.3.6.0
-    , filepath                         ^>=1.4.2.1
     , file-embed
+    , filepath                         ^>=1.4.2.1
     , http-client                      ^>=0.7.11
     , iohk-monitoring                  ^>=0.2.0.0
     , lens                             ^>=4.19.2
@@ -92,14 +92,14 @@ library
     , plutus-chain-index               ^>=0.1.0.0
     , plutus-chain-index-core          ^>=0.1.0.0
     , plutus-contract                  ^>=0.1.0.0
-    , plutus-pab                       ^>=0.1.0.0
     , plutus-ledger
     , plutus-ledger-api
     , plutus-ledger-constraints
+    , plutus-pab                       ^>=0.1.0.0
     , plutus-tx
     , prettyprinter                    ^>=1.7.1
-    , servant-client                   ^>=0.18.3
     , serialise
+    , servant-client                   ^>=0.18.3
     , text                             ^>=1.2.4.1
     , text-class                       ^>=2022.1.18
     , th-env
@@ -144,21 +144,21 @@ executable hello-world-e2e
   default-language: Haskell2010
 
 test-suite hello-world-test
-    import: lang
-    ghc-options:
-      -Wall -Wcompat -Werror -Widentities -Wincomplete-record-updates
-      -Wincomplete-uni-patterns -Wmissing-home-modules
-      -Wmissing-export-lists -Wpartial-fields -Wredundant-constraints
-      -Wunused-packages -rtsopts -with-rtsopts=-N -Werror -O2 -threaded
-    type:             exitcode-stdio-1.0
-    hs-source-dirs:   test/unit
-    main-is:          Main.hs
-    other-modules:
-      HelloWorld.ContractSpec
+  import:         lang
+  ghc-options:
+    -Wall -Wcompat -Werror -Widentities -Wincomplete-record-updates
+    -Wincomplete-uni-patterns -Wmissing-home-modules
+    -Wmissing-export-lists -Wpartial-fields -Wredundant-constraints
+    -Wunused-packages -rtsopts -with-rtsopts=-N -Werror -O2 -threaded
 
-    build-depends:
-        base
-      , hello-world
-      , plutus-contract
-      -- , sydtest
-      , tasty
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: test/unit
+  main-is:        Main.hs
+  other-modules:  HelloWorld.ContractSpec
+  build-depends:
+    , base
+    , hello-world
+    , plutus-contract
+    , tasty
+
+-- , sydtest
