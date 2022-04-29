@@ -97,6 +97,7 @@ library
     , plutus-ledger-constraints
     , plutus-pab                       ^>=0.1.0.0
     , plutus-tx
+    , plutus-use-cases
     , prettyprinter                    ^>=1.7.1
     , serialise
     , servant-client                   ^>=0.18.3
