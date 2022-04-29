@@ -173,6 +173,7 @@
                 ps.plutus-ledger-api
                 ps.plutus-ledger-constraints
                 ps.plutus-pab
+                ps.plutus-use-cases
               ];
               DUSD_SCRIPTS = self.onchain-scripts.${system};
               propagatedBuildInputs =

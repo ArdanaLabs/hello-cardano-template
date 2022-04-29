@@ -61,13 +61,14 @@ import Servant.Client qualified as SC
 import System.FilePath ((</>))
 import Test.Integration.Faucet qualified as Faucet
 import Test.Integration.Framework.DSL (fixturePassphrase)
+import Ledger.Value (CurrencySymbol(..))
 
 newtype ChainIndexPort = ChainIndexPort Int
   deriving (Show)
 
 -- Initial value passed to the PAB when starting up the HelloWorld contract.
 data HelloWorldContracts
-  = Initialize Integer | Increment | Read'
+  = Initialize Integer | Increment CurrencySymbol | Read' CurrencySymbol
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (ToSchema)
 
@@ -88,12 +89,12 @@ instance Pretty HelloWorldContracts where
   pretty = viaShow
 
 instance HasDefinitions HelloWorldContracts where
-  getDefinitions = [ Initialize 1, Increment, Read']
+  getDefinitions = [ Initialize 1, Increment (CurrencySymbol "cs-identifier"), Read' (CurrencySymbol "cs-identifier")]
   getSchema = const []
   getContract = \case
-    Initialize i -> SomeBuiltin $ initializeHandler i 
-    Increment -> SomeBuiltin increment 
-    Read' -> SomeBuiltin read'
+    Initialize initialValue -> SomeBuiltin $ initializeHandler initialValue
+    Increment contractId -> SomeBuiltin $ increment contractId
+    Read' contractId -> SomeBuiltin $ read' contractId
 
 runPAB :: String -> Int -> FilePath -> CardanoNodeConn -> IO ()
 runPAB walletHost walletPort dir socketPath = do
