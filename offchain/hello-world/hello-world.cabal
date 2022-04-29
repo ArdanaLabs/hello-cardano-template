@@ -159,6 +159,7 @@ test-suite hello-world-test
     , base
     , hello-world
     , plutus-contract
+    , plutus-ledger-api
     , tasty
 
 -- , sydtest
