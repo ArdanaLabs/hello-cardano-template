@@ -91,9 +91,9 @@ instance HasDefinitions HelloWorldContracts where
   getDefinitions = [ Initialize 1, Increment, Read']
   getSchema = const []
   getContract = \case
-    Initialize i -> SomeBuiltin $ initializeHandler @T.Text i 
-    Increment -> SomeBuiltin $ increment @T.Text 
-    Read' -> SomeBuiltin $ read' @T.Text 
+    Initialize i -> SomeBuiltin $ initializeHandler i 
+    Increment -> SomeBuiltin increment 
+    Read' -> SomeBuiltin read'
 
 runPAB :: String -> Int -> FilePath -> CardanoNodeConn -> IO ()
 runPAB walletHost walletPort dir socketPath = do

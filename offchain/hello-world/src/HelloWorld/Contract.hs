@@ -46,10 +46,10 @@ type InitHelloWorldSchema = Endpoint "initialize" Integer
 type IncHelloWorldSchema = Endpoint "increment" ()
 type ReadHelloWorldSchema = Endpoint "read" ()
 
-initialize :: Contract (Last Void) InitHelloWorldSchema e ()
+initialize :: Contract (Last Void) InitHelloWorldSchema Text ()
 initialize = forever $ handleError (logError @Text) $ awaitPromise $ endpoint @"initialize" initializeHandler
 
-initializeHandler :: AsContractError  e => Integer -> Contract (Last Void) InitHelloWorldSchema e ()
+initializeHandler :: Integer -> Contract (Last Void) InitHelloWorldSchema Text ()
 initializeHandler initialInt = do
   let lookups = otherScript helloValidator
       tx = mustPayToOtherScript helloValidatorHash (Datum $ mkI initialInt) (adaValueOf 0)
@@ -58,7 +58,7 @@ initializeHandler initialInt = do
   awaitTxConfirmed $ getCardanoTxId ledgerTx
   logInfo $ "Successfully initialized datum with value: " <> show initialInt
 
-increment :: Contract () IncHelloWorldSchema e ()
+increment :: Contract () IncHelloWorldSchema Text ()
 increment = forever $ handleError (logError @Text) $ awaitPromise $ endpoint @"increment" $ const incrementHandler
 
 incrementHandler :: AsContractError e => Contract w s e ()
@@ -89,7 +89,7 @@ getDatum' (ScriptChainIndexTxOut _ _ eitherDatum _) =
   where
     f <$$> x = (fmap . fmap) f x
 
-read' :: Contract (Last Integer) ReadHelloWorldSchema e ()
+read' :: Contract (Last Integer) ReadHelloWorldSchema Text ()
 read' = forever $ handleError (logError @Text) $ awaitPromise $ endpoint @"read" $ const readHandler
 
 readHandler :: AsContractError e => Contract (Last Integer) s e ()
