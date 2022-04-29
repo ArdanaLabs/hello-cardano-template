@@ -271,6 +271,24 @@
               ''
         );
 
+        # We are forced to use two devshells.
+        # Under ideal circumstances, we could put all the onchain and offchain
+        # code in the same project, sharing the same cabal.project, but this is
+        # not possible because:
+        #
+        # On-chain code requires recent versions of plutarch, which uses a
+        # more recent version of `plutus` than is in `plutus-apps`.
+        #
+        # So, in order to remove this hack and use one cabal project instead, we need:
+        #
+        # Plutarch to be more or less stable so that it can use the version
+        # of `plutus` that is in `plutus-apps` at the time, instead of a recent
+        # one.
+        #
+        # There was also the idea of using a plutus-tx (so not Plutarch)
+        # dummy-implementation of an on-chain validator until these two
+        # conditions are met. We opted not to do this because it would require
+        # us to bet that the condition above would be met before we want to launch.
         devShells = forAllSystems (system: {
           onchain = self.onchain.${system}.flake.devShell;
           offchain = self.offchain.${system}.flake.devShell.overrideAttrs (oa: {
