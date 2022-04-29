@@ -51,6 +51,7 @@
         , extraShell      # Extra 'shell' attributes used by haskell.nix
         , pkg-def-extras  # For overriding the package set
         , sha256map       # Extra sha256 hashes used by haskell.nix
+        , extraPackages ? {}
         }:
         let
           deferPluginErrors = true;
@@ -77,7 +78,7 @@
                     nixpkgs.lib.mkForce [ [ (import plutus { inherit system; }).pkgs.libsodium-vrf ] ];
                   cardano-crypto-class.components.library.pkgconfig =
                     nixpkgs.lib.mkForce [ [ (import plutus { inherit system; }).pkgs.libsodium-vrf ] ];
-                };
+                } // extraPackages;
               }
             ];
             shell = {
@@ -166,6 +167,9 @@
           project = plutusProjectIn {
             inherit system;
             subdir = "offchain";
+            extraPackages = {
+              hello-world.components.library.preBuild = "export DUSD_SCRIPTS=${self.onchain-scripts.${system}}";
+            };
             extraShell = {
               additional = ps: [
                 ps.plutus-contract
