@@ -11,7 +11,7 @@
     lint-utils = {
       type = "git";
       url = "https://gitlab.homotopic.tech/nix/lint-utils.git";
-      ref = "spec-type";
+      ref = "overengineered";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
