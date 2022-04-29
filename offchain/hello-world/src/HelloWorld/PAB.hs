@@ -35,7 +35,8 @@ import Data.OpenApi.Schema (ToSchema)
 import Data.String (fromString)
 import Data.Text qualified as T
 import GHC.Generics (Generic)
-import HelloWorld.Contract (initializeHandler, increment, read')
+import HelloWorld.Contract (increment, initializeHandler, read')
+import Ledger.Value (CurrencySymbol (..))
 import Network.HTTP.Client (
   defaultManagerSettings,
   newManager,
@@ -61,14 +62,15 @@ import Servant.Client qualified as SC
 import System.FilePath ((</>))
 import Test.Integration.Faucet qualified as Faucet
 import Test.Integration.Framework.DSL (fixturePassphrase)
-import Ledger.Value (CurrencySymbol(..))
 
 newtype ChainIndexPort = ChainIndexPort Int
   deriving (Show)
 
 -- Initial value passed to the PAB when starting up the HelloWorld contract.
 data HelloWorldContracts
-  = Initialize Integer | Increment CurrencySymbol | Read' CurrencySymbol
+  = Initialize Integer
+  | Increment CurrencySymbol
+  | Read' CurrencySymbol
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (ToSchema)
 
@@ -89,7 +91,7 @@ instance Pretty HelloWorldContracts where
   pretty = viaShow
 
 instance HasDefinitions HelloWorldContracts where
-  getDefinitions = [ Initialize 1, Increment (CurrencySymbol "cs-identifier"), Read' (CurrencySymbol "cs-identifier")]
+  getDefinitions = [Initialize 1, Increment (CurrencySymbol "cs-identifier"), Read' (CurrencySymbol "cs-identifier")]
   getSchema = const []
   getContract = \case
     Initialize initialValue -> SomeBuiltin $ initializeHandler initialValue
