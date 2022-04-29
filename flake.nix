@@ -173,7 +173,7 @@
               ];
               DUSD_SCRIPTS = self.onchain-scripts.${system};
               propagatedBuildInputs =
-                let pkgs = (forAllSystems nixpkgsFor)."${system}";
+                let pkgs = nixpkgsFor system;
                 in [
                 # cardano-node and cardano-cli need to be on the PATH to run the
                 # cluster + PAB.
@@ -225,7 +225,7 @@
 
         # this could be done automatically, but would reduce readability
         packages = forAllSystems (system:
-          let pkgs = (forAllSystems nixpkgsFor)."${system}";
+          let pkgs = nixpkgsFor system;
           in self.onchain.${system}.flake.packages
           // self.offchain.${system}.flake.packages
           // {
