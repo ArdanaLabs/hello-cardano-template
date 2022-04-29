@@ -41,6 +41,9 @@
           inherit (haskell-nix) config;
         };
 
+      # Name of our project; used in script prefixes.
+      projectName = "dusd";
+
       # Derivation for a Haskell Plutus project that lives in the sub-directory of this mono repo.
       plutusProjectIn =
         { system
@@ -276,7 +279,7 @@
           let
             pkgs = nixpkgsFor system;
           in {
-              feedback-loop = pkgs.callPackage ./nix/apps/feedback-loop { };
+              feedback-loop = pkgs.callPackage ./nix/apps/feedback-loop { inherit projectName; };
             });
  
         # We are forced to use two devshells.
@@ -299,7 +302,18 @@
         # us to bet that the condition above would be met before we want to launch.
         devShells = forAllSystems (system: let pkgs = nixpkgsFor system; in {
           onchain = self.onchain.${system}.flake.devShell.overrideAttrs (oa: {
-            buildInputs = pkgs.lib.attrsets.attrValues self.commonTools.${system};
+            buildInputs = pkgs.lib.attrsets.attrValues self.commonTools.${system} ++ 
+              (let ghcidScript = name: args: 
+                  (pkgs.writeShellApplication { 
+                    name = "${projectName}-ghcid-${name}"; 
+                    text = ''
+                      cd ./onchain && ${pkgs.ghcid}/bin/ghcid ${args}
+                    '';
+                  });
+              in [
+                (ghcidScript "lib" "-c 'cabal repl'")
+                (ghcidScript "test" "-c 'cabal repl test:tests'")
+              ]);
           });
           offchain = self.offchain.${system}.flake.devShell.overrideAttrs (oa: {
             buildInputs = pkgs.lib.attrsets.attrValues self.commonTools.${system};
@@ -320,7 +334,7 @@
             {
               type = "app";
               # We expect the script name of all common tools to be prefixed with dusd-
-              program = "${ self.commonTools.${system}.${name}}/bin/dusd-${name}";
+              program = "${ self.commonTools.${system}.${name}}/bin/${projectName}-${name}";
             };
         in
           {
