@@ -58,7 +58,7 @@
             cat $out/cabal-haskell.nix.project >> $out/cabal.project
           '';
         in
-          (nixpkgsFor system).haskell-nix.cabalProject' {
+          pkgs.haskell-nix.cabalProject' {
             inherit pkg-def-extras;
             src = fakeSrc.outPath;
             compiler-nix-name = "ghc8107";
@@ -271,6 +271,14 @@
               ''
         );
 
+        # Shell tools common to both onchain and offchain
+        commonTools = forAllSystems (system:
+          let
+            pkgs = nixpkgsFor system;
+          in {
+              feedback-loop = pkgs.callPackage ./nix/apps/feedback-loop { };
+            });
+ 
         # We are forced to use two devshells.
         # Under ideal circumstances, we could put all the onchain and offchain
         # code in the same project, sharing the same cabal.project, but this is
@@ -289,9 +297,12 @@
         # dummy-implementation of an on-chain validator until these two
         # conditions are met. We opted not to do this because it would require
         # us to bet that the condition above would be met before we want to launch.
-        devShells = forAllSystems (system: {
-          onchain = self.onchain.${system}.flake.devShell;
+        devShells = forAllSystems (system: let pkgs = nixpkgsFor system; in {
+          onchain = self.onchain.${system}.flake.devShell.overrideAttrs (oa: {
+            buildInputs = pkgs.lib.attrsets.attrValues self.commonTools.${system};
+          });
           offchain = self.offchain.${system}.flake.devShell.overrideAttrs (oa: {
+            buildInputs = pkgs.lib.attrsets.attrValues self.commonTools.${system};
             shellHook = oa.shellHook + ''
               # running local cluster + PAB
               export SHELLEY_TEST_DATA="${plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley/"
@@ -303,14 +314,18 @@
           // self.packages.${system}."dUSD-offchain:exe:tests"
         );
         apps = forAllSystems (system: let
-          pkgs = (forAllSystems nixpkgsFor)."${system}";
+          pkgs = nixpkgsFor.system;
+          # Convert a derivation from `commonTools` to a flake app.
+          commonToolApp = system: name:
+            {
+              type = "app";
+              # We expect the script name of all common tools to be prefixed with dusd-
+              program = "${ self.commonTools.${system}.${name}}/bin/dusd-${name}";
+            };
         in
           {
-            feedback-loop = {
-              type = "app";
-              program = "${ pkgs.callPackage ./nix/apps/feedback-loop { } }/bin/feedback-loop";
-            };
-            format =  lint-utils.mkApp.${system} lintSpec;
+            feedback-loop = commonToolApp system "feedback-loop";
+            format =  lint-utils.mkApp.${system} lintSpec;  # TODO: Refactor this to be like `commonToolApp`.
             offchain-test = {
               type = "app";
               program = checkedShellScript system "dUSD-offchain-test"

@@ -24,6 +24,7 @@ You can ensure that the Cachix is being used by trying to build one of the outpu
 
 When editing any documents within ./docs/test-plan you can set up a latex pdf rendering feedback loop by running
 ```
+# Or, if you are already inside nix-shell, run: `dusd-feedback-loop`
 nix run .#feedback-loop
 ```
 
