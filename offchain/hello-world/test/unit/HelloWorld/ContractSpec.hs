@@ -18,7 +18,7 @@ testTree =
     "HelloWorld Contract Emulator Traces"
     [ checkPredicate "should initialize correctly" (assertNoFailedTransactions .&&. assertHelloWorldDatumEquals 1) initializeHelloWorldDatum
     , checkPredicate "should increment twice" (assertNoFailedTransactions .&&. assertHelloWorldDatumEquals 3) incrementHelloWorldDatum
-    , checkPredicate "should read successfully" (assertNoFailedTransactions .&&. assertHelloWorldDatumEquals 1) readHelloWorldDatum
+    , checkPredicate "should read successfully" (assertNoFailedTransactions .&&. assertHelloWorldDatumEquals 2) readHelloWorldDatum
     ]
 
 assertHelloWorldDatumEquals :: Integer -> TracePredicate

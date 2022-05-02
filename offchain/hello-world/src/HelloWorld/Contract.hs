@@ -112,6 +112,7 @@ readHandler cs = do
                 unspentOutputs (Map.singleton txOutRef ciTxOut)
                   <> otherScript helloValidator
               tx = mustPayToOtherScript helloValidatorHash (Datum $ mkI datum) (singleton cs "" 1)
+                    <> mustSpendScriptOutput txOutRef (Redeemer $ toBuiltinData ())
           adjustedTx <- adjustUnbalancedTx <$> mkTxConstraints @Void lookups tx
           ledgerTx <- submitUnbalancedTx adjustedTx
           awaitTxConfirmed $ getCardanoTxId ledgerTx
