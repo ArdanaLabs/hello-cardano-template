@@ -144,7 +144,7 @@ executable hello-world-e2e
 
   default-language: Haskell2010
 
-test-suite hello-world-test
+test-suite hello-world-unit
   import:         lang
   ghc-options:
     -Wall -Wcompat -Werror -Widentities -Wincomplete-record-updates
@@ -162,5 +162,3 @@ test-suite hello-world-test
     , plutus-contract
     , plutus-ledger-api
     , tasty
-
--- , sydtest
