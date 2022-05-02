@@ -332,8 +332,13 @@
               ];
           });
           offchain = self.offchain.${system}.flake.devShell.overrideAttrs (oa: {
-            buildInputs = pkgs.lib.attrsets.attrValues self.commonTools.${system};
+            buildInputs = pkgs.lib.attrsets.attrValues self.commonTools.${system} ++ 
+              [ (self.haskellTools.${system}.ghcid "offchain" "lib" "-c 'cabal repl'")
+                (self.haskellTools.${system}.ghcid "offchain" "test" "-c 'cabal repl exe:tests'")
+                (self.haskellTools.${system}.ghcid "offchain" "test-run" "-c 'cabal repl exe:tests' -T :main")
+              ];
             shellHook = oa.shellHook + ''
+              ${self.flakeRoot.shellHook}
               # running local cluster + PAB
               export SHELLEY_TEST_DATA="${plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley/"
             '';
