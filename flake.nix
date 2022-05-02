@@ -351,18 +351,28 @@
           // self.packages.${system}."dUSD-offchain:exe:tests"
         );
         apps = forAllSystems (system: let
-          pkgs = nixpkgsFor.system;
-          # Convert a derivation from `commonTools` to a flake app.
-          commonToolApp = system: name:
-            {
+          # Take a set of derivations, and return a set of apps.
+          #
+          # The name of the app is determined from the set keys. The derivation
+          # is expected to contain a binary named `${projectName}-${key}`.
+          appsFromDerivationSet = drvs: 
+            (nixpkgsFor system).lib.attrsets.mapAttrs (name: value: {
               type = "app";
-              # We expect the script name of all common tools to be prefixed with dusd-
-              program = "${ self.commonTools.${system}.${name}}/bin/${projectName}-${name}";
-            };
+              program = "${value}/bin/${projectName}-${name}";
+            }) drvs;
+          # Apps that are also available in the shell. An app named `.#foo` can
+          # be run inside the shell as `dusd-foo`.
+          shellApps =  
+            appsFromDerivationSet (
+                 self.commonTools.${system} 
+              # NOTE: ghcid can only run inside nix-shell, so we cannot run these as flake apps.
+              # // self.onchainTools.${system} 
+              # // self.offchainTools.${system}
+            );
         in
+          shellApps // 
           {
-            feedback-loop = commonToolApp system "feedback-loop";
-            format =  lint-utils.mkApp.${system} lintSpec;  # TODO: Refactor this to be like `commonToolApp`.
+            format =  lint-utils.mkApp.${system} lintSpec;  # TODO: Refactor this by moving it to appsFromDerivationSet
             offchain-test = {
               type = "app";
               program = checkedShellScript system "dUSD-offchain-test"
