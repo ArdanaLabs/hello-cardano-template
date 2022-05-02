@@ -115,3 +115,11 @@ $ cabal run hello-world-e2e
 ```
 
 This will essentially go through the above steps automatically, verifying that each step succeeds. Currently this is an `executable` rather than `test-suite` as this better fits into our CI. That is, our CI will run all `test-suite`s automatically with `cabal test`, and we do not necessarily want this.
+
+## hello-world-unit
+
+We can run the unit tests with
+
+```
+$ cabal run hello-world-unit
+```
