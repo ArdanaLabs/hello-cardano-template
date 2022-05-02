@@ -37,6 +37,7 @@ import Plutus.Contract (
   submitUnbalancedTx,
   tell,
   utxosAt,
+  waitNSlots
  )
 import Plutus.Contracts.Currency (CurrencyError, OneShotCurrency, currencySymbol, mintContract)
 import PlutusTx (FromData, fromBuiltinData, toBuiltinData)
@@ -56,6 +57,9 @@ initialize = forever $ handleError (logError @Text) $ awaitPromise $ endpoint @"
 initializeHandler :: Integer -> Contract (Last CurrencySymbol) InitHelloWorldSchema Text ()
 initializeHandler initialInt = do
   ownPkh <- ownPaymentPubKeyHash
+  -- TODO: remove waitNSlots. this was added because the e2e tests are
+  -- started immediately after the network is online. there seems to be a synchr problem
+  _ <- waitNSlots 1
   cs <- currencySymbol <$> mapError (pack . show) (mintContract ownPkh [(TokenName "", 1)] :: Contract w s CurrencyError OneShotCurrency)
   let lookups = otherScript helloValidator
       tx = mustPayToOtherScript helloValidatorHash (Datum $ mkI initialInt) (singleton cs "" 1)
