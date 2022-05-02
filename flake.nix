@@ -288,7 +288,8 @@
             # alias 'name' and ghcid arguments 'args'.
             ghcid = subProject: name: args: 
               pkgs.callPackage ./nix/apps/ghcid {
-                inherit projectName name args;
+                inherit projectName args;
+                name = "${subProject}-ghcid-${name}";
                 cabalProjectRoot = "${self.flakeRoot.envVar}/${subProject}";
               };
           }
@@ -337,7 +338,7 @@
                 (self.haskellTools.${system}.ghcid "offchain" "test" "-c 'cabal repl exe:tests'")
                 (self.haskellTools.${system}.ghcid "offchain" "test-run" "-c 'cabal repl exe:tests' -T :main")
               ];
-            shellHook = oa.shellHook + ''
+            shellHook = oa.shellHook + ''$
               ${self.flakeRoot.shellHook}
               # running local cluster + PAB
               export SHELLEY_TEST_DATA="${plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley/"

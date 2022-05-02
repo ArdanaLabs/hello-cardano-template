@@ -7,7 +7,7 @@
 }:
 writeShellApplication 
   { 
-    name = "${projectName}-ghcid-${name}"; 
+    name = "${projectName}-${name}"; 
     text = ''
       cd "${cabalProjectRoot}" && ${ghcid}/bin/ghcid ${args}
     '';
