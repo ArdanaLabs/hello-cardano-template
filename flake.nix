@@ -41,6 +41,9 @@
           inherit (haskell-nix) config;
         };
 
+      # Name of our project; used in script prefixes.
+      projectName = "dusd";
+
       # Derivation for a Haskell Plutus project that lives in the sub-directory of this mono repo.
       plutusProjectIn =
         { system
@@ -58,7 +61,7 @@
             cat $out/cabal-haskell.nix.project >> $out/cabal.project
           '';
         in
-          (nixpkgsFor system).haskell-nix.cabalProject' {
+          pkgs.haskell-nix.cabalProject' {
             inherit pkg-def-extras;
             src = fakeSrc.outPath;
             compiler-nix-name = "ghc8107";
@@ -173,7 +176,7 @@
               ];
               DUSD_SCRIPTS = self.onchain-scripts.${system};
               propagatedBuildInputs =
-                let pkgs = (forAllSystems nixpkgsFor)."${system}";
+                let pkgs = nixpkgsFor system;
                 in [
                 # cardano-node and cardano-cli need to be on the PATH to run the
                 # cluster + PAB.
@@ -225,7 +228,7 @@
 
         # this could be done automatically, but would reduce readability
         packages = forAllSystems (system:
-          let pkgs = (forAllSystems nixpkgsFor)."${system}";
+          let pkgs = nixpkgsFor system;
           in self.onchain.${system}.flake.packages
           // self.offchain.${system}.flake.packages
           // {
@@ -271,6 +274,40 @@
               ''
         );
 
+        # Shell tools common to both onchain and offchain
+        commonTools = forAllSystems (system: {
+          feedback-loop = (nixpkgsFor system).callPackage ./nix/apps/feedback-loop { inherit projectName; };
+        });
+
+        ghcid = system: subProject: name: args: 
+          (nixpkgsFor system).callPackage ./nix/apps/ghcid {
+            inherit projectName args;
+            name = "${subProject}-ghcid-${name}";
+            cabalProjectRoot = "${self.flakeRoot.envVar}/${subProject}";
+          };
+
+        onchainTools = forAllSystems (system: {
+          onchain-ghcid-lib = self.ghcid system "onchain" "lib" "-c 'cabal repl'";
+          onchain-ghcid-test = self.ghcid system "onchain" "test" "-c 'cabal repl test:tests'";
+          onchain-ghcid-test-run = self.ghcid system "onchain" "test-run" "-c 'cabal repl test:tests' -T :main";
+        });
+
+        offchainTools = forAllSystems (system: {
+          offchain-ghcid-lib = self.ghcid system "offchain" "lib" "-c 'cabal repl'";
+          offchain-ghcid-test = self.ghcid system "offchain" "test" "-c 'cabal repl exe:tests'";
+          offchain-ghcid-test-run = self.ghcid system "offchain" "test-run" "-c 'cabal repl exe:tests' -T :main";
+        });
+
+        # In Nix, there is no builtin way to access the project root, where
+        # flake.nix lives. To workaround this, we inject it as env var in the
+        # `shellHook`.
+        flakeRoot = {
+          shellHook = ''
+            export FLAKE_ROOT=$(pwd)
+          '';
+          envVar = "$FLAKE_ROOT";
+        };
+ 
         # We are forced to use two devshells.
         # Under ideal circumstances, we could put all the onchain and offchain
         # code in the same project, sharing the same cabal.project, but this is
@@ -289,10 +326,21 @@
         # dummy-implementation of an on-chain validator until these two
         # conditions are met. We opted not to do this because it would require
         # us to bet that the condition above would be met before we want to launch.
-        devShells = forAllSystems (system: {
-          onchain = self.onchain.${system}.flake.devShell;
+        devShells = forAllSystems (system: let pkgs = nixpkgsFor system; in {
+          onchain = self.onchain.${system}.flake.devShell.overrideAttrs (oa: {
+            shellHook = oa.shellHook + self.flakeRoot.shellHook;
+            buildInputs = pkgs.lib.attrsets.attrValues (
+              self.commonTools.${system} //
+              self.onchainTools.${system}
+            );
+          });
           offchain = self.offchain.${system}.flake.devShell.overrideAttrs (oa: {
-            shellHook = oa.shellHook + ''
+            buildInputs = pkgs.lib.attrsets.attrValues (
+              self.commonTools.${system} //
+              self.offchainTools.${system}
+            );
+            shellHook = oa.shellHook + ''$
+              ${self.flakeRoot.shellHook}
               # running local cluster + PAB
               export SHELLEY_TEST_DATA="${plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley/"
             '';
@@ -303,14 +351,28 @@
           // self.packages.${system}."dUSD-offchain:exe:tests"
         );
         apps = forAllSystems (system: let
-          pkgs = (forAllSystems nixpkgsFor)."${system}";
-        in
-          {
-            feedback-loop = {
+          # Take a set of derivations, and return a set of apps.
+          #
+          # The name of the app is determined from the set keys. The derivation
+          # is expected to contain a binary named `${projectName}-${key}`.
+          appsFromDerivationSet = drvs: 
+            (nixpkgsFor system).lib.attrsets.mapAttrs (name: value: {
               type = "app";
-              program = "${ pkgs.callPackage ./nix/apps/feedback-loop { } }/bin/feedback-loop";
-            };
-            format =  lint-utils.mkApp.${system} lintSpec;
+              program = "${value}/bin/${projectName}-${name}";
+            }) drvs;
+          # Apps that are also available in the shell. An app named `.#foo` can
+          # be run inside the shell as `dusd-foo`.
+          shellApps =  
+            appsFromDerivationSet (
+                 self.commonTools.${system} 
+              # NOTE: ghcid can only run inside nix-shell, so we cannot run these as flake apps.
+              # // self.onchainTools.${system} 
+              # // self.offchainTools.${system}
+            );
+        in
+          shellApps // 
+          {
+            format =  lint-utils.mkApp.${system} lintSpec;  # TODO: Refactor this by moving it to appsFromDerivationSet
             offchain-test = {
               type = "app";
               program = checkedShellScript system "dUSD-offchain-test"
