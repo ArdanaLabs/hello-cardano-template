@@ -276,11 +276,33 @@
 
         # Shell tools common to both onchain and offchain
         commonTools = forAllSystems (system:
-          let
-            pkgs = nixpkgsFor system;
+          let pkgs = nixpkgsFor system;
           in {
               feedback-loop = pkgs.callPackage ./nix/apps/feedback-loop { inherit projectName; };
             });
+
+        haskellTools = forAllSystems (system: 
+          let pkgs = nixpkgsFor system;
+          in {
+            # Run `ghcid` on the given project (onchain or offchain), using
+            # alias 'name' and ghcid arguments 'args'.
+            ghcid = subProject: name: args: 
+              pkgs.callPackage ./nix/apps/ghcid {
+                inherit projectName name args;
+                cabalProjectRoot = "${self.flakeRoot.envVar}/${subProject}";
+              };
+          }
+        );
+
+        # In Nix, there is no builtin way to access the project root, where
+        # flake.nix lives. To workaround this, we inject it as env var in the
+        # `shellHook`.
+        flakeRoot = {
+          shellHook = ''
+            export FLAKE_ROOT=$(pwd)
+          '';
+          envVar = "$FLAKE_ROOT";
+        };
  
         # We are forced to use two devshells.
         # Under ideal circumstances, we could put all the onchain and offchain
@@ -302,18 +324,12 @@
         # us to bet that the condition above would be met before we want to launch.
         devShells = forAllSystems (system: let pkgs = nixpkgsFor system; in {
           onchain = self.onchain.${system}.flake.devShell.overrideAttrs (oa: {
+            shellHook = oa.shellHook + self.flakeRoot.shellHook;
             buildInputs = pkgs.lib.attrsets.attrValues self.commonTools.${system} ++ 
-              (let ghcidScript = name: args: 
-                  (pkgs.writeShellApplication { 
-                    name = "${projectName}-ghcid-${name}"; 
-                    text = ''
-                      cd ./onchain && ${pkgs.ghcid}/bin/ghcid ${args}
-                    '';
-                  });
-              in [
-                (ghcidScript "lib" "-c 'cabal repl'")
-                (ghcidScript "test" "-c 'cabal repl test:tests'")
-              ]);
+              [ (self.haskellTools.${system}.ghcid "onchain" "lib" "-c 'cabal repl'")
+                (self.haskellTools.${system}.ghcid "onchain" "test" "-c 'cabal repl test:tests'")
+                (self.haskellTools.${system}.ghcid "onchain" "test-run" "-c 'cabal repl test:tests' -T :main")
+              ];
           });
           offchain = self.offchain.${system}.flake.devShell.overrideAttrs (oa: {
             buildInputs = pkgs.lib.attrsets.attrValues self.commonTools.${system};
