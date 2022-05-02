@@ -339,7 +339,7 @@
               self.commonTools.${system} //
               self.offchainTools.${system}
             );
-            shellHook = oa.shellHook + ''$
+            shellHook = oa.shellHook + ''
               ${self.flakeRoot.shellHook}
               # running local cluster + PAB
               export SHELLEY_TEST_DATA="${plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley/"
