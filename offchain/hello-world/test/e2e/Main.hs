@@ -7,7 +7,7 @@ import Control.Monad.IO.Class (MonadIO (..))
 import Data.Aeson qualified as Asn
 import Data.Word (Word16)
 import HelloWorld.LocalCluster qualified as LC
-import HelloWorld.PAB (HelloWorldContracts(..))
+import HelloWorld.PAB (HelloWorldContracts (..))
 import Network.HTTP.Client qualified as HTTP
 import Plutus.PAB.Events.ContractInstanceState (PartiallyDecodedResponse (err))
 import Plutus.PAB.Webserver.Client (PabClient)
@@ -87,7 +87,7 @@ usesEndpoint endpoint env pclient contractId = do
   let instanceClient = PABClient.instanceClient pclient contractId
       -- TODO: this function needs to be refactored to additionally allow for passing the correct endpoint parameter
       -- preferably to enforce the same type that the schema defines and not just value
-      params = Asn.toJSON @Integer 1 
+      params = Asn.toJSON @Integer 1
       req = PABClient.callInstanceEndpoint instanceClient endpoint params
   res <- SC.runClientM req env
   case res of

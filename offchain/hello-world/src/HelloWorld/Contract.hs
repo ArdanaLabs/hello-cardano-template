@@ -37,7 +37,7 @@ import Plutus.Contract (
   submitUnbalancedTx,
   tell,
   utxosAt,
-  waitNSlots
+  waitNSlots,
  )
 import Plutus.Contracts.Currency (CurrencyError, OneShotCurrency, currencySymbol, mintContract)
 import PlutusTx (FromData, fromBuiltinData, toBuiltinData)
@@ -115,8 +115,9 @@ readHandler cs = do
           let lookups =
                 unspentOutputs (Map.singleton txOutRef ciTxOut)
                   <> otherScript helloValidator
-              tx = mustPayToOtherScript helloValidatorHash (Datum $ mkI datum) (singleton cs "" 1)
-                    <> mustSpendScriptOutput txOutRef (Redeemer $ toBuiltinData ())
+              tx =
+                mustPayToOtherScript helloValidatorHash (Datum $ mkI datum) (singleton cs "" 1)
+                  <> mustSpendScriptOutput txOutRef (Redeemer $ toBuiltinData ())
           adjustedTx <- adjustUnbalancedTx <$> mkTxConstraints @Void lookups tx
           ledgerTx <- submitUnbalancedTx adjustedTx
           awaitTxConfirmed $ getCardanoTxId ledgerTx

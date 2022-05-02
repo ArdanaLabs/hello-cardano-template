@@ -35,7 +35,7 @@ import Data.OpenApi.Schema (ToSchema)
 import Data.String (fromString)
 import Data.Text qualified as T
 import GHC.Generics (Generic)
-import HelloWorld.Contract (increment, initialize, read', InitHelloWorldSchema, IncHelloWorldSchema, ReadHelloWorldSchema)
+import HelloWorld.Contract (IncHelloWorldSchema, InitHelloWorldSchema, ReadHelloWorldSchema, increment, initialize, read')
 import Ledger.Value (CurrencySymbol (..))
 import Network.HTTP.Client (
   defaultManagerSettings,
@@ -49,7 +49,7 @@ import Plutus.PAB.App (StorageBackend (BeamSqliteBackend))
 import Plutus.PAB.Effects.Contract.Builtin (
   HasDefinitions (..),
   SomeBuiltin (SomeBuiltin),
-  endpointsToSchemas
+  endpointsToSchemas,
  )
 import Plutus.PAB.Effects.Contract.Builtin qualified as Builtin
 import Plutus.PAB.Run (runWithOpts)
@@ -96,7 +96,7 @@ instance HasDefinitions HelloWorldContracts where
   getSchema = \case
     Initialize -> endpointsToSchemas @InitHelloWorldSchema
     Increment _ -> endpointsToSchemas @IncHelloWorldSchema
-    Read' _ -> endpointsToSchemas @ReadHelloWorldSchema 
+    Read' _ -> endpointsToSchemas @ReadHelloWorldSchema
 
   getContract = \case
     Initialize -> SomeBuiltin $ initialize
