@@ -275,36 +275,27 @@
         );
 
         # Shell tools common to both onchain and offchain
-        commonTools = forAllSystems (system:
-          let pkgs = nixpkgsFor system;
-          in {
-              feedback-loop = pkgs.callPackage ./nix/apps/feedback-loop { inherit projectName; };
-            });
+        commonTools = forAllSystems (system: {
+          feedback-loop = (nixpkgsFor system).callPackage ./nix/apps/feedback-loop { inherit projectName; };
+        });
 
-        haskellTools = forAllSystems (system: 
-          let pkgs = nixpkgsFor system;
-          in {
-            # Run `ghcid` on the given project (onchain or offchain), using
-            # alias 'name' and ghcid arguments 'args'.
-            ghcid = subProject: name: args: 
-              pkgs.callPackage ./nix/apps/ghcid {
-                inherit projectName args;
-                name = "${subProject}-ghcid-${name}";
-                cabalProjectRoot = "${self.flakeRoot.envVar}/${subProject}";
-              };
-          }
-        );
+        ghcid = system: subProject: name: args: 
+          (nixpkgsFor system).callPackage ./nix/apps/ghcid {
+            inherit projectName args;
+            name = "${subProject}-ghcid-${name}";
+            cabalProjectRoot = "${self.flakeRoot.envVar}/${subProject}";
+          };
 
         onchainTools = forAllSystems (system: {
-          onchain-lib = self.haskellTools.${system}.ghcid "onchain" "lib" "-c 'cabal repl'";
-          onchain-test = self.haskellTools.${system}.ghcid "onchain" "test" "-c 'cabal repl test:tests'";
-          onchain-test-run = self.haskellTools.${system}.ghcid "onchain" "test-run" "-c 'cabal repl test:tests' -T :main";
+          onchain-ghcid-lib = self.ghcid system "onchain" "lib" "-c 'cabal repl'";
+          onchain-ghcid-test = self.ghcid system "onchain" "test" "-c 'cabal repl test:tests'";
+          onchain-ghcid-test-run = self.ghcid system "onchain" "test-run" "-c 'cabal repl test:tests' -T :main";
         });
 
         offchainTools = forAllSystems (system: {
-          offchain-lib = self.haskellTools.${system}.ghcid "offchain" "lib" "-c 'cabal repl'";
-          offchain-test = self.haskellTools.${system}.ghcid "offchain" "test" "-c 'cabal repl exe:tests'";
-          offchain-test-run = self.haskellTools.${system}.ghcid "offchain" "test-run" "-c 'cabal repl exe:tests' -T :main";
+          offchain-ghcid-lib = self.ghcid system "offchain" "lib" "-c 'cabal repl'";
+          offchain-ghcid-test = self.ghcid system "offchain" "test" "-c 'cabal repl exe:tests'";
+          offchain-ghcid-test-run = self.ghcid system "offchain" "test-run" "-c 'cabal repl exe:tests' -T :main";
         });
 
         # In Nix, there is no builtin way to access the project root, where
