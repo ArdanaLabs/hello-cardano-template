@@ -35,7 +35,7 @@ import Data.OpenApi.Schema (ToSchema)
 import Data.String (fromString)
 import Data.Text qualified as T
 import GHC.Generics (Generic)
-import HelloWorld.Contract (increment, initializeHandler, read', InitHelloWorldSchema, IncHelloWorldSchema, ReadHelloWorldSchema)
+import HelloWorld.Contract (increment, initialize, read', InitHelloWorldSchema, IncHelloWorldSchema, ReadHelloWorldSchema)
 import Ledger.Value (CurrencySymbol (..))
 import Network.HTTP.Client (
   defaultManagerSettings,
@@ -69,7 +69,7 @@ newtype ChainIndexPort = ChainIndexPort Int
 
 -- Initial value passed to the PAB when starting up the HelloWorld contract.
 data HelloWorldContracts
-  = Initialize Integer
+  = Initialize
   | Increment CurrencySymbol
   | Read' CurrencySymbol
   deriving stock (Eq, Ord, Show, Generic)
@@ -92,14 +92,14 @@ instance Pretty HelloWorldContracts where
   pretty = viaShow
 
 instance HasDefinitions HelloWorldContracts where
-  getDefinitions = [Initialize 1, Increment (CurrencySymbol "cs-identifier"), Read' (CurrencySymbol "cs-identifier")]
+  getDefinitions = [Initialize, Increment (CurrencySymbol "cs-identifier"), Read' (CurrencySymbol "cs-identifier")]
   getSchema = \case
-    Initialize _ -> endpointsToSchemas @InitHelloWorldSchema
+    Initialize -> endpointsToSchemas @InitHelloWorldSchema
     Increment _ -> endpointsToSchemas @IncHelloWorldSchema
     Read' _ -> endpointsToSchemas @ReadHelloWorldSchema 
 
   getContract = \case
-    Initialize initialValue -> SomeBuiltin $ initializeHandler initialValue
+    Initialize -> SomeBuiltin $ initialize
     Increment contractId -> SomeBuiltin $ increment contractId
     Read' contractId -> SomeBuiltin $ read' contractId
 

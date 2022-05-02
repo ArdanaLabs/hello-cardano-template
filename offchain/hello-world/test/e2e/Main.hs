@@ -68,7 +68,7 @@ spec = describe "End to End" $ do
 
 activatesContract :: ClientEnv -> PabClient HelloWorldContracts walletId -> Wallet -> IO ContractInstanceId
 activatesContract env pclient wallet = do
-  let activationArgs = ContractActivationArgs (Initialize 1) (Just wallet)
+  let activationArgs = ContractActivationArgs Initialize (Just wallet)
       activateContract = PABClient.activateContract pclient activationArgs
   res <- SC.runClientM activateContract env
   case res of
