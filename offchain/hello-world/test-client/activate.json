@@ -1,5 +1,8 @@
 {
-    "caID": "HelloWorld",
+    "caID": {
+        "contents": 1.0,
+        "tag": "Initialize"
+    },
     "caWallet": {
         "getWalletId": "2d4cc31a4b3116ab86bfe529d30d9c362acd0b44"
     }

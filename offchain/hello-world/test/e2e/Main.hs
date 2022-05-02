@@ -7,6 +7,7 @@ import Control.Monad.IO.Class (MonadIO (..))
 import Data.Aeson qualified as Asn
 import Data.Word (Word16)
 import HelloWorld.LocalCluster qualified as LC
+import HelloWorld.PAB (HelloWorldContracts(..))
 import Network.HTTP.Client qualified as HTTP
 import Plutus.PAB.Events.ContractInstanceState (PartiallyDecodedResponse (err))
 import Plutus.PAB.Webserver.Client (PabClient)
@@ -53,11 +54,9 @@ spec = describe "End to End" $ do
   itWithOuter "Tests contract endpoints" $
     \MkTestArgs {networkManager, wallet} -> do
       let env = SC.mkClientEnv networkManager base
-          pclient = PABClient.pabClient @_ @()
-      contractId <- activatesContract env pclient wallet
-      usesEndpoint "initialize" env pclient contractId
-      usesEndpoint "increment" env pclient contractId
-      usesEndpoint "read" env pclient contractId
+          pclientInitialize = PABClient.pabClient @HelloWorldContracts @()
+      contractId <- activatesContract env pclientInitialize wallet
+      usesEndpoint "initialize" env pclientInitialize contractId
   where
     base =
       BaseUrl
@@ -67,9 +66,9 @@ spec = describe "End to End" $ do
         , baseUrlPath = ""
         }
 
-activatesContract :: ClientEnv -> PabClient String walletId -> Wallet -> IO ContractInstanceId
+activatesContract :: ClientEnv -> PabClient HelloWorldContracts walletId -> Wallet -> IO ContractInstanceId
 activatesContract env pclient wallet = do
-  let activationArgs = ContractActivationArgs walletName (Just wallet)
+  let activationArgs = ContractActivationArgs (Initialize 1) (Just wallet)
       activateContract = PABClient.activateContract pclient activationArgs
   res <- SC.runClientM activateContract env
   case res of
@@ -81,7 +80,7 @@ activatesContract env pclient wallet = do
 usesEndpoint ::
   String ->
   ClientEnv ->
-  PabClient String walletId ->
+  PabClient t walletId ->
   ContractInstanceId ->
   IO ()
 usesEndpoint endpoint env pclient contractId = do
@@ -107,7 +106,7 @@ usesEndpoint endpoint env pclient contractId = do
 -}
 verifyStatus ::
   ClientEnv ->
-  PabClient String walletId ->
+  PabClient t walletId ->
   ContractInstanceId ->
   IO ()
 verifyStatus env pclient contractId = do
@@ -149,19 +148,9 @@ setupCluster manager wallet = liftIO $ do
     then pure $ MkTestArgs manager wallet
     else SysEx.die $ "*** Cluster failed to start after " <> show clusterTimeout <> " seconds"
 
-{- | Name for our test wallet. This must match the data constructor for the
- contract we are running. I.e. in HelloWorld.PAB we have
-
- @
- data HelloWorldContracts = HelloWorld -- <- matches this
- @
--}
-walletName :: String
-walletName = "HelloWorld"
-
 -- | Test wallet with hardcoded digest.
 mWallet :: Maybe Wallet
-mWallet = WTypes.Wallet (Just walletName) . WTypes.WalletId . CTypes.WalletId <$> digest
+mWallet = WTypes.Wallet (Just "HelloWorld") . WTypes.WalletId . CTypes.WalletId <$> digest
   where
     digest = TR.readMaybe "2d4cc31a4b3116ab86bfe529d30d9c362acd0b44"
 
