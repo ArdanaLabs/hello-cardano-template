@@ -295,6 +295,18 @@
           }
         );
 
+        onchainTools = forAllSystems (system: {
+          onchain-lib = self.haskellTools.${system}.ghcid "onchain" "lib" "-c 'cabal repl'";
+          onchain-test = self.haskellTools.${system}.ghcid "onchain" "test" "-c 'cabal repl test:tests'";
+          onchain-test-run = self.haskellTools.${system}.ghcid "onchain" "test-run" "-c 'cabal repl test:tests' -T :main";
+        });
+
+        offchainTools = forAllSystems (system: {
+          offchain-lib = self.haskellTools.${system}.ghcid "offchain" "lib" "-c 'cabal repl'";
+          offchain-test = self.haskellTools.${system}.ghcid "offchain" "test" "-c 'cabal repl exe:tests'";
+          offchain-test-run = self.haskellTools.${system}.ghcid "offchain" "test-run" "-c 'cabal repl exe:tests' -T :main";
+        });
+
         # In Nix, there is no builtin way to access the project root, where
         # flake.nix lives. To workaround this, we inject it as env var in the
         # `shellHook`.
@@ -326,18 +338,16 @@
         devShells = forAllSystems (system: let pkgs = nixpkgsFor system; in {
           onchain = self.onchain.${system}.flake.devShell.overrideAttrs (oa: {
             shellHook = oa.shellHook + self.flakeRoot.shellHook;
-            buildInputs = pkgs.lib.attrsets.attrValues self.commonTools.${system} ++ 
-              [ (self.haskellTools.${system}.ghcid "onchain" "lib" "-c 'cabal repl'")
-                (self.haskellTools.${system}.ghcid "onchain" "test" "-c 'cabal repl test:tests'")
-                (self.haskellTools.${system}.ghcid "onchain" "test-run" "-c 'cabal repl test:tests' -T :main")
-              ];
+            buildInputs = pkgs.lib.attrsets.attrValues (
+              self.commonTools.${system} //
+              self.onchainTools.${system}
+            );
           });
           offchain = self.offchain.${system}.flake.devShell.overrideAttrs (oa: {
-            buildInputs = pkgs.lib.attrsets.attrValues self.commonTools.${system} ++ 
-              [ (self.haskellTools.${system}.ghcid "offchain" "lib" "-c 'cabal repl'")
-                (self.haskellTools.${system}.ghcid "offchain" "test" "-c 'cabal repl exe:tests'")
-                (self.haskellTools.${system}.ghcid "offchain" "test-run" "-c 'cabal repl exe:tests' -T :main")
-              ];
+            buildInputs = pkgs.lib.attrsets.attrValues (
+              self.commonTools.${system} //
+              self.offchainTools.${system}
+            );
             shellHook = oa.shellHook + ''$
               ${self.flakeRoot.shellHook}
               # running local cluster + PAB
