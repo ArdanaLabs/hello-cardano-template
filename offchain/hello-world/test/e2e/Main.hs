@@ -85,7 +85,9 @@ usesEndpoint ::
   IO ()
 usesEndpoint endpoint env pclient contractId = do
   let instanceClient = PABClient.instanceClient pclient contractId
-      params = Asn.toJSON ()
+      -- TODO: this function needs to be refactored to additionally allow for passing the correct endpoint parameter
+      -- preferably to enforce the same type that the schema defines and not just value
+      params = Asn.toJSON @Integer 1 
       req = PABClient.callInstanceEndpoint instanceClient endpoint params
   res <- SC.runClientM req env
   case res of
