@@ -255,7 +255,12 @@
 
         checks = forAllSystems (system:
              self.onchain.${system}.flake.checks
-          // { offchain-test = flakeApp2Derivation system "offchain-test";
+          // {
+               offchain = {
+                 test = flakeApp2Derivation system "offchain-test";
+                 hello-world.unit = self.packages.${system}."hello-world:test:hello-world-unit";
+                 hello-world.e2e = self.packages.${system}."hello-world:exe:hello-world-e2e";
+               };
              }
           // (lint-utils.mkChecks.${system} lintSpec ./.)
         );
