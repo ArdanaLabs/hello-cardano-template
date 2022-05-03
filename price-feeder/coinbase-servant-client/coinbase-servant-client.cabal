@@ -33,6 +33,7 @@ library
     build-depends:
         base
       , coinbase-servant-api
+      , pricedata-types
       , servant-client
       , text
       , time
@@ -52,6 +53,7 @@ test-suite coinbase-servant-client-test
       , coinbase-servant-api
       , coinbase-servant-client
       , coinbase-mock-servant-server
+      , pricedata-types
       , sydtest
       , sydtest-servant
       , time

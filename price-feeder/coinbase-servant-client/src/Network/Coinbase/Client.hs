@@ -8,6 +8,7 @@ import UnliftIO (MonadIO)
 import UnliftIO.Exception (fromEitherIO, throwString)
 
 import Network.Coinbase.API (CoinbaseResponse(..), SpotPriceUnsafe, pricesAPIProxy)
+import PriceData.Types (CurrencyPair(..))
 
 coinbaseBaseUrl :: BaseUrl
 coinbaseBaseUrl = BaseUrl {
@@ -17,8 +18,8 @@ coinbaseBaseUrl = BaseUrl {
                   , baseUrlPath = "/v2"
                   }
 
-getSpotPrice :: MonadIO m => ClientEnv -> Text -> Text -> Maybe Day -> m SpotPriceUnsafe
-getSpotPrice clientEnv base currency maybeDay = do
+getSpotPrice :: MonadIO m => ClientEnv -> CurrencyPair -> Maybe Day -> m SpotPriceUnsafe
+getSpotPrice clientEnv (CurrencyPair base currency) maybeDay = do
   -- TODO use retry on connection clienterror
   coinbaseResponse <- fromEitherIO $ runClientM (client pricesAPIProxy (base <> "-" <> currency) ((pack . show) <$> maybeDay)) clientEnv
   case coinbaseResponse of
