@@ -11,6 +11,7 @@ import UnliftIO.Exception (fromEitherIO, throwString)
 
 import Network.Kraken.API
 import Network.Kraken.Types (TickerData, toTickerData)
+import PriceData.Types (CurrencyPair(..))
 
 krakenBaseUrl :: BaseUrl
 krakenBaseUrl = BaseUrl {
@@ -20,20 +21,21 @@ krakenBaseUrl = BaseUrl {
                 , baseUrlPath = "/0"
                 }
 
-getAssetTickerInformation :: MonadIO m => ClientEnv -> Text -> m AssetTickerInfoUnsafe
-getAssetTickerInformation clientEnv ticker = do
+getAssetTickerInformation :: MonadIO m => ClientEnv -> CurrencyPair -> m AssetTickerInfoUnsafe
+getAssetTickerInformation clientEnv (CurrencyPair base currency) = do
   -- TODO use retry on connection clienterror
   let (tickerInformationClient :<|> _) = client marketDataAPIProxy
-  krakenResponse <- fromEitherIO $ runClientM (tickerInformationClient (Just ticker)) clientEnv
+      currencyPair= base <> currency
+  krakenResponse <- fromEitherIO $ runClientM (tickerInformationClient (Just currencyPair)) clientEnv
   case krakenResponse of
     (KrakenResponse [] (AssetTickerInfoResponseUnsafe tickerMap)) -> do
-      maybe (throwString $ "The fetched asset ticker information doesn't contain the expected ticker: " ++ (unpack ticker))
+      maybe (throwString $ "The fetched asset ticker information doesn't contain the expected ticker: " ++ (unpack currencyPair))
             return $
-            Map.lookup ticker tickerMap
+            Map.lookup currencyPair tickerMap
     (KrakenResponse errors _) -> throwString $ show errors
 
-getOHLCData :: MonadIO m => ClientEnv -> Text -> Text -> Maybe Integer -> Maybe POSIXTime -> m [TickerData]
-getOHLCData clientEnv base currency interval since = do
+getOHLCData :: MonadIO m => ClientEnv -> CurrencyPair -> Maybe Integer -> Maybe POSIXTime -> m [TickerData]
+getOHLCData clientEnv (CurrencyPair base currency) interval since = do
   let (_ :<|> ohlcDataClient) = client marketDataAPIProxy
       currencyPair = base <> currency
   krakenResponse <- fromEitherIO $ runClientM (ohlcDataClient (Just currencyPair) interval since) clientEnv

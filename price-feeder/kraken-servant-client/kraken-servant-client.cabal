@@ -37,6 +37,7 @@ library
       , containers
       , kraken-servant-api
       , mtl
+      , pricedata-types
       , servant
       , servant-client
       , text
@@ -57,6 +58,7 @@ test-suite kraken-servant-client-test
       , kraken-servant-api
       , kraken-servant-client
       , kraken-mock-servant-server
+      , pricedata-types
       , sydtest
       , sydtest-servant
     hs-source-dirs:   test
