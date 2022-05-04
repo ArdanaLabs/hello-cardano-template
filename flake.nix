@@ -51,6 +51,7 @@
         , extraShell      # Extra 'shell' attributes used by haskell.nix
         , pkg-def-extras  # For overriding the package set
         , sha256map       # Extra sha256 hashes used by haskell.nix
+        , extraPackages ? {}
         }:
         let
           deferPluginErrors = true;
@@ -77,7 +78,7 @@
                     nixpkgs.lib.mkForce [ [ (import plutus { inherit system; }).pkgs.libsodium-vrf ] ];
                   cardano-crypto-class.components.library.pkgconfig =
                     nixpkgs.lib.mkForce [ [ (import plutus { inherit system; }).pkgs.libsodium-vrf ] ];
-                };
+                } // extraPackages;
               }
             ];
             shell = {
@@ -166,6 +167,9 @@
           project = plutusProjectIn {
             inherit system;
             subdir = "offchain";
+            extraPackages = {
+              hello-world.components.library.preBuild = "export DUSD_SCRIPTS=${self.onchain-scripts.${system}}";
+            };
             extraShell = {
               additional = ps: [
                 ps.plutus-contract
@@ -173,6 +177,7 @@
                 ps.plutus-ledger-api
                 ps.plutus-ledger-constraints
                 ps.plutus-pab
+                ps.plutus-use-cases
               ];
               DUSD_SCRIPTS = self.onchain-scripts.${system};
               propagatedBuildInputs =
@@ -250,7 +255,12 @@
 
         checks = forAllSystems (system:
              self.onchain.${system}.flake.checks
-          // { offchain-test = flakeApp2Derivation system "offchain-test";
+          // {
+               offchain = {
+                 test = flakeApp2Derivation system "offchain-test";
+                 hello-world.unit = self.packages.${system}."hello-world:test:hello-world-unit";
+                 hello-world.e2e = self.packages.${system}."hello-world:exe:hello-world-e2e";
+               };
              }
           // (lint-utils.mkChecks.${system} lintSpec ./.)
         );

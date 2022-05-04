@@ -35,7 +35,8 @@ import Data.OpenApi.Schema (ToSchema)
 import Data.String (fromString)
 import Data.Text qualified as T
 import GHC.Generics (Generic)
-import HelloWorld.Contract (contract)
+import HelloWorld.Contract (IncHelloWorldSchema, InitHelloWorldSchema, ReadHelloWorldSchema, increment, initialize, read')
+import Ledger.Value (CurrencySymbol (..))
 import Network.HTTP.Client (
   defaultManagerSettings,
   newManager,
@@ -48,6 +49,7 @@ import Plutus.PAB.App (StorageBackend (BeamSqliteBackend))
 import Plutus.PAB.Effects.Contract.Builtin (
   HasDefinitions (..),
   SomeBuiltin (SomeBuiltin),
+  endpointsToSchemas,
  )
 import Plutus.PAB.Effects.Contract.Builtin qualified as Builtin
 import Plutus.PAB.Run (runWithOpts)
@@ -67,7 +69,9 @@ newtype ChainIndexPort = ChainIndexPort Int
 
 -- Initial value passed to the PAB when starting up the HelloWorld contract.
 data HelloWorldContracts
-  = HelloWorld
+  = Initialize
+  | Increment CurrencySymbol
+  | Read' CurrencySymbol
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (ToSchema)
 
@@ -88,10 +92,16 @@ instance Pretty HelloWorldContracts where
   pretty = viaShow
 
 instance HasDefinitions HelloWorldContracts where
-  getDefinitions = [HelloWorld]
-  getSchema = const []
+  getDefinitions = [Initialize, Increment (CurrencySymbol "cs-identifier"), Read' (CurrencySymbol "cs-identifier")]
+  getSchema = \case
+    Initialize -> endpointsToSchemas @InitHelloWorldSchema
+    Increment _ -> endpointsToSchemas @IncHelloWorldSchema
+    Read' _ -> endpointsToSchemas @ReadHelloWorldSchema
+
   getContract = \case
-    HelloWorld -> SomeBuiltin contract
+    Initialize -> SomeBuiltin $ initialize
+    Increment contractId -> SomeBuiltin $ increment contractId
+    Read' contractId -> SomeBuiltin $ read' contractId
 
 runPAB :: String -> Int -> FilePath -> CardanoNodeConn -> IO ()
 runPAB walletHost walletPort dir socketPath = do
