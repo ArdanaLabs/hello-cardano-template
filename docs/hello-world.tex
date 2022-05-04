@@ -33,8 +33,8 @@
     the PAB transactions as it would for PlutusTx
   \item Front-end
   \begin{itemize}
-    \item Foundations built in HTML/CSS, with Typescript where necessary to link
-      with the PAB and browser wallets
+    \item Foundations built in HTML/CSS, with one Purescript component to link
+      with the PAB and browser wallets (TBD)
     \item User wallet: Nami (for first version)
   \end{itemize}
   \item Once we’re done, we can `git tag' the commit where that’s done and then
@@ -63,8 +63,8 @@
         \item Open two browsers, connected to two separate wallets, and check
           that incrementing on one updates the number on the other after
           refresh: $0$ to $1$, $1$ to $2$
-        \item Launch the two browsers in separate VMs. \todo{Does this
-          require/allow setting up separate nodes, with Nami?}
+        \item Launch the two browsers in separate VMs.
+          \todo{See issue https://github.com/ArdanaLabs/dUSD/issues/87.}
       \end{itemize}
     \item Lighthouse score above $90$, to check website performance
   \end{itemize}
