@@ -31,14 +31,17 @@ library
     -- other-extensions:
     build-depends:
         base
+      , binance-servant-client
       , coinbase-servant-client
       , http-client-tls
+      , huobi-servant-client
       , pricedata-types
       , servant-client
       , statistics
       , text
       , vector
       , kraken-servant-client
+      , kucoin-servant-client
     hs-source-dirs:   src
     ghc-options:      -Wall -Werror
     default-language: Haskell2010
