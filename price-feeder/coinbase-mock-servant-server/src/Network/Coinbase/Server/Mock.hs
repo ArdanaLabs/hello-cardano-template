@@ -7,16 +7,16 @@ import Network.Wai (Application)
 import Servant.Server (Handler, serve)
 import UnliftIO.Exception (pureTry)
 
-import Network.Coinbase.API (CoinbaseResponse(..), CoinbaseError(..), SpotPriceUnsafe(..), pricesAPIProxy)
+import Network.Coinbase.API (CoinbaseResponse(..), CoinbaseError(..), SpotPrice(..), pricesAPIProxy)
 
-coinbaseMockApp :: Application
-coinbaseMockApp = serve pricesAPIProxy mockSpotPriceHandler
+coinbaseMockApp :: Double -> Application
+coinbaseMockApp price = serve pricesAPIProxy (mockSpotPriceHandler price)
 
-mockSpotPriceHandler :: T.Text -> Maybe T.Text -> Handler (CoinbaseResponse SpotPriceUnsafe)
-mockSpotPriceHandler currencyPair maybeDay = do
+mockSpotPriceHandler :: Double -> T.Text -> Maybe T.Text -> Handler (CoinbaseResponse SpotPrice)
+mockSpotPriceHandler price currencyPair maybeDay = do
   let (base, currency) = T.drop 1 <$> T.break (== '-') currencyPair
       successResponse = CoinbaseResponse Nothing $ Just $
-                          SpotPriceUnsafe { _base = base, _currency = currency, _amount = "1232.44" }
+                          SpotPrice{ _base = base, _currency = currency, _amount = T.pack $ show price }
   case maybeDay of
     Nothing -> return successResponse
     Just dateText -> do

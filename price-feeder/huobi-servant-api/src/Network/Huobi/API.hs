@@ -3,7 +3,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
--- {-# LANGUAGE FlexibleInstances #-}
 
 module Network.Huobi.API (TickResponse(..), Tick(..), marketDataAPIProxy) where
 

@@ -10,9 +10,9 @@ import Servant.Server (Handler, serve, errBody, err400)
 
 import Network.Kucoin.API (FiatPriceResponse(..), fiatPriceAPIProxy)
 
-kucoinMockApp :: Application
-kucoinMockApp = serve fiatPriceAPIProxy mockFiatPriceHandler
+kucoinMockApp :: Double -> Application
+kucoinMockApp price = serve fiatPriceAPIProxy (mockFiatPriceHandler price)
 
-mockFiatPriceHandler :: Maybe T.Text -> [T.Text] -> Handler FiatPriceResponse
-mockFiatPriceHandler (Just "USD") ["ADA"] = return $ FiatPriceResponse { _code = "200000", _data = M.singleton "ADA" "39596.03960396" }
-mockFiatPriceHandler _ _ = throwError $ err400 { errBody = "Not Found." }
+mockFiatPriceHandler :: Double -> Maybe T.Text -> [T.Text] -> Handler FiatPriceResponse
+mockFiatPriceHandler price (Just "USD") ["ADA"] = return $ FiatPriceResponse { _code = "200000", _data = M.singleton "ADA" $ T.pack $ show price }
+mockFiatPriceHandler _ _ _ = throwError $ err400 { errBody = "Not Found." }

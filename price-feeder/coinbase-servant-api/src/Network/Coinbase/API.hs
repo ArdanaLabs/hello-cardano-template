@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Network.Coinbase.API (CoinbaseResponse(..), CoinbaseError(..), SpotPriceUnsafe(..), pricesAPIProxy) where
+module Network.Coinbase.API (CoinbaseResponse(..), CoinbaseError(..), SpotPrice(..), pricesAPIProxy) where
 
 import Data.Aeson
 import Data.Proxy
@@ -24,7 +24,7 @@ pricesAPIProxy = Proxy
 type PricesAPI = "prices" :> SpotPriceAPI
 
 -- https://developers.coinbase.com/api/v2#get-spot-price
-type SpotPriceAPI = Capture "currency_pair" T.Text :> "spot" :> QueryParam "date" T.Text :>  Get '[JSON] (CoinbaseResponse SpotPriceUnsafe)
+type SpotPriceAPI = Capture "currency_pair" T.Text :> "spot" :> QueryParam "date" T.Text :>  Get '[JSON] (CoinbaseResponse SpotPrice)
 
 data CoinbaseError = CoinbaseError {
   _id :: T.Text
@@ -45,13 +45,13 @@ instance FromJSON a => FromJSON (CoinbaseResponse a) where
 instance ToJSON a => ToJSON (CoinbaseResponse a) where
   toJSON = genericToJSON dropLeadingUnderscoreOptions
 
-data SpotPriceUnsafe = SpotPriceUnsafe {
+data SpotPrice = SpotPrice {
   _amount :: T.Text
 , _base :: T.Text
 , _currency :: T.Text
 } deriving (Eq, Generic, Ord, Show)
 
-instance FromJSON SpotPriceUnsafe where
+instance FromJSON SpotPrice where
   parseJSON = genericParseJSON dropLeadingUnderscoreOptions
-instance ToJSON SpotPriceUnsafe where
+instance ToJSON SpotPrice where
   toJSON = genericToJSON dropLeadingUnderscoreOptions

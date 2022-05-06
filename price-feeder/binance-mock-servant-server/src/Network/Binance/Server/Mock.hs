@@ -6,11 +6,11 @@ import Network.Wai (Application)
 import Servant (throwError)
 import Servant.Server (Handler, serve, errBody, err400)
 
-import Network.Binance.API (PriceUnsafe(..), tickerAPIProxy)
+import Network.Binance.API (PriceResponse(..), tickerAPIProxy)
 
-binanceMockApp :: Application
-binanceMockApp = serve tickerAPIProxy mockTickerPriceHandler
+binanceMockApp :: Double -> Application
+binanceMockApp price = serve tickerAPIProxy (mockTickerPriceHandler price)
 
-mockTickerPriceHandler :: Maybe T.Text -> Handler PriceUnsafe
-mockTickerPriceHandler (Just "ADAUSDT") = return $ PriceUnsafe { _symbol = "ADAUSDT", _price = "0.79260000" }
-mockTickerPriceHandler _ = throwError $ err400 { errBody = "Invalid symbol." }
+mockTickerPriceHandler :: Double -> Maybe T.Text -> Handler PriceResponse
+mockTickerPriceHandler price (Just "ADAUSDT") = return $ PriceResponse { _symbol = "ADAUSDT", _price = T.pack $ show price }
+mockTickerPriceHandler _ _ = throwError $ err400 { errBody = "Invalid symbol." }

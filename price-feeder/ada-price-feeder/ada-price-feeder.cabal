@@ -22,7 +22,10 @@ maintainer:         marijan.petricevic94@gmail.com
 extra-source-files: CHANGELOG.md
 
 library
-    exposed-modules:  MyLib
+    exposed-modules:
+        MyLib
+        Clients
+        Types
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -31,17 +34,20 @@ library
     -- other-extensions:
     build-depends:
         base
-      , binance-servant-client
-      , coinbase-servant-client
+      , containers
+      , binance-servant-api
+      , coinbase-servant-api
       , http-client-tls
-      , huobi-servant-client
-      , pricedata-types
+      , huobi-servant-api
+      , retry
+      , servant
       , servant-client
       , statistics
       , text
       , vector
-      , kraken-servant-client
-      , kucoin-servant-client
+      , kraken-servant-api
+      , kucoin-servant-api
+      , unliftio
     hs-source-dirs:   src
     ghc-options:      -Wall -Werror
     default-language: Haskell2010
@@ -55,8 +61,8 @@ executable ada-price-feeder
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
     build-depends:
-        base ^>=4.14.3.0,
         ada-price-feeder
+      , base
 
     hs-source-dirs:   app
     ghc-options:      -Wall -Werror
@@ -69,5 +75,23 @@ test-suite ada-price-feeder-test
 
     -- Directories containing source files.
     hs-source-dirs:   test
-    main-is:          MyLibTest.hs
-    build-depends:    base ^>=4.14.3.0
+    main-is:          Main.hs
+    other-modules:
+        ClientsSpec
+    build-depends:
+        ada-price-feeder
+      , base
+      , binance-servant-api
+      , binance-mock-servant-server
+      , coinbase-servant-api
+      , coinbase-mock-servant-server
+      , huobi-mock-servant-server
+      , huobi-servant-api
+      , kraken-mock-servant-server
+      , kraken-servant-api
+      , kucoin-mock-servant-server
+      , kucoin-servant-api
+      , sydtest
+      , sydtest-servant
+      , time
+      , unliftio

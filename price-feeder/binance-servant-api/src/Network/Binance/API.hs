@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Network.Binance.API (PriceUnsafe(..), tickerAPIProxy) where
+module Network.Binance.API (PriceResponse(..), tickerAPIProxy) where
 
 import Data.Aeson
 import Data.Proxy
@@ -19,14 +19,14 @@ tickerAPIProxy :: Proxy TickerAPI
 tickerAPIProxy = Proxy
 
 -- https://binance-docs.github.io/apidocs/spot/en/#symbol-price-ticker
-type TickerAPI = "ticker" :> "price" :> QueryParam "symbol" T.Text :> Get '[JSON] PriceUnsafe
+type TickerAPI = "ticker" :> "price" :> QueryParam "symbol" T.Text :> Get '[JSON] PriceResponse
 
-data PriceUnsafe = PriceUnsafe {
+data PriceResponse = PriceResponse {
   _symbol :: T.Text
 , _price :: T.Text
 } deriving (Eq, Generic, Ord, Show)
 
-instance FromJSON PriceUnsafe where
+instance FromJSON PriceResponse where
   parseJSON = genericParseJSON dropLeadingUnderscoreOptions
-instance ToJSON PriceUnsafe where
+instance ToJSON PriceResponse where
   toJSON = genericToJSON dropLeadingUnderscoreOptions

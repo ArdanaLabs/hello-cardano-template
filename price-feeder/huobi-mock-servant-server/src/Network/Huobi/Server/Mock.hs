@@ -8,11 +8,11 @@ import Servant.Server (Handler, serve, errBody, err400)
 
 import Network.Huobi.API (TickResponse(..), Tick(..), marketDataAPIProxy)
 
-huobiMockApp :: Application
-huobiMockApp = serve marketDataAPIProxy mockGetTick
+huobiMockApp :: Double -> Double -> Application
+huobiMockApp ask bid = serve marketDataAPIProxy (mockGetTick ask bid)
 
-mockGetTick :: Maybe T.Text -> Handler TickResponse
-mockGetTick (Just "ADAUSDT") = return $ TickResponse {
+mockGetTick :: Double -> Double -> Maybe T.Text -> Handler TickResponse
+mockGetTick ask bid (Just "ADAUSDT") = return $ TickResponse {
                                           _channel = "market.adausdt.detail.merged"
                                         , _status = "ok"
                                         , _timestamp = 1629788763750
@@ -26,8 +26,8 @@ mockGetTick (Just "ADAUSDT") = return $ TickResponse {
                                                   , _amount = 12055.365781937457
                                                   , _vol = 5.985618685709001E8
                                                   , _count = 420573
-                                                  , _bid = (49819.48, 2.58112)
-                                                  , _ask = (49819.49, 0.002411)
+                                                  , _bid = (bid, 2.58112)
+                                                  , _ask = (ask, 0.002411)
                                                   }
                                         }
-mockGetTick _ = throwError $ err400 { errBody = "Invalid symbol." }
+mockGetTick _ _ _ = throwError $ err400 { errBody = "Invalid symbol." }

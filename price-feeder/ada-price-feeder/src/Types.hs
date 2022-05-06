@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE ImportQualifiedPost #-}
-module PriceData.Types (CurrencyPair(..)) where
+module Types (CurrencyPair(..)) where
 
 import Data.Text qualified as T
 import GHC.Generics

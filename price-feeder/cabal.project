@@ -2,22 +2,16 @@ index-state: 2022-01-22T00:00:00Z
 
 packages:
     ada-price-feeder
-    pricedata-types
     binance-servant-api
     binance-mock-servant-server
-    binance-servant-client
     coinbase-servant-api
     coinbase-mock-servant-server
-    coinbase-servant-client
     huobi-servant-api
     huobi-mock-servant-server
-    huobi-servant-client
     kraken-servant-api
     kraken-mock-servant-server
-    kraken-servant-client
     kucoin-servant-api
     kucoin-mock-servant-server
-    kucoin-servant-client
           
 -- Always build tests and benchmarks.
 tests: true
