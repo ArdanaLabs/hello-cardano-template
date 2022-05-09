@@ -2,7 +2,7 @@ module Main (main) where
 
 import Test.Syd
 
-import qualified Network.Huobi.APISpec (spec)
+import Network.Huobi.APISpec qualified (spec)
 
 main :: IO ()
 main = sydTest $ do

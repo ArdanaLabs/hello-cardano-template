@@ -22,80 +22,80 @@ maintainer:         marijan.petricevic94@gmail.com
 extra-source-files: CHANGELOG.md
 
 library
-    exposed-modules:
-        MyLib
-        Clients
-        Types
+  exposed-modules:
+    Clients
+    MyLib
+    Types
 
-    -- Modules included in this library but not exported.
-    -- other-modules:
+  -- Modules included in this library but not exported.
+  -- other-modules:
 
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-    build-depends:
-        base
-      , containers
-      , binance-servant-api
-      , coinbase-servant-api
-      , http-client-tls
-      , huobi-servant-api
-      , retry
-      , servant
-      , servant-client
-      , statistics
-      , text
-      , vector
-      , kraken-servant-api
-      , kucoin-servant-api
-      , unliftio
-    hs-source-dirs:   src
-    ghc-options:      -Wall -Werror
-    default-language: Haskell2010
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+  build-depends:
+    , base
+    , binance-servant-api
+    , coinbase-servant-api
+    , containers
+    , http-client-tls
+    , huobi-servant-api
+    , kraken-servant-api
+    , kucoin-servant-api
+    , retry
+    , servant
+    , servant-client
+    , statistics
+    , text
+    , unliftio
+    , vector
+
+  hs-source-dirs:   src
+  ghc-options:      -Wall -Werror
+  default-language: Haskell2010
 
 executable ada-price-feeder
-    main-is:          Main.hs
+  main-is:          Main.hs
 
-    -- Modules included in this executable, other than Main.
-    -- other-modules:
+  -- Modules included in this executable, other than Main.
+  -- other-modules:
 
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-    build-depends:
-        ada-price-feeder
-      , base
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+  build-depends:
+    , ada-price-feeder
+    , base
 
-    hs-source-dirs:   app
-    ghc-options:      -Wall -Werror
-    default-language: Haskell2010
+  hs-source-dirs:   app
+  ghc-options:      -Wall -Werror
+  default-language: Haskell2010
 
 test-suite ada-price-feeder-test
-    ghc-options:      -Wall -Werror
-    default-language: Haskell2010
-    type:             exitcode-stdio-1.0
+  ghc-options:      -Wall -Werror
+  default-language: Haskell2010
+  type:             exitcode-stdio-1.0
 
-    -- Directories containing source files.
-    hs-source-dirs:   test
-    main-is:          Main.hs
-    other-modules:
-        ClientsSpec
-    build-depends:
-        ada-price-feeder
-      , aeson
-      , base
-      , binance-servant-api
-      , binance-mock-servant-server
-      , coinbase-servant-api
-      , coinbase-mock-servant-server
-      , genvalidity
-      , huobi-mock-servant-server
-      , huobi-servant-api
-      , kraken-mock-servant-server
-      , kraken-servant-api
-      , kucoin-mock-servant-server
-      , kucoin-servant-api
-      , mock-servant-server-utils
-      , QuickCheck
-      , sydtest
-      , sydtest-servant
-      , time
-      , unliftio
+  -- Directories containing source files.
+  hs-source-dirs:   test
+  main-is:          Main.hs
+  other-modules:    ClientsSpec
+  build-depends:
+    , ada-price-feeder
+    , aeson
+    , base
+    , binance-mock-servant-server
+    , binance-servant-api
+    , coinbase-mock-servant-server
+    , coinbase-servant-api
+    , genvalidity
+    , huobi-mock-servant-server
+    , huobi-servant-api
+    , kraken-mock-servant-server
+    , kraken-servant-api
+    , kucoin-mock-servant-server
+    , kucoin-servant-api
+    , mock-servant-server-utils
+    , QuickCheck
+    , sydtest
+    , sydtest-servant
+    , time
+    , unliftio

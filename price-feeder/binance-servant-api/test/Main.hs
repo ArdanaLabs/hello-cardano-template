@@ -2,7 +2,7 @@ module Main (main) where
 
 import Test.Syd
 
-import qualified Network.Binance.APISpec (spec)
+import Network.Binance.APISpec qualified (spec)
 
 main :: IO ()
 main = sydTest $ do

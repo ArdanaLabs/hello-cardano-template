@@ -2,10 +2,10 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeOperators #-}
 
-module Network.Kucoin.API (FiatPriceResponse(..), fiatPriceAPIProxy) where
+module Network.Kucoin.API (FiatPriceResponse (..), fiatPriceAPIProxy) where
 
 import Data.Aeson
 import Data.Map qualified as M
@@ -23,10 +23,11 @@ fiatPriceAPIProxy = Proxy
 -- https://docs.kucoin.com/#get-fiat-price
 type FiatPriceAPI = "v1" :> "prices" :> QueryParam "base" T.Text :> QueryParams "currencies" T.Text :> Get '[JSON] FiatPriceResponse
 
-data FiatPriceResponse = FiatPriceResponse {
-  _code :: T.Text
-, _data :: M.Map T.Text T.Text
-} deriving (Eq, Generic, Ord, Show)
+data FiatPriceResponse = FiatPriceResponse
+  { _code :: T.Text
+  , _data :: M.Map T.Text T.Text
+  }
+  deriving (Eq, Generic, Ord, Show)
 
 instance FromJSON FiatPriceResponse where
   parseJSON = genericParseJSON dropLeadingUnderscoreOptions

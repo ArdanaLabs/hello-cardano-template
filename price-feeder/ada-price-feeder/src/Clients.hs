@@ -1,43 +1,46 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings #-}
+
 module Clients where
 
-import Control.Retry(RetryPolicyM, RetryStatus, exponentialBackoff, limitRetries, retrying)
+import Control.Retry (RetryPolicyM, RetryStatus, exponentialBackoff, limitRetries, retrying)
 import Data.Map qualified as M
 import Data.Text qualified as T
 import Data.Text.Read (double)
-import Servant.API ((:<|>)(..))
-import Servant.Client (BaseUrl(..), ClientEnv, ClientError(..), Scheme(..), client, runClientM)
+import Servant.API ((:<|>) (..))
+import Servant.Client (BaseUrl (..), ClientEnv, ClientError (..), Scheme (..), client, runClientM)
 import UnliftIO (MonadIO)
 import UnliftIO.Exception (fromEitherIO, throwString)
 
-import Network.Binance.API (PriceResponse(..), tickerAPIProxy)
-import Network.Coinbase.API (CoinbaseResponse(..), SpotPrice(SpotPrice), pricesAPIProxy)
-import Network.Huobi.API (TickResponse(..), Tick(..), marketDataAPIProxy)
+import Network.Binance.API (PriceResponse (..), tickerAPIProxy)
+import Network.Coinbase.API (CoinbaseResponse (..), SpotPrice (SpotPrice), pricesAPIProxy)
+import Network.Huobi.API (Tick (..), TickResponse (..), marketDataAPIProxy)
+import Network.Kraken.API (AssetTickerInfoResponse (AssetTickerInfoResponse), KrakenResponse (..), _volumeWeightedAveragePrice)
 import Network.Kraken.API qualified as Kraken
-import Network.Kraken.API (KrakenResponse(..), AssetTickerInfoResponse(AssetTickerInfoResponse), _volumeWeightedAveragePrice)
-import Network.Kucoin.API (FiatPriceResponse(..), fiatPriceAPIProxy)
+import Network.Kucoin.API (FiatPriceResponse (..), fiatPriceAPIProxy)
 
-import Types (CurrencyPair(..))
+import Types (CurrencyPair (..))
 
 eitherDouble :: T.Text -> Either String Double
 eitherDouble text = do
   res <- double text
   case res of
     (x, "") -> Right x
-    (_, remainder) -> Left $ "Unable to read " <>  T.unpack remainder <> " from input " <> T.unpack text
+    (_, remainder) -> Left $ "Unable to read " <> T.unpack remainder <> " from input " <> T.unpack text
 
 adaUsd :: CurrencyPair
-adaUsd = CurrencyPair {
-    _base = "ADA"
-  , _currency = "USD"
-  }
+adaUsd =
+  CurrencyPair
+    { _base = "ADA"
+    , _currency = "USD"
+    }
 
 adaUsdt :: CurrencyPair
-adaUsdt = CurrencyPair {
-    _base = "ADA"
-  , _currency = "USDT"
-  }
+adaUsdt =
+  CurrencyPair
+    { _base = "ADA"
+    , _currency = "USDT"
+    }
 
 defaultRetryPolicy :: Monad m => RetryPolicyM m
 defaultRetryPolicy = exponentialBackoff 2000000 <> limitRetries 5
@@ -48,12 +51,13 @@ retryDecider _ (Left (ConnectionError _)) = pure True
 retryDecider _ _ = pure False
 
 binanceBaseUrl :: BaseUrl
-binanceBaseUrl = BaseUrl {
-                   baseUrlScheme = Https
-                 , baseUrlHost = "api.binance.com"
-                 , baseUrlPort = 443
-                 , baseUrlPath = "/api/v3"
-                 }
+binanceBaseUrl =
+  BaseUrl
+    { baseUrlScheme = Https
+    , baseUrlHost = "api.binance.com"
+    , baseUrlPort = 443
+    , baseUrlPath = "/api/v3"
+    }
 
 getBinancePrice :: ClientEnv -> IO Double
 getBinancePrice clientEnv = do
@@ -62,12 +66,13 @@ getBinancePrice clientEnv = do
   either (\msg -> throwString $ msg <> T.unpack priceText) return $ eitherDouble priceText
 
 coinbaseBaseUrl :: BaseUrl
-coinbaseBaseUrl = BaseUrl {
-                    baseUrlScheme = Https
-                  , baseUrlHost = "api.coinbase.com"
-                  , baseUrlPort = 443
-                  , baseUrlPath = "/v2"
-                  }
+coinbaseBaseUrl =
+  BaseUrl
+    { baseUrlScheme = Https
+    , baseUrlHost = "api.coinbase.com"
+    , baseUrlPort = 443
+    , baseUrlPath = "/v2"
+    }
 
 getCoinbasePrice :: ClientEnv -> IO Double
 getCoinbasePrice clientEnv = do
@@ -79,12 +84,13 @@ getCoinbasePrice clientEnv = do
     (CoinbaseResponse Nothing Nothing) -> throwString "Fatal error :O"
 
 kucoinBaseUrl :: BaseUrl
-kucoinBaseUrl = BaseUrl {
-                  baseUrlScheme = Https
-                , baseUrlHost = "api.kucoin.com"
-                , baseUrlPort = 443
-                , baseUrlPath = "/api"
-                }
+kucoinBaseUrl =
+  BaseUrl
+    { baseUrlScheme = Https
+    , baseUrlHost = "api.kucoin.com"
+    , baseUrlPort = 443
+    , baseUrlPath = "/api"
+    }
 
 getKucoinPrice :: MonadIO m => ClientEnv -> m Double
 getKucoinPrice clientEnv = do
@@ -94,12 +100,13 @@ getKucoinPrice clientEnv = do
   either throwString return $ eitherDouble =<< eitherPriceText
 
 huobiBaseUrl :: BaseUrl
-huobiBaseUrl = BaseUrl {
-                   baseUrlScheme = Https
-                 , baseUrlHost = "api.huobi.pro"
-                 , baseUrlPort = 443
-                 , baseUrlPath = ""
-                 }
+huobiBaseUrl =
+  BaseUrl
+    { baseUrlScheme = Https
+    , baseUrlHost = "api.huobi.pro"
+    , baseUrlPort = 443
+    , baseUrlPath = ""
+    }
 
 getHuobiPrice :: MonadIO m => ClientEnv -> m Double
 getHuobiPrice clientEnv = do
@@ -107,15 +114,16 @@ getHuobiPrice clientEnv = do
   tick <- _tick <$> (fromEitherIO $ retrying defaultRetryPolicy retryDecider $ \_ -> runClientM (client marketDataAPIProxy (Just $ base <> currency)) clientEnv)
   let (ask, _) = _ask tick
       (bid, _) = _bid tick
-  return $ (ask + bid) / 2 
+  return $ (ask + bid) / 2
 
 krakenBaseUrl :: BaseUrl
-krakenBaseUrl = BaseUrl {
-                  baseUrlScheme = Https
-                , baseUrlHost = "api.kraken.com"
-                , baseUrlPort = 443
-                , baseUrlPath = "/0"
-                }
+krakenBaseUrl =
+  BaseUrl
+    { baseUrlScheme = Https
+    , baseUrlHost = "api.kraken.com"
+    , baseUrlPort = 443
+    , baseUrlPath = "/0"
+    }
 
 getKrakenPrice :: ClientEnv -> IO Double
 getKrakenPrice clientEnv = do
@@ -125,8 +133,10 @@ getKrakenPrice clientEnv = do
   krakenResponse <- fromEitherIO $ retrying defaultRetryPolicy retryDecider $ \_ -> runClientM (tickerInformationClient (Just currencyPair)) clientEnv
   case krakenResponse of
     (KrakenResponse [] (AssetTickerInfoResponse tickerMap)) -> do
-      let eitherPriceText = maybe (Left $ "The fetched asset ticker information doesn't contain the expected ticker: " <> (T.unpack currencyPair))
-                            (Right . fst . _volumeWeightedAveragePrice) $
-                            M.lookup currencyPair tickerMap
+      let eitherPriceText =
+            maybe
+              (Left $ "The fetched asset ticker information doesn't contain the expected ticker: " <> (T.unpack currencyPair))
+              (Right . fst . _volumeWeightedAveragePrice)
+              $ M.lookup currencyPair tickerMap
       either throwString return $ eitherDouble =<< eitherPriceText
-    (KrakenResponse errors _) -> throwString $ show errors 
+    (KrakenResponse errors _) -> throwString $ show errors

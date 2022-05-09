@@ -22,34 +22,35 @@ maintainer:         marijan.petricevic94@gmail.com
 extra-source-files: CHANGELOG.md
 
 library
-    exposed-modules:  Network.Kucoin.API
+  exposed-modules:  Network.Kucoin.API
 
-    -- Modules included in this library but not exported.
-    -- other-modules:
+  -- Modules included in this library but not exported.
+  -- other-modules:
 
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-    ghc-options: -Wall -Werror
-    build-depends:
-        aeson
-      , base
-      , containers
-      , servant
-      , text
-    hs-source-dirs:   src
-    default-language: Haskell2010
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+  ghc-options:      -Wall -Werror
+  build-depends:
+    , aeson
+    , base
+    , containers
+    , servant
+    , text
+
+  hs-source-dirs:   src
+  default-language: Haskell2010
 
 test-suite kucoin-servant-api-test
-    ghc-options: -Wall -Werror
-    default-language: Haskell2010
-    type:             exitcode-stdio-1.0
-    main-is:          Main.hs
-    other-modules:
-        Network.Kucoin.APISpec
-    build-depends:
-        aeson
-      , base
-      , containers
-      , sydtest
-      , kucoin-servant-api
-    hs-source-dirs:   test
+  ghc-options:      -Wall -Werror
+  default-language: Haskell2010
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
+  other-modules:    Network.Kucoin.APISpec
+  build-depends:
+    , aeson
+    , base
+    , containers
+    , kucoin-servant-api
+    , sydtest
+
+  hs-source-dirs:   test

@@ -2,7 +2,7 @@ module Main where
 
 import Test.Syd
 
-import qualified ClientsSpec (spec)
+import ClientsSpec qualified (spec)
 
 main :: IO ()
 main = sydTest $ do

@@ -1,11 +1,11 @@
 module Main where
 
-import Network.Wai.Handler.Warp (setPort, defaultSettings)
-import Network.Wai.Handler.WarpTLS as Warp (runTLS, defaultTlsSettings)
+import Network.Wai.Handler.Warp (defaultSettings, setPort)
+import Network.Wai.Handler.WarpTLS as Warp (defaultTlsSettings, runTLS)
 import Options.Applicative
 
+import CLI (Serve (..), mockServerOptions)
 import Network.Kucoin.Server.Mock (kucoinMockApp)
-import CLI (Serve(..), mockServerOptions)
 
 main :: IO ()
 main = do

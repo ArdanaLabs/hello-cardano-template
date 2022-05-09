@@ -22,32 +22,33 @@ maintainer:         marijan.petricevic94@gmail.com
 extra-source-files: CHANGELOG.md
 
 library
-    exposed-modules:  Network.Binance.API
+  exposed-modules:  Network.Binance.API
 
-    -- Modules included in this library but not exported.
-    -- other-modules:
+  -- Modules included in this library but not exported.
+  -- other-modules:
 
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-    ghc-options: -Wall -Werror
-    build-depends:
-        aeson
-      , base
-      , servant
-      , text
-    hs-source-dirs:   src
-    default-language: Haskell2010
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+  ghc-options:      -Wall -Werror
+  build-depends:
+    , aeson
+    , base
+    , servant
+    , text
+
+  hs-source-dirs:   src
+  default-language: Haskell2010
 
 test-suite binance-servant-api-test
-    ghc-options: -Wall -Werror
-    default-language: Haskell2010
-    type:             exitcode-stdio-1.0
-    main-is:          Main.hs
-    other-modules:
-        Network.Binance.APISpec
-    build-depends:
-        aeson
-      , base
-      , sydtest
-      , binance-servant-api
-    hs-source-dirs:   test
+  ghc-options:      -Wall -Werror
+  default-language: Haskell2010
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
+  other-modules:    Network.Binance.APISpec
+  build-depends:
+    , aeson
+    , base
+    , binance-servant-api
+    , sydtest
+
+  hs-source-dirs:   test

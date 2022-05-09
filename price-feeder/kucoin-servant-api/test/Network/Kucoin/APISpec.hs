@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Network.Kucoin.APISpec (spec) where
 
 import Data.Aeson (eitherDecodeFileStrict)
@@ -15,6 +16,5 @@ testParsePrice :: Spec
 testParsePrice = do
   describe "parseJSON FiatPriceResponse" $ do
     it "should succeed parsing the kucoin modelled fiat price" $ do
-      eitherDecodeFileStrict "test-resources/fiat-price-response.json" >>=
-        (`shouldBe` (Right $ FiatPriceResponse { _code = "200000", _data = singleton "ADA" "39596.03960396" }))
-        
+      eitherDecodeFileStrict "test-resources/fiat-price-response.json"
+        >>= (`shouldBe` (Right $ FiatPriceResponse {_code = "200000", _data = singleton "ADA" "39596.03960396"}))

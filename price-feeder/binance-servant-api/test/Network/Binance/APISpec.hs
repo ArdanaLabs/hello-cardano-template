@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Network.Binance.APISpec (spec) where
 
 import Data.Aeson (eitherDecodeFileStrict)
@@ -14,6 +15,5 @@ testParsePrice :: Spec
 testParsePrice = do
   describe "parseJSON PriceUnsafe" $ do
     it "should succeed parsing the binance modelled price" $ do
-      eitherDecodeFileStrict "test-resources/price-result.json" >>=
-        (`shouldBe` (Right $ PriceUnsafe { _symbol = "ADAUSDT", _price = "0.79260000" }))
-        
+      eitherDecodeFileStrict "test-resources/price-result.json"
+        >>= (`shouldBe` (Right $ PriceUnsafe {_symbol = "ADAUSDT", _price = "0.79260000"}))
