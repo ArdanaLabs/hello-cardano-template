@@ -12,7 +12,7 @@
 /.github/CODEOWNERS @CSVdB @delicious-lemon
 
 # Any nix code
-*.nix @MatthewCroughan @nixinator @DarthPJB @srid
+*.nix @MatthewCroughan @nixinator @DarthPJB @srid @delicious-lemon
 
 offchain/hello-world-ui/* @toastal
 offchain/* @CSVdB
