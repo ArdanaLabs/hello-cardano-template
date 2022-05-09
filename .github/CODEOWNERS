@@ -9,11 +9,13 @@
 # This also holds true for GitHub teams.
 
 # This file
-/.github/CODEOWNERS @MatthewCroughan
+/.github/CODEOWNERS @CSVdB @delicious-lemon
 
 # Any nix code
-*.nix @MatthewCroughan @nixinator
+*.nix @MatthewCroughan @nixinator @DarthPJB @srid @delicious-lemon
 
+# Monorepo projects
+offchain/hello-world-ui/* @toastal
 offchain/* @CSVdB
 docs/* @CSVdB
 onchain/* @delicious-lemon
