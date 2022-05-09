@@ -12,6 +12,7 @@ packages:
     kraken-mock-servant-server
     kucoin-servant-api
     kucoin-mock-servant-server
+    mock-servant-server-utils
           
 -- Always build tests and benchmarks.
 tests: true

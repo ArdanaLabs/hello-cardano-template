@@ -59,7 +59,7 @@ getBinancePrice :: ClientEnv -> IO Double
 getBinancePrice clientEnv = do
   let CurrencyPair base currency = adaUsdt
   (PriceResponse _ priceText) <- fromEitherIO $ retrying defaultRetryPolicy retryDecider $ \_ -> runClientM (client tickerAPIProxy (Just $ base <> currency)) clientEnv
-  either throwString return $ eitherDouble priceText
+  either (\msg -> throwString $ msg <> T.unpack priceText) return $ eitherDouble priceText
 
 coinbaseBaseUrl :: BaseUrl
 coinbaseBaseUrl = BaseUrl {

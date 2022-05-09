@@ -3,9 +3,11 @@
 {-# LANGUAGE TypeApplications #-}
 module ClientsSpec (spec) where
 
--- import Data.Either (isLeft)
+import Data.Aeson (encodeFile)
+import Test.QuickCheck
 import Test.Syd
 import Test.Syd.Servant
+import Data.GenValidity
 
 import Clients
 import Network.Binance.API (tickerAPIProxy)
@@ -19,6 +21,16 @@ import Network.Kraken.Server.Mock (marketDataServer)
 import Network.Kucoin.API (fiatPriceAPIProxy)
 import Network.Kucoin.Server.Mock (mockFiatPriceHandler)
 
+import PriceData (Price(..), binancePriceData, coinbasePriceData, huobiPriceData, krakenPriceData, kucoinPriceData)
+
+approximately :: (Ord a, Num a) => a -> a -> a -> Bool
+approximately theta x y = let _min = x - theta
+                              _max = x + theta
+                          in y >= _min && y <= _max
+
+defaultTheta :: Double
+defaultTheta = 0.0000001
+
 spec :: Spec
 spec = do
   testGetBinancePrice
@@ -28,35 +40,46 @@ spec = do
   testGetKucoinPrice
 
 testGetBinancePrice :: Spec
-testGetBinancePrice = let expectedPrice = 0.79260000 in
-  servantSpec tickerAPIProxy (mockTickerPriceHandler expectedPrice) $ do
+testGetBinancePrice = let priceDataPath = "/tmp/binance.json" in
+  servantSpec tickerAPIProxy (mockTickerPriceHandler priceDataPath) $ do
     describe "getBinancePrice" $ do
       it "should successfully get the price" $ \clientEnv -> do
-        getBinancePrice clientEnv >>= (`shouldBe` expectedPrice)
+        forAll (genValid @Price) $ \(Price expectedPrice) -> do
+          liftIO $ encodeFile priceDataPath (binancePriceData expectedPrice)
+          getBinancePrice clientEnv >>= (`shouldSatisfy` approximately defaultTheta expectedPrice)
 
 testGetCoinbasePrice :: Spec
-testGetCoinbasePrice = let expectedPrice = 0.79260000 in
-  servantSpec pricesAPIProxy (mockSpotPriceHandler expectedPrice) $ do
+testGetCoinbasePrice = let priceDataPath = "/tmp/coinbase.json" in
+  servantSpec pricesAPIProxy (mockSpotPriceHandler priceDataPath) $ do
     describe "getCoinbasePrice" $ do
       it "should successfully get the price" $ \clientEnv -> do
-        getCoinbasePrice clientEnv >>= (`shouldBe` expectedPrice)
+        forAll (genValid @Price) $ \(Price expectedPrice) -> do
+          liftIO $ encodeFile priceDataPath (coinbasePriceData expectedPrice)
+          getCoinbasePrice clientEnv >>= (`shouldSatisfy` approximately defaultTheta expectedPrice)
+
 testGetHuobiPrice :: Spec
-testGetHuobiPrice = let expectedAsk = 0.79260000; expectedBid = 0.79260000 in
-  servantSpec marketDataAPIProxy (mockGetTick expectedAsk expectedBid) $ do
+testGetHuobiPrice = let priceDataPath = "/tmp/huobi.json" in
+  servantSpec marketDataAPIProxy (mockGetTick priceDataPath) $ do
     describe "getHuobiPrice" $ do
       it "should successfully get the price" $ \clientEnv -> do
-        getHuobiPrice clientEnv >>= (`shouldBe` ((expectedAsk + expectedBid) / 2))
+        forAll (genValid @(Price, Price)) $ \(Price expectedAsk, Price expectedBid) -> do
+          liftIO $ encodeFile priceDataPath (huobiPriceData expectedAsk expectedBid)
+          getHuobiPrice clientEnv >>= (`shouldSatisfy` (approximately defaultTheta $ (expectedAsk + expectedBid) / 2))
 
 testGetKrakenPrice :: Spec
-testGetKrakenPrice = let expectedPrice = 0.79260000 in
-  servantSpec Kraken.marketDataAPIProxy (marketDataServer expectedPrice) $ do
+testGetKrakenPrice = let priceDataPath = "/tmp/kraken.json" in
+  servantSpec Kraken.marketDataAPIProxy (marketDataServer priceDataPath) $ do
     describe "getKrakenPrice" $ do
       it "should successfully get the price" $ \clientEnv -> do
-        getKrakenPrice clientEnv >>= (`shouldBe` expectedPrice)
+        forAll (genValid @Price) $ \(Price expectedPrice) -> do
+          liftIO $ encodeFile priceDataPath (krakenPriceData expectedPrice)
+          getKrakenPrice clientEnv >>= (`shouldSatisfy` (approximately defaultTheta expectedPrice))
 
 testGetKucoinPrice :: Spec
-testGetKucoinPrice = let expectedPrice = 0.79260000 in
-  servantSpec fiatPriceAPIProxy (mockFiatPriceHandler expectedPrice) $ do
+testGetKucoinPrice = let priceDataPath = "/tmp/kucoin.json" in
+  servantSpec fiatPriceAPIProxy (mockFiatPriceHandler priceDataPath) $ do
     describe "getKucoinPrice" $ do
       it "should successfully get the price" $ \clientEnv -> do
-        getKucoinPrice clientEnv >>= (`shouldBe` expectedPrice) 
+        forAll (genValid @Price) $ \(Price expectedPrice) -> do
+          liftIO $ encodeFile priceDataPath (kucoinPriceData expectedPrice)
+          getKucoinPrice clientEnv >>= (`shouldSatisfy` (approximately defaultTheta expectedPrice)) 

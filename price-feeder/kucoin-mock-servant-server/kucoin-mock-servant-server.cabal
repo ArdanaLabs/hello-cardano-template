@@ -31,9 +31,12 @@ library
     -- other-extensions:
     ghc-options: -Wall -Werror
     build-depends:
-        base
+        aeson
+      , base
+      , bytestring
       , containers
       , kucoin-servant-api
+      , mock-servant-server-utils
       , servant-server
       , text
       , wai
@@ -52,6 +55,8 @@ executable kucoin-mock-servant-server
     build-depends:
         base ^>=4.14.1.0
       , kucoin-mock-servant-server
+      , mock-servant-server-utils
+      , optparse-applicative
       , warp
       , warp-tls
 

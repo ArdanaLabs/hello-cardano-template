@@ -1,44 +1,51 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Network.Kraken.Server.Mock (krakenMockApp, marketDataServer) where
 
+import Control.Monad.IO.Class (liftIO)
+import qualified Data.ByteString.Lazy.Char8 as BSL
+import Data.Aeson (eitherDecodeFileStrict)
+import Data.Maybe (fromJust)
 import qualified Data.Map as Map
 import Data.Text
 import Data.Time.Clock.POSIX (POSIXTime)
 import Network.Wai (Application)
-import Servant ((:<|>)(..))
-import Servant.Server (Server, Handler, serve)
+import Servant ((:<|>)(..), throwError)
+import Servant.Server (Server, Handler, serve, errBody, err500)
 
 import Network.Kraken.API 
+import PriceData (PriceData(..))
 
-krakenMockApp :: Double -> Application
-krakenMockApp price = serve marketDataAPIProxy (marketDataServer price)
+krakenMockApp :: FilePath -> Application
+krakenMockApp priceDataPath = serve marketDataAPIProxy (marketDataServer priceDataPath)
 
-marketDataServer :: Double -> Server MarketDataAPI
-marketDataServer price = (mockTickerInformationHandler price) :<|> mockOHLCHandler
+marketDataServer :: FilePath -> Server MarketDataAPI
+marketDataServer priceDataPath = (mockTickerInformationHandler priceDataPath) :<|> mockOHLCHandler
 
-mockTickerInformationHandler :: Double -> Maybe Text -> Handler (KrakenResponse AssetTickerInfoResponse)
+mockTickerInformationHandler :: FilePath -> Maybe Text -> Handler (KrakenResponse AssetTickerInfoResponse)
 mockTickerInformationHandler _ Nothing =
   return $
     KrakenResponse {
       _error = [ "EGeneral:Invalid arguments:ordertype" ]
     , _result = AssetTickerInfoResponse Map.empty
     }
-mockTickerInformationHandler price (Just ticker) =
-  return $
-    KrakenResponse {
-      _error = []
-    , _result = AssetTickerInfoResponse $ Map.singleton ticker $
-        AssetTickerInfo
-          ("52609.60000", "1", "1.00")
-          ("52609.50000", "1", "1.00")
-          ("52641.10000", "0.00080000")
-          ("1920.83610601", "7954.00219674")
-          (pack $ show price, "54022.90683")
-          (23329, 80463)
-          ("51513.90000", "51513.90000")
-          ("51513.90000", "51513.90000")
-          "52280.40000"
-    }
+mockTickerInformationHandler priceDataPath (Just ticker) = do
+  eitherPriceData <- liftIO $ eitherDecodeFileStrict priceDataPath
+  either (\msg -> throwError $ err500 { errBody = BSL.pack msg })
+         (\price -> return $ KrakenResponse {
+                               _error = []
+                             , _result = AssetTickerInfoResponse $ Map.singleton ticker $
+                                 AssetTickerInfo
+                                   ("52609.60000", "1", "1.00")
+                                   ("52609.50000", "1", "1.00")
+                                   ("52641.10000", "0.00080000")
+                                   ("1920.83610601", "7954.00219674")
+                                   (pack $ show $ fromJust price, "54022.90683")
+                                   (23329, 80463)
+                                   ("51513.90000", "51513.90000")
+                                   ("51513.90000", "51513.90000")
+                                   "52280.40000"
+                             })
+         (_krakenPrice <$> eitherPriceData)
 
 mockOHLCHandler :: Maybe Text -> Maybe Integer -> Maybe POSIXTime -> Handler (KrakenResponse OHLCResponse)
 mockOHLCHandler Nothing _ _ =

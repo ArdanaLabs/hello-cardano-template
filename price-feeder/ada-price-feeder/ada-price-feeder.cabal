@@ -80,17 +80,21 @@ test-suite ada-price-feeder-test
         ClientsSpec
     build-depends:
         ada-price-feeder
+      , aeson
       , base
       , binance-servant-api
       , binance-mock-servant-server
       , coinbase-servant-api
       , coinbase-mock-servant-server
+      , genvalidity
       , huobi-mock-servant-server
       , huobi-servant-api
       , kraken-mock-servant-server
       , kraken-servant-api
       , kucoin-mock-servant-server
       , kucoin-servant-api
+      , mock-servant-server-utils
+      , QuickCheck
       , sydtest
       , sydtest-servant
       , time

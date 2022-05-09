@@ -31,8 +31,12 @@ library
     -- other-extensions:
     ghc-options: -Wall -Werror
     build-depends:
-        base
+        aeson
+      , base
+      , bytestring
       , coinbase-servant-api
+      , filepath
+      , mock-servant-server-utils
       , servant-server
       , text
       , time
@@ -53,6 +57,8 @@ executable coinbase-mock-servant-server
     build-depends:
         base ^>=4.14.1.0
       , coinbase-mock-servant-server
+      , mock-servant-server-utils
+      , optparse-applicative
       , warp
       , warp-tls
 

@@ -31,9 +31,12 @@ library
     -- other-extensions:
     ghc-options: -Wall -Werror
     build-depends:
-        base
+        aeson
+      , base
+      , bytestring
       , containers
       , kraken-servant-api
+      , mock-servant-server-utils
       , servant-server
       , text
       , time
@@ -51,8 +54,10 @@ executable kraken-mock-servant-server
     -- other-extensions:
     ghc-options: -Wall -Werror
     build-depends:
-        base ^>=4.14.1.0
+        base
       , kraken-mock-servant-server
+      , mock-servant-server-utils
+      , optparse-applicative
       , warp
       , warp-tls
 
