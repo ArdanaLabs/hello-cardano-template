@@ -733,11 +733,11 @@
     },
     "flake-utils_5": {
       "locked": {
-        "lastModified": 1644229661,
-        "narHash": "sha256-1YdnJAsNy69bpcjuoKdOYQX0YxZBiCYZo4Twxerqv7k=",
+        "lastModified": 1649676176,
+        "narHash": "sha256-OWKJratjt2RW151VUlJPRALb7OU2S5s+f0vLj4o1bHM=",
         "owner": "numtide",
         "repo": "flake-utils",
-        "rev": "3cecb5b042f7f209c56ffd8371b2711a290ec797",
+        "rev": "a4b154ebbdc88c8498a5c7b01589addc9e9cb678",
         "type": "github"
       },
       "original": {
@@ -762,6 +762,21 @@
       }
     },
     "flake-utils_7": {
+      "locked": {
+        "lastModified": 1644229661,
+        "narHash": "sha256-1YdnJAsNy69bpcjuoKdOYQX0YxZBiCYZo4Twxerqv7k=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "3cecb5b042f7f209c56ffd8371b2711a290ec797",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "flake-utils_8": {
       "locked": {
         "lastModified": 1648297722,
         "narHash": "sha256-W+qlPsiZd8F3XkzXOzAoR+mpFqzm3ekQkJNa+PIh1BQ=",
@@ -1046,7 +1061,7 @@
         "cabal-34": "cabal-34_5",
         "cabal-36": "cabal-36_4",
         "cardano-shell": "cardano-shell_5",
-        "flake-utils": "flake-utils_5",
+        "flake-utils": "flake-utils_6",
         "ghc-8.6.5-iohk": "ghc-8.6.5-iohk_5",
         "hackage": "hackage_5",
         "hpc-coveralls": "hpc-coveralls_5",
@@ -1471,7 +1486,7 @@
     },
     "lint-utils": {
       "inputs": {
-        "flake-utils": "flake-utils_6",
+        "flake-utils": "flake-utils_7",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -2261,7 +2276,7 @@
         "cardano-repo-tool": "cardano-repo-tool_2",
         "easy-purescript-nix": "easy-purescript-nix",
         "flake-compat": "flake-compat",
-        "flake-utils": "flake-utils_7",
+        "flake-utils": "flake-utils_8",
         "gitignore-nix": "gitignore-nix_2",
         "hackage-nix": "hackage-nix_2",
         "haskell-language-server": "haskell-language-server_2",
@@ -2372,6 +2387,7 @@
     "root": {
       "inputs": {
         "cardano-node": "cardano-node",
+        "flake-utils": "flake-utils_5",
         "haskell-nix": "haskell-nix",
         "lint-utils": "lint-utils",
         "nixpkgs": [

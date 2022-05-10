@@ -4,6 +4,10 @@
     haskell-nix.url = "github:input-output-hk/haskell.nix";
     nixpkgs.follows = "haskell-nix/nixpkgs-unstable";
     haskell-nix.inputs.nixpkgs.follows = "haskell-nix/nixpkgs-2105";
+
+    flake-utils.url = "github:numtide/flake-utils";
+    flake-utils.inputs.nixpkgs.follows = "nixpkgs";
+
     cardano-node.url = "github:input-output-hk/cardano-node?rev=73f9a746362695dc2cb63ba757fbcabb81733d23";
     #   used for libsodium-vrf
     plutus.url = "github:input-output-hk/plutus";
@@ -19,6 +23,7 @@
     {
       self,
       nixpkgs,
+      flake-utils,
       haskell-nix,
       cardano-node,
       plutus,
@@ -27,14 +32,20 @@
     }
     @ inputs:
     let
-      # System types to support.
-      supportedSystems = [ "x86_64-linux" ]; #"aarch64-linux" ];
-
-      # Helper function to generate an attrset '{ x86_64-linux = f "x86_64-linux"; ... }'.
-      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-
-      # Nixpkgs instantiated for supported system types.
-      nixpkgsFor = system:
+      # Function that produces Flake outputs for the given system.
+      #
+      #  outputsFor :: Set Input -> System -> Set Output
+      #
+      # We use flake-utils.lib.eachSystem (see below) to call this.
+      # cf. https://github.com/NixOS/nix/issues/3843#issuecomment-661720562
+      outputsFor = system:
+    # NOTE: The body of this function is de-indented twice to keep diff clean.
+    # We should use nixpkgs-fmt later in a single commit.
+    let
+      # TODO: We probably should use a non-haskell.nix nixpkgs for certain
+      # derivations, to speed up things. Those derivations do not rely on
+      # haskell.nix anyway.
+      pkgs = 
         import nixpkgs {
           inherit system;
           overlays = [ haskell-nix.overlay ];
@@ -46,8 +57,7 @@
 
       # Derivation for a Haskell Plutus project that lives in the sub-directory of this mono repo.
       plutusProjectIn =
-        { system
-        , subdir          # The sub-directory name
+        { subdir          # The sub-directory name
         , extraShell      # Extra 'shell' attributes used by haskell.nix
         , pkg-def-extras  # For overriding the package set
         , sha256map       # Extra sha256 hashes used by haskell.nix
@@ -55,7 +65,6 @@
         }:
         let
           deferPluginErrors = true;
-          pkgs = nixpkgsFor system;
           fakeSrc = pkgs.runCommand "real-source-${subdir}" { } ''
             cp -rT ${self}/${subdir} $out
             chmod u+w $out/cabal.project
@@ -105,7 +114,7 @@
 
       # Checks the shell script using ShellCheck
       checkedShellScript = system: name: text:
-        ((nixpkgsFor system).writeShellApplication {
+        (pkgs.writeShellApplication {
           inherit name text;
         }) + "/bin/${name}";
 
@@ -114,10 +123,10 @@
       #
       # In effect, this allows us to run an 'app' as part of the build process (eg: in CI).
       flakeApp2Derivation = system: appName:
-        (nixpkgsFor system).runCommand appName { } "${self.apps.${system}.${appName}.program} | tee $out";
+        pkgs.runCommand appName { } "${self.apps.${system}.${appName}.program} | tee $out";
     in
       {
-        onchain-scripts = forAllSystems (system: (nixpkgsFor system).stdenv.mkDerivation {
+        onchain-scripts = pkgs.stdenv.mkDerivation {
           name = "onchain-scripts";
           src = self;
           buildInputs = [ self.onchain.${system}.flake.packages."dUSD-onchain:exe:scripts" ];
@@ -128,11 +137,10 @@
           configurePhase = ''
             mkdir $out
             '';
-        });
+        };
 
-        onchain = forAllSystems (system: rec {
+        onchain = rec {
           project = plutusProjectIn {
-            inherit system;
             subdir = "onchain";
             extraShell = {
               additional = ps: [
@@ -161,11 +169,10 @@
             };
           };
           flake = project.flake { };
-        });
+        };
 
-        offchain = forAllSystems (system: rec {
+        offchain = rec {
           project = plutusProjectIn {
-            inherit system;
             subdir = "offchain";
             extraPackages = {
               hello-world.components.library.preBuild = "export DUSD_SCRIPTS=${self.onchain-scripts.${system}}";
@@ -180,9 +187,7 @@
                 ps.plutus-use-cases
               ];
               DUSD_SCRIPTS = self.onchain-scripts.${system};
-              propagatedBuildInputs =
-                let pkgs = nixpkgsFor system;
-                in [
+              propagatedBuildInputs = [
                 # cardano-node and cardano-cli need to be on the PATH to run the
                 # cluster + PAB.
                 cardano-node.outputs.packages.x86_64-linux."cardano-node:exe:cardano-node"
@@ -229,12 +234,11 @@
             };
           };
           flake = project.flake { };
-        });
+        };
 
         # this could be done automatically, but would reduce readability
-        packages = forAllSystems (system:
-          let pkgs = nixpkgsFor system;
-          in self.onchain.${system}.flake.packages
+        packages =
+          self.onchain.${system}.flake.packages
           // self.offchain.${system}.flake.packages
           // {
             build-docs = pkgs.stdenv.mkDerivation {
@@ -251,9 +255,9 @@
                 ls -lah
               '';
             };
-        });
+        };
 
-        checks = forAllSystems (system:
+        checks =
              self.onchain.${system}.flake.checks
           // {
                offchain = {
@@ -262,15 +266,14 @@
                  hello-world.e2e = self.packages.${system}."hello-world:exe:hello-world-e2e";
                };
              }
-          // (lint-utils.mkChecks.${system} lintSpec ./.)
-        );
+          // (lint-utils.mkChecks.${system} lintSpec ./.);
+
         # We need this attribute because `nix flake check` won't work for Haskell
         # projects: https://nixos.wiki/wiki/Import_From_Derivation#IFD_and_Haskell
         #
         # Instead, run: `nix build .#check.x86_64-linux` (replace with your system)
-        check = forAllSystems (
-          system:
-            (nixpkgsFor system).runCommand "combined-test" {
+        check =
+            pkgs.runCommand "combined-test" {
               checksss = builtins.attrValues self.checks.${system}
               # This allows us to cache nix-shell (nix develop)
               # https://nixos.wiki/wiki/Caching_nix_shell_build_inputs
@@ -281,32 +284,31 @@
             } ''
               echo $checksss
               touch $out
-              ''
-        );
+              '';
 
         # Shell tools common to both onchain and offchain
-        commonTools = forAllSystems (system: {
-          feedback-loop = (nixpkgsFor system).callPackage ./nix/apps/feedback-loop { inherit projectName; };
-        });
+        commonTools = {
+          feedback-loop = pkgs.callPackage ./nix/apps/feedback-loop { inherit projectName; };
+        };
 
-        ghcid = system: subProject: name: args: 
-          (nixpkgsFor system).callPackage ./nix/apps/ghcid {
+        ghcid = subProject: name: args: 
+          pkgs.callPackage ./nix/apps/ghcid {
             inherit projectName args;
             name = "${subProject}-ghcid-${name}";
-            cabalProjectRoot = "${self.flakeRoot.envVar}/${subProject}";
+            cabalProjectRoot = "${self.flakeRoot.${system}.envVar}/${subProject}";
           };
 
-        onchainTools = forAllSystems (system: {
-          onchain-ghcid-lib = self.ghcid system "onchain" "lib" "-c 'cabal repl'";
-          onchain-ghcid-test = self.ghcid system "onchain" "test" "-c 'cabal repl test:tests'";
-          onchain-ghcid-test-run = self.ghcid system "onchain" "test-run" "-c 'cabal repl test:tests' -T :main";
-        });
+        onchainTools = {
+          onchain-ghcid-lib = self.ghcid.${system} "onchain" "lib" "-c 'cabal repl'";
+          onchain-ghcid-test = self.ghcid.${system} "onchain" "test" "-c 'cabal repl test:tests'";
+          onchain-ghcid-test-run = self.ghcid.${system} "onchain" "test-run" "-c 'cabal repl test:tests' -T :main";
+        };
 
-        offchainTools = forAllSystems (system: {
-          offchain-ghcid-lib = self.ghcid system "offchain" "lib" "-c 'cabal repl'";
-          offchain-ghcid-test = self.ghcid system "offchain" "test" "-c 'cabal repl exe:tests'";
-          offchain-ghcid-test-run = self.ghcid system "offchain" "test-run" "-c 'cabal repl exe:tests' -T :main";
-        });
+        offchainTools = {
+          offchain-ghcid-lib = self.ghcid.${system} "offchain" "lib" "-c 'cabal repl'";
+          offchain-ghcid-test = self.ghcid.${system} "offchain" "test" "-c 'cabal repl exe:tests'";
+          offchain-ghcid-test-run = self.ghcid.${system} "offchain" "test-run" "-c 'cabal repl exe:tests' -T :main";
+        };
 
         # In Nix, there is no builtin way to access the project root, where
         # flake.nix lives. To workaround this, we inject it as env var in the
@@ -317,7 +319,7 @@
           '';
           envVar = "$FLAKE_ROOT";
         };
- 
+
         # We are forced to use two devshells.
         # Under ideal circumstances, we could put all the onchain and offchain
         # code in the same project, sharing the same cabal.project, but this is
@@ -336,9 +338,9 @@
         # dummy-implementation of an on-chain validator until these two
         # conditions are met. We opted not to do this because it would require
         # us to bet that the condition above would be met before we want to launch.
-        devShells = forAllSystems (system: let pkgs = nixpkgsFor system; in {
+        devShells = {
           onchain = self.onchain.${system}.flake.devShell.overrideAttrs (oa: {
-            shellHook = oa.shellHook + self.flakeRoot.shellHook;
+            shellHook = oa.shellHook + self.flakeRoot.${system}.shellHook;
             buildInputs = pkgs.lib.attrsets.attrValues (
               self.commonTools.${system} //
               self.onchainTools.${system}
@@ -350,23 +352,22 @@
               self.offchainTools.${system}
             );
             shellHook = oa.shellHook + ''
-              ${self.flakeRoot.shellHook}
+              ${self.flakeRoot.${system}.shellHook}
               # running local cluster + PAB
               export SHELLEY_TEST_DATA="${plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley/"
             '';
           });
-        });
-        defaultPackage = forAllSystems (system:
+        };
+        defaultPackage =
              self.packages.${system}."dUSD-onchain:test:tests"
-          // self.packages.${system}."dUSD-offchain:exe:tests"
-        );
-        apps = forAllSystems (system: let
+          // self.packages.${system}."dUSD-offchain:exe:tests";
+        apps = let
           # Take a set of derivations, and return a set of apps.
           #
           # The name of the app is determined from the set keys. The derivation
           # is expected to contain a binary named `${projectName}-${key}`.
           appsFromDerivationSet = drvs: 
-            (nixpkgsFor system).lib.attrsets.mapAttrs (name: value: {
+            pkgs.lib.attrsets.mapAttrs (name: value: {
               type = "app";
               program = "${value}/bin/${projectName}-${name}";
             }) drvs;
@@ -391,6 +392,7 @@
                    ${self.packages.${system}."dUSD-offchain:exe:tests"}/bin/tests;
                 '';
             };
-          });
+          };
       };
+  in flake-utils.lib.eachSystem [ "x86_64-linux" ] outputsFor;
 }
