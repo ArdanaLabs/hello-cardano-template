@@ -33,7 +33,7 @@ in rec {
     };
   };
 
-  flake = project.flake { };
+  haskellNixFlake = project.flake { };
 
   tools = {
     onchain-ghcid-lib = self.ghcid.${system} "onchain" "lib" "-c 'cabal repl'";
@@ -41,7 +41,7 @@ in rec {
     onchain-ghcid-test-run = self.ghcid.${system} "onchain" "test-run" "-c 'cabal repl test:tests' -T :main";
   };
 
-  devShell = flake.devShell.overrideAttrs (oa: {
+  devShell = haskellNixFlake.devShell.overrideAttrs (oa: {
     shellHook = oa.shellHook + self.flakeRoot.${system}.shellHook;
     buildInputs = pkgs.lib.attrsets.attrValues (
       self.commonTools.${system} //
@@ -49,14 +49,14 @@ in rec {
     );
   });
 
-  checks = flake.checks // {
-    
+  checks = haskellNixFlake.checks // {
+
   };
 
   onchain-scripts = pkgs.stdenv.mkDerivation {
     name = "onchain-scripts";
     src = self;
-    buildInputs = [ flake.packages."dUSD-onchain:exe:scripts" ];
+    buildInputs = [ haskellNixFlake.packages."dUSD-onchain:exe:scripts" ];
     doCheck = false;
     installPhase = ''
       scripts "$out"

@@ -76,7 +76,8 @@ in rec {
       "https://github.com/Quid2/flat.git"."ee59880f47ab835dbd73bea0847dab7869fc20d8" = "lRFND+ZnZvAph6ZYkr9wl9VAx41pb3uSFP8Wc7idP9M=";
     };
   };
-  flake = project.flake { };
+  
+  haskellNixFlake = project.flake { };
 
   tools = {
     offchain-ghcid-lib = self.ghcid.${system} "offchain" "lib" "-c 'cabal repl'";
@@ -84,7 +85,7 @@ in rec {
     offchain-ghcid-test-run = self.ghcid.${system} "offchain" "test-run" "-c 'cabal repl exe:tests' -T :main";
   };
 
-  devShell = flake.devShell.overrideAttrs (oa: {
+  devShell = haskellNixFlake.devShell.overrideAttrs (oa: {
     buildInputs = pkgs.lib.attrsets.attrValues (
       self.commonTools.${system} //
       tools
@@ -102,14 +103,14 @@ in rec {
       program = checkedShellScript system "dUSD-offchain-test"
         '' export DUSD_SCRIPTS=${onchain-scripts}
             cd ${self}
-            ${flake.packages.${system}."dUSD-offchain:exe:tests"}/bin/tests;
+            ${haskellNixFlake.packages.${system}."dUSD-offchain:exe:tests"}/bin/tests;
         '';
     };
   };
 
-  checks = flake.checks // {
+  checks = haskellNixFlake.checks // {
     offchain-test = flakeApp2Derivation system "offchain-test";
-    offchain-hello-world-unit = flake.packages.${system}."hello-world:test:hello-world-unit";
-    offchain-hello-world-e2e = flake.packages.${system}."hello-world:exe:hello-world-e2e"; 
+    offchain-hello-world-unit = haskellNixFlake.packages.${system}."hello-world:test:hello-world-unit";
+    offchain-hello-world-e2e = haskellNixFlake.packages.${system}."hello-world:exe:hello-world-e2e"; 
   };
 }

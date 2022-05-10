@@ -76,8 +76,8 @@
 
         # this could be done automatically, but would reduce readability
         packages =
-          onchain.flake.packages
-          // offchain.flake.packages
+          onchain.haskellNixFlake.packages
+          // offchain.haskellNixFlake.packages
           // {
             build-docs = pkgs.callPackage ./docs { inherit pkgs; };
         };
