@@ -32,5 +32,19 @@ in rec {
       "https://github.com/Srid/validity"."f7982549b95d0ab727950dc876ca06b1862135ba" = "sha256-dpMIu08qXMzy8Kilk/2VWpuwIsfqFtpg/3mkwt5pdjA=";
     };
   };
+
   flake = project.flake { };
+
+  onchain-scripts = pkgs.stdenv.mkDerivation {
+    name = "onchain-scripts";
+    src = self;
+    buildInputs = [ flake.packages."dUSD-onchain:exe:scripts" ];
+    doCheck = false;
+    installPhase = ''
+      scripts "$out"
+      '';
+    configurePhase = ''
+      mkdir $out
+      '';
+  };
 }
