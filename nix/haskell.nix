@@ -1,4 +1,4 @@
-{ system, pkgs, self, plutus, ... }:
+{ system, pkgs, self, projectName, plutus, ... }:
 
 {
   # Derivation for a Haskell Plutus project that lives in the sub-directory of this mono repo.
@@ -47,5 +47,16 @@
           nativeBuildInputs = [ pkgs.cabal-install pkgs.hlint pkgs.haskellPackages.fourmolu ];
         } // extraShell;
         inherit sha256map;
-      } ;
+      };
+
+  # Run Ghcid under `cabalProjectRoot`, passing `args`.
+  ghcid = { cabalProjectRoot, name, args }:
+    pkgs.writeShellApplication {
+      name = "${projectName}-${name}";
+      text = ''
+        echo "Running Ghcid under ${cabalProjectRoot} (${name})"
+        cd "${cabalProjectRoot}" 
+        ${pkgs.ghcid}/bin/ghcid ${args}
+      '';
+    };
 }

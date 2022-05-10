@@ -1,8 +1,9 @@
-{ system, pkgs, self, plutus, ... }:
+{ system, pkgs, self, projectName, plutus, ... }:
 
 let
-  inherit (pkgs.callPackage ../nix/plutus.nix { inherit system pkgs self plutus; }) 
-    plutusProjectIn;
+  inherit (pkgs.callPackage ../nix/haskell.nix { inherit system pkgs self projectName plutus; }) 
+    plutusProjectIn ghcid;
+  cabalProjectRoot = "${self.flakeRoot.${system}.envVar}/onchain";
 in rec {
   project = plutusProjectIn {
     subdir = "onchain";
@@ -36,9 +37,12 @@ in rec {
   haskellNixFlake = project.flake { };
 
   tools = {
-    onchain-ghcid-lib = self.ghcid.${system} "onchain" "lib" "-c 'cabal repl'";
-    onchain-ghcid-test = self.ghcid.${system} "onchain" "test" "-c 'cabal repl test:tests'";
-    onchain-ghcid-test-run = self.ghcid.${system} "onchain" "test-run" "-c 'cabal repl test:tests' -T :main";
+    onchain-ghcid-lib = 
+      ghcid { inherit cabalProjectRoot; name= "onchain-ghcid-lib"; args="-c 'cabal repl'"; };
+    onchain-ghcid-test = 
+      ghcid { inherit cabalProjectRoot; name= "onchain-ghcid-test"; args="-c 'cabal repl test:tests'"; };
+    offchain-ghcid-test-run = 
+      ghcid { inherit cabalProjectRoot; name= "onchain-ghcid-test-run"; args="-c 'cabal repl test:tests' -T :main"; };
   };
 
   devShell = haskellNixFlake.devShell.overrideAttrs (oa: {

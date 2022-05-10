@@ -1,8 +1,9 @@
-{ system, pkgs, self, plutus, cardano-node, plutus-apps, onchain-scripts, ... }:
+{ system, pkgs, self, projectName, plutus, cardano-node, plutus-apps, onchain-scripts, ... }:
 
 let
-  inherit (pkgs.callPackage ../nix/plutus.nix { inherit system pkgs self plutus; }) 
-    plutusProjectIn;
+  inherit (pkgs.callPackage ../nix/haskell.nix { inherit system pkgs self projectName plutus; }) 
+    plutusProjectIn ghcid;
+  cabalProjectRoot = "${self.flakeRoot.${system}.envVar}/offchain";
   # Checks the shell script using ShellCheck
   checkedShellScript = system: name: text:
     (pkgs.writeShellApplication {
@@ -80,9 +81,12 @@ in rec {
   haskellNixFlake = project.flake { };
 
   tools = {
-    offchain-ghcid-lib = self.ghcid.${system} "offchain" "lib" "-c 'cabal repl'";
-    offchain-ghcid-test = self.ghcid.${system} "offchain" "test" "-c 'cabal repl exe:tests'";
-    offchain-ghcid-test-run = self.ghcid.${system} "offchain" "test-run" "-c 'cabal repl exe:tests' -T :main";
+    offchain-ghcid-lib = 
+      ghcid { inherit cabalProjectRoot; name= "offchain-ghcid-lib"; args="-c 'cabal repl'"; };
+    offchain-ghcid-test = 
+      ghcid { inherit cabalProjectRoot; name= "offchain-ghcid-test"; args="-c 'cabal repl exe:tests'"; };
+    offchain-ghcid-test-run = 
+      ghcid { inherit cabalProjectRoot; name= "offchain-ghcid-test-run"; args="-c 'cabal repl exe:tests' -T :main"; };
   };
 
   devShell = haskellNixFlake.devShell.overrideAttrs (oa: {

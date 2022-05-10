@@ -51,11 +51,12 @@
           overlays = [ haskell-nix.overlay ];
           inherit (haskell-nix) config;
         };
-      inherit (pkgs.callPackage ./nix/plutus.nix { inherit system pkgs self plutus; }) 
+      # TODO: Either pass only 'self', or remove it in favour of explicit arguments.
+      inherit (pkgs.callPackage ./nix/haskell.nix { inherit system pkgs self plutus; }) 
         plutusProjectIn;
-      onchain = pkgs.callPackage ./onchain { inherit system pkgs self plutus; };
+      onchain = pkgs.callPackage ./onchain { inherit system pkgs self projectName plutus; };
       offchain = pkgs.callPackage ./offchain { 
-        inherit system pkgs self plutus cardano-node plutus-apps; 
+        inherit system pkgs self projectName plutus cardano-node plutus-apps; 
         onchain-scripts = onchain.onchain-scripts; 
       };
 
@@ -105,13 +106,6 @@
         commonTools = {
           feedback-loop = pkgs.callPackage ./nix/apps/feedback-loop { inherit projectName; };
         };
-
-        ghcid = subProject: name: args: 
-          pkgs.callPackage ./nix/apps/ghcid {
-            inherit projectName args;
-            name = "${subProject}-ghcid-${name}";
-            cabalProjectRoot = "${self.flakeRoot.${system}.envVar}/${subProject}";
-          };
 
         # In Nix, there is no builtin way to access the project root, where
         # flake.nix lives. To workaround this, we inject it as env var in the
