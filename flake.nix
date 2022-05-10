@@ -1,6 +1,10 @@
 {
   description = "dUSD";
   inputs = {
+    dream2nix = {
+      url = "github:davhau/dream2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     haskell-nix.url = "github:input-output-hk/haskell.nix";
     nixpkgs.follows = "haskell-nix/nixpkgs-unstable";
     haskell-nix.inputs.nixpkgs.follows = "haskell-nix/nixpkgs-2105";
@@ -23,10 +27,19 @@
       cardano-node,
       plutus,
       plutus-apps,
-      lint-utils
+      lint-utils,
+      dream2nix
     }
     @ inputs:
     let
+      dream2nix = inputs.dream2nix.lib2.init {
+        systems = supportedSystems;
+        config = {
+          overridesDirs = [ "${inputs.dream2nix}/overrides" ];
+          projectRoot = self;
+        };
+      };
+
       # System types to support.
       supportedSystems = [ "x86_64-linux" ]; #"aarch64-linux" ];
 
@@ -238,6 +251,9 @@
           in self.onchain.${system}.flake.packages
           // self.offchain.${system}.flake.packages
           // {
+            hello-world-ui = (dream2nix.makeFlakeOutputs {
+              source = ./offchain/hello-world-ui;
+            }).packages.${system}.hello-world-ui;
             build-docs = pkgs.stdenv.mkDerivation {
               name = "build-docs";
               src = self;
