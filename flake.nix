@@ -59,6 +59,7 @@
         inherit system pkgs self projectName plutus cardano-node plutus-apps; 
         onchain-scripts = onchain.onchain-scripts; 
       };
+      docs = pkgs.callPackage ./docs { inherit pkgs projectName; };
 
       # Name of our project; used in script prefixes.
       projectName = "dusd";
@@ -74,13 +75,11 @@
 
     in
       {
-
-        # this could be done automatically, but would reduce readability
         packages =
-          onchain.packages
+             onchain.packages
           // offchain.packages
+          // docs.packages
           // {
-            build-docs = pkgs.callPackage ./docs { inherit pkgs; };
             # A combination of all derivations (aside from packages) we are care
             # to build in CI: checks, devShells. We need this because IFD in
             # Haskell disallows use of `nix flake check`, but we can use `nix
@@ -94,18 +93,13 @@
                       (_: shell: shell.inputDerivation) 
                       self.devShells.${system});
             } ''echo $drvs > $out'';
-        };
+          };
         defaultPackage = self.packages.${system}.ci;
 
         checks =
              onchain.checks
           // offchain.checks
           // (lint-utils.mkChecks.${system} lintSpec ./.);
-
-        # Shell tools common to both onchain and offchain
-        commonTools = {
-          feedback-loop = pkgs.callPackage ./nix/apps/feedback-loop { inherit projectName; };
-        };
 
         # In Nix, there is no builtin way to access the project root, where
         # flake.nix lives. To workaround this, we inject it as env var in the
@@ -140,26 +134,10 @@
           offchain = offchain.devShell;
         };
 
-        apps = let
-          # Take a set of derivations, and return a set of apps.
-          #
-          # The name of the app is determined from the set keys. The derivation
-          # is expected to contain a binary named `${projectName}-${key}`.
-          appsFromDerivationSet = drvs: 
-            pkgs.lib.attrsets.mapAttrs (name: value: {
-              type = "app";
-              program = "${value}/bin/${projectName}-${name}";
-            }) drvs;
-          # Apps that are also available in the shell. An app named `.#foo` can
-          # be run inside the shell as `dusd-foo`.
-          shellApps =  
-            appsFromDerivationSet (
-                 self.commonTools.${system} 
-            );
-        in
-          shellApps // 
-          offchain.apps //
-          {
+        apps =
+             offchain.apps
+          // docs.apps
+          // {
             format =  lint-utils.mkApp.${system} lintSpec;  # TODO: Refactor this by moving it to appsFromDerivationSet
           };
       };

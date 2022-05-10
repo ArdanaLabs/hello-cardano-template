@@ -91,7 +91,6 @@ in rec {
 
   devShell = haskellNixFlake.devShell.overrideAttrs (oa: {
     buildInputs = pkgs.lib.attrsets.attrValues (
-      self.commonTools.${system} //
       tools
     );
     shellHook = oa.shellHook + ''
