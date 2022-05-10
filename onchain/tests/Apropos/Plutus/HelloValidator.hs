@@ -9,20 +9,20 @@ import Apropos.Script
 import Test.Syd hiding (Context)
 import Test.Syd.Hedgehog
 
-import Plutus.V1.Ledger.Scripts (applyValidator, Datum (..),Context(..))
-import Plutus.V1.Ledger.Api (toBuiltinData, Redeemer(..),ScriptContext(..),ScriptPurpose(..),TxOutRef(..),TxId(..),TxInfo(..),DatumHash(..),BuiltinData(..),TxInInfo(..),TxOut(..),Value(..))
-import Plutus.V1.Ledger.Value (currencySymbol,tokenName)
+import Plutus.V1.Ledger.Api (BuiltinData (..), DatumHash (..), Redeemer (..), ScriptContext (..), ScriptPurpose (..), TxId (..), TxInInfo (..), TxInfo (..), TxOut (..), TxOutRef (..), Value (..), toBuiltinData)
+import Plutus.V1.Ledger.Scripts (Context (..), Datum (..), applyValidator)
+import Plutus.V1.Ledger.Value (currencySymbol, tokenName)
 import Plutus.V2.Ledger.Api (fromList)
 
-import Crypto.Hash (hashWith)
-import Data.ByteArray (convert)
-import qualified PlutusTx.Builtins as PlutusTx
 import Codec.Serialise (serialise)
-import Crypto.Hash.Algorithms ( Blake2b_224(Blake2b_224), HashAlgorithm )
-import qualified Data.ByteString.Lazy as Lazy
+import Crypto.Hash (hashWith)
+import Crypto.Hash.Algorithms (Blake2b_224 (Blake2b_224), HashAlgorithm)
+import Data.ByteArray (convert)
 import Data.ByteString (ByteString)
+import Data.ByteString.Lazy qualified as Lazy
+import PlutusTx.Builtins qualified as PlutusTx
 
-import Hello (helloValidator,helloAddress)
+import Hello (helloAddress, helloValidator)
 
 type HelloModel = (Integer, Integer)
 
@@ -66,30 +66,33 @@ instance HasParameterisedGenerator HelloProp HelloModel where
 
 mkCtx :: Integer -> Integer -> Context
 mkCtx i j = Context $ toBuiltinData scCtx
-  where scCtx = ScriptContext txInf (Spending txInORef)
-        txInf = TxInfo { txInfoInputs = [TxInInfo txInORef txInResolved]
-                       , txInfoOutputs = [txOutResolved]
-                       , txInfoFee = noValue
-                       , txInfoMint = noValue
-                       , txInfoDCert = []
-                       , txInfoWdrl = []
-                       , txInfoValidRange = undefined
-                       , txInfoSignatories = []
-                       , txInfoData = [(datumHash datumOut,datumOut)]
-                       , txInfoId = undefined
-                }
-        datumIn = mkDatum i
-        datumOut = mkDatum j
-        txInORef = TxOutRef txInORefId 0
-        txInORefId = TxId "0000000000000000000000000000000000000000000000000000000000000000"
-        txInResolved = TxOut helloAddress someAda (Just (datumHash datumIn))
-        txOutResolved = TxOut helloAddress someAda (Just (datumHash datumOut))
+  where
+    scCtx = ScriptContext txInf (Spending txInORef)
+    txInf =
+      TxInfo
+        { txInfoInputs = [TxInInfo txInORef txInResolved]
+        , txInfoOutputs = [txOutResolved]
+        , txInfoFee = noValue
+        , txInfoMint = noValue
+        , txInfoDCert = []
+        , txInfoWdrl = []
+        , txInfoValidRange = undefined
+        , txInfoSignatories = []
+        , txInfoData = [(datumHash datumOut, datumOut)]
+        , txInfoId = undefined
+        }
+    datumIn = mkDatum i
+    datumOut = mkDatum j
+    txInORef = TxOutRef txInORefId 0
+    txInORefId = TxId "0000000000000000000000000000000000000000000000000000000000000000"
+    txInResolved = TxOut helloAddress someAda (Just (datumHash datumIn))
+    txOutResolved = TxOut helloAddress someAda (Just (datumHash datumOut))
 
 mkDatum :: Integer -> Datum
 mkDatum i = Datum $ toBuiltinData i
 
 someAda :: Value
-someAda = Value (fromList [(currencySymbol "",fromList [(tokenName "",10)])])
+someAda = Value (fromList [(currencySymbol "", fromList [(tokenName "", 10)])])
 
 noValue :: Value
 noValue = Value (fromList [])
@@ -110,10 +113,12 @@ instance ScriptModel HelloProp HelloModel where
 spec :: Spec
 spec = do
   describe "helloValidatorGenSelfTest" $
-    mapM_ fromHedgehogGroup
+    mapM_
+      fromHedgehogGroup
       [ runGeneratorTestsWhere (Apropos :: HelloModel :+ HelloProp) "Hello Generator" Yes
       ]
   describe "helloValidatorTests" $
-    mapM_ fromHedgehogGroup
+    mapM_
+      fromHedgehogGroup
       [ runScriptTestsWhere (Apropos :: HelloModel :+ HelloProp) "AcceptsValid" Yes
       ]

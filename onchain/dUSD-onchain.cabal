@@ -121,8 +121,8 @@ test-suite tests
     , apropos-tx
     , base
     , bytestring
-    , cryptonite
     , containers
+    , cryptonite
     , dUSD-onchain
     , hedgehog
     , lens

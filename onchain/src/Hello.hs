@@ -1,10 +1,10 @@
-module Hello (helloValidator, helloLogic,helloValidatorHash,helloAddress) where
+module Hello (helloValidator, helloLogic, helloValidatorHash, helloAddress) where
 
-import Plutus.V1.Ledger.Scripts (Validator,ValidatorHash)
-import Plutus.V1.Ledger.Address (Address(..))
-import Plutus.V1.Ledger.Credential (Credential(..))
+import Plutus.V1.Ledger.Address (Address (..))
+import Plutus.V1.Ledger.Credential (Credential (..))
+import Plutus.V1.Ledger.Scripts (Validator, ValidatorHash)
 
-import Plutarch.Api.V1 (PScriptContext,mkValidator,validatorHash)
+import Plutarch.Api.V1 (PScriptContext, mkValidator, validatorHash)
 import Plutarch.Extensions.Api (passert, pgetContinuingDatum)
 import Plutarch.Prelude
 import Plutarch.Unsafe (punsafeCoerce)
