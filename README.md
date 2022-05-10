@@ -61,5 +61,6 @@ nix run .#format
 Although CI is run on every commit of every branch, you may also run the same checks locally using:
 
 ```sh-session
-nix build .#check.x86_64-linux
+# -L is for displaying full logs, which includes test output.
+nix build -L
 ```

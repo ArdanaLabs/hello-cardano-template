@@ -80,30 +80,26 @@
           // offchain.packages
           // {
             build-docs = pkgs.callPackage ./docs { inherit pkgs; };
+            # A combination of all derivations (aside from packages) we are care
+            # to build in CI: checks, devShells. We need this because IFD in
+            # Haskell disallows use of `nix flake check`, but we can use `nix
+            # build .#ci` to, effectively, run those checks.
+            ci = pkgs.runCommand "combined" {
+              drvs = 
+                builtins.attrValues self.checks.${system}
+                # This allows us to cache nix-shell (nix develop)
+                # https://nixos.wiki/wiki/Caching_nix_shell_build_inputs
+                ++ (pkgs.lib.attrsets.mapAttrsToList 
+                      (_: shell: shell.inputDerivation) 
+                      self.devShells.${system});
+            } ''echo $drvs > $out'';
         };
+        defaultPackage = self.packages.${system}.ci;
 
         checks =
              onchain.checks
           // offchain.checks
           // (lint-utils.mkChecks.${system} lintSpec ./.);
-
-        # We need this attribute because `nix flake check` won't work for Haskell
-        # projects: https://nixos.wiki/wiki/Import_From_Derivation#IFD_and_Haskell
-        #
-        # Instead, run: `nix build .#check.x86_64-linux` (replace with your system)
-        check =
-            pkgs.runCommand "combined-test" {
-              checksss = builtins.attrValues self.checks.${system}
-              # This allows us to cache nix-shell (nix develop)
-              # https://nixos.wiki/wiki/Caching_nix_shell_build_inputs
-              ++ [
-                self.devShells.${system}.onchain.inputDerivation
-                self.devShells.${system}.offchain.inputDerivation
-              ];
-            } ''
-              echo $checksss
-              touch $out
-              '';
 
         # Shell tools common to both onchain and offchain
         commonTools = {
@@ -150,9 +146,6 @@
           offchain = offchain.devShell;
         };
 
-        defaultPackage =
-             self.packages.${system}."dUSD-onchain:test:tests"
-          // self.packages.${system}."dUSD-offchain:exe:tests";
         apps = let
           # Take a set of derivations, and return a set of apps.
           #
