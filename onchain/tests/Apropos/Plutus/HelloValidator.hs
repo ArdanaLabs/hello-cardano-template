@@ -24,22 +24,25 @@ import PlutusTx.Builtins qualified as PlutusTx
 
 import Hello (helloAddress, helloValidator)
 
-type HelloModel = (Integer, Integer)
+type HelloModel = Either Integer (Integer, Integer)
 
 data HelloProp
   = IsValid
   | IsInvalid
+  | IsMalformed
   deriving stock (Show, Eq, Ord, Enum, Bounded)
 
 instance Enumerable HelloProp where
   enumerated = [minBound .. maxBound]
 
 instance LogicalModel HelloProp where
-  logic = ExactlyOne [Var IsValid, Var IsInvalid]
+  logic = ExactlyOne [Var IsValid, Var IsInvalid, Var IsMalformed]
 
 instance HasLogicalModel HelloProp HelloModel where
-  satisfiesProperty IsValid (i, j) = i + 1 == j
-  satisfiesProperty IsInvalid p = not $ satisfiesProperty IsValid p
+  satisfiesProperty IsValid (Right (i, j)) = i + 1 == j
+  satisfiesProperty IsInvalid p@(Right _) = not $ satisfiesProperty IsValid p
+  satisfiesProperty IsMalformed (Left _) = True
+  satisfiesProperty _ _ = False
 
 instance HasPermutationGenerator HelloProp HelloModel where
   generators =
@@ -47,25 +50,39 @@ instance HasPermutationGenerator HelloProp HelloModel where
         { name = "MakeValid"
         , match = Not $ Var IsValid
         , contract = clear >> addAll [IsValid]
-        , morphism = \(i, _j) -> pure (i, i + 1)
+        , morphism = \case
+            Right (i, _) -> pure $ Right (i, i + 1)
+            Left i -> pure $ Right (i, i + 1)
         }
     , Morphism
         { name = "MakeInvalid"
         , match = Not $ Var IsInvalid
         , contract = clear >> addAll [IsInvalid]
-        , morphism = \(i, j) -> pure (i, j + 1)
+        , morphism = \case
+            Right (i, j) -> pure $ Right (i, j + 1)
+            Left i -> pure $ Right (i, i)
+        }
+    , Morphism
+        { name = "MakeMalformed"
+        , match = Not $ Var IsMalformed
+        , contract = clear >> addAll [IsMalformed]
+        , morphism = \case
+            Right (i, _) -> pure $ Left i
+            _ -> error "this should never happen"
         }
     ]
 
 instance HasParameterisedGenerator HelloProp HelloModel where
-  parameterisedGenerator =
-    buildGen $
-      (,)
-        <$> (fromIntegral <$> int (linear (-10) 10))
-        <*> (fromIntegral <$> int (linear (-10) 10))
+  parameterisedGenerator = buildGen g
+    where
+      g = do
+        r <-
+          (,) <$> (fromIntegral <$> int (linear (-10) 10))
+            <*> (fromIntegral <$> int (linear (-10) 10))
+        pure (Right r)
 
-mkCtx :: Integer -> Integer -> Context
-mkCtx i j = Context $ toBuiltinData scCtx
+mkCtx :: HelloModel -> Context
+mkCtx hm = Context $ toBuiltinData scCtx
   where
     scCtx = ScriptContext txInf (Spending txInORef)
     txInf =
@@ -81,8 +98,10 @@ mkCtx i j = Context $ toBuiltinData scCtx
         , txInfoData = [(datumHash datumOut, datumOut)]
         , txInfoId = undefined
         }
-    datumIn = mkDatum i
-    datumOut = mkDatum j
+    datumIn = mkDatum $ helloModelInp hm
+    datumOut = case hm of
+      Right (_, j) -> mkDatum j
+      Left i -> Datum $ toBuiltinData (Just i)
     txInORef = TxOutRef txInORefId 0
     txInORefId = TxId "0000000000000000000000000000000000000000000000000000000000000000"
     txInResolved = TxOut helloAddress someAda (Just (datumHash datumIn))
@@ -90,6 +109,10 @@ mkCtx i j = Context $ toBuiltinData scCtx
 
 mkDatum :: Integer -> Datum
 mkDatum i = Datum $ toBuiltinData i
+
+helloModelInp :: HelloModel -> Integer
+helloModelInp (Right (i, _)) = i
+helloModelInp (Left i) = i
 
 someAda :: Value
 someAda = Value (fromList [(currencySymbol "", fromList [(tokenName "", 10)])])
@@ -108,7 +131,7 @@ datumHash (Datum (BuiltinData d)) = (DatumHash . hashBlake2b_224 . Lazy.toStrict
 
 instance ScriptModel HelloProp HelloModel where
   expect _ = Var IsValid
-  script _ (i, j) = applyValidator (mkCtx i j) helloValidator (mkDatum i) (Redeemer (toBuiltinData ()))
+  script _ hm = applyValidator (mkCtx hm) helloValidator (mkDatum (helloModelInp hm)) (Redeemer (toBuiltinData ()))
 
 spec :: Spec
 spec = do

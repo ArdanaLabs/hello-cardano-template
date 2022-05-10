@@ -96,6 +96,7 @@ executable scripts
     , base
     , bytestring
     , dUSD-onchain
+    , plutus-ledger-api
     , serialise
 
 test-suite tests
