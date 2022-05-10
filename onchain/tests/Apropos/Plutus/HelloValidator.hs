@@ -1,0 +1,119 @@
+module Apropos.Plutus.HelloValidator (
+  HelloProp (..),
+  spec,
+) where
+
+import Apropos
+import Apropos.Script
+
+import Test.Syd hiding (Context)
+import Test.Syd.Hedgehog
+
+import Plutus.V1.Ledger.Scripts (applyValidator, Datum (..),Context(..))
+import Plutus.V1.Ledger.Api (toBuiltinData, Redeemer(..),ScriptContext(..),ScriptPurpose(..),TxOutRef(..),TxId(..),TxInfo(..),DatumHash(..),BuiltinData(..),TxInInfo(..),TxOut(..),Value(..))
+import Plutus.V1.Ledger.Value (currencySymbol,tokenName)
+import Plutus.V2.Ledger.Api (fromList)
+
+import Crypto.Hash (hashWith)
+import Data.ByteArray (convert)
+import qualified PlutusTx.Builtins as PlutusTx
+import Codec.Serialise (serialise)
+import Crypto.Hash.Algorithms ( Blake2b_224(Blake2b_224), HashAlgorithm )
+import qualified Data.ByteString.Lazy as Lazy
+import Data.ByteString (ByteString)
+
+import Hello (helloValidator,helloAddress)
+
+type HelloModel = (Integer, Integer)
+
+data HelloProp
+  = IsValid
+  | IsInvalid
+  deriving stock (Show, Eq, Ord, Enum, Bounded)
+
+instance Enumerable HelloProp where
+  enumerated = [minBound .. maxBound]
+
+instance LogicalModel HelloProp where
+  logic = ExactlyOne [Var IsValid, Var IsInvalid]
+
+instance HasLogicalModel HelloProp HelloModel where
+  satisfiesProperty IsValid (i, j) = i + 1 == j
+  satisfiesProperty IsInvalid p = not $ satisfiesProperty IsValid p
+
+instance HasPermutationGenerator HelloProp HelloModel where
+  generators =
+    [ Morphism
+        { name = "MakeValid"
+        , match = Not $ Var IsValid
+        , contract = clear >> addAll [IsValid]
+        , morphism = \(i, _j) -> pure (i, i + 1)
+        }
+    , Morphism
+        { name = "MakeInvalid"
+        , match = Not $ Var IsInvalid
+        , contract = clear >> addAll [IsInvalid]
+        , morphism = \(i, j) -> pure (i, j + 1)
+        }
+    ]
+
+instance HasParameterisedGenerator HelloProp HelloModel where
+  parameterisedGenerator =
+    buildGen $
+      (,)
+        <$> (fromIntegral <$> int (linear (-10) 10))
+        <*> (fromIntegral <$> int (linear (-10) 10))
+
+mkCtx :: Integer -> Integer -> Context
+mkCtx i j = Context $ toBuiltinData scCtx
+  where scCtx = ScriptContext txInf (Spending txInORef)
+        txInf = TxInfo { txInfoInputs = [TxInInfo txInORef txInResolved]
+                       , txInfoOutputs = [txOutResolved]
+                       , txInfoFee = noValue
+                       , txInfoMint = noValue
+                       , txInfoDCert = []
+                       , txInfoWdrl = []
+                       , txInfoValidRange = undefined
+                       , txInfoSignatories = []
+                       , txInfoData = [(datumHash datumIn,datumIn),(datumHash datumOut,datumOut)]
+                       , txInfoId = undefined
+                }
+        datumIn = mkDatum i
+        datumOut = mkDatum j
+        txInORef = TxOutRef txInORefId 0
+        txInORefId = TxId "0000000000000000000000000000000000000000000000000000000000000000"
+        txInResolved = TxOut helloAddress someAda (Just (datumHash datumIn))
+        txOutResolved = TxOut helloAddress someAda (Just (datumHash datumOut))
+
+mkDatum :: Integer -> Datum
+mkDatum i = Datum $ toBuiltinData i
+
+someAda :: Value
+someAda = Value (fromList [(currencySymbol "",fromList [(tokenName "",10)])])
+
+noValue :: Value
+noValue = Value (fromList [])
+
+-- TODO do this with a non-hack
+datumHash :: Datum -> DatumHash
+datumHash (Datum (BuiltinData d)) = (DatumHash . hashBlake2b_224 . Lazy.toStrict . serialise) d
+  where
+    _plutusHashWith :: HashAlgorithm alg => alg -> ByteString -> PlutusTx.BuiltinByteString
+    _plutusHashWith alg = PlutusTx.toBuiltin . convert @_ @ByteString . hashWith alg
+    hashBlake2b_224 :: ByteString -> PlutusTx.BuiltinByteString
+    hashBlake2b_224 = _plutusHashWith Blake2b_224
+
+instance ScriptModel HelloProp HelloModel where
+  expect _ = Var IsValid
+  script _ (i, j) = applyValidator (mkCtx i j) helloValidator (mkDatum i) (Redeemer (toBuiltinData ()))
+
+spec :: Spec
+spec = do
+  describe "helloValidatorGenSelfTest" $
+    mapM_ fromHedgehogGroup
+      [ runGeneratorTestsWhere (Apropos :: HelloModel :+ HelloProp) "Hello Generator" Yes
+      ]
+  describe "helloValidatorTests" $
+    mapM_ fromHedgehogGroup
+      [ runScriptTestsWhere (Apropos :: HelloModel :+ HelloProp) "AcceptsValid" Yes
+      ]

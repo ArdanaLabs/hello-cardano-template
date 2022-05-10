@@ -108,6 +108,7 @@ test-suite tests
     Apropos.Plutus.AssetClass
     Apropos.Plutus.Auction
     Apropos.Plutus.Hello
+    Apropos.Plutus.HelloValidator
     Apropos.Plutus.Integer
     Apropos.Plutus.SingletonValue
     Apropos.Plutus.Value
@@ -119,13 +120,17 @@ test-suite tests
     , apropos
     , apropos-tx
     , base
+    , bytestring
+    , cryptonite
     , containers
     , dUSD-onchain
     , hedgehog
     , lens
+    , memory
     , plutarch
     , plutus-ledger-api
     , plutus-tx
+    , serialise
     , sydtest
     , sydtest-hedgehog
     , tasty

@@ -4,12 +4,12 @@ module Apropos.Plutus.Hello (
 ) where
 
 import Apropos
+import Apropos.Script
 
 import Test.Syd
 import Test.Syd.Hedgehog
 
 import Plutarch (compile, (#))
-import Plutarch.Evaluate (evalScript)
 import Plutarch.Prelude qualified as PPrelude
 
 import Hello (helloLogic)
@@ -54,16 +54,9 @@ instance HasParameterisedGenerator HelloProp HelloModel where
         <$> (fromIntegral <$> int (linear (-10) 10))
         <*> (fromIntegral <$> int (linear (-10) 10))
 
-instance HasPureRunner HelloProp HelloModel where
+instance ScriptModel HelloProp HelloModel where
   expect _ = Var IsValid
-  script _ (i, j) = helloLogic' i j
-
-helloLogic' :: Integer -> Integer -> Bool
-helloLogic' i j = evaledScript == Right compiledUnit
-  where
-    compiledUnit = compile (PPrelude.pconstant ())
-
-    (evaledScript, _, _) = evalScript $ compile $ helloLogic # PPrelude.pconstant i # PPrelude.pconstant j
+  script _ (i, j) = compile $ helloLogic # PPrelude.pconstant i # PPrelude.pconstant j
 
 spec :: Spec
 spec = do
@@ -71,7 +64,7 @@ spec = do
     mapM_ fromHedgehogGroup $
       [ runGeneratorTestsWhere (Apropos :: HelloModel :+ HelloProp) "Hello Generator" Yes
       ]
-  describe "helloPureTests" $
+  describe "helloLogicTests" $
     mapM_ fromHedgehogGroup $
-      [ runPureTestsWhere (Apropos :: HelloModel :+ HelloProp) "AcceptsValid" Yes
+      [ runScriptTestsWhere (Apropos :: HelloModel :+ HelloProp) "AcceptsValid" Yes
       ]
