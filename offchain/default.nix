@@ -66,4 +66,10 @@ in rec {
     };
   };
   flake = project.flake { };
+
+  tools = {
+    offchain-ghcid-lib = self.ghcid.${system} "offchain" "lib" "-c 'cabal repl'";
+    offchain-ghcid-test = self.ghcid.${system} "offchain" "test" "-c 'cabal repl exe:tests'";
+    offchain-ghcid-test-run = self.ghcid.${system} "offchain" "test-run" "-c 'cabal repl exe:tests' -T :main";
+  };
 }

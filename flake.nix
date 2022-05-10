@@ -135,18 +135,6 @@
             cabalProjectRoot = "${self.flakeRoot.${system}.envVar}/${subProject}";
           };
 
-        onchainTools = {
-          onchain-ghcid-lib = self.ghcid.${system} "onchain" "lib" "-c 'cabal repl'";
-          onchain-ghcid-test = self.ghcid.${system} "onchain" "test" "-c 'cabal repl test:tests'";
-          onchain-ghcid-test-run = self.ghcid.${system} "onchain" "test-run" "-c 'cabal repl test:tests' -T :main";
-        };
-
-        offchainTools = {
-          offchain-ghcid-lib = self.ghcid.${system} "offchain" "lib" "-c 'cabal repl'";
-          offchain-ghcid-test = self.ghcid.${system} "offchain" "test" "-c 'cabal repl exe:tests'";
-          offchain-ghcid-test-run = self.ghcid.${system} "offchain" "test-run" "-c 'cabal repl exe:tests' -T :main";
-        };
-
         # In Nix, there is no builtin way to access the project root, where
         # flake.nix lives. To workaround this, we inject it as env var in the
         # `shellHook`.
@@ -180,13 +168,13 @@
             shellHook = oa.shellHook + self.flakeRoot.${system}.shellHook;
             buildInputs = pkgs.lib.attrsets.attrValues (
               self.commonTools.${system} //
-              self.onchainTools.${system}
+              onchain.tools
             );
           });
           offchain = offchain.flake.devShell.overrideAttrs (oa: {
             buildInputs = pkgs.lib.attrsets.attrValues (
               self.commonTools.${system} //
-              self.offchainTools.${system}
+              offchain.tools
             );
             shellHook = oa.shellHook + ''
               ${self.flakeRoot.${system}.shellHook}

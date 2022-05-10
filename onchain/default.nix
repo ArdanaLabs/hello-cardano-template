@@ -35,6 +35,12 @@ in rec {
 
   flake = project.flake { };
 
+  tools = {
+    onchain-ghcid-lib = self.ghcid.${system} "onchain" "lib" "-c 'cabal repl'";
+    onchain-ghcid-test = self.ghcid.${system} "onchain" "test" "-c 'cabal repl test:tests'";
+    onchain-ghcid-test-run = self.ghcid.${system} "onchain" "test-run" "-c 'cabal repl test:tests' -T :main";
+  };
+
   onchain-scripts = pkgs.stdenv.mkDerivation {
     name = "onchain-scripts";
     src = self;
