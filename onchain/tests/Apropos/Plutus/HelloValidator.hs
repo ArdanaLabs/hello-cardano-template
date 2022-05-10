@@ -75,7 +75,7 @@ mkCtx i j = Context $ toBuiltinData scCtx
                        , txInfoWdrl = []
                        , txInfoValidRange = undefined
                        , txInfoSignatories = []
-                       , txInfoData = [(datumHash datumIn,datumIn),(datumHash datumOut,datumOut)]
+                       , txInfoData = [(datumHash datumOut,datumOut)]
                        , txInfoId = undefined
                 }
         datumIn = mkDatum i
