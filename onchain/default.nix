@@ -49,6 +49,10 @@ in rec {
     );
   });
 
+  packages = haskellNixFlake.packages // {
+
+  };
+
   checks = haskellNixFlake.checks // {
 
   };

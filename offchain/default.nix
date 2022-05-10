@@ -97,6 +97,10 @@ in rec {
     '';
   });
 
+  packages = haskellNixFlake.packages // {
+
+  };
+
   apps = {
     offchain-test = {
       type = "app";
