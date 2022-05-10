@@ -1,3 +1,4 @@
+{-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Network.Kraken.Server.Mock (krakenMockApp, marketDataServer) where
