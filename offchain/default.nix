@@ -3,6 +3,17 @@
 let
   inherit (pkgs.callPackage ../nix/plutus.nix { inherit system pkgs self plutus; }) 
     plutusProjectIn;
+  # Checks the shell script using ShellCheck
+  checkedShellScript = system: name: text:
+    (pkgs.writeShellApplication {
+      inherit name text;
+    }) + "/bin/${name}";
+  # Take a flake app (identified as the key in the 'apps' set), and return a
+  # derivation that runs it in the compile phase.
+  #
+  # In effect, this allows us to run an 'app' as part of the build process (eg: in CI).
+  flakeApp2Derivation = system: appName:
+    pkgs.runCommand appName { } "${self.apps.${system}.${appName}.program} | tee $out";
 in rec {
   project = plutusProjectIn {
     subdir = "offchain";
@@ -84,4 +95,21 @@ in rec {
       export SHELLEY_TEST_DATA="${plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley/"
     '';
   });
+
+  apps = {
+    offchain-test = {
+      type = "app";
+      program = checkedShellScript system "dUSD-offchain-test"
+        '' export DUSD_SCRIPTS=${onchain-scripts}
+            cd ${self}
+            ${flake.packages.${system}."dUSD-offchain:exe:tests"}/bin/tests;
+        '';
+    };
+  };
+
+  checks = flake.checks // {
+    offchain-test = flakeApp2Derivation system "offchain-test";
+    offchain-hello-world-unit = flake.packages.${system}."hello-world:test:hello-world-unit";
+    offchain-hello-world-e2e = flake.packages.${system}."hello-world:exe:hello-world-e2e"; 
+  };
 }

@@ -71,18 +71,6 @@
         # nixpkgs-fmt = {};
       };
 
-      # Checks the shell script using ShellCheck
-      checkedShellScript = system: name: text:
-        (pkgs.writeShellApplication {
-          inherit name text;
-        }) + "/bin/${name}";
-
-      # Take a flake app (identified as the key in the 'apps' set), and return a
-      # derivation that runs it in the compile phase.
-      #
-      # In effect, this allows us to run an 'app' as part of the build process (eg: in CI).
-      flakeApp2Derivation = system: appName:
-        pkgs.runCommand appName { } "${self.apps.${system}.${appName}.program} | tee $out";
     in
       {
 
@@ -95,14 +83,8 @@
         };
 
         checks =
-             onchain.flake.checks
-          // {
-               offchain = {
-                 test = flakeApp2Derivation system "offchain-test";
-                 hello-world.unit = self.packages.${system}."hello-world:test:hello-world-unit";
-                 hello-world.e2e = self.packages.${system}."hello-world:exe:hello-world-e2e";
-               };
-             }
+             onchain.checks
+          // offchain.checks
           // (lint-utils.mkChecks.${system} lintSpec ./.);
 
         # We need this attribute because `nix flake check` won't work for Haskell
@@ -189,16 +171,9 @@
             );
         in
           shellApps // 
+          offchain.apps //
           {
             format =  lint-utils.mkApp.${system} lintSpec;  # TODO: Refactor this by moving it to appsFromDerivationSet
-            offchain-test = {
-              type = "app";
-              program = checkedShellScript system "dUSD-offchain-test"
-                '' export DUSD_SCRIPTS=${onchain.onchain-scripts}
-                   cd ${self}
-                   ${self.packages.${system}."dUSD-offchain:exe:tests"}/bin/tests;
-                '';
-            };
           };
       };
   in flake-utils.lib.eachSystem [ "x86_64-linux" ] outputsFor;

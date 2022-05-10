@@ -49,6 +49,10 @@ in rec {
     );
   });
 
+  checks = flake.checks // {
+    
+  };
+
   onchain-scripts = pkgs.stdenv.mkDerivation {
     name = "onchain-scripts";
     src = self;
