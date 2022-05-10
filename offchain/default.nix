@@ -72,4 +72,16 @@ in rec {
     offchain-ghcid-test = self.ghcid.${system} "offchain" "test" "-c 'cabal repl exe:tests'";
     offchain-ghcid-test-run = self.ghcid.${system} "offchain" "test-run" "-c 'cabal repl exe:tests' -T :main";
   };
+
+  devShell = flake.devShell.overrideAttrs (oa: {
+    buildInputs = pkgs.lib.attrsets.attrValues (
+      self.commonTools.${system} //
+      tools
+    );
+    shellHook = oa.shellHook + ''
+      ${self.flakeRoot.${system}.shellHook}
+      # running local cluster + PAB
+      export SHELLEY_TEST_DATA="${plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley/"
+    '';
+  });
 }

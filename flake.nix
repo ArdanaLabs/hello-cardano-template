@@ -164,25 +164,10 @@
         # conditions are met. We opted not to do this because it would require
         # us to bet that the condition above would be met before we want to launch.
         devShells = {
-          onchain = onchain.flake.devShell.overrideAttrs (oa: {
-            shellHook = oa.shellHook + self.flakeRoot.${system}.shellHook;
-            buildInputs = pkgs.lib.attrsets.attrValues (
-              self.commonTools.${system} //
-              onchain.tools
-            );
-          });
-          offchain = offchain.flake.devShell.overrideAttrs (oa: {
-            buildInputs = pkgs.lib.attrsets.attrValues (
-              self.commonTools.${system} //
-              offchain.tools
-            );
-            shellHook = oa.shellHook + ''
-              ${self.flakeRoot.${system}.shellHook}
-              # running local cluster + PAB
-              export SHELLEY_TEST_DATA="${plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley/"
-            '';
-          });
+          onchain = onchain.devShell;
+          offchain = offchain.devShell;
         };
+
         defaultPackage =
              self.packages.${system}."dUSD-onchain:test:tests"
           // self.packages.${system}."dUSD-offchain:exe:tests";
@@ -201,9 +186,6 @@
           shellApps =  
             appsFromDerivationSet (
                  self.commonTools.${system} 
-              # NOTE: ghcid can only run inside nix-shell, so we cannot run these as flake apps.
-              # // self.onchainTools.${system} 
-              # // self.offchainTools.${system}
             );
         in
           shellApps // 

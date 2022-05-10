@@ -41,6 +41,14 @@ in rec {
     onchain-ghcid-test-run = self.ghcid.${system} "onchain" "test-run" "-c 'cabal repl test:tests' -T :main";
   };
 
+  devShell = flake.devShell.overrideAttrs (oa: {
+    shellHook = oa.shellHook + self.flakeRoot.${system}.shellHook;
+    buildInputs = pkgs.lib.attrsets.attrValues (
+      self.commonTools.${system} //
+      tools
+    );
+  });
+
   onchain-scripts = pkgs.stdenv.mkDerivation {
     name = "onchain-scripts";
     src = self;
