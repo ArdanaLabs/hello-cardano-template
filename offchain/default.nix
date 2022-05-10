@@ -103,14 +103,14 @@ in rec {
       program = checkedShellScript system "dUSD-offchain-test"
         '' export DUSD_SCRIPTS=${onchain-scripts}
             cd ${self}
-            ${haskellNixFlake.packages.${system}."dUSD-offchain:exe:tests"}/bin/tests;
+            ${haskellNixFlake.packages."dUSD-offchain:exe:tests"}/bin/tests;
         '';
     };
   };
 
   checks = haskellNixFlake.checks // {
     offchain-test = flakeApp2Derivation system "offchain-test";
-    offchain-hello-world-unit = haskellNixFlake.packages.${system}."hello-world:test:hello-world-unit";
-    offchain-hello-world-e2e = haskellNixFlake.packages.${system}."hello-world:exe:hello-world-e2e"; 
+    offchain-hello-world-unit = haskellNixFlake.packages."hello-world:test:hello-world-unit";
+    offchain-hello-world-e2e = haskellNixFlake.packages."hello-world:exe:hello-world-e2e"; 
   };
 }

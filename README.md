@@ -55,3 +55,11 @@ To auto-format the project tree, run:
 ```sh-session
 nix run .#format
 ```
+
+### Running CI locally
+
+Although CI is run on every commit of every branch, you may also run the same checks locally using:
+
+```sh-session
+nix build .#check.x86_64-linux
+```
