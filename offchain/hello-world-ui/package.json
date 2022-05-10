@@ -1,0 +1,16 @@
+{
+  "name": "hello-world-ui",
+  "description": "Hello World UI",
+  "scripts": {
+    "watch": "spago build --watch",
+    "clean": "rm -rf node_modules output dce-output .spago dist/*.js *.lock .cache",
+    "esbuild": "esbuild --external:url --external:xhr2 --outfile=dist/main.js",
+    "bundle:build": "spago build --purs-args '--codegen corefn'",
+    "bundle:dce": "zephyr -f Main.main",
+    "bundle:esbuild": "npm run esbuild -- --bundle index.js --minify",
+    "bundle": "npm run bundle:build && npm run bundle:dce && npm run bundle:esbuild"
+  },
+  "devDependencies": {
+    "esbuild": "^0.14.10"
+  }
+}
