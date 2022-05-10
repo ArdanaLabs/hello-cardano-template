@@ -8,7 +8,8 @@
     "bundle:build": "spago build --purs-args '--codegen corefn'",
     "bundle:dce": "zephyr -f Main.main",
     "bundle:esbuild": "npm run esbuild -- --bundle index.js --minify",
-    "bundle": "npm run bundle:build && npm run bundle:dce && npm run bundle:esbuild"
+    "bundle": "npm run bundle:build && npm run bundle:dce && npm run bundle:esbuild",
+    "build": "npm run bundle"
   },
   "devDependencies": {
     "esbuild": "^0.14.10"
