@@ -24,10 +24,31 @@ You can ensure that the Cachix is being used by trying to build one of the outpu
 
 When editing any documents within ./docs/test-plan you can set up a latex pdf rendering feedback loop by running
 ```
+# Or, if you are already inside nix-shell, run: `dusd-feedback-loop`
 nix run .#feedback-loop
 ```
 
 ## Development workflow
+
+### Dev shells
+
+The onchain and offchain code have different dependencies, thus different dev shells. To launch a shell for onchain dev, run:
+
+```
+nix develop .#onchain
+```
+
+For offchain, run:
+
+```
+nix develop .#offchain
+```
+
+### Ghcid
+
+In the nix shell, run `dusd-<TAB>` to see available commands, and select the appropriate ghcid configuration. For example, running `dusd-offchain-ghcid-lib` will run Ghcid on the offchain library component.
+
+### Formatting
 
 To auto-format the project tree, run:
 

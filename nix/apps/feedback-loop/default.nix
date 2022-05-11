@@ -1,9 +1,10 @@
 { writeShellApplication
 , entr
+, projectName
 }:
 writeShellApplication
   {
-    name = "feedback-loop";
+    name = "${projectName}-feedback-loop";
     runtimeInputs = [ entr ];
     text = ''
       find docs -name "*.tex" | entr nix build .#build-docs

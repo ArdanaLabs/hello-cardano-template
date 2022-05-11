@@ -33,13 +33,16 @@
     the PAB transactions as it would for PlutusTx
   \item Front-end
   \begin{itemize}
-    \item Static and comes from cloudflare
-    \item Mostly html/css, some typescript as necessary
+    \item Foundations built in HTML/CSS, with one Purescript component to link
+      with the PAB and browser wallets (TBD)
     \item User wallet: Nami (for first version)
   \end{itemize}
   \item Once we’re done, we can `git tag' the commit where that’s done and then
     upgrade this to the price module implementation in-place.
-  \item How to balance transactions? \todo{This is a research project!}
+  \item How to balance transactions?
+    \todo{
+      \url{https://github.com/input-output-hk/plutus-apps/issues/249\#issuecomment-1085834665}
+    }
 \end{itemize}
 
 \section{Tests}
@@ -65,11 +68,14 @@
         \item Open two browsers, connected to two separate wallets, and check
           that incrementing on one updates the number on the other after
           refresh: $0$ to $1$, $1$ to $2$
-        \item Launch the two browsers in separate VMs. \todo{Does this
-          require/allow setting up separate nodes, with Nami?}
+        \item Launch the two browsers in separate VMs.
+          \todo{See issue \url{https://github.com/ArdanaLabs/dUSD/issues/87}.}
       \end{itemize}
     \item Lighthouse score above $90$, to check website performance
   \end{itemize}
+  \item PAB E2E testing: The same tests will be ran as for the frontend tests,
+    but using a second PAB to sign and submit transactions.
+    The tests will be ran against a local testnet set up through Maeserat.
   \item Contract Model Tests with PAB
   \begin{itemize}
     \item Wallet signs and submits a transaction
@@ -77,17 +83,18 @@
       atomicity constraints)
     \item \todo{@Dan: Which tests do we want to run? `noFundsLocked'?}
   \end{itemize}
-  \item \todo{@Syd: End-to-end tests with the Cardano test net?}
-  \item \todo{@Syd: Actually deploy to main net and run manual tests?}
+  \item This project will be deployed to mainnet to run manual tests
 \end{itemize}
 
 \section{Features to be added}
 
 \begin{itemize}
-  \item Frontend integration with Yoroi, Daedelus. Anything else?
-  \item Replace datum from something builtin, to test encoding/decoding match
+  \item Frontend integration with Yoroi, Daedelus. Any other browser wallets?
+  \item Replace datum to something not-builtin, to test encoding/decoding match
     between on-chain and off-chain
   \item Maeserat: Volume tests, benchmarks for time and memory consumption
+  \item Set up an NFT-system to persistently identify and track the Hello World
+    UTXOs
 \end{itemize}
 
 \end{document}
