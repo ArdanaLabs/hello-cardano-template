@@ -12,14 +12,8 @@
     #   used for libsodium-vrf
     plutus.url = "github:input-output-hk/plutus";
     plutus-apps.url = "github:input-output-hk/plutus-apps?rev=e4062bca213f233cdf9822833b07aa69dff6d22a";
-    lint-utils = {
-      type = "git";
-      url = "https://gitlab.homotopic.tech/nix/lint-utils.git";
-      ref = "overengineered";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
-  outputs = {self, nixpkgs, haskell-nix, flake-utils, lint-utils, ...}@inputs:
+  outputs = {self, nixpkgs, haskell-nix, flake-utils, ...}@inputs:
     let
       # Function that produces Flake outputs for the given system.
       #
@@ -45,15 +39,7 @@
         onchain = import ./onchain { inherit inputs system pkgs; };
         offchain = import ./offchain { inherit inputs system pkgs; };
         docs = import ./docs { inherit inputs system pkgs; };
-      };
-
-      lintSpec = {
-        cabal-fmt = {};
-        fourmolu = {
-          ghcOpts = "-o-XTypeApplications -o-XImportQualifiedPost";
-        };
-        # Enable after https://github.com/ArdanaLabs/dUSD/issues/8
-        # nixpkgs-fmt = {};
+        format = import ./nix/format.nix { inherit inputs system pkgs; };
       };
 
     in
@@ -86,7 +72,7 @@
         checks =
              projects.onchain.checks
           // projects.offchain.checks
-          // (lint-utils.mkChecks.${system} lintSpec ./.);
+          // projects.format.checks;
 
         # In Nix, there is no builtin way to access the project root, where
         # flake.nix lives. To workaround this, we inject it as env var in the
@@ -124,9 +110,7 @@
         apps =
              projects.offchain.apps
           // projects.docs.apps
-          // {
-            format =  lint-utils.mkApp.${system} lintSpec;  # TODO: Refactor this by moving it to appsFromDerivationSet
-          };
+          // projects.format.apps;
       };
   in flake-utils.lib.eachSystem [ "x86_64-linux" ] outputsFor // {
     # Name of our project; used in script prefixes.

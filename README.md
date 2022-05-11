@@ -56,6 +56,8 @@ To auto-format the project tree, run:
 nix run .#format
 ```
 
+If you are in nix-shell already, you can also just run `treefmt`.
+
 ### Running CI locally
 
 Although CI is run on every commit of every branch, you may also run the same checks locally using:

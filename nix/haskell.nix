@@ -44,7 +44,12 @@
           exactDeps = true;
           # We use the ones from Nixpkgs, since they are cached reliably.
           # Eventually we will probably want to build these with haskell.nix.
-          nativeBuildInputs = [ pkgs.cabal-install pkgs.hlint pkgs.haskellPackages.fourmolu ];
+          nativeBuildInputs = [ 
+            pkgs.cabal-install 
+            pkgs.hlint 
+          ] ++ 
+          # Auto-formatter dependencies are useful in devshell for editors.
+          inputs.self.projects.${system}.format.dependencies;
         } // extraShell;
         inherit sha256map;
       };

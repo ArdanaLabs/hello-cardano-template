@@ -763,21 +763,6 @@
     },
     "flake-utils_7": {
       "locked": {
-        "lastModified": 1644229661,
-        "narHash": "sha256-1YdnJAsNy69bpcjuoKdOYQX0YxZBiCYZo4Twxerqv7k=",
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "rev": "3cecb5b042f7f209c56ffd8371b2711a290ec797",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "type": "github"
-      }
-    },
-    "flake-utils_8": {
-      "locked": {
         "lastModified": 1648297722,
         "narHash": "sha256-W+qlPsiZd8F3XkzXOzAoR+mpFqzm3ekQkJNa+PIh1BQ=",
         "owner": "numtide",
@@ -1482,28 +1467,6 @@
         "owner": "input-output-hk",
         "repo": "iohk-nix",
         "type": "github"
-      }
-    },
-    "lint-utils": {
-      "inputs": {
-        "flake-utils": "flake-utils_7",
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1650427214,
-        "narHash": "sha256-9m66rRSSM614ocRXNPAArwnrS6zzCQYYhd3nw8g4QUg=",
-        "ref": "overengineered",
-        "rev": "5555def5a25c5437834c06cbe79b3945916ec59f",
-        "revCount": 28,
-        "type": "git",
-        "url": "https://gitlab.homotopic.tech/nix/lint-utils.git"
-      },
-      "original": {
-        "ref": "overengineered",
-        "type": "git",
-        "url": "https://gitlab.homotopic.tech/nix/lint-utils.git"
       }
     },
     "membench": {
@@ -2276,7 +2239,7 @@
         "cardano-repo-tool": "cardano-repo-tool_2",
         "easy-purescript-nix": "easy-purescript-nix",
         "flake-compat": "flake-compat",
-        "flake-utils": "flake-utils_8",
+        "flake-utils": "flake-utils_7",
         "gitignore-nix": "gitignore-nix_2",
         "hackage-nix": "hackage-nix_2",
         "haskell-language-server": "haskell-language-server_2",
@@ -2389,7 +2352,6 @@
         "cardano-node": "cardano-node",
         "flake-utils": "flake-utils_5",
         "haskell-nix": "haskell-nix",
-        "lint-utils": "lint-utils",
         "nixpkgs": [
           "haskell-nix",
           "nixpkgs-unstable"
