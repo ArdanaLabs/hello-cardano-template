@@ -2,10 +2,10 @@ module HelloWorld.Page.Home where
 
 import Prelude
 
-import Affjax as AX
 import Affjax.RequestBody as AB
 import Affjax.ResponseFormat as AR
 import Affjax.StatusCode (StatusCode(..))
+import Affjax.Web as AW
 import Control.Monad.Reader.Trans (class MonadAsk, ask)
 import Data.Argonaut.Core as A
 import Data.Either (Either(..))
@@ -38,8 +38,8 @@ _req endpoint = do
   { baseURL, contractID } <- ask
   response <-
     liftAff
-      $ AX.request
-          ( AX.defaultRequest
+      $ AW.request
+          ( AW.defaultRequest
               { url = requestURL baseURL contractID
               , method = Left POST
               , content = Just $ AB.json $ A.fromArray []
@@ -47,7 +47,7 @@ _req endpoint = do
               }
           )
   case response of
-    Left err -> pure $ Left $ AX.printError err
+    Left err -> pure $ Left $ AW.printError err
     Right response'
       | isSuccessfulResponse response' -> pure $ Right unit
       | otherwise -> pure $ Left response'.statusText

@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     easy-purescript-nix = {
-      url = "github:justinwoo/easy-purescript-nix?rev=aa72388ca0fb72ed64467f59a121db1f104897db";
+      url = "github:justinwoo/easy-purescript-nix";
       flake = false;
     };
   };
@@ -55,15 +55,14 @@
             inherit name;
             src = ./.;
             buildInputs = with spagoPkgs; [ installSpagoStyle buildSpagoStyle ];
-            nativeBuildInputs = with easy-ps; [ purs spago zephyr pkgs.esbuild ];
+            nativeBuildInputs = with easy-ps; [ purs spago pkgs.esbuild ];
             unpackPhase = ''
               cp -R $src/* .
               install-spago-style
             '';
             buildPhase = ''
-              build-spago-style "./src/**/*.purs" --codegen corefn
-              zephyr -f Main.main
-              esbuild --external:url --external:xhr2 --outfile=main.js --bundle index.js --minify
+              build-spago-style "./src/**/*.purs"
+              esbuild --bundle index.js --minify --outfile=main.js
             '';
             installPhase = ''
               mkdir $out
@@ -93,7 +92,6 @@
             purs-tidy
             spago
             spago2nix
-            zephyr
           ]);
         });
     };
