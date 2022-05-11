@@ -1,4 +1,4 @@
-{ system, pkgs, self, projectName, plutus, ... }:
+{ inputs, system, pkgs }:
 
 {
   # Derivation for a Haskell Plutus project that lives in the sub-directory of this mono repo.
@@ -12,7 +12,7 @@
     let
       deferPluginErrors = true;
       fakeSrc = pkgs.runCommand "real-source-${subdir}" { } ''
-        cp -rT ${self}/${subdir} $out
+        cp -rT ${inputs.self}/${subdir} $out
         chmod u+w $out/cabal.project
         cat $out/cabal-haskell.nix.project >> $out/cabal.project
       '';
@@ -30,9 +30,9 @@
               plutus-ledger.flags.defer-plugin-errors = deferPluginErrors;
               plutus-contract.flags.defer-plugin-errors = deferPluginErrors;
               cardano-crypto-praos.components.library.pkgconfig =
-                pkgs.lib.mkForce [ [ (import plutus { inherit system; }).pkgs.libsodium-vrf ] ];
+                pkgs.lib.mkForce [ [ (import inputs.plutus { inherit system; }).pkgs.libsodium-vrf ] ];
               cardano-crypto-class.components.library.pkgconfig =
-                pkgs.lib.mkForce [ [ (import plutus { inherit system; }).pkgs.libsodium-vrf ] ];
+                pkgs.lib.mkForce [ [ (import inputs.plutus { inherit system; }).pkgs.libsodium-vrf ] ];
             } // extraPackages;
           }
         ];
@@ -52,7 +52,7 @@
   # Run Ghcid under `cabalProjectRoot`, passing `args`.
   ghcid = { cabalProjectRoot, name, args }:
     pkgs.writeShellApplication {
-      name = "${projectName}-${name}";
+      name = "${inputs.self.projectName}-${name}";
       text = ''
         echo "Running Ghcid under ${cabalProjectRoot} (${name})"
         cd "${cabalProjectRoot}" 

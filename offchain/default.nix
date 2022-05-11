@@ -1,9 +1,10 @@
-{ system, pkgs, self, projectName, plutus, cardano-node, plutus-apps, onchain-scripts, ... }:
+{ inputs, system, pkgs }:
 
 let
-  inherit (pkgs.callPackage ../nix/haskell.nix { inherit system pkgs self projectName plutus; }) 
+  inherit (pkgs.callPackage ../nix/haskell.nix { inherit inputs system pkgs; }) 
     plutusProjectIn ghcid;
-  cabalProjectRoot = "${self.flakeRoot.${system}.envVar}/offchain";
+  cabalProjectRoot = "${inputs.self.flakeRoot.${system}.envVar}/offchain";
+  onchain-scripts = inputs.self.projects.${system}.onchain.onchain-scripts;
   # Checks the shell script using ShellCheck
   checkedShellScript = system: name: text:
     (pkgs.writeShellApplication {
@@ -14,7 +15,7 @@ let
   #
   # In effect, this allows us to run an 'app' as part of the build process (eg: in CI).
   flakeApp2Derivation = system: appName:
-    pkgs.runCommand appName { } "${self.apps.${system}.${appName}.program} | tee $out";
+    pkgs.runCommand appName { } "${inputs.self.apps.${system}.${appName}.program} | tee $out";
 in rec {
   project = plutusProjectIn {
     subdir = "offchain";
@@ -34,8 +35,8 @@ in rec {
       propagatedBuildInputs = [
         # cardano-node and cardano-cli need to be on the PATH to run the
         # cluster + PAB.
-        cardano-node.outputs.packages.x86_64-linux."cardano-node:exe:cardano-node"
-        cardano-node.outputs.packages.x86_64-linux."cardano-cli:exe:cardano-cli"
+        inputs.cardano-node.outputs.packages.x86_64-linux."cardano-node:exe:cardano-node"
+        inputs.cardano-node.outputs.packages.x86_64-linux."cardano-cli:exe:cardano-cli"
       ];
       tools = {
         ghcid = { };
@@ -58,7 +59,7 @@ in rec {
       "https://github.com/input-output-hk/cardano-config"."e9de7a2cf70796f6ff26eac9f9540184ded0e4e6" = "sha256-jQbwcfNJ8am7Q3W+hmTFmyo3wp3QItquEH//klNiofI=";
       "https://github.com/input-output-hk/cardano-crypto.git"."07397f0e50da97eaa0575d93bee7ac4b2b2576ec" = "oxIOVlgm07FAEmgGRF1C2me9TXqVxQulEOcJ22zpTRs=";
       "https://github.com/input-output-hk/cardano-ledger"."1a9ec4ae9e0b09d54e49b2a40c4ead37edadcce5" = "sha256-lRNfkGMHnpPO0T19FZY5BnuRkr0zTRZIkxZVgHH0fys=";
-      "https://github.com/input-output-hk/cardano-node"."${cardano-node.rev}" = "sha256-e4k1vCsZqUB/I3uPRDIKP9pZ81E/zosJn8kXySAfBcI=";
+      "https://github.com/input-output-hk/cardano-node"."${inputs.cardano-node.rev}" = "sha256-e4k1vCsZqUB/I3uPRDIKP9pZ81E/zosJn8kXySAfBcI=";
       "https://github.com/input-output-hk/cardano-prelude"."fd773f7a58412131512b9f694ab95653ac430852" = "BtbT5UxOAADvQD4qTPNrGfnjQNgbYNO4EAJwH2ZsTQo=";
       "https://github.com/input-output-hk/cardano-wallet"."f6d4db733c4e47ee11683c343b440552f59beff7" = "sha256-3oeHsrAhDSSKBSzpGIAqmOcFmBdAJ5FR02UXPLb/Yz0=";
       "https://github.com/input-output-hk/ekg-forward"."297cd9db5074339a2fb2e5ae7d0780debb670c63" = "sha256-jwj/gh/A/PXhO6yVESV27k4yx9I8Id8fTa3m4ofPnP0=";
@@ -68,7 +69,7 @@ in rec {
       "https://github.com/input-output-hk/ouroboros-network"."4fac197b6f0d2ff60dc3486c593b68dc00969fbf" = "sha256-Cy29MHrYTkN7s3Vvog5/pOzbo7jiqTeDz6OmrNvag6w=";
       "https://github.com/input-output-hk/plutus.git"."4127e9cd6e889824d724c30eae55033cb50cbf3e" =
       "sha256-S8uvyld7ZpPsmxZlWJeRNAPd+mw3PafrtaiiuU8H3KA=";
-      "https://github.com/input-output-hk/plutus-apps"."${plutus-apps.rev}" = "sha256-Aoo+hGLUQTAkuIGTG+mpOE/DSlV8KEe5kvUZZdYez48=";
+      "https://github.com/input-output-hk/plutus-apps"."${inputs.plutus-apps.rev}" = "sha256-Aoo+hGLUQTAkuIGTG+mpOE/DSlV8KEe5kvUZZdYez48=";
       "https://github.com/input-output-hk/purescript-bridge"."47a1f11825a0f9445e0f98792f79172efef66c00" = "sha256-/SbnmXrB9Y2rrPd6E79Iu5RDaKAKozIl685HQ4XdQTU=";
       "https://github.com/input-output-hk/servant-purescript"."44e7cacf109f84984cd99cd3faf185d161826963" = "sha256-DH9ISydu5gxvN4xBuoXVv1OhYCaqGOtzWlACdJ0H64I=";
       "https://github.com/input-output-hk/Win32-network"."3825d3abf75f83f406c1f7161883c438dac7277d" = "Hesb5GXSx0IwKSIi42ofisVELcQNX6lwHcoZcbaDiqc=";
@@ -94,9 +95,9 @@ in rec {
       tools
     );
     shellHook = oa.shellHook + ''
-      ${self.flakeRoot.${system}.shellHook}
+      ${inputs.self.flakeRoot.${system}.shellHook}
       # running local cluster + PAB
-      export SHELLEY_TEST_DATA="${plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley/"
+      export SHELLEY_TEST_DATA="${inputs.plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley/"
     '';
   });
 
@@ -109,7 +110,7 @@ in rec {
       type = "app";
       program = checkedShellScript system "dUSD-offchain-test"
         '' export DUSD_SCRIPTS=${onchain-scripts}
-            cd ${self}
+            cd ${inputs.self}
             ${haskellNixFlake.packages."dUSD-offchain:exe:tests"}/bin/tests;
         '';
     };

@@ -1,4 +1,4 @@
-{ pkgs, projectName, ... }:
+{ inputs, system, pkgs }:
 
 {
   packages = {
@@ -23,7 +23,7 @@
       type = "app";
       program = pkgs.writeShellApplication
         {
-          name = "${projectName}-feedback-loop";
+          name = "${inputs.self.projectName}-feedback-loop";
           runtimeInputs = [ pkgs.entr ];
           # FIXME: Running 'nix build' inside an app is rather alow. This should
           # just directly call the same command as the build derivation above
@@ -31,7 +31,7 @@
           text = ''
             find docs -name "*.tex" | entr nix build .#build-docs
           '';
-        } + "/bin/${projectName}-feedback-loop";
+        } + "/bin/${inputs.self.projectName}-feedback-loop";
     };
   };
 }

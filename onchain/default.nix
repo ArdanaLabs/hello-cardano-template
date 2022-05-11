@@ -1,9 +1,9 @@
-{ system, pkgs, self, projectName, plutus, ... }:
+{ inputs, system, pkgs  }:
 
 let
-  inherit (pkgs.callPackage ../nix/haskell.nix { inherit system pkgs self projectName plutus; }) 
+  inherit (pkgs.callPackage ../nix/haskell.nix { inherit inputs system pkgs; }) 
     plutusProjectIn ghcid;
-  cabalProjectRoot = "${self.flakeRoot.${system}.envVar}/onchain";
+  cabalProjectRoot = "${inputs.self.flakeRoot.${system}.envVar}/onchain";
 in rec {
   project = plutusProjectIn {
     subdir = "onchain";
@@ -46,7 +46,7 @@ in rec {
   };
 
   devShell = haskellNixFlake.devShell.overrideAttrs (oa: {
-    shellHook = oa.shellHook + self.flakeRoot.${system}.shellHook;
+    shellHook = oa.shellHook + inputs.self.flakeRoot.${system}.shellHook;
     buildInputs = pkgs.lib.attrsets.attrValues (
       tools
     );
@@ -62,7 +62,7 @@ in rec {
 
   onchain-scripts = pkgs.stdenv.mkDerivation {
     name = "onchain-scripts";
-    src = self;
+    src = inputs.self; # FIXME: Why should src be project root here?
     buildInputs = [ haskellNixFlake.packages."dUSD-onchain:exe:scripts" ];
     doCheck = false;
     installPhase = ''

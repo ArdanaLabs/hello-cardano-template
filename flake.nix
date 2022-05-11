@@ -19,18 +19,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs =
-    {
-      self,
-      nixpkgs,
-      flake-utils,
-      haskell-nix,
-      cardano-node,
-      plutus,
-      plutus-apps,
-      lint-utils
-    }
-    @ inputs:
+  outputs = {self, nixpkgs, haskell-nix, flake-utils, lint-utils, ...}@inputs:
     let
       # Function that produces Flake outputs for the given system.
       #
@@ -44,25 +33,19 @@
     let
       # TODO: We probably should use a non-haskell.nix nixpkgs for certain
       # derivations, to speed up things. Those derivations do not rely on
-      # haskell.nix anyway.
+      # haskell.nix anyway. Consider this in the context of passing `pkgs` to
+      # sub-flake'ishes.
       pkgs = 
         import nixpkgs {
           inherit system;
           overlays = [ haskell-nix.overlay ];
           inherit (haskell-nix) config;
         };
-      # TODO: Either pass only 'self', or remove it in favour of explicit arguments.
-      inherit (pkgs.callPackage ./nix/haskell.nix { inherit system pkgs self plutus; }) 
-        plutusProjectIn;
-      onchain = pkgs.callPackage ./onchain { inherit system pkgs self projectName plutus; };
-      offchain = pkgs.callPackage ./offchain { 
-        inherit system pkgs self projectName plutus cardano-node plutus-apps; 
-        onchain-scripts = onchain.onchain-scripts; 
+      projects = {
+        onchain = import ./onchain { inherit inputs system pkgs; };
+        offchain = import ./offchain { inherit inputs system pkgs; };
+        docs = import ./docs { inherit inputs system pkgs; };
       };
-      docs = pkgs.callPackage ./docs { inherit pkgs projectName; };
-
-      # Name of our project; used in script prefixes.
-      projectName = "dusd";
 
       lintSpec = {
         cabal-fmt = {};
@@ -75,10 +58,14 @@
 
     in
       {
+        inherit projects;
+
+        # TODO: Refactor this composition so it takes a projects set, without
+        # needing to look inside.
         packages =
-             onchain.packages
-          // offchain.packages
-          // docs.packages
+             projects.onchain.packages
+          // projects.offchain.packages
+          // projects.docs.packages
           // {
             # A combination of all derivations (aside from packages) we are care
             # to build in CI: checks, devShells. We need this because IFD in
@@ -97,8 +84,8 @@
         defaultPackage = self.packages.${system}.ci;
 
         checks =
-             onchain.checks
-          // offchain.checks
+             projects.onchain.checks
+          // projects.offchain.checks
           // (lint-utils.mkChecks.${system} lintSpec ./.);
 
         # In Nix, there is no builtin way to access the project root, where
@@ -130,16 +117,19 @@
         # conditions are met. We opted not to do this because it would require
         # us to bet that the condition above would be met before we want to launch.
         devShells = {
-          onchain = onchain.devShell;
-          offchain = offchain.devShell;
+          onchain = projects.onchain.devShell;
+          offchain = projects.offchain.devShell;
         };
 
         apps =
-             offchain.apps
-          // docs.apps
+             projects.offchain.apps
+          // projects.docs.apps
           // {
             format =  lint-utils.mkApp.${system} lintSpec;  # TODO: Refactor this by moving it to appsFromDerivationSet
           };
       };
-  in flake-utils.lib.eachSystem [ "x86_64-linux" ] outputsFor;
+  in flake-utils.lib.eachSystem [ "x86_64-linux" ] outputsFor // {
+    # Name of our project; used in script prefixes.
+    projectName = "dusd";
+  };
 }
