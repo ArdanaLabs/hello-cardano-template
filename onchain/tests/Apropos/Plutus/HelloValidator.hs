@@ -41,9 +41,9 @@ instance LogicalModel HelloProp where
   logic = ExactlyOne [Var IsValid, Var IsInvalid]
 
 instance HasLogicalModel HelloProp HelloModel where
-  satisfiesProperty IsValid (_,i, j) = i + 1 == j
+  satisfiesProperty IsValid (_, i, j) = i + 1 == j
   satisfiesProperty IsInvalid p = not $ satisfiesProperty IsValid p
-  satisfiesProperty IsMalformed (b,_,_) = b
+  satisfiesProperty IsMalformed (b, _, _) = b
 
 instance HasPermutationGenerator HelloProp HelloModel where
   sources =
@@ -51,9 +51,9 @@ instance HasPermutationGenerator HelloProp HelloModel where
         { sourceName = "Yes"
         , covers = Yes
         , gen =
-              (,,) <$> bool
-                   <*> (fromIntegral <$> int (linear minBound maxBound))
-                   <*> (fromIntegral <$> int (linear minBound maxBound))
+            (,,) <$> bool
+              <*> (fromIntegral <$> int (linear minBound maxBound))
+              <*> (fromIntegral <$> int (linear minBound maxBound))
         }
     ]
   generators =
@@ -61,50 +61,57 @@ instance HasPermutationGenerator HelloProp HelloModel where
         { name = "MakeValid"
         , match = Not $ Var IsValid
         , contract = add IsValid >> remove IsInvalid
-        , morphism = \(m,i,_) -> pure (m,i, i + 1)
+        , morphism = \(m, i, _) -> pure (m, i, i + 1)
         }
     , Morphism
         { name = "MakeInvalid"
         , match = Not $ Var IsInvalid
         , contract = add IsInvalid >> remove IsValid
-        , morphism = \(m,i,_) -> do
+        , morphism = \(m, i, _) -> do
             j <- genFilter (/= (i + 1)) (fromIntegral <$> int (linear minBound maxBound))
             pure (m, i, j)
         }
     , Morphism
         { name = "ToggleMalformed"
         , match = Yes
-        , contract = branches [ has IsMalformed >> remove IsMalformed
-                              , hasn't IsMalformed >> add IsMalformed
-                              ]
-        , morphism = \(m,i,j) -> pure (not m, i, j)
+        , contract =
+            branches
+              [ has IsMalformed >> remove IsMalformed
+              , hasn't IsMalformed >> add IsMalformed
+              ]
+        , morphism = \(m, i, j) -> pure (not m, i, j)
         }
     ]
 
 instance HasParameterisedGenerator HelloProp HelloModel where
   parameterisedGenerator = buildGen
 
+untouched :: a
+untouched = error "untouched by script"
+
 mkCtx :: HelloModel -> Context
-mkCtx hm@(m,i,j) = Context $ toBuiltinData scCtx
+mkCtx hm@(m, i, j) = Context $ toBuiltinData scCtx
   where
     scCtx = ScriptContext txInf (Spending txInORef)
     txInf =
       TxInfo
         { txInfoInputs = [TxInInfo txInORef txInResolved]
         , txInfoOutputs = [txOutResolved]
-        , txInfoFee = noValue
-        , txInfoMint = noValue
-        , txInfoDCert = []
-        , txInfoWdrl = []
-        , txInfoValidRange = undefined
-        , txInfoSignatories = []
+        , txInfoFee = untouched
+        , txInfoMint = untouched
+        , txInfoDCert = untouched
+        , txInfoWdrl = untouched
+        , txInfoValidRange = untouched
+        , txInfoSignatories = untouched
         , txInfoData = [(datumHash datumOut, datumOut)]
-        , txInfoId = undefined
+        , txInfoId = untouched
         }
     datumIn = mkDatum $ helloModelInp hm
-    datumOut = Datum $ if m
-                         then toBuiltinData $ Just i
-                         else toBuiltinData j
+    datumOut =
+      Datum $
+        if m
+          then toBuiltinData $ Just i
+          else toBuiltinData j
     txInORef = TxOutRef txInORefId 0
     txInORefId = TxId "0000000000000000000000000000000000000000000000000000000000000000"
     txInResolved = TxOut helloAddress someAda (Just (datumHash datumIn))
@@ -118,9 +125,6 @@ helloModelInp (_, i, _) = i
 
 someAda :: Value
 someAda = Value (fromList [(currencySymbol "", fromList [(tokenName "", 10)])])
-
-noValue :: Value
-noValue = Value (fromList [])
 
 instance ScriptModel HelloProp HelloModel where
   expect = Var IsValid :&&: Not (Var IsMalformed)
@@ -138,4 +142,3 @@ spec = do
       fromHedgehogGroup
       [ runScriptTestsWhere @HelloProp "AcceptsValid" Yes
       ]
-
