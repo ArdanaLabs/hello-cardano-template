@@ -45,13 +45,18 @@ instance HasLogicalModel HelloProp HelloModel where
 instance HasPermutationGenerator HelloProp HelloModel where
   sources =
     [ Source
-        { sourceName = "baseGen"
-        , covers = Yes
+        { sourceName = "Well Formed"
+        , covers = ExactlyOne [Var IsValid, Var IsInvalid]
         , gen = do
             r <-
               (,) <$> (fromIntegral <$> int (linear (-10) 10))
                 <*> (fromIntegral <$> int (linear (-10) 10))
             pure (Right r)
+        }
+    , Source
+        { sourceName = "Malformed"
+        , covers = Var IsMalformed
+        , gen = Left . fromIntegral <$> int (linear (-10) 10)
         }
     ]
   generators =
@@ -68,16 +73,12 @@ instance HasPermutationGenerator HelloProp HelloModel where
         , match = Not $ Var IsInvalid
         , contract = clear >> addAll [IsInvalid]
         , morphism = \case
-            Right (i, j) -> pure $ Right (i, j + 1)
-            Left i -> pure $ Right (i, i)
-        }
-    , Morphism
-        { name = "MakeMalformed"
-        , match = Not $ Var IsMalformed
-        , contract = clear >> addAll [IsMalformed]
-        , morphism = \case
-            Right (i, _) -> pure $ Left i
-            _ -> error "this should never happen"
+            Right (i, _) -> do
+              j <- genFilter (/= (i + 1)) (fromIntegral <$> int (linear (-10) 10))
+              pure $ Right (i, j)
+            Left i -> do
+              j <- genFilter (/= (i + 1)) (fromIntegral <$> int (linear (-10) 10))
+              pure $ Right (i, j)
         }
     ]
 

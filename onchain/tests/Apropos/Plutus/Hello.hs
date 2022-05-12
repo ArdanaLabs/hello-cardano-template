@@ -45,13 +45,15 @@ instance HasPermutationGenerator HelloProp HelloModel where
         { name = "MakeValid"
         , match = Not $ Var IsValid
         , contract = clear >> addAll [IsValid]
-        , morphism = \(i, _j) -> pure (i, i + 1)
+        , morphism = \(i, _) -> pure (i, i + 1)
         }
     , Morphism
         { name = "MakeInvalid"
         , match = Not $ Var IsInvalid
         , contract = clear >> addAll [IsInvalid]
-        , morphism = \(i, j) -> pure (i, j + 1)
+        , morphism = \(i, _) -> do
+            j <- genFilter (/= (i + 1)) (fromIntegral <$> int (linear (-10) 10))
+            pure (i, j)
         }
     ]
 
