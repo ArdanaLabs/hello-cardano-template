@@ -28,8 +28,6 @@ evalCommands = snd . foldl (flip f) (0, "")  where
 mkTest :: [Command] -> WebdriverTestM () ()
 mkTest commands = do
 
-    openPath "/"
-
     initialize <- findElem $ ById "initialize"
     increment  <- findElem $ ById "increment"
     read       <- findElem $ ById "read"
