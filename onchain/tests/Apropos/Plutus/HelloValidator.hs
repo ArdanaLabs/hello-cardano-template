@@ -30,8 +30,8 @@ data HelloProp
   = IsValid
   | IsInvalid
   | IsMalformed
-  deriving stock (Show, Eq, Ord, Enum, Bounded,Generic)
-  deriving anyclass (Enumerable,Hashable)
+  deriving stock (Show, Eq, Ord, Enum, Bounded, Generic)
+  deriving anyclass (Enumerable, Hashable)
 
 instance LogicalModel HelloProp where
   logic = ExactlyOne [Var IsValid, Var IsInvalid, Var IsMalformed]
@@ -44,14 +44,15 @@ instance HasLogicalModel HelloProp HelloModel where
 
 instance HasPermutationGenerator HelloProp HelloModel where
   sources =
-    [ Source {
-        sourceName = "baseGen"
-      , covers = Yes
-      , gen =  do
-          r <- (,) <$> (fromIntegral <$> int (linear (-10) 10))
-                   <*> (fromIntegral <$> int (linear (-10) 10))
-          pure (Right r)
-      }
+    [ Source
+        { sourceName = "baseGen"
+        , covers = Yes
+        , gen = do
+            r <-
+              (,) <$> (fromIntegral <$> int (linear (-10) 10))
+                <*> (fromIntegral <$> int (linear (-10) 10))
+            pure (Right r)
+        }
     ]
   generators =
     [ Morphism

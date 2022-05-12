@@ -19,8 +19,8 @@ type HelloModel = (Integer, Integer)
 data HelloProp
   = IsValid
   | IsInvalid
-  deriving stock (Show, Eq, Ord, Enum, Bounded,Generic)
-  deriving anyclass (Hashable,Enumerable)
+  deriving stock (Show, Eq, Ord, Enum, Bounded, Generic)
+  deriving anyclass (Hashable, Enumerable)
 
 instance LogicalModel HelloProp where
   logic = ExactlyOne [Var IsValid, Var IsInvalid]
@@ -31,13 +31,14 @@ instance HasLogicalModel HelloProp HelloModel where
 
 instance HasPermutationGenerator HelloProp HelloModel where
   sources =
-    [ Source {
-        sourceName = "baseGen"
-      , covers = Yes
-      , gen = (,)
-          <$> (fromIntegral <$> int (linear (-10) 10))
-          <*> (fromIntegral <$> int (linear (-10) 10))
-      }
+    [ Source
+        { sourceName = "baseGen"
+        , covers = Yes
+        , gen =
+            (,)
+              <$> (fromIntegral <$> int (linear (-10) 10))
+              <*> (fromIntegral <$> int (linear (-10) 10))
+        }
     ]
   generators =
     [ Morphism

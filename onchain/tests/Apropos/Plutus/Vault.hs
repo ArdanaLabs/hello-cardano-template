@@ -43,7 +43,7 @@ data VaultProp
   = DebtProp SingletonValueProp
   | CollateralProp SingletonValueProp
   deriving stock (Eq, Ord, Show, Generic)
-  deriving anyclass (Enumerable,Hashable)
+  deriving anyclass (Enumerable, Hashable)
 
 instance LogicalModel VaultProp where
   logic =
