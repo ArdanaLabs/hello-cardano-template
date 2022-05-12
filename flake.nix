@@ -57,14 +57,14 @@
             // pseudoFlakes.offchain.checks
             // pseudoFlakes.format.checks;
 
-          # In Nix, there is no builtin way to access the project root, where
+          # In flake apps, there is no builtin way to access the project root, where
           # flake.nix lives. To workaround this, we inject it as env var in the
-          # `shellHook`.
-          flakeRoot = {
+          # `shellHook`. This is abstracted away as `flakeLocal`.
+          flakeLocal = {
             shellHook = ''
               export FLAKE_ROOT=$(pwd)
             '';
-            envVar = "$FLAKE_ROOT";
+            absPath = relPath: "$FLAKE_ROOT/${relPath}";
           };
 
           # We are forced to use two devshells.

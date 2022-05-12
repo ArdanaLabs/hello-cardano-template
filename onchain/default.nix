@@ -3,11 +3,11 @@
 let
   inherit (pkgs.callPackage ../nix/haskell.nix { inherit inputs system pkgs; })
     plutusProjectIn ghcid;
-  cabalProjectRoot = "${inputs.self.flakeRoot.${system}.envVar}/onchain";
+  subdir = "onchain";
 in
 rec {
   project = plutusProjectIn {
-    subdir = "onchain";
+    inherit subdir;
     extraShell = {
       additional = ps: [
         ps.apropos
@@ -39,15 +39,15 @@ rec {
 
   tools = {
     onchain-ghcid-lib =
-      ghcid { inherit cabalProjectRoot; name = "onchain-ghcid-lib"; args = "-c 'cabal repl'"; };
+      ghcid { inherit subdir; name = "onchain-ghcid-lib"; args = "-c 'cabal repl'"; };
     onchain-ghcid-test =
-      ghcid { inherit cabalProjectRoot; name = "onchain-ghcid-test"; args = "-c 'cabal repl test:tests'"; };
+      ghcid { inherit subdir; name = "onchain-ghcid-test"; args = "-c 'cabal repl test:tests'"; };
     offchain-ghcid-test-run =
-      ghcid { inherit cabalProjectRoot; name = "onchain-ghcid-test-run"; args = "-c 'cabal repl test:tests' -T :main"; };
+      ghcid { inherit subdir; name = "onchain-ghcid-test-run"; args = "-c 'cabal repl test:tests' -T :main"; };
   };
 
   devShell = haskellNixFlake.devShell.overrideAttrs (oa: {
-    shellHook = oa.shellHook + inputs.self.flakeRoot.${system}.shellHook;
+    shellHook = oa.shellHook + inputs.self.flakeLocal.${system}.shellHook;
     buildInputs = pkgs.lib.attrsets.attrValues (
       tools
     );

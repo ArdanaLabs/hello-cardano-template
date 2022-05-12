@@ -3,7 +3,7 @@
 let
   inherit (pkgs.callPackage ../nix/haskell.nix { inherit inputs system pkgs; })
     plutusProjectIn ghcid;
-  cabalProjectRoot = "${inputs.self.flakeRoot.${system}.envVar}/offchain";
+  subdir = "offchain";
   onchain-scripts = inputs.self.pseudoFlakes.${system}.onchain.onchain-scripts;
   # Checks the shell script using ShellCheck
   checkedShellScript = system: name: text:
@@ -19,7 +19,7 @@ let
 in
 rec {
   project = plutusProjectIn {
-    subdir = "offchain";
+    inherit subdir;
     extraPackages = {
       hello-world.components.library.preBuild = "export DUSD_SCRIPTS=${onchain-scripts}";
     };
@@ -84,11 +84,11 @@ rec {
 
   tools = {
     offchain-ghcid-lib =
-      ghcid { inherit cabalProjectRoot; name = "offchain-ghcid-lib"; args = "-c 'cabal repl'"; };
+      ghcid { inherit subdir; name = "offchain-ghcid-lib"; args = "-c 'cabal repl'"; };
     offchain-ghcid-test =
-      ghcid { inherit cabalProjectRoot; name = "offchain-ghcid-test"; args = "-c 'cabal repl exe:tests'"; };
+      ghcid { inherit subdir; name = "offchain-ghcid-test"; args = "-c 'cabal repl exe:tests'"; };
     offchain-ghcid-test-run =
-      ghcid { inherit cabalProjectRoot; name = "offchain-ghcid-test-run"; args = "-c 'cabal repl exe:tests' -T :main"; };
+      ghcid { inherit subdir; name = "offchain-ghcid-test-run"; args = "-c 'cabal repl exe:tests' -T :main"; };
   };
 
   devShell = haskellNixFlake.devShell.overrideAttrs (oa: {
@@ -96,7 +96,7 @@ rec {
       tools
     );
     shellHook = oa.shellHook + ''
-      ${inputs.self.flakeRoot.${system}.shellHook}
+      ${inputs.self.flakeLocal.${system}.shellHook}
       # running local cluster + PAB
       export SHELLEY_TEST_DATA="${inputs.plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley/"
     '';

@@ -54,13 +54,13 @@
       inherit sha256map;
     };
 
-  # Run Ghcid under `cabalProjectRoot`, passing `args`.
-  ghcid = { cabalProjectRoot, name, args }:
+  # Run Ghcid under `subdir`, passing `args`.
+  ghcid = { subdir, name, args }:
     pkgs.writeShellApplication {
       name = "${inputs.self.projectName}-${name}";
       text = ''
-        echo "Running Ghcid under ${cabalProjectRoot} (${name})"
-        cd "${cabalProjectRoot}" 
+        echo "Running Ghcid under ${subdir} (${name})"
+        cd "${inputs.self.flakeLocal.${system}.absPath subdir}"
         ${pkgs.ghcid}/bin/ghcid ${args}
       '';
     };
