@@ -14,10 +14,8 @@ data IntegerProp
   | IsZero
   | IsLarge
   | IsSmall
-  deriving stock (Show, Eq, Ord, Enum, Bounded)
-
-instance Enumerable IntegerProp where
-  enumerated = [minBound .. maxBound]
+  deriving stock (Show, Eq, Ord, Generic)
+  deriving anyclass (Enumerable, Hashable)
 
 instance LogicalModel IntegerProp where
   logic =
@@ -33,30 +31,25 @@ instance HasLogicalModel IntegerProp Integer where
   satisfiesProperty IsSmall i = i <= 10 && i >= -10
 
 instance HasPermutationGenerator IntegerProp Integer where
+  sources =
+    [ Source
+        { sourceName = "Zero"
+        , covers = Var IsZero
+        , gen = pure 0
+        }
+    , Source
+        { sourceName = "Large"
+        , covers = Var IsPositive :&&: Var IsLarge
+        , gen = fromIntegral <$> int (linear 11 maxBound)
+        }
+    , Source
+        { sourceName = "Small"
+        , covers = Var IsPositive :&&: Var IsSmall
+        , gen = fromIntegral <$> int (linear 1 10)
+        }
+    ]
   generators =
     [ Morphism
-        { name = "MakeZero"
-        , match = Not $ Var IsZero
-        , contract = clear >> addAll [IsZero, IsSmall]
-        , morphism = \_ -> pure 0
-        }
-    , Morphism
-        { name = "MakeLarge"
-        , match = Not $ Var IsLarge
-        , contract = clear >> addAll [IsLarge, IsPositive]
-        , morphism = \_ -> do
-            i <- int (linear 11 (maxBound -1))
-            pure $ fromIntegral i
-        }
-    , Morphism
-        { name = "MakeSmall"
-        , match = Not $ Var IsSmall
-        , contract = clear >> addAll [IsSmall, IsPositive]
-        , morphism = \_ -> do
-            i <- int (linear 1 10)
-            pure $ fromIntegral i
-        }
-    , Morphism
         { name = "Negate"
         , match = Not $ Var IsZero
         , contract =
@@ -69,13 +62,10 @@ instance HasPermutationGenerator IntegerProp Integer where
     ]
 
 instance HasParameterisedGenerator IntegerProp Integer where
-  parameterisedGenerator = buildGen $ pure 0
+  parameterisedGenerator = buildGen
 
 spec :: Spec
 spec = do
   describe "integerGenSelfTest" $
-    mapM_ fromHedgehogGroup $
-      permutationGeneratorSelfTest
-        True
-        (\(_ :: Morphism IntegerProp integerGenSelfTest) -> True)
-        (pure (0 :: Integer))
+    fromHedgehogGroup $
+      permutationGeneratorSelfTest @IntegerProp

@@ -10,7 +10,6 @@ import Apropos.Plutus.AssetClass (AssetClassProp (..))
 import Apropos.Plutus.Integer (IntegerProp (..))
 import Apropos.Plutus.SingletonValue (SingletonValue, SingletonValueProp (..))
 import Control.Lens (lens)
-import GHC.Generics (Generic)
 import Plutus.V1.Ledger.Api (
   Datum (..),
  )
@@ -22,16 +21,16 @@ import Test.Syd.Hedgehog (fromHedgehogGroup)
 import Plutarch (PCon (pcon), (#))
 import Plutarch.Api.V1 (PDatum (PDatum))
 import Plutarch.Builtin (
-  PIsData (pdata),
   pforgetData,
   ppairDataBuiltin,
  )
 import Plutarch.Lift (pconstant, plift)
+import Plutarch.Prelude (pdata)
 
 spec :: Spec
 spec = do
   describe "vault model" $ do
-    fromHedgehogGroup $ runGeneratorTestsWhere (Apropos :: VaultModel :+ VaultProp) "generator" Yes
+    fromHedgehogGroup $ runGeneratorTestsWhere @VaultProp "generator" Yes
 
 data VaultModel = VaultModel
   { collateral :: SingletonValue
@@ -44,7 +43,7 @@ data VaultProp
   = DebtProp SingletonValueProp
   | CollateralProp SingletonValueProp
   deriving stock (Eq, Ord, Show, Generic)
-  deriving anyclass (Enumerable)
+  deriving anyclass (Enumerable, Hashable)
 
 instance LogicalModel VaultProp where
   logic =
@@ -60,32 +59,31 @@ instance HasLogicalModel VaultProp VaultModel where
   satisfiesProperty (CollateralProp p) vm = satisfiesProperty p (collateral vm)
 
 instance HasAbstractions VaultProp VaultModel where
-  abstractions =
-    [ WrapAbs $
-        ProductAbstraction
-          { abstractionName = "debt"
-          , propertyAbstraction = abstractsProperties DebtProp
-          , productModelAbstraction = lens debt (\vm debt' -> vm {debt = debt'})
-          }
-    , WrapAbs $
-        ProductAbstraction
-          { abstractionName = "collateral"
-          , propertyAbstraction = abstractsProperties CollateralProp
-          , productModelAbstraction = lens collateral (\vm collateral' -> vm {collateral = collateral'})
+  sourceAbstractions =
+    [ SoAs $
+        SourceAbstraction
+          { sourceAbsName = "VaultModel"
+          , constructor = VaultModel
+          , productAbs =
+              ProductAbstraction
+                { abstractionName = "collateral"
+                , propertyAbstraction = abstractsProperties CollateralProp
+                , productModelAbstraction = lens collateral (\vm collateral' -> vm {collateral = collateral'})
+                }
+                :& ProductAbstraction
+                  { abstractionName = "debt"
+                  , propertyAbstraction = abstractsProperties DebtProp
+                  , productModelAbstraction = lens debt (\vm debt' -> vm {debt = debt'})
+                  }
+                :& Nil
           }
     ]
 
 instance HasPermutationGenerator VaultProp VaultModel where
-  generators = abstractionMorphisms
+  sources = abstractionSources
 
 instance HasParameterisedGenerator VaultProp VaultModel where
-  parameterisedGenerator = buildGen baseGen
-
-baseGen :: Gen VaultModel
-baseGen =
-  VaultModel
-    <$> genSatisfying (Not (Var (Amt IsNegative)) :&&: Var (AC IsAda))
-    <*> genSatisfying (Not (Var (Amt IsNegative)) :&&: Var (AC IsDUSD))
+  parameterisedGenerator = buildGen
 
 makeVaultDatum :: VaultModel -> Datum
 makeVaultDatum VaultModel {collateral = (AssetClass (collateralCs, collateralTn), collateralAmt), debt = (AssetClass (debtCs, debtTn), debtAmt)} =
