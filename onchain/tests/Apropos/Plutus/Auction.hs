@@ -1,7 +1,6 @@
 module Apropos.Plutus.Auction (spec) where
 
 import Apropos
-import GHC.Generics (Generic)
 import Gen
 import Plutus.V1.Ledger.Api
 import Plutus.V1.Ledger.Value (AssetClass, assetClassValue)
@@ -11,7 +10,7 @@ import Test.Syd.Hedgehog (fromHedgehogGroup)
 spec :: Spec
 spec = do
   xdescribe "auction model" $ do
-    fromHedgehogGroup $ runGeneratorTestsWhere (Apropos :: AuctionModel :+ AuctionProp) "generator" Yes
+    fromHedgehogGroup $ runGeneratorTestsWhere @AuctionProp "generator" Yes
 
 data AuctionProp
   = Valid

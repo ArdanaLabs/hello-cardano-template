@@ -1,8 +1,9 @@
 module DUSD (main) where
 
-import Hello (helloScript)
+import Hello (helloValidator)
 import Plutarch (printScript)
+import Plutus.V1.Ledger.Scripts (getValidator)
 
 main :: IO ()
 main = do
-  putStrLn $ printScript helloScript
+  putStrLn $ printScript (getValidator helloValidator)

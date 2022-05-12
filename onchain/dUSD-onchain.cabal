@@ -22,6 +22,7 @@ common lang
     DerivingStrategies
     DerivingVia
     DoAndIfThenElse
+    DuplicateRecordFields
     EmptyCase
     EmptyDataDecls
     EmptyDataDeriving
@@ -96,6 +97,7 @@ executable scripts
     , base
     , bytestring
     , dUSD-onchain
+    , plutus-ledger-api
     , serialise
 
 test-suite tests
@@ -107,7 +109,7 @@ test-suite tests
   other-modules:
     Apropos.Plutus.AssetClass
     Apropos.Plutus.Auction
-    Apropos.Plutus.Hello
+    Apropos.Plutus.HelloValidator
     Apropos.Plutus.Integer
     Apropos.Plutus.SingletonValue
     Apropos.Plutus.Value
@@ -119,13 +121,17 @@ test-suite tests
     , apropos
     , apropos-tx
     , base
+    , bytestring
     , containers
+    , cryptonite
     , dUSD-onchain
     , hedgehog
     , lens
+    , memory
     , plutarch
     , plutus-ledger-api
     , plutus-tx
+    , serialise
     , sydtest
     , sydtest-hedgehog
     , tasty

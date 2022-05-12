@@ -18,7 +18,6 @@ import Apropos.Plutus.SingletonValue (
  )
 
 import Data.List (sort)
-import GHC.Generics (Generic)
 
 import Test.Syd
 import Test.Syd.Hedgehog
@@ -29,8 +28,8 @@ data MultiValueProp
   = HasSomeAda
   | HasSomeDana
   | HasSomeJunk
-  deriving stock (Eq, Ord, Show, Enum, Bounded, Generic)
-  deriving anyclass (Enumerable)
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (Enumerable, Hashable)
 
 instance LogicalModel MultiValueProp where
   logic = Yes
@@ -49,6 +48,13 @@ instance HasLogicalModel MultiValueProp MultiValue where
   satisfiesProperty (propsFor -> AllElems props) = all $ satisfiesExpression props
 
 instance HasPermutationGenerator MultiValueProp MultiValue where
+  sources =
+    [ Source
+        { sourceName = "empty"
+        , covers = None [Var p | p <- enumerated]
+        , gen = pure []
+        }
+    ]
   generators =
     [ Morphism
       { name = "Add " ++ show p
@@ -72,15 +78,10 @@ instance HasPermutationGenerator MultiValueProp MultiValue where
          ]
 
 instance HasParameterisedGenerator MultiValueProp MultiValue where
-  parameterisedGenerator = buildGen $ pure []
-
--- TODO better base gen?
+  parameterisedGenerator = buildGen
 
 spec :: Spec
 spec = do
   describe "valueGenSelfTests" $
-    mapM_ fromHedgehogGroup $
-      permutationGeneratorSelfTest
-        True
-        (const @Bool @(Morphism MultiValueProp MultiValue) True)
-        (pure [])
+    fromHedgehogGroup $
+      permutationGeneratorSelfTest @MultiValueProp

@@ -11,7 +11,6 @@ import Apropos
 import Control.Monad (replicateM)
 import Data.Maybe (mapMaybe)
 import Data.String
-import GHC.Generics
 import Plutus.V1.Ledger.Value
 import Test.Syd
 import Test.Syd.Hedgehog
@@ -23,7 +22,7 @@ data AssetClassProp
   | IsLiquidity
   | IsOther
   deriving stock (Eq, Ord, Enum, Show, Bounded, Generic)
-  deriving anyclass (Enumerable)
+  deriving anyclass (Enumerable, Hashable)
 
 specialAC :: AssetClassProp -> Maybe AssetClass
 specialAC IsAda = Just ada
@@ -52,27 +51,26 @@ instance LogicalModel AssetClassProp where
   logic = ExactlyOne [Var IsAda, Var IsDana, Var IsDUSD, Var IsLiquidity, Var IsOther]
 
 instance HasLogicalModel AssetClassProp AssetClass where
-  satisfiesProperty property ac = case specialAC property of
+  satisfiesProperty p ac = case specialAC p of
     Just ac' -> ac == ac'
     Nothing -> ac `notElem` specialTokens
 
 instance HasPermutationGenerator AssetClassProp AssetClass where
-  generators =
-    Morphism
-      { name = "IsOther"
-      , match = Not $ Var IsOther
-      , contract = clear >> add IsOther
-      , morphism = \_ -> genFilter (`notElem` specialTokens) baseGen
-      } :
-      [ Morphism
-        { name = "SetToken" ++ show property
-        , match = Not $ Var property
-        , contract = clear >> add property
-        , morphism = \_ -> pure ac
-        }
-      | property <- enumerated
-      , Just ac <- pure $ specialAC property
-      ]
+  sources =
+    [ Source
+      { sourceName = "Token" ++ show p
+      , covers = Var p
+      , gen = pure ac
+      }
+    | p <- enumerated
+    , Just ac <- pure $ specialAC p
+    ]
+      ++ [ Source
+            { sourceName = "Other"
+            , covers = Var IsOther
+            , gen = genFilter (`notElem` specialTokens) baseGen
+            }
+         ]
 
 baseGen :: Gen AssetClass
 baseGen =
@@ -89,13 +87,10 @@ baseGen =
     hexIt = element "01234567890abcdef"
 
 instance HasParameterisedGenerator AssetClassProp AssetClass where
-  parameterisedGenerator = buildGen baseGen
+  parameterisedGenerator = buildGen
 
 spec :: Spec
 spec = do
   describe "assetClassGenSelfTest" $
-    mapM_ fromHedgehogGroup $
-      permutationGeneratorSelfTest
-        True
-        (\(_ :: Morphism AssetClassProp assetClassGenSelfTest) -> True)
-        baseGen
+    fromHedgehogGroup $
+      permutationGeneratorSelfTest @AssetClassProp
