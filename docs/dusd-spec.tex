@@ -209,8 +209,8 @@ setup, $90\%$), is used to pay back debt, burning the rest.
 
 \subsection{Buffer}
 
-The buffer is a UTXO responsible for setting the protocol-wide parameters,
-holding the protocol's profits and launching surplus and debt auctions. \\
+The buffer is a UTXO responsible for holding the protocol's profits and launching 
+surplus and debt auctions. \\
 
 Let's start by going through some general information on how the surplus and
 debt auctions will work.
@@ -261,6 +261,10 @@ i.e. a given amount of ADA from the buffer's reserves is sold for DANA.
 
 Admin can trigger a DANA $\leftrightarrow$ ADA sale auction of a given size,
 i.e. a given amount of DANA from the buffer's reserves is sold for ADA.
+
+\subsection{Protocol Parameters Module}
+
+The Protocol Parameters Module is a UTXO responsible for setting the protocol-wide parameters.
 
 \subsubsection{Set liquidation discount}
 
@@ -427,14 +431,18 @@ Acceptance criteria:
     price eventually converges back to within $1\%$ of USD.
     \todo{Phrase this criterium properly.
     How can we test if the auction sizes are chosen appropriately?}
+  \item Admin and only admin can trigger ADA and DANA sale auctions
+\end{itemize}
+
+\subsection{Protocol Parameters Module}
+\begin{itemize}
   \item Admin and only admin can set the protocol-wide parameters (stability
     fee, liquidation discount, liquidation fee and debt
     floor)
   \item If the protocol-wide parameters are changed, this change is immediately
     and correctly seen in liquidations and when taking out loans
-  % Comment for Version 2: Add debt ceiling to the protocol-wide parameters
-  \item Admin and only admin can trigger ADA and DANA sale auctions
-\end{itemize}
+    % Comment for Version 2: Add debt ceiling to the protocol-wide parameters
+\end{itemize}  
 
 \subsection{Update mechanism for the protocol (TBD)}
 
@@ -596,43 +604,6 @@ In brokering this transaction, the liquidation bot earns profits, which are
 stored in the admin wallet and used for protocol development.
 
 \subsection{Buffer}
-
-The buffer will contain in its datum a map from timestamps to the stability fee
-set at that time.
-We use a map to make the stability fee calculations as accurate as
-possible.\footnote{
-  Imagine you open a vault, take out a loan and then leave the vault alone for
-  two years.
-  Just before you pay back the loan, governance decides to increase the
-  stability fee.
-  We want to use the stability fee that was applicable to the two year period
-  when calculating your stability fee wherever possible, rather than
-  retro-actively increasing your debt.
-}. \\
-
-We put together this map by figuring out the time of execution of the
-transaction that changes the stability fee, within that transaction itself.
-This is done by setting the timestamp to be the beginning of the
-``txInfoValidRange'' range\footnote{
-  \url{https://playground.plutus.iohkdev.io/doc/haddock/plutus-ledger-api/html/Plutus-V1-Ledger-Contexts.html}},
-where the on-chain validator enforces this range to be less than $12$ hours
-long. \\
-
-In order to prevent datum overflow\footnote{
-  This means we want to prevent the datum from becoming too big}
-we limit the size of the map to $20$ data points.
-This means that any transaction that changes the stability fee, will both add a
-new entry to the map, and remove the oldest entry in case there are more than
-$20$ entries. \\
-
-The buffer will be a UTXO that includes in its datum the following:
-\begin{itemize}
-  \item Map from timestamps to stability fees
-  \item Liquidation discount
-  \item Liquidation fee
-  \item Liquidation ratio
-  \item Debt floor
-\end{itemize}
 The buffer's script address will be dependent on the same three admin public
 keys as the price module. \\
 
@@ -670,6 +641,45 @@ The main advantage of this price modules-based approach, is that we always sell
 at a trusted price, without allowing as many opportunities for manipulations.
 (Classic auctions are vulnerable for manipulations through resource contention,
 DEXes through executing big transactions, e.g. sandwich attacks.)
+ 
+\subsection{Protocol Parameters Module}
+
+The protocol parameters module will contain in its datum a map from timestamps to the stability fee
+set at that time.
+We use a map to make the stability fee calculations as accurate as
+possible.\footnote{
+  Imagine you open a vault, take out a loan and then leave the vault alone for
+  two years.
+  Just before you pay back the loan, governance decides to increase the
+  stability fee.
+  We want to use the stability fee that was applicable to the two year period
+  when calculating your stability fee wherever possible, rather than
+  retro-actively increasing your debt.
+}. \\
+
+We put together this map by figuring out the time of execution of the
+transaction that changes the stability fee, within that transaction itself.
+This is done by setting the timestamp to be the beginning of the
+``txInfoValidRange'' range\footnote{
+  \url{https://playground.plutus.iohkdev.io/doc/haddock/plutus-ledger-api/html/Plutus-V1-Ledger-Contexts.html}},
+where the on-chain validator enforces this range to be less than $12$ hours
+long. \\
+
+In order to prevent datum overflow\footnote{
+  This means we want to prevent the datum from becoming too big}
+we limit the size of the map to $20$ data points.
+This means that any transaction that changes the stability fee, will both add a
+new entry to the map, and remove the oldest entry in case there are more than
+$20$ entries. \\
+
+The protocol parameters module will be a UTXO that includes in its datum the following:
+\begin{itemize}
+  \item Map from timestamps to stability fees
+  \item Liquidation discount
+  \item Liquidation fee
+  \item Liquidation ratio
+  \item Debt floor
+\end{itemize}
 
 \section{Tests}
 
