@@ -109,7 +109,6 @@ test-suite tests
   other-modules:
     Apropos.Plutus.AssetClass
     Apropos.Plutus.Auction
-    Apropos.Plutus.Hello
     Apropos.Plutus.HelloValidator
     Apropos.Plutus.Integer
     Apropos.Plutus.SingletonValue

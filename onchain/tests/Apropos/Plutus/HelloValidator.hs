@@ -6,21 +6,25 @@ module Apropos.Plutus.HelloValidator (
 import Apropos
 import Apropos.Script
 
+import Plutarch.Api.V1 (datumHash)
 import Test.Syd hiding (Context)
 import Test.Syd.Hedgehog
 
-import Plutus.V1.Ledger.Api (BuiltinData (..), DatumHash (..), Redeemer (..), ScriptContext (..), ScriptPurpose (..), TxId (..), TxInInfo (..), TxInfo (..), TxOut (..), TxOutRef (..), Value (..), toBuiltinData)
+import Plutus.V1.Ledger.Api (
+  Redeemer (..),
+  ScriptContext (..),
+  ScriptPurpose (..),
+  TxId (..),
+  TxInInfo (..),
+  TxInfo (..),
+  TxOut (..),
+  TxOutRef (..),
+  Value (..),
+  toBuiltinData,
+ )
 import Plutus.V1.Ledger.Scripts (Context (..), Datum (..), applyValidator)
 import Plutus.V1.Ledger.Value (currencySymbol, tokenName)
 import Plutus.V2.Ledger.Api (fromList)
-
-import Codec.Serialise (serialise)
-import Crypto.Hash (hashWith)
-import Crypto.Hash.Algorithms (Blake2b_224 (Blake2b_224), HashAlgorithm)
-import Data.ByteArray (convert)
-import Data.ByteString (ByteString)
-import Data.ByteString.Lazy qualified as Lazy
-import PlutusTx.Builtins qualified as PlutusTx
 
 import Hello (helloAddress, helloValidator)
 
@@ -46,17 +50,17 @@ instance HasPermutationGenerator HelloProp HelloModel where
   sources =
     [ Source
         { sourceName = "Well Formed"
-        , covers = ExactlyOne [Var IsValid, Var IsInvalid]
+        , covers = Not (Var IsMalformed)
         , gen = do
             r <-
-              (,) <$> (fromIntegral <$> int (linear (-10) 10))
-                <*> (fromIntegral <$> int (linear (-10) 10))
+              (,) <$> (fromIntegral <$> int (linear minBound maxBound))
+                <*> (fromIntegral <$> int (linear minBound maxBound))
             pure (Right r)
         }
     , Source
         { sourceName = "Malformed"
         , covers = Var IsMalformed
-        , gen = Left . fromIntegral <$> int (linear (-10) 10)
+        , gen = Left . fromIntegral <$> int (linear minBound maxBound)
         }
     ]
   generators =
@@ -64,21 +68,18 @@ instance HasPermutationGenerator HelloProp HelloModel where
         { name = "MakeValid"
         , match = Not $ Var IsValid
         , contract = clear >> addAll [IsValid]
-        , morphism = \case
-            Right (i, _) -> pure $ Right (i, i + 1)
-            Left i -> pure $ Right (i, i + 1)
+        , morphism = \m -> do
+            let i = helloModelInp m
+            pure $ Right (i, i + 1)
         }
     , Morphism
         { name = "MakeInvalid"
         , match = Not $ Var IsInvalid
         , contract = clear >> addAll [IsInvalid]
-        , morphism = \case
-            Right (i, _) -> do
-              j <- genFilter (/= (i + 1)) (fromIntegral <$> int (linear (-10) 10))
-              pure $ Right (i, j)
-            Left i -> do
-              j <- genFilter (/= (i + 1)) (fromIntegral <$> int (linear (-10) 10))
-              pure $ Right (i, j)
+        , morphism = \m -> do
+            let i = helloModelInp m
+            j <- genFilter (/= (i + 1)) (fromIntegral <$> int (linear minBound maxBound))
+            pure $ Right (i, j)
         }
     ]
 
@@ -123,15 +124,6 @@ someAda = Value (fromList [(currencySymbol "", fromList [(tokenName "", 10)])])
 
 noValue :: Value
 noValue = Value (fromList [])
-
--- TODO do this with a non-hack
-datumHash :: Datum -> DatumHash
-datumHash (Datum (BuiltinData d)) = (DatumHash . hashBlake2b_224 . Lazy.toStrict . serialise) d
-  where
-    _plutusHashWith :: HashAlgorithm alg => alg -> ByteString -> PlutusTx.BuiltinByteString
-    _plutusHashWith alg = PlutusTx.toBuiltin . convert @_ @ByteString . hashWith alg
-    hashBlake2b_224 :: ByteString -> PlutusTx.BuiltinByteString
-    hashBlake2b_224 = _plutusHashWith Blake2b_224
 
 instance ScriptModel HelloProp HelloModel where
   expect = Var IsValid

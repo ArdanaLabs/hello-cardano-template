@@ -149,7 +149,7 @@
               "https://github.com/mlabs-haskell/apropos"."8304b8a91d38ea26d3302aee411748176c85c4bd" = "sha256-TqCQixWcs492kcJlWffyjwixPwG4LYATqy6lwbzA6DA=";
               "https://github.com/mlabs-haskell/apropos-tx"."9734e1e8a4833fc56af350adf07c104cf043aafa" = "sha256-QpHYio6n3DciQXIJOoH65DTbclSQSrTPS0nbeGKK33c=";
               "https://github.com/mlabs-haskell/digraph"."d4dfec22f6a6eb646dcfa9591eaca0a9be88d260" = "sha256-ytQkJ18tYs13rt66s4jdbaGa5mLNEIerF8u24PvyPLA=";
-              "https://github.com/Plutonomicon/plutarch"."cae000584f5492daa2e13a08632ea69221a8c147" = "sha256-ZEGKBr1q852sx5aOOAqWHKZR+//YByQmGmBKglGr+qQ=";
+              "https://github.com/Plutonomicon/plutarch"."ae2059f11f24d47bedeaa18749d01711cddab0bc" = "sha256-DeSwiDyJeI9had5OCxLiGtYeDl07Vic0cR8RETBLY9k=";
               "https://github.com/input-output-hk/plutus.git"."983e6af2154c4bdf86ed645062bcb62f304d0a4f" = "sha256-Ga+hIhrgq2kR5Vnso/Edo2wgQpFn167eWGl35oM093U=";
               "https://github.com/Quid2/flat.git"."ee59880f47ab835dbd73bea0847dab7869fc20d8" = "lRFND+ZnZvAph6ZYkr9wl9VAx41pb3uSFP8Wc7idP9M=";
               "https://github.com/input-output-hk/cardano-crypto.git"."07397f0e50da97eaa0575d93bee7ac4b2b2576ec" = "oxIOVlgm07FAEmgGRF1C2me9TXqVxQulEOcJ22zpTRs=";

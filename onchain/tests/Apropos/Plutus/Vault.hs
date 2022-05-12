@@ -21,11 +21,11 @@ import Test.Syd.Hedgehog (fromHedgehogGroup)
 import Plutarch (PCon (pcon), (#))
 import Plutarch.Api.V1 (PDatum (PDatum))
 import Plutarch.Builtin (
-  PIsData (pdata),
   pforgetData,
   ppairDataBuiltin,
  )
 import Plutarch.Lift (pconstant, plift)
+import Plutarch.Prelude (pdata)
 
 spec :: Spec
 spec = do

@@ -14,7 +14,6 @@ import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extensions.Monad (pmatchFieldC)
 import Plutarch.Extra.Api (pgetContinuingOutputs, pparseDatum)
 import Plutarch.Extra.TermCont (pmatchC)
-import Plutarch.TryFrom (PTryFrom)
 
 {- | enfroces that there is a unique continuing output gets it's Datum
  - and converts it to the desired type via pfromData

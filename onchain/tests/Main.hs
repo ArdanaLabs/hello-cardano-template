@@ -2,7 +2,6 @@ module Main (main) where
 
 import Apropos.Plutus.AssetClass qualified as AssetClass
 import Apropos.Plutus.Auction qualified as Auction
-import Apropos.Plutus.Hello qualified as Hello
 import Apropos.Plutus.HelloValidator qualified as HelloValidator
 import Apropos.Plutus.Integer qualified as Integer
 import Apropos.Plutus.SingletonValue qualified as SingletonValue
@@ -29,5 +28,4 @@ main =
       Value.spec
       Vault.spec
       Auction.spec
-      Hello.spec
       HelloValidator.spec
