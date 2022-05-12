@@ -38,35 +38,19 @@
             offchain = import ./offchain { inherit inputs system pkgs; };
             docs = import ./docs { inherit inputs system pkgs; };
             format = import ./nix/format.nix { inherit inputs system pkgs; };
+            everything-else = import ./nix/everything-else.nix { inherit inputs system pkgs; };
           };
 
         in
         {
           inherit projects;
 
-          # TODO: Refactor this composition so it takes a projects set, without
-          # needing to look inside.
           packages =
             projects.onchain.packages
             // projects.offchain.packages
             // projects.docs.packages
-            // {
-              # A combination of all derivations (aside from packages) we are care
-              # to build in CI: checks, devShells. We need this because IFD in
-              # Haskell disallows use of `nix flake check`, but we can use `nix
-              # build .#ci` to, effectively, run those checks.
-              ci = pkgs.runCommand "combined"
-                {
-                  drvs =
-                    builtins.attrValues self.checks.${system}
-                    # This allows us to cache nix-shell (nix develop)
-                    # https://nixos.wiki/wiki/Caching_nix_shell_build_inputs
-                    ++ (pkgs.lib.attrsets.mapAttrsToList
-                      (_: shell: shell.inputDerivation)
-                      self.devShells.${system});
-                } ''echo $drvs > $out'';
-            };
-          defaultPackage = self.packages.${system}.ci;
+            // projects.everything-else.packages;
+          defaultPackage = self.packages.${system}.everything-else;
 
           checks =
             projects.onchain.checks
