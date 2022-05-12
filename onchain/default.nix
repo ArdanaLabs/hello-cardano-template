@@ -1,10 +1,11 @@
-{ inputs, system, pkgs  }:
+{ inputs, system, pkgs }:
 
 let
-  inherit (pkgs.callPackage ../nix/haskell.nix { inherit inputs system pkgs; }) 
+  inherit (pkgs.callPackage ../nix/haskell.nix { inherit inputs system pkgs; })
     plutusProjectIn ghcid;
   cabalProjectRoot = "${inputs.self.flakeRoot.${system}.envVar}/onchain";
-in rec {
+in
+rec {
   project = plutusProjectIn {
     subdir = "onchain";
     extraShell = {
@@ -17,7 +18,7 @@ in rec {
         ps.sydtest-hedgehog
       ];
     };
-    pkg-def-extras = [];
+    pkg-def-extras = [ ];
     sha256map = {
       "https://github.com/mlabs-haskell/apropos"."455b1a3ad1eee35de4d3fb8c4a4527071474336c" = "sha256-EC6vnimXA+jBRPQLLs2dltuTx9XoSdkQfh742NnLJSQ=";
       "https://github.com/mlabs-haskell/apropos-tx"."489eeb8c30d62d5c75eafe4242a1f133695f8564" = "sha256-15nFGPhXBy+G0oocb6KQf5KVnT0fuAOoFCdzT+vyeEg=";
@@ -37,12 +38,12 @@ in rec {
   haskellNixFlake = project.flake { };
 
   tools = {
-    onchain-ghcid-lib = 
-      ghcid { inherit cabalProjectRoot; name= "onchain-ghcid-lib"; args="-c 'cabal repl'"; };
-    onchain-ghcid-test = 
-      ghcid { inherit cabalProjectRoot; name= "onchain-ghcid-test"; args="-c 'cabal repl test:tests'"; };
-    offchain-ghcid-test-run = 
-      ghcid { inherit cabalProjectRoot; name= "onchain-ghcid-test-run"; args="-c 'cabal repl test:tests' -T :main"; };
+    onchain-ghcid-lib =
+      ghcid { inherit cabalProjectRoot; name = "onchain-ghcid-lib"; args = "-c 'cabal repl'"; };
+    onchain-ghcid-test =
+      ghcid { inherit cabalProjectRoot; name = "onchain-ghcid-test"; args = "-c 'cabal repl test:tests'"; };
+    offchain-ghcid-test-run =
+      ghcid { inherit cabalProjectRoot; name = "onchain-ghcid-test-run"; args = "-c 'cabal repl test:tests' -T :main"; };
   };
 
   devShell = haskellNixFlake.devShell.overrideAttrs (oa: {
@@ -52,13 +53,9 @@ in rec {
     );
   });
 
-  packages = haskellNixFlake.packages // {
+  packages = haskellNixFlake.packages // { };
 
-  };
-
-  checks = haskellNixFlake.checks // {
-
-  };
+  checks = haskellNixFlake.checks // { };
 
   onchain-scripts = pkgs.stdenv.mkDerivation {
     name = "onchain-scripts";
@@ -67,9 +64,9 @@ in rec {
     doCheck = false;
     installPhase = ''
       scripts "$out"
-      '';
+    '';
     configurePhase = ''
       mkdir $out
-      '';
+    '';
   };
 }

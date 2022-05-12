@@ -1,7 +1,7 @@
 { inputs, system, pkgs }:
 
 let
-  inherit (pkgs.callPackage ../nix/haskell.nix { inherit inputs system pkgs; }) 
+  inherit (pkgs.callPackage ../nix/haskell.nix { inherit inputs system pkgs; })
     plutusProjectIn ghcid;
   cabalProjectRoot = "${inputs.self.flakeRoot.${system}.envVar}/offchain";
   onchain-scripts = inputs.self.projects.${system}.onchain.onchain-scripts;
@@ -16,7 +16,8 @@ let
   # In effect, this allows us to run an 'app' as part of the build process (eg: in CI).
   flakeApp2Derivation = system: appName:
     pkgs.runCommand appName { } "${inputs.self.apps.${system}.${appName}.program} | tee $out";
-in rec {
+in
+rec {
   project = plutusProjectIn {
     subdir = "offchain";
     extraPackages = {
@@ -68,7 +69,7 @@ in rec {
       "https://github.com/input-output-hk/optparse-applicative"."7497a29cb998721a9068d5725d49461f2bba0e7a" = "sha256-uQx+SEYsCH7JcG3xAT0eJck9yq3y0cvx49bvItLLer8=";
       "https://github.com/input-output-hk/ouroboros-network"."4fac197b6f0d2ff60dc3486c593b68dc00969fbf" = "sha256-Cy29MHrYTkN7s3Vvog5/pOzbo7jiqTeDz6OmrNvag6w=";
       "https://github.com/input-output-hk/plutus.git"."4127e9cd6e889824d724c30eae55033cb50cbf3e" =
-      "sha256-S8uvyld7ZpPsmxZlWJeRNAPd+mw3PafrtaiiuU8H3KA=";
+        "sha256-S8uvyld7ZpPsmxZlWJeRNAPd+mw3PafrtaiiuU8H3KA=";
       "https://github.com/input-output-hk/plutus-apps"."${inputs.plutus-apps.rev}" = "sha256-Aoo+hGLUQTAkuIGTG+mpOE/DSlV8KEe5kvUZZdYez48=";
       "https://github.com/input-output-hk/purescript-bridge"."47a1f11825a0f9445e0f98792f79172efef66c00" = "sha256-/SbnmXrB9Y2rrPd6E79Iu5RDaKAKozIl685HQ4XdQTU=";
       "https://github.com/input-output-hk/servant-purescript"."44e7cacf109f84984cd99cd3faf185d161826963" = "sha256-DH9ISydu5gxvN4xBuoXVv1OhYCaqGOtzWlACdJ0H64I=";
@@ -78,16 +79,16 @@ in rec {
       "https://github.com/Quid2/flat.git"."ee59880f47ab835dbd73bea0847dab7869fc20d8" = "lRFND+ZnZvAph6ZYkr9wl9VAx41pb3uSFP8Wc7idP9M=";
     };
   };
-  
+
   haskellNixFlake = project.flake { };
 
   tools = {
-    offchain-ghcid-lib = 
-      ghcid { inherit cabalProjectRoot; name= "offchain-ghcid-lib"; args="-c 'cabal repl'"; };
-    offchain-ghcid-test = 
-      ghcid { inherit cabalProjectRoot; name= "offchain-ghcid-test"; args="-c 'cabal repl exe:tests'"; };
-    offchain-ghcid-test-run = 
-      ghcid { inherit cabalProjectRoot; name= "offchain-ghcid-test-run"; args="-c 'cabal repl exe:tests' -T :main"; };
+    offchain-ghcid-lib =
+      ghcid { inherit cabalProjectRoot; name = "offchain-ghcid-lib"; args = "-c 'cabal repl'"; };
+    offchain-ghcid-test =
+      ghcid { inherit cabalProjectRoot; name = "offchain-ghcid-test"; args = "-c 'cabal repl exe:tests'"; };
+    offchain-ghcid-test-run =
+      ghcid { inherit cabalProjectRoot; name = "offchain-ghcid-test-run"; args = "-c 'cabal repl exe:tests' -T :main"; };
   };
 
   devShell = haskellNixFlake.devShell.overrideAttrs (oa: {
@@ -101,9 +102,7 @@ in rec {
     '';
   });
 
-  packages = haskellNixFlake.packages // {
-
-  };
+  packages = haskellNixFlake.packages // { };
 
   apps = {
     offchain-test = {
@@ -119,6 +118,6 @@ in rec {
   checks = haskellNixFlake.checks // {
     offchain-test = flakeApp2Derivation system "offchain-test";
     offchain-hello-world-unit = haskellNixFlake.packages."hello-world:test:hello-world-unit";
-    offchain-hello-world-e2e = haskellNixFlake.packages."hello-world:exe:hello-world-e2e"; 
+    offchain-hello-world-e2e = haskellNixFlake.packages."hello-world:exe:hello-world-e2e";
   };
 }

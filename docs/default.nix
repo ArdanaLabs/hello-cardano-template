@@ -5,7 +5,7 @@
     build-docs = pkgs.stdenv.mkDerivation {
       name = "build-docs";
       src = ./.;
-      buildInputs = with pkgs; [ (texlive.combine { inherit ( texlive ) scheme-basic latexmk todonotes metafont; }) ];
+      buildInputs = with pkgs; [ (texlive.combine { inherit (texlive) scheme-basic latexmk todonotes metafont; }) ];
       doCheck = false;
       buildPhase = ''
         HOME=$TMP latexmk -output-directory="tmp" -pdf ./*.tex
