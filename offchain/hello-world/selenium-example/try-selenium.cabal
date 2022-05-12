@@ -1,0 +1,72 @@
+cabal-version:      2.4
+name:               try-selenium
+version:            0.1.0.0
+
+-- A short (one-line) description of the package.
+-- synopsis:
+
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+-- The license under which the package is released.
+-- license:
+author:             Péter Diviánszky
+
+-- A copyright notice.
+-- copyright:
+-- category:
+-- extra-source-files:
+
+data-dir: html
+data-files: HelloWorld.html
+
+library
+    exposed-modules:  MyLib
+
+    -- Modules included in this library but not exported.
+    -- other-modules:
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:    base ^>=4.14
+    hs-source-dirs:   src
+    default-language: Haskell2010
+
+executable try-selenium
+    main-is:          Main.hs
+
+    -- Modules included in this executable, other than Main.
+    other-modules:
+        Paths_try_selenium
+    autogen-modules:
+        Paths_try_selenium
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:
+        base ^>=4.14,
+        QuickCheck,
+        text,
+        webdriver
+
+    hs-source-dirs:   app
+    default-language: Haskell2010
+
+test-suite try-selenium-test
+    default-language: Haskell2010
+    type:             exitcode-stdio-1.0
+
+    -- Directories containing source files.
+    -- hs-source-dirs:
+    main-is:          MyLibTest.hs
+    build-depends:
+        base ^>=4.14,
+        network-uri,
+        sydtest,
+        sydtest-webdriver,
+        http-types,
+        wai,
+        sydtest-wai

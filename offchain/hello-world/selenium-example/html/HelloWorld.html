@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head></head>
+<body>
+<button id="initialize" onclick="initialize()">Initialize</button>
+<button id="increment" onclick="increment()">Increment</button>
+<button id="read" onclick="read()">Read</button>
+<p id="counterr"></p>
+
+<script>
+var counter = 0;
+
+function read() {
+  document.getElementById("counterr").innerHTML = counter;
+}
+
+function initialize() {
+  counter = 0;
+}
+
+function increment() {
+  counter = counter + 1;
+}
+</script>
+</body>
+</html>
+
+
+

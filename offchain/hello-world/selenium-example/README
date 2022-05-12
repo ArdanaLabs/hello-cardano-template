@@ -1,0 +1,17 @@
+
+# Installation
+
+> nix-env -iA nixpkgs.selenium-server-standalone
+
+> cabal install
+
+
+# Running
+
+> selenium-server
+
+In anouther shell:
+
+> try-selenium
+
+
