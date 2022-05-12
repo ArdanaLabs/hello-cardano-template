@@ -1,3 +1,5 @@
+# TODO: We should be able to get rid of this once
+# https://github.com/numtide/treefmt/issues/165 is implemented upstream.
 { inputs, system, pkgs }:
 
 # Uses https://github.com/numtide/treefmt to provide auto-formating for multiple
