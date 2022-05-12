@@ -22,29 +22,15 @@
       # We use flake-utils.lib.eachSystem (see below) to call this.
       # cf. https://github.com/NixOS/nix/issues/3843#issuecomment-661720562
       outputsFor = system:
-        let
-          # TODO: We probably should use a non-haskell.nix nixpkgs for certain
-          # derivations, to speed up things. Those derivations do not rely on
-          # haskell.nix anyway. Consider this in the context of passing `pkgs` to
-          # the psuedo flakes flakes.
-          pkgs =
-            import nixpkgs {
-              inherit system;
-              overlays = [ haskell-nix.overlay ];
-              inherit (haskell-nix) config;
-            };
+        rec {
           pseudoFlakes = {
-            onchain = import ./onchain { inherit inputs system pkgs; };
-            offchain = import ./offchain { inherit inputs system pkgs; };
-            docs = import ./docs { inherit inputs system pkgs; };
-            format = import ./nix/format.nix { inherit inputs system pkgs; };
-            everything-else = import ./nix/everything-else.nix { inherit inputs system pkgs; };
-            flake-local = import ./nix/flake-local.nix { inherit inputs system pkgs; };
+            onchain = import ./onchain { inherit inputs system; };
+            offchain = import ./offchain { inherit inputs system; };
+            docs = import ./docs { inherit inputs system; };
+            format = import ./nix/format.nix { inherit inputs system; };
+            everything-else = import ./nix/everything-else.nix { inherit inputs system; };
+            flake-local = import ./nix/flake-local.nix { inherit inputs system; };
           };
-
-        in
-        {
-          inherit pseudoFlakes;
 
           packages =
             pseudoFlakes.onchain.packages

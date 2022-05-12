@@ -1,9 +1,12 @@
 # TODO: We should be able to get rid of this once
 # https://github.com/numtide/treefmt/issues/165 is implemented upstream.
-{ inputs, system, pkgs }:
+{ inputs, system }:
 
-# Uses https://github.com/numtide/treefmt to provide auto-formating for multiple
-# languages. Configure the behaviour in treefmt.toml at project root.
+let
+  pkgs = inputs.nixpkgs.legacyPackages.${system};
+  # Uses https://github.com/numtide/treefmt to provide auto-formating for multiple
+  # languages. Configure the behaviour in treefmt.toml at project root.
+in
 rec {
   dependencies = [
     pkgs.haskellPackages.cabal-fmt

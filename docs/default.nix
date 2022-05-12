@@ -1,6 +1,8 @@
-{ inputs, system, pkgs }:
+{ inputs, system }:
 
-{
+let
+  pkgs = inputs.nixpkgs.legacyPackages.${system};
+in {
   packages = {
     build-docs = pkgs.stdenv.mkDerivation {
       name = "build-docs";

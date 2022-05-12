@@ -1,4 +1,4 @@
-{ inputs, system, pkgs }:
+{ inputs, system }:
 
 {
   # In flake apps, there is no builtin way to access the project root, where

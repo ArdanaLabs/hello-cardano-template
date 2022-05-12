@@ -3,8 +3,11 @@
 #
 # Useful as an alternative to 'nix flake check' (which doesn't work due to IFD)
 
-{ inputs, system, pkgs }:
+{ inputs, system }:
 
+let
+  pkgs = inputs.nixpkgs.legacyPackages.${system};
+in
 {
   packages = {
     # A combination of all derivations (aside from packages) we care

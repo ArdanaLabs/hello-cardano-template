@@ -1,8 +1,8 @@
-{ inputs, system, pkgs }:
+{ inputs, system }:
 
 let
-  inherit (pkgs.callPackage ../nix/haskell.nix { inherit inputs system pkgs; })
-    plutusProjectIn ghcid;
+  inherit (inputs.nixpkgs.legacyPackages.${system}.callPackage ../nix/haskell.nix { inherit inputs system; })
+    pkgs plutusProjectIn ghcid;
   subdir = "offchain";
   onchain-scripts = inputs.self.pseudoFlakes.${system}.onchain.onchain-scripts;
   # Checks the shell script using ShellCheck

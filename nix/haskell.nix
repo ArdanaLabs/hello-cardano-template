@@ -1,6 +1,14 @@
-{ inputs, system, pkgs }:
+{ inputs, system }:
 
-{
+rec {
+  # The bloated haskell.nix pkgs goes here.
+  pkgs =
+    import inputs.nixpkgs {
+      inherit system;
+      overlays = [ inputs.haskell-nix.overlay ];
+      inherit (inputs.haskell-nix) config;
+    };
+
   # Derivation for a Haskell Plutus project that lives in the sub-directory of this mono repo.
   plutusProjectIn =
     { subdir          # The sub-directory name
