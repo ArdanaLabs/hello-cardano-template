@@ -49,7 +49,10 @@
 
 \begin{itemize}
   \item Apropos-tx testing for the on-chain code
-    \todo{@Fraser Spec for behaviour}
+  \begin{itemize}
+    \item the plutarch increment function satisfies the property (increment(n) = n + 1)
+    \item the compiled validator validates if and only if the output datum returns to the script address, is of type integer, and is equal to increment(input datum)
+  \end{itemize}
   \item Unit test for on-chain code:
   \begin{itemize}
     \item increment from 0 to 1
