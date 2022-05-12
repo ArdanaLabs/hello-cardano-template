@@ -19,10 +19,8 @@ type HelloModel = (Integer, Integer)
 data HelloProp
   = IsValid
   | IsInvalid
-  deriving stock (Show, Eq, Ord, Enum, Bounded)
-
-instance Enumerable HelloProp where
-  enumerated = [minBound .. maxBound]
+  deriving stock (Show, Eq, Ord, Enum, Bounded,Generic)
+  deriving anyclass (Hashable,Enumerable)
 
 instance LogicalModel HelloProp where
   logic = ExactlyOne [Var IsValid, Var IsInvalid]
@@ -32,6 +30,15 @@ instance HasLogicalModel HelloProp HelloModel where
   satisfiesProperty IsInvalid p = not $ satisfiesProperty IsValid p
 
 instance HasPermutationGenerator HelloProp HelloModel where
+  sources =
+    [ Source {
+        sourceName = "baseGen"
+      , covers = Yes
+      , gen = (,)
+          <$> (fromIntegral <$> int (linear (-10) 10))
+          <*> (fromIntegral <$> int (linear (-10) 10))
+      }
+    ]
   generators =
     [ Morphism
         { name = "MakeValid"
@@ -48,23 +55,19 @@ instance HasPermutationGenerator HelloProp HelloModel where
     ]
 
 instance HasParameterisedGenerator HelloProp HelloModel where
-  parameterisedGenerator =
-    buildGen $
-      (,)
-        <$> (fromIntegral <$> int (linear (-10) 10))
-        <*> (fromIntegral <$> int (linear (-10) 10))
+  parameterisedGenerator = buildGen
 
 instance ScriptModel HelloProp HelloModel where
-  expect _ = Var IsValid
-  script _ (i, j) = compile $ helloLogic # PPrelude.pconstant i # PPrelude.pconstant j
+  expect = Var IsValid
+  script (i, j) = compile $ helloLogic # PPrelude.pconstant i # PPrelude.pconstant j
 
 spec :: Spec
 spec = do
   describe "helloGenSelfTest" $
     mapM_ fromHedgehogGroup $
-      [ runGeneratorTestsWhere (Apropos :: HelloModel :+ HelloProp) "Hello Generator" Yes
+      [ runGeneratorTestsWhere @HelloProp "Hello Generator" Yes
       ]
   describe "helloLogicTests" $
     mapM_ fromHedgehogGroup $
-      [ runScriptTestsWhere (Apropos :: HelloModel :+ HelloProp) "AcceptsValid" Yes
+      [ runScriptTestsWhere @HelloProp "AcceptsValid" Yes
       ]

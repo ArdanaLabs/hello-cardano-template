@@ -22,6 +22,7 @@ common lang
     DerivingStrategies
     DerivingVia
     DoAndIfThenElse
+    DuplicateRecordFields
     EmptyCase
     EmptyDataDecls
     EmptyDataDeriving

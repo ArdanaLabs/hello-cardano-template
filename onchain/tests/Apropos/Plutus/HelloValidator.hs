@@ -30,10 +30,8 @@ data HelloProp
   = IsValid
   | IsInvalid
   | IsMalformed
-  deriving stock (Show, Eq, Ord, Enum, Bounded)
-
-instance Enumerable HelloProp where
-  enumerated = [minBound .. maxBound]
+  deriving stock (Show, Eq, Ord, Enum, Bounded,Generic)
+  deriving anyclass (Enumerable,Hashable)
 
 instance LogicalModel HelloProp where
   logic = ExactlyOne [Var IsValid, Var IsInvalid, Var IsMalformed]
@@ -45,6 +43,16 @@ instance HasLogicalModel HelloProp HelloModel where
   satisfiesProperty _ _ = False
 
 instance HasPermutationGenerator HelloProp HelloModel where
+  sources =
+    [ Source {
+        sourceName = "baseGen"
+      , covers = Yes
+      , gen =  do
+          r <- (,) <$> (fromIntegral <$> int (linear (-10) 10))
+                   <*> (fromIntegral <$> int (linear (-10) 10))
+          pure (Right r)
+      }
+    ]
   generators =
     [ Morphism
         { name = "MakeValid"
@@ -73,13 +81,7 @@ instance HasPermutationGenerator HelloProp HelloModel where
     ]
 
 instance HasParameterisedGenerator HelloProp HelloModel where
-  parameterisedGenerator = buildGen g
-    where
-      g = do
-        r <-
-          (,) <$> (fromIntegral <$> int (linear (-10) 10))
-            <*> (fromIntegral <$> int (linear (-10) 10))
-        pure (Right r)
+  parameterisedGenerator = buildGen
 
 mkCtx :: HelloModel -> Context
 mkCtx hm = Context $ toBuiltinData scCtx
@@ -130,18 +132,18 @@ datumHash (Datum (BuiltinData d)) = (DatumHash . hashBlake2b_224 . Lazy.toStrict
     hashBlake2b_224 = _plutusHashWith Blake2b_224
 
 instance ScriptModel HelloProp HelloModel where
-  expect _ = Var IsValid
-  script _ hm = applyValidator (mkCtx hm) helloValidator (mkDatum (helloModelInp hm)) (Redeemer (toBuiltinData ()))
+  expect = Var IsValid
+  script hm = applyValidator (mkCtx hm) helloValidator (mkDatum (helloModelInp hm)) (Redeemer (toBuiltinData ()))
 
 spec :: Spec
 spec = do
   describe "helloValidatorGenSelfTest" $
     mapM_
       fromHedgehogGroup
-      [ runGeneratorTestsWhere (Apropos :: HelloModel :+ HelloProp) "Hello Generator" Yes
+      [ runGeneratorTestsWhere @HelloProp "Hello Generator" Yes
       ]
   describe "helloValidatorTests" $
     mapM_
       fromHedgehogGroup
-      [ runScriptTestsWhere (Apropos :: HelloModel :+ HelloProp) "AcceptsValid" Yes
+      [ runScriptTestsWhere @HelloProp "AcceptsValid" Yes
       ]
