@@ -28,7 +28,7 @@ import Plutus.V2.Ledger.Api (fromList)
 
 import Hello (helloAddress, helloValidator)
 
-type HelloModel = Either Integer (Integer, Integer)
+type HelloModel = (Bool, Integer, Integer)
 
 data HelloProp
   = IsValid
@@ -38,48 +38,46 @@ data HelloProp
   deriving anyclass (Enumerable, Hashable)
 
 instance LogicalModel HelloProp where
-  logic = ExactlyOne [Var IsValid, Var IsInvalid, Var IsMalformed]
+  logic = ExactlyOne [Var IsValid, Var IsInvalid]
 
 instance HasLogicalModel HelloProp HelloModel where
-  satisfiesProperty IsValid (Right (i, j)) = i + 1 == j
-  satisfiesProperty IsInvalid p@(Right _) = not $ satisfiesProperty IsValid p
-  satisfiesProperty IsMalformed (Left _) = True
-  satisfiesProperty _ _ = False
+  satisfiesProperty IsValid (_,i, j) = i + 1 == j
+  satisfiesProperty IsInvalid p = not $ satisfiesProperty IsValid p
+  satisfiesProperty IsMalformed (b,_,_) = b
 
 instance HasPermutationGenerator HelloProp HelloModel where
   sources =
     [ Source
-        { sourceName = "Well Formed"
-        , covers = Not (Var IsMalformed)
-        , gen = do
-            r <-
-              (,) <$> (fromIntegral <$> int (linear minBound maxBound))
-                <*> (fromIntegral <$> int (linear minBound maxBound))
-            pure (Right r)
-        }
-    , Source
-        { sourceName = "Malformed"
-        , covers = Var IsMalformed
-        , gen = Left . fromIntegral <$> int (linear minBound maxBound)
+        { sourceName = "Yes"
+        , covers = Yes
+        , gen =
+              (,,) <$> bool
+                   <*> (fromIntegral <$> int (linear minBound maxBound))
+                   <*> (fromIntegral <$> int (linear minBound maxBound))
         }
     ]
   generators =
     [ Morphism
         { name = "MakeValid"
         , match = Not $ Var IsValid
-        , contract = clear >> addAll [IsValid]
-        , morphism = \m -> do
-            let i = helloModelInp m
-            pure $ Right (i, i + 1)
+        , contract = add IsValid >> remove IsInvalid
+        , morphism = \(m,i,_) -> pure (m,i, i + 1)
         }
     , Morphism
         { name = "MakeInvalid"
         , match = Not $ Var IsInvalid
-        , contract = clear >> addAll [IsInvalid]
-        , morphism = \m -> do
-            let i = helloModelInp m
+        , contract = add IsInvalid >> remove IsValid
+        , morphism = \(m,i,_) -> do
             j <- genFilter (/= (i + 1)) (fromIntegral <$> int (linear minBound maxBound))
-            pure $ Right (i, j)
+            pure (m, i, j)
+        }
+    , Morphism
+        { name = "ToggleMalformed"
+        , match = Yes
+        , contract = branches [ has IsMalformed >> remove IsMalformed
+                              , hasn't IsMalformed >> add IsMalformed
+                              ]
+        , morphism = \(m,i,j) -> pure (not m, i, j)
         }
     ]
 
@@ -87,7 +85,7 @@ instance HasParameterisedGenerator HelloProp HelloModel where
   parameterisedGenerator = buildGen
 
 mkCtx :: HelloModel -> Context
-mkCtx hm = Context $ toBuiltinData scCtx
+mkCtx hm@(m,i,j) = Context $ toBuiltinData scCtx
   where
     scCtx = ScriptContext txInf (Spending txInORef)
     txInf =
@@ -104,9 +102,9 @@ mkCtx hm = Context $ toBuiltinData scCtx
         , txInfoId = undefined
         }
     datumIn = mkDatum $ helloModelInp hm
-    datumOut = case hm of
-      Right (_, j) -> mkDatum j
-      Left i -> Datum $ toBuiltinData (Just i)
+    datumOut = Datum $ if m
+                         then toBuiltinData $ Just i
+                         else toBuiltinData j
     txInORef = TxOutRef txInORefId 0
     txInORefId = TxId "0000000000000000000000000000000000000000000000000000000000000000"
     txInResolved = TxOut helloAddress someAda (Just (datumHash datumIn))
@@ -116,8 +114,7 @@ mkDatum :: Integer -> Datum
 mkDatum i = Datum $ toBuiltinData i
 
 helloModelInp :: HelloModel -> Integer
-helloModelInp (Right (i, _)) = i
-helloModelInp (Left i) = i
+helloModelInp (_, i, _) = i
 
 someAda :: Value
 someAda = Value (fromList [(currencySymbol "", fromList [(tokenName "", 10)])])
@@ -126,7 +123,7 @@ noValue :: Value
 noValue = Value (fromList [])
 
 instance ScriptModel HelloProp HelloModel where
-  expect = Var IsValid
+  expect = Var IsValid :&&: Not (Var IsMalformed)
   script hm = applyValidator (mkCtx hm) helloValidator (mkDatum (helloModelInp hm)) (Redeemer (toBuiltinData ()))
 
 spec :: Spec
@@ -141,3 +138,4 @@ spec = do
       fromHedgehogGroup
       [ runScriptTestsWhere @HelloProp "AcceptsValid" Yes
       ]
+
