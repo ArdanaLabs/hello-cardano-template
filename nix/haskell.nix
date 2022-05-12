@@ -49,7 +49,7 @@
           pkgs.hlint
         ] ++
         # Auto-formatter dependencies are useful in devshell for editors.
-        inputs.self.projects.${system}.format.dependencies;
+        inputs.self.pseudoFlakes.${system}.format.dependencies;
       } // extraShell;
       inherit sha256map;
     };

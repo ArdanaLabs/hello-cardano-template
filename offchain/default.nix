@@ -4,7 +4,7 @@ let
   inherit (pkgs.callPackage ../nix/haskell.nix { inherit inputs system pkgs; })
     plutusProjectIn ghcid;
   cabalProjectRoot = "${inputs.self.flakeRoot.${system}.envVar}/offchain";
-  onchain-scripts = inputs.self.projects.${system}.onchain.onchain-scripts;
+  onchain-scripts = inputs.self.pseudoFlakes.${system}.onchain.onchain-scripts;
   # Checks the shell script using ShellCheck
   checkedShellScript = system: name: text:
     (pkgs.writeShellApplication {

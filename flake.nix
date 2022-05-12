@@ -26,14 +26,14 @@
           # TODO: We probably should use a non-haskell.nix nixpkgs for certain
           # derivations, to speed up things. Those derivations do not rely on
           # haskell.nix anyway. Consider this in the context of passing `pkgs` to
-          # sub-flake'ishes.
+          # the psuedo flakes flakes.
           pkgs =
             import nixpkgs {
               inherit system;
               overlays = [ haskell-nix.overlay ];
               inherit (haskell-nix) config;
             };
-          projects = {
+          pseudoFlakes = {
             onchain = import ./onchain { inherit inputs system pkgs; };
             offchain = import ./offchain { inherit inputs system pkgs; };
             docs = import ./docs { inherit inputs system pkgs; };
@@ -43,19 +43,19 @@
 
         in
         {
-          inherit projects;
+          inherit pseudoFlakes;
 
           packages =
-            projects.onchain.packages
-            // projects.offchain.packages
-            // projects.docs.packages
-            // projects.everything-else.packages;
+            pseudoFlakes.onchain.packages
+            // pseudoFlakes.offchain.packages
+            // pseudoFlakes.docs.packages
+            // pseudoFlakes.everything-else.packages;
           defaultPackage = self.packages.${system}.everything-else;
 
           checks =
-            projects.onchain.checks
-            // projects.offchain.checks
-            // projects.format.checks;
+            pseudoFlakes.onchain.checks
+            // pseudoFlakes.offchain.checks
+            // pseudoFlakes.format.checks;
 
           # In Nix, there is no builtin way to access the project root, where
           # flake.nix lives. To workaround this, we inject it as env var in the
@@ -86,18 +86,18 @@
           # conditions are met. We opted not to do this because it would require
           # us to bet that the condition above would be met before we want to launch.
           devShells = {
-            onchain = projects.onchain.devShell;
-            offchain = projects.offchain.devShell;
+            onchain = pseudoFlakes.onchain.devShell;
+            offchain = pseudoFlakes.offchain.devShell;
           };
 
           apps =
-            projects.offchain.apps
-            // projects.docs.apps
-            // projects.format.apps;
+            pseudoFlakes.offchain.apps
+            // pseudoFlakes.docs.apps
+            // pseudoFlakes.format.apps;
         };
     in
     flake-utils.lib.eachSystem [ "x86_64-linux" ] outputsFor // {
-      # Name of our project; used in script prefixes.
+      # Name of our project; used in script prefixes (eg: ghcid).
       projectName = "dusd";
     };
 }
