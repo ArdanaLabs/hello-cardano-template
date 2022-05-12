@@ -60,7 +60,7 @@
       name = "${inputs.self.projectName}-${name}";
       text = ''
         echo "Running Ghcid under ${subdir} (${name})"
-        cd "${inputs.self.flakeLocal.${system}.absPath subdir}"
+        cd "${inputs.self.pseudoFlakes.${system}.flake-local.flakeLocal.absPath subdir}"
         ${pkgs.ghcid}/bin/ghcid ${args}
       '';
     };

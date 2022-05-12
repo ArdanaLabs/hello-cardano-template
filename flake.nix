@@ -39,6 +39,7 @@
             docs = import ./docs { inherit inputs system pkgs; };
             format = import ./nix/format.nix { inherit inputs system pkgs; };
             everything-else = import ./nix/everything-else.nix { inherit inputs system pkgs; };
+            flake-local = import ./nix/flake-local.nix { inherit inputs system pkgs; };
           };
 
         in
@@ -56,16 +57,6 @@
             pseudoFlakes.onchain.checks
             // pseudoFlakes.offchain.checks
             // pseudoFlakes.format.checks;
-
-          # In flake apps, there is no builtin way to access the project root, where
-          # flake.nix lives. To workaround this, we inject it as env var in the
-          # `shellHook`. This is abstracted away as `flakeLocal`.
-          flakeLocal = {
-            shellHook = ''
-              export FLAKE_ROOT=$(pwd)
-            '';
-            absPath = relPath: "$FLAKE_ROOT/${relPath}";
-          };
 
           # We are forced to use two devshells.
           # Under ideal circumstances, we could put all the onchain and offchain

@@ -96,7 +96,7 @@ rec {
       tools
     );
     shellHook = oa.shellHook + ''
-      ${inputs.self.flakeLocal.${system}.shellHook}
+      ${inputs.self.pseudoFlakes.${system}.flake-local.flakeLocal.shellHook}
       # running local cluster + PAB
       export SHELLEY_TEST_DATA="${inputs.plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley/"
     '';

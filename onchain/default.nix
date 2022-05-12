@@ -47,7 +47,7 @@ rec {
   };
 
   devShell = haskellNixFlake.devShell.overrideAttrs (oa: {
-    shellHook = oa.shellHook + inputs.self.flakeLocal.${system}.shellHook;
+    shellHook = oa.shellHook + inputs.self.pseudoFlakes.${system}.flake-local.flakeLocal.shellHook;
     buildInputs = pkgs.lib.attrsets.attrValues (
       tools
     );
