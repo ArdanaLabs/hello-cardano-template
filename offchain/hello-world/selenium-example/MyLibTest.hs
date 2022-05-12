@@ -1,26 +1,58 @@
+{-# LANGUAGE OverloadedStrings, NoMonomorphismRestriction #-}
 module Main where
+
+import Data.Text (unpack)
+import Control.Monad
 
 import Network.URI
 import Test.Syd
-import Test.Syd.Wai
 import Test.Syd.Webdriver
+import Test.WebDriver
+import Test.QuickCheck
+import Paths_try_selenium
 
-import Network.HTTP.Types as HTTP
-import Network.Wai as Wai
+data Command = Init | Inc | Read
+  deriving Show
 
-main :: IO ()
-main = sydTest $ webdriverSpec (\_ -> initPage) $ do
-  it "test 1" $
+instance Arbitrary Command where
+  arbitrary = elements [Init, Inc, Inc, Inc, Inc, Read, Read]
+
+evalCommands :: [Command] -> String
+evalCommands = snd . foldl (flip f) (0, "")  where
+
+  f Init (_, c) = (0, c)
+  f Inc (i, c) = (i + 1, c)
+  f read (i, _) = (i, show i)
+
+
+mkTest :: [Command] -> WebdriverTestM () ()
+mkTest commands = do
+
     openPath "/"
 
+    initialize <- findElem $ ById "initialize"
+    increment  <- findElem $ ById "increment"
+    read       <- findElem $ ById "read"
+    counter    <- findElem $ ById "counterr"
+
+    let interpret c = click $ case c of
+         Init -> initialize
+         Inc -> increment
+         Read -> read
+
+    mapM_ interpret commands
+    n <- unpack <$> getText counter
+
+    when (n /= evalCommands commands) $ error "fail"
+
 initPage = do
-  portNumber <- applicationSetupFunc exampleApplication
-  let uriStr = "http://127.0.0.1:" <> show portNumber
+  path <- liftIO getDataDir
+  let uriStr = "file://" <> path <> "/HelloWorld.html"
   case parseURI uriStr of
     Nothing -> liftIO $ expectationFailure $ "Failed to parse uri as string: " <> show uriStr
     Just uri -> pure (uri, ())
 
-exampleApplication :: Wai.Application
-exampleApplication req sendResp = do
-  lb <- strictRequestBody req
-  sendResp $ responseLBS HTTP.ok200 (Wai.requestHeaders req) lb
+main :: IO ()
+main = sydTest $ webdriverSpec (\_ -> initPage) $ do
+  it "test 1" $ mkTest [Init, Inc, Read]
+
