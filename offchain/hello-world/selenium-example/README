@@ -3,15 +3,30 @@
 
 > nix-env -iA nixpkgs.selenium-server-standalone
 
-> cabal install
-
 
 # Running
 
+## Tests based on `webdriver` package
+
 > selenium-server
 
-In anouther shell:
+In another shell:
 
-> try-selenium
+> cabal test webdriver
 
 
+## Tests based on `sydtest-webdriver` package
+
+> cabal test sydtest-webdriver
+
+Notes
+
+- this doesn't work (error message: `ResponseTimeout`, probably from the `webdriver-standalone` executable)
+- currently just one test case is given, randomized property tests are missing
+
+
+# TODOs
+
+1.  nixify
+2.  fix the solution using `sydtest-webdriver`
+3.  integrate with the real application
