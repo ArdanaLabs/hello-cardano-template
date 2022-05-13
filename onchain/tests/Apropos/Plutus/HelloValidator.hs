@@ -10,6 +10,7 @@ import Apropos.Script
 import Test.Syd hiding (Context)
 import Test.Syd.Hedgehog
 
+import Plutus.V1.Ledger.Address (pubKeyHashAddress)
 import Plutus.V1.Ledger.Api (
   Redeemer (..),
   Value (..),
@@ -17,19 +18,18 @@ import Plutus.V1.Ledger.Api (
  )
 import Plutus.V1.Ledger.Scripts (Context (..), Datum (..), applyValidator)
 import Plutus.V1.Ledger.Value (currencySymbol, tokenName)
-import Plutus.V1.Ledger.Address (pubKeyHashAddress)
 import Plutus.V2.Ledger.Api (fromList)
 
 import Hello (helloAddress, helloValidator)
 
-data HelloModel =
-  HelloModel
-    { isContinuing :: Bool
-    , isMalformed :: Bool
-    , isUnitRedeemer :: Bool
-    , inDatum :: Integer
-    , outDatum :: Integer
-    } deriving stock (Show)
+data HelloModel = HelloModel
+  { isContinuing :: Bool
+  , isMalformed :: Bool
+  , isUnitRedeemer :: Bool
+  , inDatum :: Integer
+  , outDatum :: Integer
+  }
+  deriving stock (Show)
 
 data HelloProp
   = IsValid
@@ -57,10 +57,10 @@ instance HasPermutationGenerator HelloProp HelloModel where
         , covers = Yes
         , gen =
             HelloModel <$> bool
-                       <*> bool
-                       <*> bool
-                       <*> (fromIntegral <$> int (linear minBound maxBound))
-                       <*> (fromIntegral <$> int (linear minBound maxBound))
+              <*> bool
+              <*> bool
+              <*> (fromIntegral <$> int (linear minBound maxBound))
+              <*> (fromIntegral <$> int (linear minBound maxBound))
         }
     ]
   generators =
@@ -68,7 +68,7 @@ instance HasPermutationGenerator HelloProp HelloModel where
         { name = "MakeValid"
         , match = Not $ Var IsValid
         , contract = swap IsValid IsInvalid
-        , morphism = \hm@HelloModel {..} -> pure hm { outDatum = inDatum + 1 }
+        , morphism = \hm@HelloModel {..} -> pure hm {outDatum = inDatum + 1}
         }
     , Morphism
         { name = "MakeInvalid"
@@ -76,25 +76,25 @@ instance HasPermutationGenerator HelloProp HelloModel where
         , contract = swap IsInvalid IsValid
         , morphism = \hm@HelloModel {..} -> do
             j <- genFilter (/= (inDatum + 1)) (fromIntegral <$> int (linear minBound maxBound))
-            pure hm { outDatum = j }
+            pure hm {outDatum = j}
         }
     , Morphism
         { name = "ToggleMalformed"
         , match = Yes
         , contract = toggle IsMalformed
-        , morphism = \hm@HelloModel {..} -> pure hm { isMalformed = not isMalformed }
+        , morphism = \hm@HelloModel {..} -> pure hm {isMalformed = not isMalformed}
         }
     , Morphism
         { name = "ToggleContinuing"
         , match = Yes
         , contract = toggle IsContinuing
-        , morphism = \hm@HelloModel {..} -> pure hm { isContinuing = not isContinuing }
+        , morphism = \hm@HelloModel {..} -> pure hm {isContinuing = not isContinuing}
         }
     , Morphism
         { name = "ToggleIsUnitRedeemer"
         , match = Yes
         , contract = toggle IsUnitRedeemer
-        , morphism = \hm@HelloModel {..} -> pure hm { isUnitRedeemer = not isUnitRedeemer }
+        , morphism = \hm@HelloModel {..} -> pure hm {isUnitRedeemer = not isUnitRedeemer}
         }
     ]
 
@@ -129,7 +129,7 @@ instance ScriptModel HelloProp HelloModel where
   expect = Var IsValid :&&: Not (Var IsMalformed) :&&: Var IsContinuing
   script hm@HelloModel {..} =
     let redeemer = Redeemer $ if isUnitRedeemer then toBuiltinData () else toBuiltinData (42 :: Integer)
-    in applyValidator (mkCtx hm) helloValidator (Datum (toBuiltinData inDatum)) redeemer
+     in applyValidator (mkCtx hm) helloValidator (Datum (toBuiltinData inDatum)) redeemer
 
 spec :: Spec
 spec = do
