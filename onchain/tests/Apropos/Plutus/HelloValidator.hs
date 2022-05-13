@@ -4,21 +4,15 @@ module Apropos.Plutus.HelloValidator (
 ) where
 
 import Apropos
+import Apropos.ContextBuilder
 import Apropos.Script
 
-import Plutarch.Api.V1 (datumHash)
 import Test.Syd hiding (Context)
 import Test.Syd.Hedgehog
 
+import Plutus.V1.Ledger.Address (pubKeyHashAddress)
 import Plutus.V1.Ledger.Api (
   Redeemer (..),
-  ScriptContext (..),
-  ScriptPurpose (..),
-  TxId (..),
-  TxInInfo (..),
-  TxInfo (..),
-  TxOut (..),
-  TxOutRef (..),
   Value (..),
   toBuiltinData,
  )
@@ -28,12 +22,21 @@ import Plutus.V2.Ledger.Api (fromList)
 
 import Hello (helloAddress, helloValidator)
 
-type HelloModel = (Bool, Integer, Integer)
+data HelloModel = HelloModel
+  { isContinuing :: Bool
+  , isMalformed :: Bool
+  , isUnitRedeemer :: Bool
+  , inDatum :: Integer
+  , outDatum :: Integer
+  }
+  deriving stock (Show)
 
 data HelloProp
   = IsValid
   | IsInvalid
   | IsMalformed
+  | IsContinuing
+  | IsUnitRedeemer
   deriving stock (Show, Eq, Ord, Enum, Bounded, Generic)
   deriving anyclass (Enumerable, Hashable)
 
@@ -41,9 +44,11 @@ instance LogicalModel HelloProp where
   logic = ExactlyOne [Var IsValid, Var IsInvalid]
 
 instance HasLogicalModel HelloProp HelloModel where
-  satisfiesProperty IsValid (_, i, j) = i + 1 == j
+  satisfiesProperty IsValid HelloModel {..} = inDatum + 1 == outDatum
   satisfiesProperty IsInvalid p = not $ satisfiesProperty IsValid p
-  satisfiesProperty IsMalformed (b, _, _) = b
+  satisfiesProperty IsMalformed HelloModel {..} = isMalformed
+  satisfiesProperty IsContinuing HelloModel {..} = isContinuing
+  satisfiesProperty IsUnitRedeemer HelloModel {..} = isUnitRedeemer
 
 instance HasPermutationGenerator HelloProp HelloModel where
   sources =
@@ -51,7 +56,9 @@ instance HasPermutationGenerator HelloProp HelloModel where
         { sourceName = "Yes"
         , covers = Yes
         , gen =
-            (,,) <$> bool
+            HelloModel <$> bool
+              <*> bool
+              <*> bool
               <*> (fromIntegral <$> int (linear minBound maxBound))
               <*> (fromIntegral <$> int (linear minBound maxBound))
         }
@@ -60,75 +67,69 @@ instance HasPermutationGenerator HelloProp HelloModel where
     [ Morphism
         { name = "MakeValid"
         , match = Not $ Var IsValid
-        , contract = add IsValid >> remove IsInvalid
-        , morphism = \(m, i, _) -> pure (m, i, i + 1)
+        , contract = swap IsValid IsInvalid
+        , morphism = \hm@HelloModel {..} -> pure hm {outDatum = inDatum + 1}
         }
     , Morphism
         { name = "MakeInvalid"
         , match = Not $ Var IsInvalid
-        , contract = add IsInvalid >> remove IsValid
-        , morphism = \(m, i, _) -> do
-            j <- genFilter (/= (i + 1)) (fromIntegral <$> int (linear minBound maxBound))
-            pure (m, i, j)
+        , contract = swap IsInvalid IsValid
+        , morphism = \hm@HelloModel {..} -> do
+            j <- genFilter (/= (inDatum + 1)) (fromIntegral <$> int (linear minBound maxBound))
+            pure hm {outDatum = j}
         }
     , Morphism
         { name = "ToggleMalformed"
         , match = Yes
-        , contract =
-            branches
-              [ has IsMalformed >> remove IsMalformed
-              , hasn't IsMalformed >> add IsMalformed
-              ]
-        , morphism = \(m, i, j) -> pure (not m, i, j)
+        , contract = toggle IsMalformed
+        , morphism = \hm@HelloModel {..} -> pure hm {isMalformed = not isMalformed}
+        }
+    , Morphism
+        { name = "ToggleContinuing"
+        , match = Yes
+        , contract = toggle IsContinuing
+        , morphism = \hm@HelloModel {..} -> pure hm {isContinuing = not isContinuing}
+        }
+    , Morphism
+        { name = "ToggleIsUnitRedeemer"
+        , match = Yes
+        , contract = toggle IsUnitRedeemer
+        , morphism = \hm@HelloModel {..} -> pure hm {isUnitRedeemer = not isUnitRedeemer}
         }
     ]
 
 instance HasParameterisedGenerator HelloProp HelloModel where
   parameterisedGenerator = buildGen
 
-untouched :: a
-untouched = error "untouched by script"
-
 mkCtx :: HelloModel -> Context
-mkCtx hm@(m, i, j) = Context $ toBuiltinData scCtx
+mkCtx HelloModel {..} =
+  buildContext $ do
+    withTxInfo $ do
+      addInput nullTxOutRef helloAddress someAda (Just datumIn)
+      addOutput outAddr someAda (Just datumOut)
+
+      txInfoIdUntouched
+      txInfoSignatoriesUntouched
+      txInfoValidRangeUntouched
+      txInfoWdrlUntouched
+      txInfoDCertUntouched
+      txInfoMintUntouched
+      txInfoFeeUntouched
   where
-    scCtx = ScriptContext txInf (Spending txInORef)
-    txInf =
-      TxInfo
-        { txInfoInputs = [TxInInfo txInORef txInResolved]
-        , txInfoOutputs = [txOutResolved]
-        , txInfoFee = untouched
-        , txInfoMint = untouched
-        , txInfoDCert = untouched
-        , txInfoWdrl = untouched
-        , txInfoValidRange = untouched
-        , txInfoSignatories = untouched
-        , txInfoData = [(datumHash datumOut, datumOut)]
-        , txInfoId = untouched
-        }
-    datumIn = mkDatum $ helloModelInp hm
+    outAddr = if isContinuing then helloAddress else pubKeyHashAddress ""
+    datumIn = Datum $ toBuiltinData inDatum
     datumOut =
       Datum $
-        if m
-          then toBuiltinData $ Just i
-          else toBuiltinData j
-    txInORef = TxOutRef txInORefId 0
-    txInORefId = TxId "0000000000000000000000000000000000000000000000000000000000000000"
-    txInResolved = TxOut helloAddress someAda (Just (datumHash datumIn))
-    txOutResolved = TxOut helloAddress someAda (Just (datumHash datumOut))
-
-mkDatum :: Integer -> Datum
-mkDatum i = Datum $ toBuiltinData i
-
-helloModelInp :: HelloModel -> Integer
-helloModelInp (_, i, _) = i
-
-someAda :: Value
-someAda = Value (fromList [(currencySymbol "", fromList [(tokenName "", 10)])])
+        if isMalformed
+          then toBuiltinData $ Just outDatum
+          else toBuiltinData outDatum
+    someAda = Value (fromList [(currencySymbol "", fromList [(tokenName "", 10)])])
 
 instance ScriptModel HelloProp HelloModel where
-  expect = Var IsValid :&&: Not (Var IsMalformed)
-  script hm = applyValidator (mkCtx hm) helloValidator (mkDatum (helloModelInp hm)) (Redeemer (toBuiltinData ()))
+  expect = Var IsValid :&&: Not (Var IsMalformed) :&&: Var IsContinuing
+  script hm@HelloModel {..} =
+    let redeemer = Redeemer $ if isUnitRedeemer then toBuiltinData () else toBuiltinData (42 :: Integer)
+     in applyValidator (mkCtx hm) helloValidator (Datum (toBuiltinData inDatum)) redeemer
 
 spec :: Spec
 spec = do

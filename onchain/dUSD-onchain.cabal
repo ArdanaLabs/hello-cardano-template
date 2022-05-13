@@ -51,6 +51,7 @@ common lang
     PostfixOperators
     QuantifiedConstraints
     RankNTypes
+    RecordWildCards
     RelaxedPolyRec
     ScopedTypeVariables
     StandaloneDeriving
@@ -136,4 +137,5 @@ test-suite tests
     , sydtest-hedgehog
     , tasty
     , tasty-hedgehog
+    , transformers
     , with-utf8
