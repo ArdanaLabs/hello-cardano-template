@@ -4,8 +4,8 @@ module Apropos.Plutus.HelloValidator (
 ) where
 
 import Apropos
-import Apropos.Script
 import Apropos.ContextBuilder
+import Apropos.Script
 
 import Test.Syd hiding (Context)
 import Test.Syd.Hedgehog
@@ -100,7 +100,7 @@ mkCtx (m, i, j) =
 
 instance ScriptModel HelloProp HelloModel where
   expect = Var IsValid :&&: Not (Var IsMalformed)
-  script hm@(_,i,_) = applyValidator (mkCtx hm) helloValidator (Datum (toBuiltinData i)) (Redeemer (toBuiltinData ()))
+  script hm@(_, i, _) = applyValidator (mkCtx hm) helloValidator (Datum (toBuiltinData i)) (Redeemer (toBuiltinData ()))
 
 spec :: Spec
 spec = do
