@@ -17,13 +17,15 @@ import Plutus.V1.Ledger.Api (
  )
 import Plutus.V1.Ledger.Scripts (Context (..), Datum (..), applyValidator)
 import Plutus.V1.Ledger.Value (currencySymbol, tokenName)
+import Plutus.V1.Ledger.Address (pubKeyHashAddress)
 import Plutus.V2.Ledger.Api (fromList)
 
 import Hello (helloAddress, helloValidator)
 
 data HelloModel =
   HelloModel
-    { isMalformed :: Bool
+    { isContinuing :: Bool
+    , isMalformed :: Bool
     , inDatum :: Integer
     , outDatum :: Integer
     } deriving stock (Show)
@@ -32,6 +34,7 @@ data HelloProp
   = IsValid
   | IsInvalid
   | IsMalformed
+  | IsContinuing
   deriving stock (Show, Eq, Ord, Enum, Bounded, Generic)
   deriving anyclass (Enumerable, Hashable)
 
@@ -42,6 +45,7 @@ instance HasLogicalModel HelloProp HelloModel where
   satisfiesProperty IsValid HelloModel {..} = inDatum + 1 == outDatum
   satisfiesProperty IsInvalid p = not $ satisfiesProperty IsValid p
   satisfiesProperty IsMalformed HelloModel {..} = isMalformed
+  satisfiesProperty IsContinuing HelloModel {..} = isContinuing
 
 instance HasPermutationGenerator HelloProp HelloModel where
   sources =
@@ -50,8 +54,9 @@ instance HasPermutationGenerator HelloProp HelloModel where
         , covers = Yes
         , gen =
             HelloModel <$> bool
-              <*> (fromIntegral <$> int (linear minBound maxBound))
-              <*> (fromIntegral <$> int (linear minBound maxBound))
+                       <*> bool
+                       <*> (fromIntegral <$> int (linear minBound maxBound))
+                       <*> (fromIntegral <$> int (linear minBound maxBound))
         }
     ]
   generators =
@@ -75,6 +80,12 @@ instance HasPermutationGenerator HelloProp HelloModel where
         , contract = toggle IsMalformed
         , morphism = \hm@HelloModel {..} -> pure hm { isMalformed = not isMalformed }
         }
+    , Morphism
+        { name = "ToggleContinuing"
+        , match = Yes
+        , contract = toggle IsContinuing
+        , morphism = \hm@HelloModel {..} -> pure hm { isContinuing = not isContinuing }
+        }
     ]
 
 instance HasParameterisedGenerator HelloProp HelloModel where
@@ -85,7 +96,7 @@ mkCtx HelloModel {..} =
   buildContext $ do
     withTxInfo $ do
       addInput nullTxOutRef helloAddress someAda (Just datumIn)
-      addOutput helloAddress someAda (Just datumOut)
+      addOutput outAddr someAda (Just datumOut)
 
       txInfoIdUntouched
       txInfoSignatoriesUntouched
@@ -95,6 +106,7 @@ mkCtx HelloModel {..} =
       txInfoMintUntouched
       txInfoFeeUntouched
   where
+    outAddr = if isContinuing then helloAddress else (pubKeyHashAddress "")
     datumIn = Datum $ toBuiltinData inDatum
     datumOut =
       Datum $
@@ -104,7 +116,7 @@ mkCtx HelloModel {..} =
     someAda = Value (fromList [(currencySymbol "", fromList [(tokenName "", 10)])])
 
 instance ScriptModel HelloProp HelloModel where
-  expect = Var IsValid :&&: Not (Var IsMalformed)
+  expect = Var IsValid :&&: Not (Var IsMalformed) :&&: Var IsContinuing
   script hm@HelloModel {..} = applyValidator (mkCtx hm) helloValidator (Datum (toBuiltinData inDatum)) (Redeemer (toBuiltinData ()))
 
 spec :: Spec
