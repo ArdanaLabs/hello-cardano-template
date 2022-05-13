@@ -12,8 +12,6 @@ import Test.Syd.Hedgehog
 
 import Plutus.V1.Ledger.Api (
   Redeemer (..),
-  ScriptContext (..),
-  TxInfo,
   Value (..),
   toBuiltinData,
  )
@@ -22,8 +20,6 @@ import Plutus.V1.Ledger.Value (currencySymbol, tokenName)
 import Plutus.V2.Ledger.Api (fromList)
 
 import Hello (helloAddress, helloValidator)
-import Data.Functor.Identity (Identity,runIdentity)
-import Control.Monad.Trans.State (StateT)
 
 type HelloModel = (Bool, Integer, Integer)
 
@@ -84,20 +80,20 @@ instance HasParameterisedGenerator HelloProp HelloModel where
   parameterisedGenerator = buildGen
 
 mkCtx :: HelloModel -> Context
-mkCtx (m, i, j) = Context $ toBuiltinData scCtx
-  where
-    scCtx = runIdentity $ buildScriptContext @(StateT ScriptContext) @Identity $ do
-      withTxInfoBuilder @(StateT ScriptContext) @Identity @(StateT TxInfo) $ do
-        addInput nullTxOutRef helloAddress someAda (Just datumIn)
-        addOutput helloAddress someAda (Just datumOut)
+mkCtx (m, i, j) =
+  buildContext $ do
+    withTxInfo $ do
+      addInput nullTxOutRef helloAddress someAda (Just datumIn)
+      addOutput helloAddress someAda (Just datumOut)
 
-        txInfoIdUntouched
-        txInfoSignatoriesUntouched
-        txInfoValidRangeUntouched
-        txInfoWdrlUntouched
-        txInfoDCertUntouched
-        txInfoMintUntouched
-        txInfoFeeUntouched
+      txInfoIdUntouched
+      txInfoSignatoriesUntouched
+      txInfoValidRangeUntouched
+      txInfoWdrlUntouched
+      txInfoDCertUntouched
+      txInfoMintUntouched
+      txInfoFeeUntouched
+  where
     datumIn = Datum $ toBuiltinData i
     datumOut =
       Datum $
