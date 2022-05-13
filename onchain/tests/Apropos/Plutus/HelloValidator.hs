@@ -26,6 +26,7 @@ data HelloModel =
   HelloModel
     { isContinuing :: Bool
     , isMalformed :: Bool
+    , isUnitRedeemer :: Bool
     , inDatum :: Integer
     , outDatum :: Integer
     } deriving stock (Show)
@@ -35,6 +36,7 @@ data HelloProp
   | IsInvalid
   | IsMalformed
   | IsContinuing
+  | IsUnitRedeemer
   deriving stock (Show, Eq, Ord, Enum, Bounded, Generic)
   deriving anyclass (Enumerable, Hashable)
 
@@ -46,6 +48,7 @@ instance HasLogicalModel HelloProp HelloModel where
   satisfiesProperty IsInvalid p = not $ satisfiesProperty IsValid p
   satisfiesProperty IsMalformed HelloModel {..} = isMalformed
   satisfiesProperty IsContinuing HelloModel {..} = isContinuing
+  satisfiesProperty IsUnitRedeemer HelloModel {..} = isUnitRedeemer
 
 instance HasPermutationGenerator HelloProp HelloModel where
   sources =
@@ -54,6 +57,7 @@ instance HasPermutationGenerator HelloProp HelloModel where
         , covers = Yes
         , gen =
             HelloModel <$> bool
+                       <*> bool
                        <*> bool
                        <*> (fromIntegral <$> int (linear minBound maxBound))
                        <*> (fromIntegral <$> int (linear minBound maxBound))
@@ -86,6 +90,12 @@ instance HasPermutationGenerator HelloProp HelloModel where
         , contract = toggle IsContinuing
         , morphism = \hm@HelloModel {..} -> pure hm { isContinuing = not isContinuing }
         }
+    , Morphism
+        { name = "ToggleIsUnitRedeemer"
+        , match = Yes
+        , contract = toggle IsUnitRedeemer
+        , morphism = \hm@HelloModel {..} -> pure hm { isUnitRedeemer = not isUnitRedeemer }
+        }
     ]
 
 instance HasParameterisedGenerator HelloProp HelloModel where
@@ -106,7 +116,7 @@ mkCtx HelloModel {..} =
       txInfoMintUntouched
       txInfoFeeUntouched
   where
-    outAddr = if isContinuing then helloAddress else (pubKeyHashAddress "")
+    outAddr = if isContinuing then helloAddress else pubKeyHashAddress ""
     datumIn = Datum $ toBuiltinData inDatum
     datumOut =
       Datum $
@@ -117,7 +127,9 @@ mkCtx HelloModel {..} =
 
 instance ScriptModel HelloProp HelloModel where
   expect = Var IsValid :&&: Not (Var IsMalformed) :&&: Var IsContinuing
-  script hm@HelloModel {..} = applyValidator (mkCtx hm) helloValidator (Datum (toBuiltinData inDatum)) (Redeemer (toBuiltinData ()))
+  script hm@HelloModel {..} =
+    let redeemer = Redeemer $ if isUnitRedeemer then toBuiltinData () else toBuiltinData (42 :: Integer)
+    in applyValidator (mkCtx hm) helloValidator (Datum (toBuiltinData inDatum)) redeemer
 
 spec :: Spec
 spec = do
