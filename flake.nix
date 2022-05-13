@@ -147,7 +147,7 @@
             pkg-def-extras = [];
             sha256map = {
               "https://github.com/mlabs-haskell/apropos"."8304b8a91d38ea26d3302aee411748176c85c4bd" = "sha256-TqCQixWcs492kcJlWffyjwixPwG4LYATqy6lwbzA6DA=";
-              "https://github.com/mlabs-haskell/apropos-tx"."9734e1e8a4833fc56af350adf07c104cf043aafa" = "sha256-QpHYio6n3DciQXIJOoH65DTbclSQSrTPS0nbeGKK33c=";
+              "https://github.com/mlabs-haskell/apropos-tx"."24a084cc5c003f2e974778e5f3917e9a4683b4d9" = "sha256-HubDduHP/yXYKEUU8I9sUtwA6DUKhLDiLVtek/uO3bQ=";
               "https://github.com/mlabs-haskell/digraph"."d4dfec22f6a6eb646dcfa9591eaca0a9be88d260" = "sha256-ytQkJ18tYs13rt66s4jdbaGa5mLNEIerF8u24PvyPLA=";
               "https://github.com/Plutonomicon/plutarch"."ae2059f11f24d47bedeaa18749d01711cddab0bc" = "sha256-DeSwiDyJeI9had5OCxLiGtYeDl07Vic0cR8RETBLY9k=";
               "https://github.com/input-output-hk/plutus.git"."983e6af2154c4bdf86ed645062bcb62f304d0a4f" = "sha256-Ga+hIhrgq2kR5Vnso/Edo2wgQpFn167eWGl35oM093U=";
