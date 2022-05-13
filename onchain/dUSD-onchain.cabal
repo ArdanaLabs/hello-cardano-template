@@ -137,3 +137,4 @@ test-suite tests
     , tasty
     , tasty-hedgehog
     , with-utf8
+    , transformers

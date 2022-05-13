@@ -5,20 +5,15 @@ module Apropos.Plutus.HelloValidator (
 
 import Apropos
 import Apropos.Script
+import Apropos.ContextBuilder
 
-import Plutarch.Api.V1 (datumHash)
 import Test.Syd hiding (Context)
 import Test.Syd.Hedgehog
 
 import Plutus.V1.Ledger.Api (
   Redeemer (..),
   ScriptContext (..),
-  ScriptPurpose (..),
-  TxId (..),
-  TxInInfo (..),
-  TxInfo (..),
-  TxOut (..),
-  TxOutRef (..),
+  TxInfo,
   Value (..),
   toBuiltinData,
  )
@@ -27,6 +22,8 @@ import Plutus.V1.Ledger.Value (currencySymbol, tokenName)
 import Plutus.V2.Ledger.Api (fromList)
 
 import Hello (helloAddress, helloValidator)
+import Data.Functor.Identity (Identity,runIdentity)
+import Control.Monad.Trans.State (StateT)
 
 type HelloModel = (Bool, Integer, Integer)
 
@@ -86,49 +83,32 @@ instance HasPermutationGenerator HelloProp HelloModel where
 instance HasParameterisedGenerator HelloProp HelloModel where
   parameterisedGenerator = buildGen
 
-untouched :: a
-untouched = error "untouched by script"
-
 mkCtx :: HelloModel -> Context
-mkCtx hm@(m, i, j) = Context $ toBuiltinData scCtx
+mkCtx (m, i, j) = Context $ toBuiltinData scCtx
   where
-    scCtx = ScriptContext txInf (Spending txInORef)
-    txInf =
-      TxInfo
-        { txInfoInputs = [TxInInfo txInORef txInResolved]
-        , txInfoOutputs = [txOutResolved]
-        , txInfoFee = untouched
-        , txInfoMint = untouched
-        , txInfoDCert = untouched
-        , txInfoWdrl = untouched
-        , txInfoValidRange = untouched
-        , txInfoSignatories = untouched
-        , txInfoData = [(datumHash datumOut, datumOut)]
-        , txInfoId = untouched
-        }
-    datumIn = mkDatum $ helloModelInp hm
+    scCtx = runIdentity $ buildScriptContext @(StateT ScriptContext) @Identity $ do
+      withTxInfoBuilder @(StateT ScriptContext) @Identity @(StateT TxInfo) $ do
+        addInput nullTxOutRef helloAddress someAda (Just datumIn)
+        addOutput helloAddress someAda (Just datumOut)
+
+        txInfoIdUntouched
+        txInfoSignatoriesUntouched
+        txInfoValidRangeUntouched
+        txInfoWdrlUntouched
+        txInfoDCertUntouched
+        txInfoMintUntouched
+        txInfoFeeUntouched
+    datumIn = Datum $ toBuiltinData i
     datumOut =
       Datum $
         if m
           then toBuiltinData $ Just i
           else toBuiltinData j
-    txInORef = TxOutRef txInORefId 0
-    txInORefId = TxId "0000000000000000000000000000000000000000000000000000000000000000"
-    txInResolved = TxOut helloAddress someAda (Just (datumHash datumIn))
-    txOutResolved = TxOut helloAddress someAda (Just (datumHash datumOut))
-
-mkDatum :: Integer -> Datum
-mkDatum i = Datum $ toBuiltinData i
-
-helloModelInp :: HelloModel -> Integer
-helloModelInp (_, i, _) = i
-
-someAda :: Value
-someAda = Value (fromList [(currencySymbol "", fromList [(tokenName "", 10)])])
+    someAda = Value (fromList [(currencySymbol "", fromList [(tokenName "", 10)])])
 
 instance ScriptModel HelloProp HelloModel where
   expect = Var IsValid :&&: Not (Var IsMalformed)
-  script hm = applyValidator (mkCtx hm) helloValidator (mkDatum (helloModelInp hm)) (Redeemer (toBuiltinData ()))
+  script hm@(_,i,_) = applyValidator (mkCtx hm) helloValidator (Datum (toBuiltinData i)) (Redeemer (toBuiltinData ()))
 
 spec :: Spec
 spec = do
