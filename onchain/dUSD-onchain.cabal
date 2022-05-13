@@ -51,6 +51,7 @@ common lang
     PostfixOperators
     QuantifiedConstraints
     RankNTypes
+    RecordWildCards
     RelaxedPolyRec
     ScopedTypeVariables
     StandaloneDeriving

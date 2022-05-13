@@ -21,7 +21,12 @@ import Plutus.V2.Ledger.Api (fromList)
 
 import Hello (helloAddress, helloValidator)
 
-type HelloModel = (Bool, Integer, Integer)
+data HelloModel =
+  HelloModel
+    { isMalformed :: Bool
+    , inDatum :: Integer
+    , outDatum :: Integer
+    } deriving stock (Show)
 
 data HelloProp
   = IsValid
@@ -34,9 +39,9 @@ instance LogicalModel HelloProp where
   logic = ExactlyOne [Var IsValid, Var IsInvalid]
 
 instance HasLogicalModel HelloProp HelloModel where
-  satisfiesProperty IsValid (_, i, j) = i + 1 == j
+  satisfiesProperty IsValid HelloModel {..} = inDatum + 1 == outDatum
   satisfiesProperty IsInvalid p = not $ satisfiesProperty IsValid p
-  satisfiesProperty IsMalformed (b, _, _) = b
+  satisfiesProperty IsMalformed HelloModel {..} = isMalformed
 
 instance HasPermutationGenerator HelloProp HelloModel where
   sources =
@@ -44,7 +49,7 @@ instance HasPermutationGenerator HelloProp HelloModel where
         { sourceName = "Yes"
         , covers = Yes
         , gen =
-            (,,) <$> bool
+            HelloModel <$> bool
               <*> (fromIntegral <$> int (linear minBound maxBound))
               <*> (fromIntegral <$> int (linear minBound maxBound))
         }
@@ -54,21 +59,21 @@ instance HasPermutationGenerator HelloProp HelloModel where
         { name = "MakeValid"
         , match = Not $ Var IsValid
         , contract = swap IsValid IsInvalid
-        , morphism = \(m, i, _) -> pure (m, i, i + 1)
+        , morphism = \hm@HelloModel {..} -> pure hm { outDatum = inDatum + 1 }
         }
     , Morphism
         { name = "MakeInvalid"
         , match = Not $ Var IsInvalid
         , contract = swap IsInvalid IsValid
-        , morphism = \(m, i, _) -> do
-            j <- genFilter (/= (i + 1)) (fromIntegral <$> int (linear minBound maxBound))
-            pure (m, i, j)
+        , morphism = \hm@HelloModel {..} -> do
+            j <- genFilter (/= (inDatum + 1)) (fromIntegral <$> int (linear minBound maxBound))
+            pure hm { outDatum = j }
         }
     , Morphism
         { name = "ToggleMalformed"
         , match = Yes
         , contract = toggle IsMalformed
-        , morphism = \(m, i, j) -> pure (not m, i, j)
+        , morphism = \hm@HelloModel {..} -> pure hm { isMalformed = not isMalformed }
         }
     ]
 
@@ -76,7 +81,7 @@ instance HasParameterisedGenerator HelloProp HelloModel where
   parameterisedGenerator = buildGen
 
 mkCtx :: HelloModel -> Context
-mkCtx (m, i, j) =
+mkCtx HelloModel {..} =
   buildContext $ do
     withTxInfo $ do
       addInput nullTxOutRef helloAddress someAda (Just datumIn)
@@ -90,17 +95,17 @@ mkCtx (m, i, j) =
       txInfoMintUntouched
       txInfoFeeUntouched
   where
-    datumIn = Datum $ toBuiltinData i
+    datumIn = Datum $ toBuiltinData inDatum
     datumOut =
       Datum $
-        if m
-          then toBuiltinData $ Just i
-          else toBuiltinData j
+        if isMalformed
+          then toBuiltinData $ Just outDatum
+          else toBuiltinData outDatum
     someAda = Value (fromList [(currencySymbol "", fromList [(tokenName "", 10)])])
 
 instance ScriptModel HelloProp HelloModel where
   expect = Var IsValid :&&: Not (Var IsMalformed)
-  script hm@(_, i, _) = applyValidator (mkCtx hm) helloValidator (Datum (toBuiltinData i)) (Redeemer (toBuiltinData ()))
+  script hm@HelloModel {..} = applyValidator (mkCtx hm) helloValidator (Datum (toBuiltinData inDatum)) (Redeemer (toBuiltinData ()))
 
 spec :: Spec
 spec = do
