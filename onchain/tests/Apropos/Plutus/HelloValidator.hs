@@ -53,13 +53,13 @@ instance HasPermutationGenerator HelloProp HelloModel where
     [ Morphism
         { name = "MakeValid"
         , match = Not $ Var IsValid
-        , contract = add IsValid >> remove IsInvalid
+        , contract = swap IsValid IsInvalid
         , morphism = \(m, i, _) -> pure (m, i, i + 1)
         }
     , Morphism
         { name = "MakeInvalid"
         , match = Not $ Var IsInvalid
-        , contract = add IsInvalid >> remove IsValid
+        , contract = swap IsInvalid IsValid
         , morphism = \(m, i, _) -> do
             j <- genFilter (/= (i + 1)) (fromIntegral <$> int (linear minBound maxBound))
             pure (m, i, j)
@@ -67,11 +67,7 @@ instance HasPermutationGenerator HelloProp HelloModel where
     , Morphism
         { name = "ToggleMalformed"
         , match = Yes
-        , contract =
-            branches
-              [ has IsMalformed >> remove IsMalformed
-              , hasn't IsMalformed >> add IsMalformed
-              ]
+        , contract = toggle IsMalformed
         , morphism = \(m, i, j) -> pure (not m, i, j)
         }
     ]
