@@ -1,12 +1,12 @@
-{ inputs, system }:
+{ self, system }:
 
 rec {
   # The bloated haskell.nix pkgs goes here.
   pkgs =
-    import inputs.nixpkgs {
+    import self.inputs.nixpkgs {
       inherit system;
-      overlays = [ inputs.haskell-nix.overlay ];
-      inherit (inputs.haskell-nix) config;
+      overlays = [ self.inputs.haskell-nix.overlay ];
+      inherit (self.inputs.haskell-nix) config;
     };
 
   # Derivation for a Haskell Plutus project that lives in the sub-directory of this mono repo.
@@ -20,7 +20,7 @@ rec {
     let
       deferPluginErrors = true;
       fakeSrc = pkgs.runCommand "real-source-${subdir}" { } ''
-        cp -rT ${inputs.self}/${subdir} $out
+        cp -rT ${self}/${subdir} $out
         chmod u+w $out/cabal.project
         cat $out/cabal-haskell.nix.project >> $out/cabal.project
       '';
@@ -38,9 +38,9 @@ rec {
             plutus-ledger.flags.defer-plugin-errors = deferPluginErrors;
             plutus-contract.flags.defer-plugin-errors = deferPluginErrors;
             cardano-crypto-praos.components.library.pkgconfig =
-              pkgs.lib.mkForce [ [ (import inputs.plutus { inherit system; }).pkgs.libsodium-vrf ] ];
+              pkgs.lib.mkForce [ [ (import self.inputs.plutus { inherit system; }).pkgs.libsodium-vrf ] ];
             cardano-crypto-class.components.library.pkgconfig =
-              pkgs.lib.mkForce [ [ (import inputs.plutus { inherit system; }).pkgs.libsodium-vrf ] ];
+              pkgs.lib.mkForce [ [ (import self.inputs.plutus { inherit system; }).pkgs.libsodium-vrf ] ];
           } // extraPackages;
         }
       ];
@@ -55,21 +55,11 @@ rec {
         nativeBuildInputs = [
           pkgs.cabal-install
           pkgs.hlint
-        ] ++
-        # Auto-formatter dependencies are useful in devshell for editors.
-        inputs.self.pseudoFlakes.${system}.format.dependencies;
+        ];
+#        ++
+#        # Auto-formatter dependencies are useful in devshell for editors.
+#        self.pseudoFlakes.${system}.format.dependencies;
       } // extraShell;
       inherit sha256map;
-    };
-
-  # Run Ghcid under `subdir`, passing `args`.
-  ghcid = { subdir, name, args }:
-    pkgs.writeShellApplication {
-      name = "${inputs.self.projectName}-${name}";
-      text = ''
-        echo "Running Ghcid under ${subdir} (${name})"
-        cd "${inputs.self.pseudoFlakes.${system}.flake-local.flakeLocal.absPath subdir}"
-        ${pkgs.ghcid}/bin/ghcid ${args}
-      '';
     };
 }
