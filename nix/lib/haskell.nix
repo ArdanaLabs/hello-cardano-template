@@ -6,7 +6,6 @@ rec {
     import self.inputs.nixpkgs {
       inherit system;
       overlays = [ self.inputs.haskell-nix.overlay ];
-      inherit (self.inputs.haskell-nix) config;
     };
 
   # Derivation for a Haskell Plutus project that lives in the sub-directory of this mono repo.
