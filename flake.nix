@@ -31,6 +31,7 @@
         imports = [
           ./offchain/flake-module.nix
           ./onchain/flake-module.nix
+          ./docs/flake-module.nix
           ./nix/flake-modules/format/flake-module.nix
         ];
       }
