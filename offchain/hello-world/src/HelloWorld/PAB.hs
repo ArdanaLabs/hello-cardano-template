@@ -55,7 +55,7 @@ import Plutus.PAB.Effects.Contract.Builtin qualified as Builtin
 import Plutus.PAB.Run (runWithOpts)
 import Plutus.PAB.Run.Command (ConfigCommand (Migrate, PABWebserver))
 import Plutus.PAB.Run.CommandParser (AppOpts (..))
-import Plutus.PAB.Types (Config (..), DbConfig (..))
+import Plutus.PAB.Types (Config (..), DbConfig (..), WebserverConfig (permissiveCorsPolicy))
 import Plutus.PAB.Types qualified as PAB.Config
 import Prettyprinter (Pretty (..), viaShow)
 import Servant.Client (BaseUrl (..), Scheme (..))
@@ -184,7 +184,25 @@ mkPabConfig socketPath dbPath ciPort walletUrl =
     , dbConfig = mkDbConfig dbPath
     , chainIndexConfig = mkChainIndexConfig ciPort
     , walletServerConfig = mkWalletConfig walletUrl
+    , pabWebserverConfig = pabConfig
     }
+  where
+    pabConfig =
+      def
+        { -- Docs in plutus-apps' Plutus.PAB.Types have this to say:
+          --
+          --     "If true; use a very permissive CORS policy
+          --     (any website can interact.)"
+          --
+          -- If we need a more granular policy, we can write our own startServer
+          -- that takes in a middleware parameter. We'd then override the
+          -- following functions from plutus-apps:
+          --
+          --     runWithOpts -> runConfigCommand -> startServer
+          --
+          -- and call our new runWithOptsCors in the above launchPAB function.
+          permissiveCorsPolicy = True
+        }
 
 mkPABServerConfig :: FilePath -> PABServerConfig
 mkPABServerConfig socketPath =

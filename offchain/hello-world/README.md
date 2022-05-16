@@ -40,6 +40,9 @@ Below are instructions for this step-through. Our commands will use the `jq` too
     You can further verify that everything is running normally:
 
     ```
+    $ curl localhost:9080/api/healthcheck | jq
+    []
+
     $ curl localhost:46493/v2/wallets | jq
     [
       {
