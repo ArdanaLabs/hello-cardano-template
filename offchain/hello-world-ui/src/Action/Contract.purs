@@ -1,6 +1,9 @@
 module HelloWorld.Action.Contract where
 
+import HelloWorld.ContractID (ContractID)
+
 data Action
-  = Initialize
-  | Increment
-  | Read
+  = Activate
+  | Initialize ContractID
+  | Increment ContractID
+  | Read ContractID

@@ -7,12 +7,14 @@ newtype BaseURL = BaseURL String
 derive instance eqBaseURL :: Eq BaseURL
 derive instance ordBaseURL :: Ord BaseURL
 
-newtype ContractID = ContractID String
+newtype Wallet = Wallet String
 
-derive instance eqContractID :: Eq ContractID
-derive instance ordContractID :: Ord ContractID
+derive instance eqWallet :: Eq Wallet
+derive instance ordWallet :: Ord Wallet
+instance Show Wallet where
+  show (Wallet wallet) = wallet
 
 type Env =
   { baseURL :: BaseURL
-  , contractID :: ContractID
+  , wallet :: Wallet
   }
