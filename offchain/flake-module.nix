@@ -50,7 +50,7 @@
             };
           })
         ];
-        sha256map = import ./sha256map.nix;
+        sha256map = import ./sha256map;
       };
     in
     {

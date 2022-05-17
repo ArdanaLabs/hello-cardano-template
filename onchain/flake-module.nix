@@ -21,7 +21,7 @@
           ];
         };
         pkg-def-extras = [ ];
-        sha256map = import ./sha256map.nix;
+        sha256map = import ./sha256map;
       };
       haskellNixFlake = project.flake { };
     in
