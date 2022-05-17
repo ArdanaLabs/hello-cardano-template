@@ -49,6 +49,6 @@ prop commands = monadicIO $ do
   assert $ n == evalCommands commands
 
 main :: IO ()
-main = quickCheck $ mapSize (*10) $ withMaxSuccess 10 prop
+main = quickCheck $ mapSize (*10) $ withMaxSuccess 5 prop
 
 
