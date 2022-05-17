@@ -1,5 +1,5 @@
 cabal-version:      2.4
-name:               try-selenium
+name:               selenium-example
 version:            0.1.0.0
 
 data-dir: html
@@ -10,8 +10,8 @@ test-suite webdriver
     type:             exitcode-stdio-1.0
     main-is:          WebDriver.hs
 
-    other-modules:    Paths_try_selenium
-    autogen-modules:  Paths_try_selenium
+    other-modules:    Paths_selenium_example
+    autogen-modules:  Paths_selenium_example
 
     build-depends:
         base ^>=4.14,
@@ -24,8 +24,8 @@ test-suite sydtest-webdriver
     type:             exitcode-stdio-1.0
     main-is:          SydTestWebDriver.hs
 
-    other-modules:    Paths_try_selenium
-    autogen-modules:  Paths_try_selenium
+    other-modules:    Paths_selenium_example
+    autogen-modules:  Paths_selenium_example
 
     build-depends:
         base ^>=4.14,

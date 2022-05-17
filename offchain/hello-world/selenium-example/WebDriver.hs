@@ -7,7 +7,7 @@ import Control.Monad.IO.Class
 import Data.Text (unpack)
 import Test.QuickCheck
 import Test.QuickCheck.Monadic
-import Paths_try_selenium
+import Paths_selenium_example
 
 data Command = Init | Inc | Read
   deriving Show

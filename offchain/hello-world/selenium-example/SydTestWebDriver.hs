@@ -9,7 +9,7 @@ import Test.Syd
 import Test.Syd.Webdriver
 import Test.WebDriver
 import Test.QuickCheck
-import Paths_try_selenium
+import Paths_selenium_example
 
 data Command = Init | Inc | Read
   deriving Show
