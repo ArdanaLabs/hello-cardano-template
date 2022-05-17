@@ -3,7 +3,7 @@
 rec {
   # The bloated haskell.nix pkgs goes here.
   pkgs =
-    import self.inputs.nixpkgs {
+    import self.inputs.bloated-nixpkgs {
       inherit system;
       overlays = [ self.inputs.haskell-nix.overlay ];
     };
