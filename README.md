@@ -54,13 +54,14 @@ nix run .#format
 
 If you are in nix-shell already, you can also just run `treefmt`.
 
-### Running CI locally
+### Running checks locally
 
-Although CI is run on every commit of every branch, you may also run the same checks locally using:
+Although CI is run on every attribute of the `flake.nix` upon every commit of
+every branch, you may also some of the same checks locally as follows:
 
 ```sh-session
 # -L is for displaying full logs, which includes test output.
-nix build -L
+nix flake check -L
 ```
 
 ### Making a new package
