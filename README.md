@@ -64,15 +64,12 @@ every branch, you may also some of the same checks locally as follows:
 nix flake check -L
 ```
 
-### Making a new package
+### Making a new package (flake module)
 
 Each project in this repository should have a `flake-module.nix` based on the
-following template, at its root. This is part of the
-[flake-modules-core](https://github.com/hercules-ci/flake-modules-core)
-framework. Each of these `flake-module.nix` files can be thought of as a
-subflake. They can also be thought of as a `default.nix` similar to what you see
-in Nixpkgs next to every package. The real name for this, though, is a "flake
-module".
+following template, at its root. You can run `nix flake init -t .`
+anywhere in this repository, and a new `flake-module.nix` with the following
+skeleton template will be created in your current directory.
 
 ```
 { self, ... }:
@@ -83,6 +80,13 @@ module".
   };
 }
 ```
+
+This is part of the
+[flake-modules-core](https://github.com/hercules-ci/flake-modules-core)
+framework. Each of these `flake-module.nix` files can be thought of as a
+subflake. They can also be thought of as a `default.nix` similar to what you see
+in Nixpkgs next to every package. The real name for this, though, is a "flake
+module".
 
 `perSystem` is where flake attributes like `packages` or `apps` which need a
 system argument like `x86_64-linux` may go.
