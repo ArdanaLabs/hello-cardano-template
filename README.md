@@ -91,7 +91,7 @@ system argument like `x86_64-linux` may go.
 the framework. Anything that doesn't require a system like `x86_64-linux` goes
 here.
 
-`inputs'` and `self`' have the `system` abstracted away. For example, the
+`inputs'` and `self'` have the `system` abstracted away. For example, the
 following expressions are equivalent to eachother:
 
 - `inputs'.nixpkgs.legacyPackages`
