@@ -1,16 +1,9 @@
 { self, system }:
-
-rec {
-  # The bloated haskell.nix pkgs goes here.
-  pkgs =
-    import self.inputs.bloated-nixpkgs {
-      inherit system;
-      overlays = [ self.inputs.haskell-nix.overlay ];
-    };
-
+{
   # Derivation for a Haskell Plutus project that lives in the sub-directory of this mono repo.
   plutusProjectIn =
-    { subdir          # The sub-directory name
+    { pkgs            # The instance of nixpkgs to use
+    , subdir          # The sub-directory name
     , extraShell      # Extra 'shell' attributes used by haskell.nix
     , pkg-def-extras  # For overriding the package set
     , sha256map       # Extra sha256 hashes used by haskell.nix

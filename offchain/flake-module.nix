@@ -2,10 +2,13 @@
 {
   perSystem = system: { config, self', inputs', ... }:
     let
+      # A flake-module in nix/flake-modules/haskell.nix defines haskell-nix
+      # packages once, so we can reuse it here, it's more performant.
+      pkgs = config.haskell-nix.pkgs;
       # dusd-lib contains helper functions for dealing with haskell.nix. From it,
-      # we inherit pkgs, plutusProjectIn
+      # we inherit plutusProjectIn
       dusd-lib = import "${self}/nix/lib/haskell.nix" { inherit system self; };
-      inherit (dusd-lib) pkgs plutusProjectIn;
+      inherit (dusd-lib) plutusProjectIn;
 
       onchain-scripts = self'.packages.onchain-scripts;
       subdir = "offchain";
@@ -17,6 +20,7 @@
       haskellNixFlake = project.flake { };
       project = plutusProjectIn {
         inherit subdir;
+        inherit pkgs;
         extraPackages = {
           hello-world.components.library.preBuild = "export DUSD_SCRIPTS=${onchain-scripts}";
         };

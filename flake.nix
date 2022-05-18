@@ -37,6 +37,7 @@
           ./onchain/flake-module.nix
           ./docs/flake-module.nix
           ./nix/flake-modules/format/flake-module.nix
+          ./nix/flake-modules/haskell.nix/flake-module.nix
         ];
       }
     ).config.flake;
