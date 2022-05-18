@@ -38,6 +38,7 @@
           ./docs/flake-module.nix
           ./nix/flake-modules/format/flake-module.nix
           ./nix/flake-modules/haskell.nix/flake-module.nix
+          ./nix/flake-modules/templates/flake-module.nix
         ];
       }
     ).config.flake;
