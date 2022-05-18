@@ -44,10 +44,6 @@ For offchain, run:
 nix develop .#offchain
 ```
 
-### Ghcid
-
-In the nix shell, run `dusd-<TAB>` to see available commands, and select the appropriate ghcid configuration. For example, running `dusd-offchain-ghcid-lib` will run Ghcid on the offchain library component.
-
 ### Formatting
 
 To auto-format the project tree, run:
