@@ -66,3 +66,42 @@ Although CI is run on every commit of every branch, you may also run the same ch
 # -L is for displaying full logs, which includes test output.
 nix build -L
 ```
+
+### Making a new package
+
+Each project in this repository should have a `flake-module.nix` based on the
+following template, at its root. This is part of the
+[flake-modules-core](https://github.com/hercules-ci/flake-modules-core)
+framework. Each of these `flake-module.nix` files can be thought of as a
+subflake. They can also be thought of as a `default.nix` similar to what you see
+in Nixpkgs next to every package. The real name for this, though, is a "flake
+module".
+
+```
+{ self, ... }:
+{
+  perSystem = system: { config, self', inputs', ... }: {
+  };
+  flake = {
+  };
+}
+```
+
+`perSystem` is where flake attributes like `packages` or `apps` which need a
+system argument like `x86_64-linux` may go.
+
+`flake` is where any flake attribute can go, in the event of any confusion with
+the framework. Anything that doesn't require a system like `x86_64-linux` goes
+here.
+
+`inputs'` and `self`' have the `system` abstracted away. For example, the
+following expressions are equivalent to eachother:
+
+- `inputs'.nixpkgs.legacyPackages`
+- `self.inputs.nixpkgs.legacyPackages.x86_64-linux`
+
+Another example of equivalence is as follows:
+
+-  `self'.packages.hello`
+-  `self.packages.x86_64-linux.hello`
+
