@@ -28,9 +28,6 @@
             {
               name = "dusd-feedback-loop";
               runtimeInputs = [ pkgs.entr ];
-              # FIXME: Running 'nix build' inside an app is rather alow. This should
-              # just directly call the same command as the build derivation above
-              # (ie. latexmk).
               text = ''
                 find docs -name "*.tex" | entr nix build .#build-docs
               '';
