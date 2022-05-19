@@ -1,12 +1,8 @@
-# Installation
-
-> nix-env -iA nixpkgs.selenium-server-standalone
-
-
-# Running
+# Running the tests
 
 ## Tests based on `webdriver` package
 
+> nix-env -iA nixpkgs.selenium-server-standalone
 > selenium-server
 
 In another shell:
