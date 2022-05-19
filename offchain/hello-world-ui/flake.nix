@@ -7,10 +7,41 @@
       url = "github:justinwoo/easy-purescript-nix";
       flake = false;
     };
+    purs-nix.url = "github:ursi/purs-nix";
   };
 
   outputs = { self, nixpkgs, easy-purescript-nix, ... }@inputs:
     let
+      make-purs-nix = system:
+        let
+          purs-nix = inputs.purs-nix { inherit system; };
+          inherit (purs-nix) ps-pkgs purs;
+        in
+        purs-nix
+        // purs
+             { dependencies =
+                 with ps-pkgs;
+                 [ aff
+                   affjax
+                   affjax-web
+                   argonaut-codecs
+                   argonaut-core
+                   effect
+                   either
+                   foreign-object
+                   halogen
+                   http-methods
+                   maybe
+                   prelude
+                   remotedata
+                   transformers
+                   tuples
+                   type-equality
+                 ];
+
+               srcs = [ ./src ];
+             };
+
       name = "hello-world-ui";
 
       supportedSystems = [
@@ -44,36 +75,23 @@
       packages = forAllSystems (system:
         let
           pkgs = import nixpkgs { inherit system; };
-
-          easy-ps = import easy-purescript-nix { inherit pkgs; };
-
-          spagoPkgs = import ./spago-packages.nix { inherit pkgs; };
+          inherit (make-purs-nix system) modules;
         in
 
         {
-          "${name}" = pkgs.stdenv.mkDerivation {
-            inherit name;
-            src = ./.;
-            buildInputs = with spagoPkgs; [ installSpagoStyle buildSpagoStyle ];
-            nativeBuildInputs = with easy-ps; [ purs spago pkgs.esbuild ];
-            unpackPhase = ''
-              cp -R $src/* .
-              install-spago-style
-            '';
-            buildPhase = ''
-              build-spago-style "./src/**/*.purs"
-              esbuild --bundle index.js --minify --outfile=main.js
-            '';
-            installPhase = ''
-              mkdir $out
-              mv main.js $out/
-              cp dist/index.html $out/
-            '';
-          };
+          "${name}" =
+            pkgs.runCommand name {}
+              ''
+              mkdir $out; cd $out
+              ln -s ${modules.Main.bundle { esbuild.minify = true; }} main.js
+              ln -s ${./dist/index.html} index.html
+              '';
         });
 
       devShell = forAllSystems (system:
         let
+          purs-nix = make-purs-nix system;
+
           pkgs = import nixpkgs {
             inherit system;
           };
@@ -84,14 +102,12 @@
           inherit name;
           inputsFrom = builtins.attrValues self.packages.${system};
           buildInputs = (with pkgs; [
-            dhall
-            dhall-json
             nodejs-16_x
-          ]) ++ (with easy-ps; [
-            purescript-language-server
-            purs-tidy
-            spago
-            spago2nix
+            (purs-nix.command {})
+            purs-nix.esbuild
+            purs-nix.purescript
+            purs-nix.purescript-language-server
+            easy-ps.purs-tidy
           ]);
         });
     };
