@@ -19,9 +19,8 @@ test-suite webdriver
         text,
         webdriver
 
-test-suite sydtest-webdriver
+executable sydtest-webdriver
     default-language: Haskell2010
-    type:             exitcode-stdio-1.0
     main-is:          SydTestWebDriver.hs
 
     other-modules:    Paths_selenium_example

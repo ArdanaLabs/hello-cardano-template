@@ -40,6 +40,7 @@
         imports = [
           ./offchain/flake-module.nix
           ./offchain/hello-world-ui/flake-module.nix
+          ./offchain/hello-world/selenium-example/flake-module.nix
           ./onchain/flake-module.nix
           ./docs/flake-module.nix
           ./nix/flake-modules/format/flake-module.nix
