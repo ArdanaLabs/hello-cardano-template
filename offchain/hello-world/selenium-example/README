@@ -1,4 +1,3 @@
-
 # Installation
 
 > nix-env -iA nixpkgs.selenium-server-standalone
@@ -12,21 +11,22 @@
 
 In another shell:
 
+> nix develop
 > cabal test webdriver
 
 
 ## Tests based on `sydtest-webdriver` package
 
+> nix develop
 > cabal test sydtest-webdriver
 
 Notes
 
 - this doesn't work (error message: `ResponseTimeout`, probably from the `webdriver-standalone` executable)
-- currently just one test case is given, randomized property tests are missing
 
 
 # TODOs
 
-1.  nixify
+1.  use flake modules
 2.  fix the solution using `sydtest-webdriver`
 3.  integrate with the real application

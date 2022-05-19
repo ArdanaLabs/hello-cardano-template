@@ -24,25 +24,6 @@ evalCommands = snd . foldl (flip f) (0, "")  where
   f Inc (i, c) = (i + 1, c)
   f read (i, _) = (i, show i)
 
-
-mkTest :: [Command] -> WebdriverTestM () ()
-mkTest commands = do
-
-    initialize <- findElem $ ById "initialize"
-    increment  <- findElem $ ById "increment"
-    read       <- findElem $ ById "read"
-    counter    <- findElem $ ById "counterr"
-
-    let interpret c = click $ case c of
-         Init -> initialize
-         Inc -> increment
-         Read -> read
-
-    mapM_ interpret commands
-    n <- unpack <$> getText counter
-
-    when (n /= evalCommands commands) $ error "fail"
-
 initPage = do
   path <- liftIO getDataDir
   let uriStr = "file://" <> path <> "/HelloWorld.html"
@@ -51,6 +32,22 @@ initPage = do
     Just uri -> pure (uri, ())
 
 main :: IO ()
-main = sydTest $ webdriverSpec (\_ -> initPage) $ do
-  it "test 1" $ mkTest [Init, Inc, Read]
+main = sydTest $ webdriverSpec (\_ -> initPage) $
+  it "test 1" $ \wte -> property $ \commands ->
+    runWebdriverTestM wte $ do
+
+      initialize <- findElem $ ById "initialize"
+      increment  <- findElem $ ById "increment"
+      read       <- findElem $ ById "read"
+      counter    <- findElem $ ById "counterr"
+
+      let interpret c = click $ case c of
+           Init -> initialize
+           Inc -> increment
+           Read -> read
+
+      mapM_ interpret commands
+      n <- unpack <$> getText counter
+
+      when (n /= evalCommands commands) $ error "fail"
 
