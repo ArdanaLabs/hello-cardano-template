@@ -47,9 +47,16 @@
             {
               name = projectName;
               runtimeInputs = [ pkgs.entr pkgs.nodePackages.serve ];
-              text = ''
-                find . -name "*.purs" | entr -r sh -c 'nix build .#hello-world-ui && serve result'
-              '';
+              text =
+                let
+                  script = pkgs.writeScript "serve.sh" ''
+                    nix build .#${projectName}
+                    serve result
+                  '';
+                in
+                ''
+                  find . -name "*.purs" | entr -r ${script}
+                '';
             } + "/bin/${projectName}";
         };
       };
