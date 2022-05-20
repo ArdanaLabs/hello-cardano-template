@@ -11,8 +11,10 @@
 # This file
 /.github/CODEOWNERS @CSVdB @delicious-lemon
 
-# Any nix code
-*.nix @MatthewCroughan @nixinator @DarthPJB @srid @delicious-lemon
+*.nix @ArdanaLabs/devops
+
+# onchain nix code
+onchain/*.nix @srid @delicious-lemon
 
 # Monorepo projects
 offchain/hello-world-ui/* @toastal

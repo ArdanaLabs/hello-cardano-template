@@ -44,10 +44,6 @@ For offchain, run:
 nix develop .#offchain
 ```
 
-### Ghcid
-
-In the nix shell, run `dusd-<TAB>` to see available commands, and select the appropriate ghcid configuration. For example, running `dusd-offchain-ghcid-lib` will run Ghcid on the offchain library component.
-
 ### Formatting
 
 To auto-format the project tree, run:
@@ -55,3 +51,58 @@ To auto-format the project tree, run:
 ```sh-session
 nix run .#format
 ```
+
+If you are in nix-shell already, you can also just run `treefmt`.
+
+### Running checks locally
+
+Although CI is run on every attribute of the `flake.nix` upon every commit of
+every branch, you may also some of the same checks locally as follows:
+
+```sh-session
+# -L is for displaying full logs, which includes test output.
+nix flake check -L
+```
+
+### Making a new package (flake module)
+
+Each project in this repository should have a `flake-module.nix` based on the
+following template, at its root. You can run `nix flake init -t .`
+anywhere in this repository, and a new `flake-module.nix` with the following
+skeleton template will be created in your current directory.
+
+```
+{ self, ... }:
+{
+  perSystem = system: { config, self', inputs', ... }: {
+  };
+  flake = {
+  };
+}
+```
+
+This is part of the
+[flake-modules-core](https://github.com/hercules-ci/flake-modules-core)
+framework. Each of these `flake-module.nix` files can be thought of as a
+subflake. They can also be thought of as a `default.nix` similar to what you see
+in Nixpkgs next to every package. The real name for this, though, is a "flake
+module".
+
+`perSystem` is where flake attributes like `packages` or `apps` which need a
+system argument like `x86_64-linux` may go.
+
+`flake` is where any flake attribute can go, in the event of any confusion with
+the framework. Anything that doesn't require a system like `x86_64-linux` goes
+here.
+
+`inputs'` and `self'` have the `system` abstracted away. For example, the
+following expressions are equivalent to eachother:
+
+- `inputs'.nixpkgs.legacyPackages`
+- `self.inputs.nixpkgs.legacyPackages.x86_64-linux`
+
+Another example of equivalence is as follows:
+
+-  `self'.packages.hello`
+-  `self.packages.x86_64-linux.hello`
+
