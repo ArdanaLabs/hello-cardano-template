@@ -45,15 +45,16 @@
           '';
       };
       apps = {
-        "${projectName}" = {
+        ${projectName} = {
           type = "app";
-          program = (pkgs.writeShellApplication {
-            name = projectName;
-            text = ''
-              cd ./.
-              ${pkgs.nodePackages.serve}/bin/serve ${self'.packages.${projectName}}
-            '';
-          }) + "/bin/${projectName}";
+          program = pkgs.writeShellApplication
+            {
+              name = projectName;
+              runtimeInputs = [ pkgs.entr pkgs.nodePackages.serve ];
+              text = ''
+                find . -name "*.purs" | entr -r sh -c 'nix build .#hello-world-ui && serve result'
+              '';
+            } + "/bin/${projectName}";
         };
       };
       devShells.${projectName} = pkgs.mkShell {
