@@ -46,12 +46,12 @@
           program = pkgs.writeShellApplication
             {
               name = projectName;
-              runtimeInputs = [ pkgs.entr pkgs.nodePackages.serve ];
+              runtimeInputs = [ pkgs.entr pkgs.nodePackages.http-server ];
               text =
                 let
                   script = pkgs.writeScript "serve.sh" ''
                     nix build .#${projectName}
-                    serve result
+                    http-server -c-1 result
                   '';
                 in
                 ''
