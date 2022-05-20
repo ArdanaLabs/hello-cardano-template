@@ -31,3 +31,7 @@ ci
 
 # Ignore direnv cache
 .direnv
+
+# Ignore flake.nix anywhere except for the root
+flake.nix
+!/flake.nix
