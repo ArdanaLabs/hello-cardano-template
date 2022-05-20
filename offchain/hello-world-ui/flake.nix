@@ -3,14 +3,10 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    easy-purescript-nix = {
-      url = "github:justinwoo/easy-purescript-nix";
-      flake = false;
-    };
     purs-nix.url = "github:ursi/purs-nix";
   };
 
-  outputs = { self, nixpkgs, easy-purescript-nix, ... }@inputs:
+  outputs = { self, nixpkgs, ... }@inputs:
     let
       make-purs-nix = system:
         let
@@ -95,8 +91,6 @@
           pkgs = import nixpkgs {
             inherit system;
           };
-
-          easy-ps = import easy-purescript-nix { inherit pkgs; };
         in
         pkgs.mkShell {
           inherit name;
@@ -107,7 +101,7 @@
             purs-nix.esbuild
             purs-nix.purescript
             purs-nix.purescript-language-server
-            easy-ps.purs-tidy
+            purs-nix.purs-tidy
           ]);
         });
     };
