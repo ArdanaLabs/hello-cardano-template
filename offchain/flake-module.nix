@@ -10,6 +10,10 @@
       dusd-lib = import "${self}/nix/lib/haskell.nix" { inherit system self; };
       inherit (dusd-lib) plutusProjectIn fixHaskellDotNix;
 
+      haskellNixFlake =
+        fixHaskellDotNix (project.flake {})
+          [ ./dUSD-offchain.cabal ./hello-world/hello-world.cabal ];
+
       onchain-scripts = self'.packages.onchain-scripts;
       subdir = "offchain";
       # Checks the shell script using ShellCheck
@@ -17,7 +21,6 @@
         (pkgs.writeShellApplication {
           inherit name text;
         }) + "/bin/${name}";
-      haskellNixFlake = project.flake { };
       project = plutusProjectIn {
         inherit subdir;
         inherit pkgs;
@@ -64,7 +67,7 @@
           export SHELLEY_TEST_DATA="${self.inputs.plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley/"
         '';
       });
-      packages = (fixHaskellDotNix haskellNixFlake [ ./dUSD-offchain.cabal ./hello-world/hello-world.cabal ]).packages // {
+      packages = haskellNixFlake.packages // {
       };
       apps = {
         offchain-test = {

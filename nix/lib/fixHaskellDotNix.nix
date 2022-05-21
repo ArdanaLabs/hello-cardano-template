@@ -1,4 +1,4 @@
-l: haskellNix:
+l: haskellNix: cabalFiles:
   let
     b = builtins;
     f = cabalFile:
@@ -25,8 +25,10 @@ l: haskellNix:
            (map (test: "${name}:test:${test}") (getNamesOfType "test-suite"));
     };
   in
-  b.foldl'
-    (acc: file:
-     l.recursiveUpdate acc (f file)
-    )
-    {}
+  haskellNix
+  // b.foldl'
+       (acc: file:
+        l.recursiveUpdate acc (f file)
+       )
+       {}
+       cabalFiles

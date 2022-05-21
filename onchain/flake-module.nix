@@ -9,6 +9,7 @@
       # we inherit plutusProjectIn and fixHaskellDotNix
       dusd-lib = import "${self}/nix/lib/haskell.nix" { inherit system self; };
       inherit (dusd-lib) plutusProjectIn fixHaskellDotNix;
+      haskellNixFlake = fixHaskellDotNix (project.flake {}) [ ./dUSD-onchain.cabal ];
 
       subdir = "onchain";
       project = plutusProjectIn {
@@ -27,10 +28,9 @@
         pkg-def-extras = [ ];
         sha256map = import ./sha256map;
       };
-      haskellNixFlake = project.flake { };
     in
     {
-      packages = (fixHaskellDotNix haskellNixFlake [ ./dUSD-onchain.cabal ]).packages // {
+      packages = haskellNixFlake.packages // {
         onchain-scripts = pkgs.stdenv.mkDerivation {
           name = "onchain-scripts";
           src = self; # FIXME: Why should src be project root here?
@@ -44,7 +44,7 @@
           '';
         };
       };
-      checks = (fixHaskellDotNix haskellNixFlake [ ./dUSD-onchain.cabal ]).checks // {
+      checks = haskellNixFlake.checks // {
       };
       devShells.onchain = haskellNixFlake.devShell // { };
     };
