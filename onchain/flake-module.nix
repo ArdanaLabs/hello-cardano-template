@@ -6,9 +6,9 @@
       # packages once, so we can reuse it here, it's more performant.
       pkgs = config.haskell-nix.pkgs;
       # dusd-lib contains helper functions for dealing with haskell.nix. From it,
-      # we inherit plutusProjectIn
+      # we inherit plutusProjectIn and fixHaskellDotNix
       dusd-lib = import "${self}/nix/lib/haskell.nix" { inherit system self; };
-      inherit (dusd-lib) plutusProjectIn;
+      inherit (dusd-lib) plutusProjectIn fixHaskellDotNix;
 
       subdir = "onchain";
       project = plutusProjectIn {
@@ -30,7 +30,7 @@
       haskellNixFlake = project.flake { };
     in
     {
-      packages = haskellNixFlake.packages // {
+      packages = (fixHaskellDotNix haskellNixFlake [ ./dUSD-onchain.cabal ]).packages // {
         onchain-scripts = pkgs.stdenv.mkDerivation {
           name = "onchain-scripts";
           src = self; # FIXME: Why should src be project root here?
@@ -44,7 +44,8 @@
           '';
         };
       };
-      checks = haskellNixFlake.checks // { };
+      checks = (fixHaskellDotNix haskellNixFlake [ ./dUSD-onchain.cabal ]).checks // {
+      };
       devShells.onchain = haskellNixFlake.devShell // { };
     };
   flake = {
