@@ -13,16 +13,19 @@ l: haskellNix: cabalFiles:
         makeSet = attr: names:
           b.listToAttrs
             (b.map (name: { inherit name; value = haskellNix.${attr}.${name}; }) names);
+
+         checks =
+           makeSet "checks"
+             (map (test: "${name}:test:${test}") (getNamesOfType "test-suite"));
        in
        { packages =
            makeSet "packages"
              ((if library then ["${name}:lib:${name}"] else [])
               ++ map (exe: "${name}:exe:${exe}") (getNamesOfType "executable")
-             );
+             )
+           // checks;
 
-         checks =
-            makeSet "checks"
-              (map (test: "${name}:test:${test}") (getNamesOfType "test-suite"));
+         inherit checks;
        };
   in
   haskellNix
