@@ -1,4 +1,4 @@
-l: haskellNix:
+l: haskellNix: cabalFiles:
   let
     b = builtins;
     f = cabalFile:
@@ -13,20 +13,25 @@ l: haskellNix:
         makeSet = attr: names:
           b.listToAttrs
             (b.map (name: { inherit name; value = haskellNix.${attr}.${name}; }) names);
-    in
-    { packages =
-        makeSet "packages"
-          ((if library then ["${name}:lib:${name}"] else [])
-           ++ map (exe: "${name}:exe:${exe}") (getNamesOfType "executable")
-          );
 
-      checks =
-         makeSet "checks"
-           (map (test: "${name}:test:${test}") (getNamesOfType "test-suite"));
-    };
+         checks =
+           makeSet "checks"
+             (map (test: "${name}:test:${test}") (getNamesOfType "test-suite"));
+       in
+       { packages =
+           makeSet "packages"
+             ((if library then ["${name}:lib:${name}"] else [])
+              ++ map (exe: "${name}:exe:${exe}") (getNamesOfType "executable")
+             )
+           // checks;
+
+         inherit checks;
+       };
   in
-  b.foldl'
-    (acc: file:
-     l.recursiveUpdate acc (f file)
-    )
-    {}
+  haskellNix
+  // b.foldl'
+       (acc: file:
+        l.recursiveUpdate acc (f file)
+       )
+       {}
+       cabalFiles
