@@ -2780,11 +2780,11 @@
         "utils": "utils_6"
       },
       "locked": {
-        "lastModified": 1652923136,
-        "narHash": "sha256-x9emLJ/d+BpV/i3EwyMjj1AEyspDyu8kzf23UV8zX1A=",
+        "lastModified": 1653322270,
+        "narHash": "sha256-0BrzdilE+2vYr6WYYf2yb2gNOg3RZ7EjDP4V5bHBPGM=",
         "owner": "ursi",
         "repo": "purs-nix",
-        "rev": "2bac21ac327fdcba7a6fb87b154730c96c09ef03",
+        "rev": "13264034134af6f532ef8367fca7d45ec0317e04",
         "type": "github"
       },
       "original": {
