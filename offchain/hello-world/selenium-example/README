@@ -2,27 +2,31 @@
 
 ## Tests based on `webdriver` package
 
-> nix-env -iA nixpkgs.selenium-server-standalone
-> selenium-server
+- install chromedriver
+- Download selenium-server-standalone-2.53.1.jar from http://docs.seleniumhq.org/download/
 
-In another shell:
+Run in a shell:
 
-> nix develop
+> java -jar selenium-server-standalone-2.53.1.jar
+
+Run in another shell:
+
+> nix develop .#selenium-example
 > cabal test webdriver
 
 
 ## Tests based on `sydtest-webdriver` package
 
-> nix develop
-> cabal test sydtest-webdriver
+> nix develop .#selenium-example
+> cabal run sydtest-webdriver
 
 Notes
 
-- this doesn't work (error message: `ResponseTimeout`, probably from the `webdriver-standalone` executable)
+- this doesn't work, because sydtest-webdriver uses a wrong version of selenium-server-standalone
 
 
 # TODOs
 
-1.  use flake modules
-2.  fix the solution using `sydtest-webdriver`
-3.  integrate with the real application
+1.  fix `sydtest-webdriver` and remove the `webdriver`-based test
+2.  integrate with the real application
+

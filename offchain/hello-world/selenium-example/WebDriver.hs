@@ -22,14 +22,13 @@ evalCommands = snd . foldl (flip f) (0, "")  where
   f Inc (i, c) = (i + 1, c)
   f read (i, _) = (i, show i)
 
-firefoxConfig = defaultConfig
--- chromeConfig = useBrowser chrome defaultConfig
+chromeConfig = useBrowser chrome defaultConfig
 
 prop :: [Command] -> Property
 prop commands = monadicIO $ do
 
   path <- liftIO getDataDir
-  n <- run $ runSession firefoxConfig . finallyClose $ do
+  n <- run $ runSession chromeConfig . finallyClose $ do
 
     openPage $ "file://" <> path <> "/HelloWorld.html"
 
