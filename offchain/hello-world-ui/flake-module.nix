@@ -71,6 +71,17 @@
           purs-nix.purescript-language-server
           # purs-nix.purs-tidy
         ]);
+        shellHook = ''
+          if [ -d ".git" ]
+          then
+            cd offchain/hello-world-ui
+          fi
+
+          if [ ! -d "output" ]
+          then
+              purs-nix compile
+          fi
+        '';
       };
     };
   flake = {
