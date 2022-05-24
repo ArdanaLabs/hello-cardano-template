@@ -1980,6 +1980,23 @@
         "type": "indirect"
       }
     },
+    "nixpkgs'": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1484390918,
+        "narHash": "sha256-KQ0+PHFKGXSQUMM95KhL4Agm/Wg4/fp0uMEcfW7qrJA=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "f0c230c2c7cc5c88b0d80b95ca61d86d1dfb700f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "f0c230c2c7cc5c88b0d80b95ca61d86d1dfb700f",
+        "type": "github"
+      }
+    },
     "nixpkgs-2003": {
       "locked": {
         "lastModified": 1620055814,
@@ -2822,6 +2839,7 @@
         "haskell-nix": "haskell-nix",
         "lint-utils": "lint-utils",
         "nixpkgs": "nixpkgs_4",
+        "nixpkgs'": "nixpkgs'",
         "plutus": "plutus",
         "plutus-apps": "plutus-apps",
         "purs-nix": "purs-nix"

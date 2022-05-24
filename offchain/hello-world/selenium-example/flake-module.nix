@@ -20,7 +20,7 @@
             haskell-language-server = {};
           };
           buildInputs = with pkgs; [
-            selenium-server-standalone
+            inputs'.nixpkgs'.legacyPackages.selenium-server-standalone
             nixpkgs-fmt
           ];
         };
