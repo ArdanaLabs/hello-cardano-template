@@ -24,7 +24,7 @@ extra-source-files: CHANGELOG.md
 library
   exposed-modules:
     Clients
-    MyLib
+    PriceFetcher
     Types
 
   -- Modules included in this library but not exported.
@@ -64,6 +64,7 @@ executable ada-price-feeder
   build-depends:
     , ada-price-feeder
     , base
+    , optparse-applicative
 
   hs-source-dirs:   app
   ghc-options:      -Wall -Werror

@@ -1,7 +1,7 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module MyLib (getMedianPriceFromSources) where
+module PriceFetcher (getMedianPriceFromSources) where
 
 import Data.Vector qualified as V (fromList)
 import Network.HTTP.Client.TLS (newTlsManager)

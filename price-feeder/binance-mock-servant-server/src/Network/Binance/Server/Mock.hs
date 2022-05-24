@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ImportQualifiedPost #-}
 
 module Network.Binance.Server.Mock (binanceMockApp, mockTickerPriceHandler) where
 

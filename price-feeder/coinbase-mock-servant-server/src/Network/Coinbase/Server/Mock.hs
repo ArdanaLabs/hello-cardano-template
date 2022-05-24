@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ImportQualifiedPost #-}
 
 module Network.Coinbase.Server.Mock (coinbaseMockApp, mockSpotPriceHandler) where
 

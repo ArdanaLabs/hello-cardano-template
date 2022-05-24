@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ImportQualifiedPost #-}
 
 module Network.Huobi.Server.Mock (huobiMockApp, mockGetTick) where
 
