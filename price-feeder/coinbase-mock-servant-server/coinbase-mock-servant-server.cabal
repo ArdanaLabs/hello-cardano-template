@@ -61,7 +61,6 @@ executable coinbase-mock-servant-server
     , mock-servant-server-utils
     , optparse-applicative
     , warp
-    , warp-tls
 
   hs-source-dirs:   app
   default-language: Haskell2010
