@@ -30,6 +30,7 @@
 
             srcs = [ ./src ];
           };
+      easy-ps = import self.inputs.easy-purescript-nix { inherit pkgs; };
     in
     {
       packages = {
@@ -69,7 +70,7 @@
           purs-nix.esbuild
           purs-nix.purescript
           purs-nix.purescript-language-server
-          # purs-nix.purs-tidy
+          easy-ps.purs-tidy
         ]);
       };
     };
