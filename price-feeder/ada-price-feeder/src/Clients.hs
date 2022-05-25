@@ -111,7 +111,8 @@ huobiBaseUrl =
 getHuobiPrice :: MonadIO m => ClientEnv -> m Double
 getHuobiPrice clientEnv = do
   let CurrencyPair base currency = adaUsdt
-  tick <- _tick <$> (fromEitherIO $ retrying defaultRetryPolicy retryDecider $ \_ -> runClientM (client marketDataAPIProxy (Just $ base <> currency)) clientEnv)
+      symbolParam = T.toLower $ base <> currency
+  tick <- _tick <$> (fromEitherIO $ retrying defaultRetryPolicy retryDecider $ \_ -> runClientM (client marketDataAPIProxy (Just $ symbolParam)) clientEnv)
   let (ask, _) = _ask tick
       (bid, _) = _bid tick
   return $ (ask + bid) / 2
