@@ -1186,7 +1186,7 @@
         "nix-tools": "nix-tools_5",
         "nixpkgs": [
           "haskell-nix",
-          "nixpkgs-2105"
+          "nixpkgs-unstable"
         ],
         "nixpkgs-2003": "nixpkgs-2003_5",
         "nixpkgs-2105": "nixpkgs-2105_5",
@@ -2593,10 +2593,6 @@
     },
     "root": {
       "inputs": {
-        "bloated-nixpkgs": [
-          "haskell-nix",
-          "nixpkgs-unstable"
-        ],
         "cardano-node": "cardano-node",
         "dream2nix": "dream2nix",
         "flake-modules-core": "flake-modules-core",
