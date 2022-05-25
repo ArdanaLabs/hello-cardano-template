@@ -4,4 +4,4 @@ import PriceFetcher (getMedianPriceFromSources)
 
 main :: IO ()
 main = do
-  putStrLn =<< getMedianPriceFromSources
+  putStrLn =<< show <$> getMedianPriceFromSources
