@@ -10,7 +10,7 @@
         name = "selenium-example";
         src = ./.;
         compiler-nix-name = "ghc8107";
-        sha256map = { "https://github.com/NorfairKing/sydtest"."a446095558bc9f67bc3b8ca2e9ce230150c049ff" = "sha256-grXhl2KfpQWmGpbPGJUyELwQaHfLPICyVZNMLkctj1Q="; };
+        sha256map = import ./sha256map;
         # This is used by `nix develop .` to open a shell for use with
         # `cabal`, `hlint` and `haskell-language-server`
         shell = {
