@@ -20,6 +20,8 @@
             haskell-language-server = {};
           };
           buildInputs = with pkgs; [
+            chromedriver
+            chromium
             inputs'.nixpkgs'.legacyPackages.selenium-server-standalone
             nixpkgs-fmt
           ];
