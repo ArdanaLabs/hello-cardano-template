@@ -87,8 +87,10 @@ in nixosTest {
     };
     client = { config, pkgs, ... }: {
       virtualisation.vlans = [ 1 ];
-      environment.systemPackages = [ pkgs.curl pkgs.iputils ];
+      security.pki.certificateFiles = [ sslCertificate ];
+      environment.systemPackages = [ pkgs.curl pkgs.iputils priceFeederExe ];
       networking.hosts.${serverIpAddress} = [ "api.kraken.com" ];
+      networking.hosts."192.0.2.0" = [ "api.huobi.pro" "api.kucoin.com" "api.coinbase.com" "api.binance.com" ];
     };
   };
   testScript = ''
@@ -106,6 +108,7 @@ in nixosTest {
     client.wait_until_succeeds("ping -n -c 1 api.kraken.com")
     (_, response) = client.execute("curl -k https://api.kraken.com/0/public/Ticker?pair=ADAUSD")
     assert (str(price) in response), "Couldn't find the price {} in the curl response {}".format(str(price), response)
-    # server.succeed("${priceFeederExe}/bin/ada-price-feeder")
+    (_, output) = client.execute("ada-price-feeder")
+    assert (str(price) in output), output
   '';
 }

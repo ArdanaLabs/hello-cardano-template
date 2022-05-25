@@ -3,10 +3,12 @@
 
 module PriceFetcher (getMedianPriceFromSources) where
 
+import Data.Either (rights)
 import Data.Vector qualified as V (fromList)
 import Network.HTTP.Client.TLS (newTlsManager)
 import Servant.Client (BaseUrl, ClientEnv, mkClientEnv)
 import Statistics.Quantile (median, medianUnbiased)
+import UnliftIO.Exception (tryAny)
 
 import Clients
 
@@ -23,5 +25,5 @@ getMedianPriceFromSources :: IO Double
 getMedianPriceFromSources = do
   manager <- newTlsManager
   let clientEnv = mkClientEnv manager
-  results <- sequenceA $ fetchers clientEnv
-  return $ median medianUnbiased $ V.fromList results
+  results <- traverse tryAny (fetchers clientEnv)
+  return $ median medianUnbiased $ V.fromList (rights results)
