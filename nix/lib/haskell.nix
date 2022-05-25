@@ -1,5 +1,6 @@
 { self, system }:
 {
+  fixHaskellDotNix = import ./fixHaskellDotNix.nix self.inputs.nixpkgs.lib;
   # Derivation for a Haskell Plutus project that lives in the sub-directory of this mono repo.
   plutusProjectIn =
     { pkgs            # The instance of nixpkgs to use

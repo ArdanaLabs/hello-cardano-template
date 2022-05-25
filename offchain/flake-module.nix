@@ -6,9 +6,13 @@
       # packages once, so we can reuse it here, it's more performant.
       pkgs = config.haskell-nix.pkgs;
       # dusd-lib contains helper functions for dealing with haskell.nix. From it,
-      # we inherit plutusProjectIn
+      # we inherit plutusProjectIn and fixHaskellDotNix
       dusd-lib = import "${self}/nix/lib/haskell.nix" { inherit system self; };
-      inherit (dusd-lib) plutusProjectIn;
+      inherit (dusd-lib) plutusProjectIn fixHaskellDotNix;
+
+      haskellNixFlake =
+        fixHaskellDotNix (project.flake {})
+          [ ./dUSD-offchain.cabal ./hello-world/hello-world.cabal ];
 
       onchain-scripts = self'.packages.onchain-scripts;
       subdir = "offchain";
@@ -17,7 +21,6 @@
         (pkgs.writeShellApplication {
           inherit name text;
         }) + "/bin/${name}";
-      haskellNixFlake = project.flake { };
       project = plutusProjectIn {
         inherit subdir;
         inherit pkgs;
@@ -64,7 +67,8 @@
           export SHELLEY_TEST_DATA="${self.inputs.plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley/"
         '';
       });
-      packages = haskellNixFlake.packages // { };
+      packages = haskellNixFlake.packages // {
+      };
       apps = {
         offchain-test = {
           type = "app";
