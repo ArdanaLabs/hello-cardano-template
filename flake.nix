@@ -35,6 +35,7 @@
         imports = [
           ./offchain/flake-module.nix
           ./onchain/flake-module.nix
+          ./price-feeder/flake-module.nix
           ./docs/flake-module.nix
           ./nix/flake-modules/format/flake-module.nix
           ./nix/flake-modules/haskell.nix/flake-module.nix
