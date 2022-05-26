@@ -26,7 +26,8 @@ evalCommands = snd . foldl (flip f) (0, "")
     f Inc (i, c) = (i + 1, c)
     f read (i, _) = (i, show i)
 
-initPage = do
+initPage :: WebdriverSpec () -> Spec
+initPage = webdriverSpec $ \_ -> do
   path <- liftIO getDataDir
   let uriStr = "file://" <> path <> "/HelloWorld.html"
   case parseURI uriStr of
@@ -35,9 +36,10 @@ initPage = do
 
 main :: IO ()
 main = sydTest $
-  webdriverSpec (\_ -> initPage) $
+  initPage $
     it "test 1" $ \wte -> property $ \commands ->
       runWebdriverTestM wte $ do
+        openPath ""
         initialize <- findElem $ ById "initialize"
         increment <- findElem $ ById "increment"
         read <- findElem $ ById "read"
