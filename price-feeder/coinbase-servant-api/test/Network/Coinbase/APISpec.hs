@@ -24,7 +24,7 @@ testParseSpotPrice = do
   describe "parseJSON SpotPrice" $ do
     it "should succeed parsing the coinbase modelled spot price" $ do
       eitherDecodeFileStrict "test-resources/spot-price-result.json"
-        >>= (`shouldBe` (Right $ CoinbaseResponse Nothing $ Just $ SpotPriceUnsafe {_base = "BTC", _currency = "USD", _amount = "41397.58"}))
+        >>= (`shouldBe` (Right $ CoinbaseResponse Nothing $ Just $ SpotPrice {_base = "BTC", _currency = "USD", _amount = "41397.58"}))
     it "should succeed parsing the coinbase modelled error" $ do
       eitherDecodeFileStrict "test-resources/spot-price-error-result.json"
-        >>= (`shouldBe` (Right (CoinbaseResponse (Just [CoinbaseError "invalid_request" "Invalid date (2022/01/01)- use format YYYY-MM-DD"]) Nothing :: CoinbaseResponse SpotPriceUnsafe)))
+        >>= (`shouldBe` (Right (CoinbaseResponse (Just [CoinbaseError "invalid_request" "Invalid date (2022/01/01)- use format YYYY-MM-DD"]) Nothing :: CoinbaseResponse SpotPrice)))
