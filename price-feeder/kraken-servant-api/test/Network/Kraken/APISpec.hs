@@ -51,15 +51,15 @@ testParseAssetTickerInfo = do
 
 testParseTickData :: Spec
 testParseTickData = do
-  describe "parseJSON TickDataUnsafe" $ do
+  describe "parseJSON OHLCResponse" $ do
     it "should succeed parsing the kraken modelled tick data" $ do
       maybeTickData <- eitherDecodeFileStrict "test-resources/tick-data.json"
       maybeTickData
         `shouldBe` ( Right $
                       KrakenResponse [] $
-                        OHLCResponseUnsafe
-                          { _ohlcResponseUnsafeLast = 1616662920
-                          , _ohlcResponseUnsafePairs =
+                        OHLCResponse
+                          { _ohlcResponseLast = 1616662920
+                          , _ohlcResponsePairs =
                               Map.fromList
                                 [
                                   ( "XXBTZUSD"
