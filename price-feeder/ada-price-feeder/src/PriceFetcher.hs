@@ -11,7 +11,7 @@ import Network.HTTP.Client.TLS (newTlsManagerWith)
 import Servant.Client (BaseUrl, ClientEnv, mkClientEnv)
 import Statistics.Quantile (median, medianUnbiased)
 import System.IO (hPutStrLn, stderr)
-import UnliftIO.Exception (tryAny, throwString)
+import UnliftIO.Exception (throwString, tryAny)
 
 import Clients
 
@@ -33,4 +33,4 @@ getMedianPriceFromSources managerSettings = do
   if length prices > 0
     then return $ median medianUnbiased $ V.fromList prices
     else do
-    throwString "Unable to fetch at least one price"
+      throwString "Unable to fetch at least one price"

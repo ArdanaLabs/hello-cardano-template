@@ -1,6 +1,6 @@
 module Main where
 
-import Network.Connection (TLSSettings(..))
+import Network.Connection (TLSSettings (..))
 import Network.HTTP.Client.TLS (mkManagerSettings, tlsManagerSettings)
 import Options.Applicative
 
@@ -9,13 +9,18 @@ import PriceFetcher (getMedianPriceFromSources)
 main :: IO ()
 main = do
   shouldValidateCert <- execParser priceFeederOptions
-  let dontValidateCertTlsSettings = TLSSettingsSimple { settingDisableCertificateValidation = False
-                                                      , settingDisableSession = False
-                                                      , settingUseServerName = False
-                                                      }
-  putStrLn =<< show <$> getMedianPriceFromSources (if shouldValidateCert
-                                                     then tlsManagerSettings
-                                                     else mkManagerSettings dontValidateCertTlsSettings Nothing)
+  let dontValidateCertTlsSettings =
+        TLSSettingsSimple
+          { settingDisableCertificateValidation = False
+          , settingDisableSession = False
+          , settingUseServerName = False
+          }
+  putStrLn =<< show
+    <$> getMedianPriceFromSources
+      ( if shouldValidateCert
+          then tlsManagerSettings
+          else mkManagerSettings dontValidateCertTlsSettings Nothing
+      )
 
 priceFeederOptions :: ParserInfo Bool
 priceFeederOptions =
@@ -26,5 +31,5 @@ priceFeederOptions =
         <> header "ada-price-feeder"
     )
 
-disableCerticicateValidation :: Parser Bool 
+disableCerticicateValidation :: Parser Bool
 disableCerticicateValidation = flag False True (long "disable-cert-validation")
