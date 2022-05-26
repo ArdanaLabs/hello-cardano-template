@@ -22,7 +22,7 @@
             selenium-example.components.tests.sydtest-webdriver = {
               pkgconfig = [ [ realNixpkgs.makeWrapper ] ];
               postInstall = ''
-                wrapProgram $out/bin/selenium-webdriver \
+                wrapProgram $out/bin/sydtest-webdriver \
                   --prefix PATH : "${realNixpkgs.lib.makeBinPath ( with realNixpkgs; [
                     chromedriver
                     chromium
