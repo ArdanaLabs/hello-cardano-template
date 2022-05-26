@@ -3,10 +3,35 @@
   perSystem = system: { config, self', inputs', ... }:
     let
       description = "Selenium test for dUSD Hello World UI";
+      # dusd-lib contains helper functions for dealing with haskell.nix. From it,
+      # we inherit fixHaskellDotNix
+      dusd-lib = import "${self}/nix/lib/haskell.nix" { inherit system self; };
+      inherit (dusd-lib) fixHaskellDotNix;
+      # realNixpkgs is required to get chromium and selenium from
+      # cache.nixos.org rather than the bloated Haskell.nix Nixpkgs.
+      realNixpkgs = inputs'.nixpkgs.legacyPackages;
       # A flake-module in nix/flake-modules/haskell.nix defines haskell-nix
       # packages once, so we can reuse it here, it's more performant.
       pkgs = config.haskell-nix.pkgs;
-      seleniumExample = pkgs.haskell-nix.cabalProject {
+      haskellNixFlake =
+        fixHaskellDotNix (project.flake { })
+          [ ./selenium-example.cabal ];
+      project = pkgs.haskell-nix.cabalProject {
+        modules = [{
+          packages = {
+            selenium-example.components.tests.sydtest-webdriver = {
+              pkgconfig = [ [ realNixpkgs.makeWrapper ] ];
+              postInstall = ''
+                wrapProgram $out/bin/selenium-webdriver \
+                  --prefix PATH : "${realNixpkgs.lib.makeBinPath ( with realNixpkgs; [
+                    chromedriver
+                    chromium
+                    selenium-server-standalone
+                  ])}"
+              '';
+            };
+          };
+        }];
         name = "selenium-example";
         src = ./.;
         compiler-nix-name = "ghc8107";
@@ -15,41 +40,23 @@
         # `cabal`, `hlint` and `haskell-language-server`
         shell = {
           tools = {
-            cabal = {};
-            hlint = {};
-            haskell-language-server = {};
+            cabal = { };
+            hlint = { };
+            haskell-language-server = { };
           };
-          buildInputs = with pkgs; [
+          buildInputs = with realNixpkgs; [
             chromedriver
             chromium
-            inputs'.nixpkgs'.legacyPackages.selenium-server-standalone
+            selenium-server-standalone
             nixpkgs-fmt
           ];
         };
-        # Non-Haskell shell tools go here
-        # This adds `js-unknown-ghcjs-cabal` to the shell.
-        # shell.crossPlatforms = p: [p.ghcjs];
-        };
-      haskellNixFlake = seleniumExample.flake { };
-
-      selenium-example-test = seleniumExample.selenium-example.components.exes.sydtest-webdriver.overrideAttrs (oldAttrs: rec {
-          buildInputs = oldAttrs.buildInputs or [] ++ [ pkgs.makeWrapper ];
-          postInstall = oldAttrs.postInstall or "" + ''
-            wrapProgram $out/bin/sydtest-webdriver \
-            --set PATH ${pkgs.lib.makeBinPath [ pkgs.selenium-server-standalone ]}
-          '';
-        });
+      };
     in
     {
-      packages = {
-        # TODO @Matthew, run this selenium example test in a nixos vm and add it to checks
-        inherit selenium-example-test;
-      };
+      packages = haskellNixFlake.packages;
       devShells.selenium-example = haskellNixFlake.devShell;
-      checks = {
-        
-      };
+      checks = haskellNixFlake.checks // { };
     };
-
-  flake = {};
+  flake = { };
 }

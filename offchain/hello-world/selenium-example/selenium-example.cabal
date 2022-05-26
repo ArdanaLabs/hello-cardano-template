@@ -5,9 +5,13 @@ version:            0.1.0.0
 data-dir: html
 data-files: HelloWorld.html
 
-test-suite webdriver
+-- TODO: The naming of the executable as 'webdriver' and build-depends 'webdriver' is
+-- a possible collision. The naming is also confusing, since sydtest-webdriver
+-- and webdriver are similar names, which also collide with real hackage
+-- packages. This probably needs to be addressed.
+
+executable webdriver
     default-language: Haskell2010
-    type:             exitcode-stdio-1.0
     main-is:          WebDriver.hs
 
     other-modules:    Paths_selenium_example
@@ -19,8 +23,9 @@ test-suite webdriver
         text,
         webdriver
 
-executable sydtest-webdriver
+test-suite sydtest-webdriver
     default-language: Haskell2010
+    type:             exitcode-stdio-1.0
     main-is:          SydTestWebDriver.hs
 
     other-modules:    Paths_selenium_example
