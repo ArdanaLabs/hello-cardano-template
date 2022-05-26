@@ -1,9 +1,8 @@
-cabal-version:      2.4
-name:               selenium-example
-version:            0.1.0.0
-
-data-dir: html
-data-files: HelloWorld.html
+cabal-version: 2.4
+name:          selenium-example
+version:       0.1.0.0
+data-dir:      html
+data-files:    HelloWorld.html
 
 -- TODO: The naming of the executable as 'webdriver' and build-depends 'webdriver' is
 -- a possible collision. The naming is also confusing, since sydtest-webdriver
@@ -11,31 +10,27 @@ data-files: HelloWorld.html
 -- packages. This probably needs to be addressed.
 
 executable webdriver
-    default-language: Haskell2010
-    main-is:          WebDriver.hs
-
-    other-modules:    Paths_selenium_example
-    autogen-modules:  Paths_selenium_example
-
-    build-depends:
-        base ^>=4.14,
-        QuickCheck,
-        text,
-        webdriver
+  default-language: Haskell2010
+  main-is:          WebDriver.hs
+  other-modules:    Paths_selenium_example
+  autogen-modules:  Paths_selenium_example
+  build-depends:
+    , base        ^>=4.14
+    , QuickCheck
+    , text
+    , webdriver
 
 test-suite sydtest-webdriver
-    default-language: Haskell2010
-    type:             exitcode-stdio-1.0
-    main-is:          SydTestWebDriver.hs
-
-    other-modules:    Paths_selenium_example
-    autogen-modules:  Paths_selenium_example
-
-    build-depends:
-        base ^>=4.14,
-        QuickCheck,
-        text,
-        webdriver,
-        network-uri,
-        sydtest,
-        sydtest-webdriver
+  default-language: Haskell2010
+  type:             exitcode-stdio-1.0
+  main-is:          SydTestWebDriver.hs
+  other-modules:    Paths_selenium_example
+  autogen-modules:  Paths_selenium_example
+  build-depends:
+    , base               ^>=4.14
+    , network-uri
+    , QuickCheck
+    , sydtest
+    , sydtest-webdriver
+    , text
+    , webdriver

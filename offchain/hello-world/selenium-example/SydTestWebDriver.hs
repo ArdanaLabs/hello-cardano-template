@@ -1,28 +1,30 @@
-{-# LANGUAGE OverloadedStrings, NoMonomorphismRestriction #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
+
 module Main where
 
-import Data.Text (unpack)
 import Control.Monad
+import Data.Text (unpack)
 
 import Network.URI
+import Paths_selenium_example
+import Test.QuickCheck
 import Test.Syd
 import Test.Syd.Webdriver
 import Test.WebDriver
-import Test.QuickCheck
-import Paths_selenium_example
 
 data Command = Init | Inc | Read
-  deriving Show
+  deriving (Show)
 
 instance Arbitrary Command where
   arbitrary = elements [Init, Inc, Inc, Inc, Inc, Read, Read]
 
 evalCommands :: [Command] -> String
-evalCommands = snd . foldl (flip f) (0, "")  where
-
-  f Init (_, c) = (0, c)
-  f Inc (i, c) = (i + 1, c)
-  f read (i, _) = (i, show i)
+evalCommands = snd . foldl (flip f) (0, "")
+  where
+    f Init (_, c) = (0, c)
+    f Inc (i, c) = (i + 1, c)
+    f read (i, _) = (i, show i)
 
 initPage = do
   path <- liftIO getDataDir
@@ -32,22 +34,21 @@ initPage = do
     Just uri -> pure (uri, ())
 
 main :: IO ()
-main = sydTest $ webdriverSpec (\_ -> initPage) $
-  it "test 1" $ \wte -> property $ \commands ->
-    runWebdriverTestM wte $ do
+main = sydTest $
+  webdriverSpec (\_ -> initPage) $
+    it "test 1" $ \wte -> property $ \commands ->
+      runWebdriverTestM wte $ do
+        initialize <- findElem $ ById "initialize"
+        increment <- findElem $ ById "increment"
+        read <- findElem $ ById "read"
+        counter <- findElem $ ById "counterr"
 
-      initialize <- findElem $ ById "initialize"
-      increment  <- findElem $ ById "increment"
-      read       <- findElem $ ById "read"
-      counter    <- findElem $ ById "counterr"
+        let interpret c = click $ case c of
+              Init -> initialize
+              Inc -> increment
+              Read -> read
 
-      let interpret c = click $ case c of
-           Init -> initialize
-           Inc -> increment
-           Read -> read
+        mapM_ interpret commands
+        n <- unpack <$> getText counter
 
-      mapM_ interpret commands
-      n <- unpack <$> getText counter
-
-      when (n /= evalCommands commands) $ error "fail"
-
+        when (n /= evalCommands commands) $ error "fail"
