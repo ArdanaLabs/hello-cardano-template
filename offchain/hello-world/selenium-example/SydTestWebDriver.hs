@@ -37,7 +37,7 @@ initPage = webdriverSpec $ \_ -> do
 main :: IO ()
 main = sydTest $
   initPage $
-    it "test 1" $ \wte -> property $ \commands ->
+    it "test 1" $ \wte -> mapSize (* 10) $ withMaxSuccess 5 $ property $ \commands ->
       runWebdriverTestM wte $ do
         openPath ""
         initialize <- findElem $ ById "initialize"
