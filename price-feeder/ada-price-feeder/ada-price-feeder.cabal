@@ -37,6 +37,7 @@ library
     , binance-servant-api
     , coinbase-servant-api
     , containers
+    , http-client
     , http-client-tls
     , huobi-servant-api
     , kraken-servant-api
@@ -64,6 +65,8 @@ executable ada-price-feeder
   build-depends:
     , ada-price-feeder
     , base
+    , connection
+    , http-client-tls
     , optparse-applicative
 
   hs-source-dirs:   app
