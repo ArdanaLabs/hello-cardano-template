@@ -7,9 +7,6 @@
     # An instance of Nixpkgs specially for haskell.nix usage
     bloated-nixpkgs.follows = "haskell-nix/nixpkgs-unstable";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    # TODO: remove this, it is not nice to refer to such old version of nixpkgs
-    nixpkgs'.url = "github:nixos/nixpkgs?rev=f0c230c2c7cc5c88b0d80b95ca61d86d1dfb700f";
-    nixpkgs'.flake = false;
     cardano-node.url = "github:input-output-hk/cardano-node?rev=73f9a746362695dc2cb63ba757fbcabb81733d23";
     #   used for libsodium-vrf
     plutus.url = "github:input-output-hk/plutus";
