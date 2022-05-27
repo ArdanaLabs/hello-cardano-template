@@ -23,7 +23,11 @@
           inherit name text;
         }) + "/bin/${name}";
       project = pkgs.haskell-nix.cabalProject' {
-        src = ./.;
+        src = pkgs.runCommand "fakesrc-offchain" {} ''
+          cp -rT ${./.} $out
+          chmod u+w $out/cabal.project
+          cat $out/cabal-haskell.nix.project >> $out/cabal.project
+        '';
         compiler-nix-name = "ghc8107";
         cabalProjectFileName = "cabal.project";
         shell = commonPlutusShell // {
