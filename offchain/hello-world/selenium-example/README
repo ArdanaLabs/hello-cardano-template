@@ -1,32 +1,11 @@
 # Running the tests
 
-## Tests based on `webdriver` package
-
-- install chromedriver
-- Download selenium-server-standalone-2.53.1.jar from http://docs.seleniumhq.org/download/
-
-Run in a shell:
-
-> java -jar selenium-server-standalone-2.53.1.jar
-
-Run in another shell:
-
 > nix develop .#selenium-example
-> cabal test webdriver
-
-
-## Tests based on `sydtest-webdriver` package
-
-> nix develop .#selenium-example
-> cabal run sydtest-webdriver
-
-Notes
-
-- this doesn't work, because sydtest-webdriver uses a wrong version of selenium-server-standalone
+> nix build -L .#"selenium-example:exe:sydtest-webdriver"
+> result/bin/sydtest-webdriver
 
 
 # TODOs
 
-1.  fix `sydtest-webdriver` and remove the `webdriver`-based test
-2.  integrate with the real application
+1.  integrate with the real application
 
