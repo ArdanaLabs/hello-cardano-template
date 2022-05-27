@@ -73,7 +73,7 @@ library
   hs-source-dirs:  src
   build-depends:   base
 
-executable tests
+test-suite tests
   import:         lang
   type:           exitcode-stdio-1.0
   main-is:        Main.hs
