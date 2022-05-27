@@ -25,17 +25,17 @@ testParseKrakenResponse = do
 
 testParseAssetTickerInfo :: Spec
 testParseAssetTickerInfo = do
-  describe "parseJSON AssetTickerInfoUnsafe" $ do
+  describe "parseJSON AssetTickerInfo" $ do
     it "should succeed parsing the kraken modelled asset ticker info" $ do
       maybeAssetTickerInfo <- eitherDecodeFileStrict "test-resources/asset-ticker-info.json"
       maybeAssetTickerInfo
         `shouldBe` ( Right $
                       KrakenResponse [] $
-                        AssetTickerInfoResponseUnsafe $
+                        AssetTickerInfoResponse $
                           Map.fromList
                             [
                               ( "XXBTZUSD"
-                              , AssetTickerInfoUnsafe
+                              , AssetTickerInfo
                                   ("52609.60000", "1", "1.000")
                                   ("52609.50000", "1", "1.000")
                                   ("52641.10000", "0.00080000")
