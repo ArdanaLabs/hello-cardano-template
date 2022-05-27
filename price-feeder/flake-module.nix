@@ -27,7 +27,7 @@
 
       packages = haskellNixFlake.packages;
       checks = {
-        price-feeder-integration-test = pkgs.callPackage ./test.nix {
+        price-feeder-integration-test = inputs'.nixpkgs.legacyPackages.callPackage ./test.nix {
           sslCertificate = "${self.inputs.nixpkgs}/nixos/tests/common/acme/server/acme.test.cert.pem";
           sslCertificateKey = "${self.inputs.nixpkgs}/nixos/tests/common/acme/server/acme.test.key.pem";
           priceFeederExe = self'.packages."ada-price-feeder:exe:ada-price-feeder";

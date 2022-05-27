@@ -108,7 +108,7 @@ in nixosTest {
     client.wait_until_succeeds("ping -n -c 1 api.kraken.com")
     (_, response) = client.execute("curl -k https://api.kraken.com/0/public/Ticker?pair=ADAUSD")
     assert (str(price) in response), "Couldn't find the price {} in the curl response {}".format(str(price), response)
-    (_, output) = client.execute("ada-price-feeder 2>&1")
+    (_, output) = client.execute("ada-price-feeder --disable-cert-validation 2>&1")
     assert (str(price) in output), output
   '';
 }
