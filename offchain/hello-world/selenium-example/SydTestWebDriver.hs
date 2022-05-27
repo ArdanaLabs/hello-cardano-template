@@ -7,37 +7,29 @@ import Control.Monad
 import Data.Text (unpack)
 
 import Network.URI
-import Paths_selenium_example
-import System.Directory (doesFileExist)
 import Test.QuickCheck
 import Test.Syd
 import Test.Syd.Webdriver
 import Test.WebDriver
 
-data Command = Init | Inc | Read
+data Command = Init | Incr
   deriving (Show)
 
 instance Arbitrary Command where
-  arbitrary = elements [Init, Inc, Inc, Inc, Inc, Read, Read]
+  arbitrary = elements [Init, Incr, Incr, Incr, Incr]
 
-evalCommands :: [Command] -> String
-evalCommands = snd . foldl (flip f) (0, "")
+evalCommands :: [Command] -> Int
+evalCommands = foldl f 0
   where
-    f Init (_, c) = (0, c)
-    f Inc (i, c) = (i + 1, c)
-    f read (i, _) = (i, show i)
+    f _ Init = 0
+    f c Incr = c + 1
 
 initPage :: WebdriverSpec () -> Spec
 initPage = webdriverSpec $ \_ -> do
-  path <- liftIO getDataDir
-  let fullPath = path <> "/HelloWorld.html"
-      uriStr = "file://" <> fullPath
-  fileDoesExist <- liftIO $ doesFileExist fullPath
-  if (not fileDoesExist)
-    then liftIO $ expectationFailure $ "file does not exist: " <> fullPath
-    else case parseURI uriStr of
-      Nothing -> liftIO $ expectationFailure $ "Failed to parse uri as string: " <> show uriStr
-      Just uri -> pure (uri, ())
+  let uriStr = "http://127.0.0.1:8080"
+  case parseURI uriStr of
+    Nothing -> liftIO $ expectationFailure $ "Failed to parse uri as string: " <> show uriStr
+    Just uri -> pure (uri, ())
 
 main :: IO ()
 main = sydTest $
@@ -49,15 +41,13 @@ main = sydTest $
             openPath ""
             initialize <- findElem $ ById "initialize"
             increment <- findElem $ ById "increment"
-            read <- findElem $ ById "read"
-            counter <- findElem $ ById "counterr"
+            counter <- findElem $ ById "counter"
 
             let interpret c = click $ case c of
                   Init -> initialize
-                  Inc -> increment
-                  Read -> read
+                  Incr -> increment
 
             mapM_ interpret commands
             n <- unpack <$> getText counter
 
-            when (n /= evalCommands commands) $ error "fail"
+            when (n /= (show $ evalCommands commands)) $ error "fail"
