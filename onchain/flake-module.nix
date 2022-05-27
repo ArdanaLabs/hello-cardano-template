@@ -6,16 +6,19 @@
       # packages once, so we can reuse it here, it's more performant.
       pkgs = config.haskell-nix.pkgs;
       # dusd-lib contains helper functions for dealing with haskell.nix. From it,
-      # we inherit plutusProjectIn and fixHaskellDotNix
-      dusd-lib = import "${self}/nix/lib/haskell.nix" { inherit system self; };
-      inherit (dusd-lib) plutusProjectIn fixHaskellDotNix;
+      # we inherit fixHaskellDotNix and some common attributes to give to
+      # cabalProject'
+      dusd-lib = import "${self}/nix/lib/haskell.nix" { inherit system self pkgs; };
+      inherit (dusd-lib) commonPlutusModules commonPlutusShell fixHaskellDotNix;
       haskellNixFlake = fixHaskellDotNix (project.flake {}) [ ./dUSD-onchain.cabal ];
 
-      subdir = "onchain";
-      project = plutusProjectIn {
-        inherit subdir;
-        inherit pkgs;
-        extraShell = {
+      project = pkgs.haskell-nix.cabalProject' {
+        src = ./.;
+        compiler-nix-name = "ghc8107";
+        cabalProjectFileName = "cabal.project";
+        modules = commonPlutusModules ++ [{
+        }];
+        shell = commonPlutusShell // {
           additional = ps: [
             ps.apropos
             ps.apropos-tx
@@ -25,7 +28,6 @@
             ps.sydtest-hedgehog
           ];
         };
-        pkg-def-extras = [ ];
         sha256map = import ./sha256map;
       };
     in
