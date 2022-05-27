@@ -54,6 +54,24 @@
         modules = commonPlutusModules ++ [{
           packages = {
             hello-world.components.library.preBuild = "export DUSD_SCRIPTS=${onchain-scripts}";
+            dUSD-offchain.components.tests.tests = {
+              pkgconfig = [ [ pkgs.makeWrapper ] ];
+              postInstall = with pkgs; ''
+                wrapProgram $out/bin/tests \
+                  --set 'DUSD_SCRIPTS' '${onchain-scripts}'
+              '';
+            };
+            hello-world.components.tests.hello-world-e2e = {
+              pkgconfig = [ [ pkgs.makeWrapper ] ];
+              postInstall = with pkgs; ''
+                wrapProgram $out/bin/hello-world-e2e \
+                  --set 'SHELLEY_TEST_DATA' '${self.inputs.plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley' \
+                  --prefix PATH : "${pkgs.lib.makeBinPath [
+                    self.inputs.cardano-node.outputs.packages.${system}."cardano-node:exe:cardano-node"
+                    self.inputs.cardano-node.outputs.packages.${system}."cardano-cli:exe:cardano-cli"
+                  ]}"
+              '';
+            };
           };
         }];
         sha256map = import ./sha256map;
@@ -69,23 +87,8 @@
       };
     in
     {
-      devShells.offchain = haskellNixFlake.devShell.overrideAttrs (oa: {
-        shellHook = oa.shellHook + ''
-          # running local cluster + PAB
-          export SHELLEY_TEST_DATA="${self.inputs.plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley/"
-        '';
-      });
+      devShells.offchain = haskellNixFlake.devShell;
       packages = haskellNixFlake.packages // {
-      };
-      apps = {
-        offchain-test = {
-          type = "app";
-          program = checkedShellScript system "dUSD-offchain-test"
-            '' export DUSD_SCRIPTS=${onchain-scripts}
-                cd ${self}
-                ${haskellNixFlake.packages."dUSD-offchain:exe:tests"}/bin/tests;
-            '';
-        };
       };
     };
   flake = {

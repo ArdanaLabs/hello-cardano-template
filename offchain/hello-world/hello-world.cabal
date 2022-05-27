@@ -120,8 +120,9 @@ executable hello-world-cluster
     , base
     , hello-world
 
-executable hello-world-e2e
+test-suite hello-world-e2e
   import:           lang
+  type:             exitcode-stdio-1.0
   main-is:          Main.hs
   build-depends:
     , aeson
