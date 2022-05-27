@@ -21,13 +21,14 @@
           packages = {
             selenium-example.components.tests.sydtest-webdriver = {
               pkgconfig = [ [ realNixpkgs.makeWrapper ] ];
-              postInstall = ''
+              postInstall = with realNixpkgs; ''
                 wrapProgram $out/bin/sydtest-webdriver \
-                  --prefix PATH : "${realNixpkgs.lib.makeBinPath ( with realNixpkgs; [
+                  --set FONTCONFIG_FILE ${makeFontsConf { fontDirectories = [ twitter-color-emoji roboto ]; }} \
+                  --prefix PATH : "${realNixpkgs.lib.makeBinPath [
                     chromedriver
                     chromium
                     selenium-server-standalone
-                  ])}"
+                  ]}"
               '';
             };
           };
