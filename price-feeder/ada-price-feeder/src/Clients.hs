@@ -43,7 +43,7 @@ adaUsdt =
     }
 
 defaultRetryPolicy :: Monad m => RetryPolicyM m
-defaultRetryPolicy = exponentialBackoff 2000000 <> limitRetries 5
+defaultRetryPolicy = exponentialBackoff 2000000 <> limitRetries 1
 
 -- Retry on connection error
 retryDecider :: Monad m => RetryStatus -> Either ClientError a -> m Bool

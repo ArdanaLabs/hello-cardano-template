@@ -8,18 +8,18 @@ import PriceFetcher (getMedianPriceFromSources)
 
 main :: IO ()
 main = do
-  shouldValidateCert <- execParser priceFeederOptions
+  shouldDisableValidateCert <- execParser priceFeederOptions
   let dontValidateCertTlsSettings =
         TLSSettingsSimple
-          { settingDisableCertificateValidation = False
+          { settingDisableCertificateValidation = True
           , settingDisableSession = False
           , settingUseServerName = False
           }
   putStrLn =<< show
     <$> getMedianPriceFromSources
-      ( if shouldValidateCert
-          then tlsManagerSettings
-          else mkManagerSettings dontValidateCertTlsSettings Nothing
+      ( if shouldDisableValidateCert
+          then mkManagerSettings dontValidateCertTlsSettings Nothing
+          else tlsManagerSettings
       )
 
 priceFeederOptions :: ParserInfo Bool
