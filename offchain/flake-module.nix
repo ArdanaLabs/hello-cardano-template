@@ -6,9 +6,10 @@
       # packages once, so we can reuse it here, it's more performant.
       pkgs = config.haskell-nix.pkgs;
       # dusd-lib contains helper functions for dealing with haskell.nix. From it,
-      # we inherit plutusProjectIn and fixHaskellDotNix
-      dusd-lib = import "${self}/nix/lib/haskell.nix" { inherit system self; };
-      inherit (dusd-lib) plutusProjectIn fixHaskellDotNix;
+      # we inherit fixHaskellDotNix and some common attributes to give to
+      # cabalProject'
+      dusd-lib = import "${self}/nix/lib/haskell.nix" { inherit system self pkgs; };
+      inherit (dusd-lib) commonPlutusModules commonPlutusShell fixHaskellDotNix;
 
       haskellNixFlake =
         fixHaskellDotNix (project.flake {})
@@ -21,13 +22,11 @@
         (pkgs.writeShellApplication {
           inherit name text;
         }) + "/bin/${name}";
-      project = plutusProjectIn {
-        inherit subdir;
-        inherit pkgs;
-        extraPackages = {
-          hello-world.components.library.preBuild = "export DUSD_SCRIPTS=${onchain-scripts}";
-        };
-        extraShell = {
+      project = pkgs.haskell-nix.cabalProject' {
+        src = ./.;
+        compiler-nix-name = "ghc8107";
+        cabalProjectFileName = "cabal.project";
+        shell = commonPlutusShell // {
           additional = ps: [
             ps.plutus-contract
             ps.plutus-ledger
@@ -48,6 +47,12 @@
             haskell-language-server = { };
           };
         };
+        modules = commonPlutusModules ++ [{
+          packages = {
+            hello-world.components.library.preBuild = "export DUSD_SCRIPTS=${onchain-scripts}";
+          };
+        }];
+        sha256map = import ./sha256map;
         pkg-def-extras = [
           (hackage: {
             packages = {
@@ -57,7 +62,6 @@
             };
           })
         ];
-        sha256map = import ./sha256map;
       };
     in
     {
