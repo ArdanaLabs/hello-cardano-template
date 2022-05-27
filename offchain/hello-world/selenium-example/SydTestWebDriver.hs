@@ -8,6 +8,7 @@ import Data.Text (unpack)
 
 import Network.URI
 import Paths_selenium_example
+import System.Directory (doesFileExist)
 import Test.QuickCheck
 import Test.Syd
 import Test.Syd.Webdriver
@@ -29,28 +30,34 @@ evalCommands = snd . foldl (flip f) (0, "")
 initPage :: WebdriverSpec () -> Spec
 initPage = webdriverSpec $ \_ -> do
   path <- liftIO getDataDir
-  let uriStr = "file://" <> path <> "/HelloWorld.html"
-  case parseURI uriStr of
-    Nothing -> liftIO $ expectationFailure $ "Failed to parse uri as string: " <> show uriStr
-    Just uri -> pure (uri, ())
+  let fullPath = path <> "/HelloWorld.html"
+      uriStr = "file://" <> fullPath
+  fileDoesExist <- liftIO $ doesFileExist fullPath
+  if (not fileDoesExist)
+    then liftIO $ expectationFailure $ "file does not exist: " <> fullPath
+    else case parseURI uriStr of
+      Nothing -> liftIO $ expectationFailure $ "Failed to parse uri as string: " <> show uriStr
+      Just uri -> pure (uri, ())
 
 main :: IO ()
 main = sydTest $
   initPage $
-    it "test 1" $ \wte -> mapSize (* 10) $ withMaxSuccess 5 $ property $ \commands ->
-      runWebdriverTestM wte $ do
-        openPath ""
-        initialize <- findElem $ ById "initialize"
-        increment <- findElem $ ById "increment"
-        read <- findElem $ ById "read"
-        counter <- findElem $ ById "counterr"
+    it "test 1" $ \wte -> mapSize (* 10) $
+      withMaxSuccess 5 $
+        property $ \commands ->
+          runWebdriverTestM wte $ do
+            openPath ""
+            initialize <- findElem $ ById "initialize"
+            increment <- findElem $ ById "increment"
+            read <- findElem $ ById "read"
+            counter <- findElem $ ById "counterr"
 
-        let interpret c = click $ case c of
-              Init -> initialize
-              Inc -> increment
-              Read -> read
+            let interpret c = click $ case c of
+                  Init -> initialize
+                  Inc -> increment
+                  Read -> read
 
-        mapM_ interpret commands
-        n <- unpack <$> getText counter
+            mapM_ interpret commands
+            n <- unpack <$> getText counter
 
-        when (n /= evalCommands commands) $ error "fail"
+            when (n /= evalCommands commands) $ error "fail"
