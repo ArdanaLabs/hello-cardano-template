@@ -13,7 +13,11 @@
       haskellNixFlake = fixHaskellDotNix (project.flake {}) [ ./dUSD-onchain.cabal ];
 
       project = pkgs.haskell-nix.cabalProject' {
-        src = ./.;
+        src = pkgs.runCommand "fakesrc-onchain" {} ''
+          cp -rT ${./.} $out
+          chmod u+w $out/cabal.project
+          cat $out/cabal-haskell.nix.project >> $out/cabal.project
+        '';
         compiler-nix-name = "ghc8107";
         cabalProjectFileName = "cabal.project";
         modules = commonPlutusModules ++ [{
