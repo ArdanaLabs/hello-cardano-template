@@ -17,7 +17,7 @@ in
             haskell-nix only once, for performance, since we haven't implemented
             the rest of the module.
           '';
-          default = import self.inputs.bloated-nixpkgs {
+          default = import self.inputs.haskell-nix.inputs.nixpkgs {
             inherit system;
             overlays = [ self.inputs.haskell-nix.overlay ];
           };

@@ -2,10 +2,7 @@
   inputs = {
     haskell-nix = {
       url = "github:input-output-hk/haskell.nix";
-      inputs.nixpkgs.follows = "haskell-nix/nixpkgs-2105";
     };
-    # An instance of Nixpkgs specially for haskell.nix usage
-    bloated-nixpkgs.follows = "haskell-nix/nixpkgs-unstable";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     cardano-node.url = "github:input-output-hk/cardano-node?rev=73f9a746362695dc2cb63ba757fbcabb81733d23";
     #   used for libsodium-vrf
