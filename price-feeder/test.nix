@@ -19,22 +19,22 @@ let
   testUser = "test";
   workingDir = "/tmp/test";
   priceDataJSONFile = "${workingDir}/pricedata.json";
-  createSeverMockService = { serverMockExe
-                           , user
-                           , name
-                           , port
-                           , priceDataJSONFile
-                           }: {
-                             wantedBy = [ "multi-user.target" ]; 
-                             after = [ "network.target" ];
-                             description = "${name}-server-mock";
-                             serviceConfig = {
-                               User = user;
-                               Group = user;
-                               StateDirectory = dirOf priceDataJSONFile;
-                               ExecStart = ''${serverMockExe}/bin/${name}-mock-servant-server ${priceDataJSONFile} ${toString port}'';
-                             };
-                           };
+  createServerMockService = { serverMockExe
+                            , user
+                            , name
+                            , port
+                            , priceDataJSONFile
+                            }: {
+                              wantedBy = [ "multi-user.target" ]; 
+                              after = [ "network.target" ];
+                              description = "${name}-server-mock";
+                              serviceConfig = {
+                                User = user;
+                                Group = user;
+                                StateDirectory = dirOf priceDataJSONFile;
+                                ExecStart = ''${serverMockExe}/bin/${name}-mock-servant-server ${priceDataJSONFile} ${toString port}'';
+                              };
+                            };
 in nixosTest {
   name = "price-feeder-integration";
 
@@ -58,7 +58,7 @@ in nixosTest {
         { address = serverIpAddress; prefixLength = 24; }
       ];
 
-      systemd.services.kraken-mock-server = createSeverMockService {
+      systemd.services.kraken-mock-server = createServerMockService {
                                               user = testUser;
                                               serverMockExe = krakenMockServerExe;
                                               name = "kraken";
