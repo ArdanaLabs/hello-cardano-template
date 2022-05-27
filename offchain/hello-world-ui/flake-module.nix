@@ -51,7 +51,8 @@
               text =
                 let
                   script = pkgs.writeScript "serve.sh" ''
-                    http-server -c-1 $(nix eval .#${projectName}.outPath)
+                    nix build .#${projectName}
+                    http-server -c-1 result
                   '';
                 in
                 ''
