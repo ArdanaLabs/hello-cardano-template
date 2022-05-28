@@ -22,6 +22,11 @@
       url = "github:davhau/dream2nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    purs-nix.url = "github:ursi/purs-nix";
+    easy-purescript-nix = {
+      url = "github:justinwoo/easy-purescript-nix";
+      flake = false;
+    };
   };
 
   outputs = { self, flake-modules-core, ... }:
@@ -31,6 +36,7 @@
         systems = [ "x86_64-linux" ];
         imports = [
           ./offchain/flake-module.nix
+          ./offchain/hello-world-ui/flake-module.nix
           ./onchain/flake-module.nix
           ./docs/flake-module.nix
           ./nix/flake-modules/format/flake-module.nix

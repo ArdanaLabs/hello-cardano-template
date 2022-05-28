@@ -54,6 +54,17 @@
         modules = commonPlutusModules ++ [{
           packages = {
             hello-world.components.library.preBuild = "export DUSD_SCRIPTS=${onchain-scripts}";
+            hello-world.components.exes.hello-world-cluster = {
+              pkgconfig = [ [ pkgs.makeWrapper ] ];
+              postInstall = with pkgs; ''
+                wrapProgram $out/bin/hello-world-cluster \
+                  --set 'SHELLEY_TEST_DATA' '${self.inputs.plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley' \
+                  --prefix PATH : "${pkgs.lib.makeBinPath [
+                    self.inputs.cardano-node.outputs.packages.${system}."cardano-node:exe:cardano-node"
+                    self.inputs.cardano-node.outputs.packages.${system}."cardano-cli:exe:cardano-cli"
+                  ]}"
+              '';
+            };
             dUSD-offchain.components.tests.tests = {
               pkgconfig = [ [ pkgs.makeWrapper ] ];
               postInstall = with pkgs; ''
