@@ -26,7 +26,7 @@ evalCommands = foldl f 0
 
 initPage :: WebdriverSpec () -> Spec
 initPage = webdriverSpec $ \_ -> do
-  let uriStr = "http://127.0.0.1:8080"
+  let uriStr = "http://127.0.0.1:8000"
   case parseURI uriStr of
     Nothing -> liftIO $ expectationFailure $ "Failed to parse uri as string: " <> show uriStr
     Just uri -> pure (uri, ())

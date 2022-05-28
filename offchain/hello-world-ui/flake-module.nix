@@ -47,12 +47,18 @@
           program = pkgs.writeShellApplication
             {
               name = projectName;
-              runtimeInputs = [ pkgs.entr pkgs.nodePackages.http-server ];
+              runtimeInputs = with pkgs; [
+                entr
+                simple-http-server
+                # Nix unstable is required for --print-out-paths, this should
+                # be changed to stable when it is released.
+                nixVersions.unstable
+              ];
               text =
                 let
-                  script = pkgs.writeScript "serve.sh" ''
-                    nix build .#${projectName}
-                    http-server -c-1 result
+                  script = pkgs.writeShellScript "serve.sh" ''
+                    simple-http-server --index --nocache \
+                      $(nix build --print-out-paths --no-link .#${projectName})
                   '';
                 in
                 ''
