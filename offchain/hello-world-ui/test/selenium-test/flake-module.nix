@@ -15,11 +15,11 @@
       pkgs = config.haskell-nix.pkgs;
       haskellNixFlake =
         fixHaskellDotNix (project.flake { })
-          [ ./selenium-example.cabal ];
+          [ ./hello-world-ui-selenium-test.cabal ];
       project = pkgs.haskell-nix.cabalProject {
         modules = [{
           packages = {
-            selenium-example.components.exes.sydtest-webdriver = {
+            hello-world-ui-selenium-test.components.exes.sydtest-webdriver = {
               pkgconfig = [ [ realNixpkgs.makeWrapper ] ];
               postInstall = with realNixpkgs; ''
                 wrapProgram $out/bin/sydtest-webdriver \
@@ -33,7 +33,7 @@
             };
           };
         }];
-        name = "selenium-example";
+        name = "hello-world-ui-selenium-test";
         src = ./.;
         compiler-nix-name = "ghc8107";
         sha256map = import ./sha256map;

@@ -1,8 +1,8 @@
 cabal-version: 2.4
-name:          selenium-example
+name:          hello-world-ui-selenium-test
 version:       0.1.0.0
 
-executable sydtest-webdriver
+test-suite sydtest-webdriver
   default-language: Haskell2010
   type:             exitcode-stdio-1.0
   main-is:          SydTestWebDriver.hs
