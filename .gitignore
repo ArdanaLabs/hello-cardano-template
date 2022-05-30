@@ -21,9 +21,11 @@ bin
 ci
 
 # Editor Settings and more should not be added as files to root of the repo,
-# outside of Nix. Using Nix, you can provide a custom vscodium/vscode binary
-# which uses a specified config.
+# outside of Nix. Using Nix, you can provide a custom vscodium/vscode or other
+# editor binary which uses a specified config via a devshell.
 .vscode
+.editorconfig
+.tidyrc.json
 
 # Prevents Nix results from `nix build`, etc, from being checked in
 # accidentally.
@@ -35,3 +37,14 @@ ci
 # Ignore flake.nix anywhere except for the root
 flake.nix
 !/flake.nix
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
+.Trash*

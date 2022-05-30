@@ -4,6 +4,8 @@
 $ nix run .#hello-world-ui
 ```
 
+then open URL http://127.0.0.1:8000 in the browser
+
 ## Enter a development shell with all the required toolchain
 
 ```console

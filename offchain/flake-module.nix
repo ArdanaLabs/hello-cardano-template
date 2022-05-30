@@ -6,9 +6,10 @@
       # packages once, so we can reuse it here, it's more performant.
       pkgs = config.haskell-nix.pkgs;
       # dusd-lib contains helper functions for dealing with haskell.nix. From it,
-      # we inherit plutusProjectIn and fixHaskellDotNix
-      dusd-lib = import "${self}/nix/lib/haskell.nix" { inherit system self; };
-      inherit (dusd-lib) plutusProjectIn fixHaskellDotNix;
+      # we inherit fixHaskellDotNix and some common attributes to give to
+      # cabalProject'
+      dusd-lib = import "${self}/nix/lib/haskell.nix" { inherit system self pkgs; };
+      inherit (dusd-lib) commonPlutusModules commonPlutusShell fixHaskellDotNix;
 
       haskellNixFlake =
         fixHaskellDotNix (project.flake {})
@@ -21,13 +22,15 @@
         (pkgs.writeShellApplication {
           inherit name text;
         }) + "/bin/${name}";
-      project = plutusProjectIn {
-        inherit subdir;
-        inherit pkgs;
-        extraPackages = {
-          hello-world.components.library.preBuild = "export DUSD_SCRIPTS=${onchain-scripts}";
-        };
-        extraShell = {
+      project = pkgs.haskell-nix.cabalProject' {
+        src = pkgs.runCommand "fakesrc-offchain" {} ''
+          cp -rT ${./.} $out
+          chmod u+w $out/cabal.project
+          cat $out/cabal-haskell.nix.project >> $out/cabal.project
+        '';
+        compiler-nix-name = "ghc8107";
+        cabalProjectFileName = "cabal.project";
+        shell = commonPlutusShell // {
           additional = ps: [
             ps.plutus-contract
             ps.plutus-ledger
@@ -48,6 +51,41 @@
             haskell-language-server = { };
           };
         };
+        modules = commonPlutusModules ++ [{
+          packages = {
+            hello-world.components.library.preBuild = "export DUSD_SCRIPTS=${onchain-scripts}";
+            hello-world.components.exes.hello-world-cluster = {
+              pkgconfig = [ [ pkgs.makeWrapper ] ];
+              postInstall = with pkgs; ''
+                wrapProgram $out/bin/hello-world-cluster \
+                  --set 'SHELLEY_TEST_DATA' '${self.inputs.plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley' \
+                  --prefix PATH : "${pkgs.lib.makeBinPath [
+                    self.inputs.cardano-node.outputs.packages.${system}."cardano-node:exe:cardano-node"
+                    self.inputs.cardano-node.outputs.packages.${system}."cardano-cli:exe:cardano-cli"
+                  ]}"
+              '';
+            };
+            dUSD-offchain.components.tests.tests = {
+              pkgconfig = [ [ pkgs.makeWrapper ] ];
+              postInstall = with pkgs; ''
+                wrapProgram $out/bin/tests \
+                  --set 'DUSD_SCRIPTS' '${onchain-scripts}'
+              '';
+            };
+            hello-world.components.tests.hello-world-e2e = {
+              pkgconfig = [ [ pkgs.makeWrapper ] ];
+              postInstall = with pkgs; ''
+                wrapProgram $out/bin/hello-world-e2e \
+                  --set 'SHELLEY_TEST_DATA' '${self.inputs.plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley' \
+                  --prefix PATH : "${pkgs.lib.makeBinPath [
+                    self.inputs.cardano-node.outputs.packages.${system}."cardano-node:exe:cardano-node"
+                    self.inputs.cardano-node.outputs.packages.${system}."cardano-cli:exe:cardano-cli"
+                  ]}"
+              '';
+            };
+          };
+        }];
+        sha256map = import ./sha256map;
         pkg-def-extras = [
           (hackage: {
             packages = {
@@ -57,27 +95,11 @@
             };
           })
         ];
-        sha256map = import ./sha256map;
       };
     in
     {
-      devShells.offchain = haskellNixFlake.devShell.overrideAttrs (oa: {
-        shellHook = oa.shellHook + ''
-          # running local cluster + PAB
-          export SHELLEY_TEST_DATA="${self.inputs.plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley/"
-        '';
-      });
+      devShells.offchain = haskellNixFlake.devShell;
       packages = haskellNixFlake.packages // {
-      };
-      apps = {
-        offchain-test = {
-          type = "app";
-          program = checkedShellScript system "dUSD-offchain-test"
-            '' export DUSD_SCRIPTS=${onchain-scripts}
-                cd ${self}
-                ${haskellNixFlake.packages."dUSD-offchain:exe:tests"}/bin/tests;
-            '';
-        };
       };
     };
   flake = {
