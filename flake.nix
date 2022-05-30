@@ -35,13 +35,10 @@
       {
         systems = [ "x86_64-linux" ];
         imports = [
-          ./offchain/flake-module.nix
-          ./offchain/hello-world-ui/flake-module.nix
-          ./onchain/flake-module.nix
-          ./docs/flake-module.nix
-          ./nix/flake-modules/format/flake-module.nix
-          ./nix/flake-modules/haskell.nix/flake-module.nix
-          ./nix/flake-modules/templates/flake-module.nix
+          ./offchain
+          ./onchain
+          ./docs
+          ./nix/flake-modules
         ];
       }
     ).config.flake;

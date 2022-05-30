@@ -66,6 +66,10 @@ nix flake check -L
 
 ### Making a new package (flake module)
 
+Every project is imported by the top-level default.nix in each folder. For
+example, `offchain/default.nix` imports the flake-module.nix for multiple
+projects.
+
 Each project in this repository should have a `flake-module.nix` based on the
 following template, at its root. You can run `nix flake init -t .`
 anywhere in this repository, and a new `flake-module.nix` with the following
