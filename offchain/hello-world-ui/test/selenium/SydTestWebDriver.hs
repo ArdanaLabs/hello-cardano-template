@@ -3,7 +3,10 @@
 
 module Main where
 
+import qualified Control.Concurrent as C
+
 import Control.Monad
+import Data.String
 import Data.Text (unpack)
 
 import Network.URI
@@ -11,6 +14,10 @@ import Test.QuickCheck
 import Test.Syd
 import Test.Syd.Webdriver
 import Test.WebDriver
+import System.Environment (getEnv)
+import Network.Wai.Application.Static (staticApp, defaultFileServerSettings)
+import Network.Wai.Handler.Warp (run, Port)
+import Network.Socket.Free
 
 data Command = Init | Incr
   deriving (Show)
@@ -24,9 +31,16 @@ evalCommands = foldl f 0
     f _ Init = 0
     f c Incr = c + 1
 
+startHelloWorldUI :: Port -> IO ()
+startHelloWorldUI port = do
+  helloWorldUIIndex <- getEnv "HELLO_WORLD_UI_INDEX"
+  run port $ staticApp (defaultFileServerSettings $ fromString helloWorldUIIndex)
+
 initPage :: WebdriverSpec () -> Spec
 initPage = webdriverSpec $ \_ -> do
-  let uriStr = "http://127.0.0.1:8000"
+  port <- liftIO getFreePort
+  liftIO $ C.forkIO $ startHelloWorldUI port
+  let uriStr = "http://127.0.0.1:" <> show port
   case parseURI uriStr of
     Nothing -> liftIO $ expectationFailure $ "Failed to parse uri as string: " <> show uriStr
     Just uri -> pure (uri, ())

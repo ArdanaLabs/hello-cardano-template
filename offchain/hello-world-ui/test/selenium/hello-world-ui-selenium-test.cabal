@@ -14,8 +14,11 @@ test-suite sydtest-webdriver
   build-depends:
     , base               ^>=4.14
     , network-uri
+    , port-utils
     , QuickCheck
     , sydtest
     , sydtest-webdriver
     , text
+    , wai-app-static
+    , warp
     , webdriver
