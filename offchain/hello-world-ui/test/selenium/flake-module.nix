@@ -56,7 +56,7 @@
     in
     {
       packages = haskellNixFlake.packages;
-      devShells.selenium-example = haskellNixFlake.devShell;
+      devShells.hello-world-ui-selenium-test = haskellNixFlake.devShell;
       checks = haskellNixFlake.checks // { };
     };
   flake = { };
