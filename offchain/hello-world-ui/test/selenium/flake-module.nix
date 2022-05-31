@@ -24,6 +24,7 @@
               postInstall = with realNixpkgs; ''
                 wrapProgram $out/bin/sydtest-webdriver \
                   --set FONTCONFIG_FILE ${makeFontsConf { fontDirectories = [ twitter-color-emoji roboto ]; }} \
+                  --set HELLO_WORLD_UI_INDEX ${self'.packages.hello-world-ui} \
                   --prefix PATH : "${realNixpkgs.lib.makeBinPath [
                     chromedriver
                     chromium
