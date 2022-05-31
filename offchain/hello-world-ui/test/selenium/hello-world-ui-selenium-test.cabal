@@ -9,6 +9,8 @@ library
 
 test-suite sydtest-webdriver
   default-language: Haskell2010
+  default-extensions:
+    ImportQualifiedPost
   type:             exitcode-stdio-1.0
   main-is:          SydTestWebDriver.hs
   build-depends:

@@ -3,21 +3,21 @@
 
 module Main where
 
-import qualified Control.Concurrent as C
+import Control.Concurrent qualified as C
 
 import Control.Monad
 import Data.String
 import Data.Text (unpack)
 
+import Network.Socket.Free
 import Network.URI
+import Network.Wai.Application.Static (defaultFileServerSettings, staticApp)
+import Network.Wai.Handler.Warp (Port, run)
+import System.Environment (getEnv)
 import Test.QuickCheck
 import Test.Syd
 import Test.Syd.Webdriver
 import Test.WebDriver
-import System.Environment (getEnv)
-import Network.Wai.Application.Static (staticApp, defaultFileServerSettings)
-import Network.Wai.Handler.Warp (run, Port)
-import Network.Socket.Free
 
 data Command = Init | Incr
   deriving (Show)
