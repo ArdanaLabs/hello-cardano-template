@@ -19,7 +19,7 @@
       project = pkgs.haskell-nix.cabalProject {
         modules = [{
           packages = {
-            hello-world-ui-selenium-test.components.exes.sydtest-webdriver = {
+            hello-world-ui-selenium-test.components.tests.sydtest-webdriver = {
               pkgconfig = [ [ realNixpkgs.makeWrapper ] ];
               postInstall = with realNixpkgs; ''
                 wrapProgram $out/bin/sydtest-webdriver \
