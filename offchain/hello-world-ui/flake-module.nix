@@ -1,5 +1,6 @@
 { self, ... }:
 {
+  imports = [ ./test/selenium/flake-module.nix ];
   perSystem = system: { config, self', inputs', ... }:
     let
       pkgs = inputs'.nixpkgs.legacyPackages;
@@ -62,7 +63,6 @@
                   '';
                 in
                 ''
-                  ${self'.packages."hello-world:exe:hello-world-cluster".exePath} &
                   find . -name "*.purs" | entr -r ${script}
                 '';
             } + "/bin/${projectName}";
