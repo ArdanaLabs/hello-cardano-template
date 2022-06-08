@@ -77,6 +77,7 @@ library
     Plutarch.Extensions.Api
     Plutarch.Extensions.List
     Plutarch.Extensions.Monad
+    Utils
 
   hs-source-dirs:  src
   build-depends:
@@ -88,11 +89,11 @@ library
     , plutus-ledger-api
     , serialise
 
-executable hello-ctl
+executable hello-world
   import:         lang
   type:           exitcode-stdio-1.0
   main-is:        HelloWorld.hs
-  hs-source-dirs: hello-ctl
+  hs-source-dirs: hello-world
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
   build-depends:
     , base
