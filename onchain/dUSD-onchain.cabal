@@ -88,6 +88,19 @@ library
     , plutus-ledger-api
     , serialise
 
+executable hello-ctl
+  import:         lang
+  type:           exitcode-stdio-1.0
+  main-is:        HelloWorld.hs
+  hs-source-dirs: hello-ctl
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+    , base
+    , bytestring
+    , dUSD-onchain
+    , plutus-ledger-api
+    , serialise
+
 executable scripts
   import:         lang
   type:           exitcode-stdio-1.0
