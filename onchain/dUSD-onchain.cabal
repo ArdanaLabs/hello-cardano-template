@@ -98,6 +98,7 @@ executable hello-world
   build-depends:
     , base
     , bytestring
+    , directory
     , dUSD-onchain
     , plutus-ledger-api
     , serialise
