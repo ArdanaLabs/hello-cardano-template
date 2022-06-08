@@ -13,7 +13,6 @@ main = do
   [out] <- getArgs
   writeFile (out ++ "/hello_world.cbor") hellWorldHexString
 
-
 hellWorldHexString :: String
 hellWorldHexString = validatorToHexString helloValidator
 
