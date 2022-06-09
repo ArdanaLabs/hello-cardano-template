@@ -23,10 +23,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     purs-nix.url = "github:ursi/purs-nix";
-    easy-purescript-nix = {
-      url = "github:justinwoo/easy-purescript-nix";
-      flake = false;
-    };
   };
 
   outputs = { self, flake-modules-core, ... }:
