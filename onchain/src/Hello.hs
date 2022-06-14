@@ -46,4 +46,3 @@ validator' = plam $ \n _unit sc -> unTermCont $ do
 
 helloLogic :: ClosedTerm (PInteger :--> PInteger :--> PUnit)
 helloLogic = plam $ \n m -> unTermCont $ passert "int was not correct" $ n + 1 #== m
-
