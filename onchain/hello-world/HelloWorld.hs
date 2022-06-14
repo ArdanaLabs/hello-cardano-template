@@ -1,6 +1,6 @@
 module Main (main) where
 
-import Hello (helloWorldHexString)
+import Hello
 
 import Control.Monad (unless)
 import System.Directory (doesDirectoryExist)
@@ -13,6 +13,7 @@ main = do
     [out] -> do
       exists <- doesDirectoryExist out
       unless exists $ die $ "directory: " <> out <> " does not exist"
-      writeFile (out ++ "/hello_world.cbor.txt") helloWorldHexString
+      --writeFile (out ++ "/hello_world.cbor.txt") helloWorldHexString
+      writeFile (out ++ "/hello_world.cbor.txt") trivialHexString
     _ -> do
       die "usage: cabal run hello-world <file_path>"

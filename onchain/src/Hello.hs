@@ -4,6 +4,7 @@ module Hello (
   helloValidatorHash,
   helloAddress,
   helloWorldHexString,
+  trivialHexString,
 ) where
 
 import Utils (validatorToHexString)
@@ -46,3 +47,9 @@ validator' = plam $ \n _unit sc -> unTermCont $ do
 
 helloLogic :: ClosedTerm (PInteger :--> PInteger :--> PUnit)
 helloLogic = plam $ \n m -> unTermCont $ passert "int was not correct" $ n + 1 #== m
+
+trivialHexString :: String
+trivialHexString = validatorToHexString $ mkValidator trivialValidator
+
+trivialValidator :: ClosedTerm (PData :--> PData :--> PScriptContext :--> POpaque )
+trivialValidator = plam $ \_ _ _ -> popaque $ pcon PUnit
