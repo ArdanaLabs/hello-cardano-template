@@ -759,22 +759,6 @@
     "easy-purescript-nix": {
       "flake": false,
       "locked": {
-        "lastModified": 1653314291,
-        "narHash": "sha256-K81AOJe2YmvJ8sSDZAL2Jw85Q9FvRQQCokxBpuNGrpQ=",
-        "owner": "justinwoo",
-        "repo": "easy-purescript-nix",
-        "rev": "cbcb53725c430de4e69f652d69c1677e17c6bcec",
-        "type": "github"
-      },
-      "original": {
-        "owner": "justinwoo",
-        "repo": "easy-purescript-nix",
-        "type": "github"
-      }
-    },
-    "easy-purescript-nix_2": {
-      "flake": false,
-      "locked": {
         "lastModified": 1648036602,
         "narHash": "sha256-8erFzbiRJYqPgJHuQwhgBPltQeaWeAZom/5X3lyUAcc=",
         "owner": "justinwoo",
@@ -2437,11 +2421,11 @@
     },
     "nixpkgs_5": {
       "locked": {
-        "lastModified": 1652659998,
-        "narHash": "sha256-FqNrXC1EE6U2RACwXBlsAvg1lqQGLYpuYb6+W3DL9vA=",
+        "lastModified": 1654593855,
+        "narHash": "sha256-c+SyXvj7THre87OyIdZfRVR+HhI/g1ZDrQ3VUtTuHkU=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "1d7db1b9e4cf1ee075a9f52e5c36f7b9f4207502",
+        "rev": "033bd4fa9a8fbe0c68a88e925d9a884161044b25",
         "type": "github"
       },
       "original": {
@@ -2707,7 +2691,7 @@
     "plutus-apps": {
       "inputs": {
         "cardano-repo-tool": "cardano-repo-tool_2",
-        "easy-purescript-nix": "easy-purescript-nix_2",
+        "easy-purescript-nix": "easy-purescript-nix",
         "flake-compat": "flake-compat",
         "flake-utils": "flake-utils_7",
         "gitignore-nix": "gitignore-nix_2",
@@ -2904,7 +2888,6 @@
       "inputs": {
         "cardano-node": "cardano-node",
         "dream2nix": "dream2nix",
-        "easy-purescript-nix": "easy-purescript-nix",
         "flake-modules-core": "flake-modules-core",
         "haskell-nix": "haskell-nix",
         "lint-utils": "lint-utils",

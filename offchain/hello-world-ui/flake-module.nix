@@ -31,7 +31,6 @@
 
             srcs = [ ./src ];
           };
-      easy-ps = import self.inputs.easy-purescript-nix { inherit pkgs; };
     in
     {
       packages = {
@@ -77,7 +76,7 @@
           purs-nix.esbuild
           purs-nix.purescript
           purs-nix.purescript-language-server
-          easy-ps.purs-tidy
+          nodePackages.purs-tidy
         ]);
       };
     };
