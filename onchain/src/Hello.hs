@@ -51,5 +51,5 @@ helloLogic = plam $ \n m -> unTermCont $ passert "int was not correct" $ n + 1 #
 trivialHexString :: String
 trivialHexString = validatorToHexString $ mkValidator trivialValidator
 
-trivialValidator :: ClosedTerm (PData :--> PData :--> PScriptContext :--> POpaque )
+trivialValidator :: ClosedTerm (PData :--> PData :--> PScriptContext :--> POpaque)
 trivialValidator = plam $ \_ _ _ -> popaque $ pcon PUnit

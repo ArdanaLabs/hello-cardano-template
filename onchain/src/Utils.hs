@@ -2,8 +2,8 @@ module Utils (validatorToHexString) where
 
 import Codec.Serialise (serialise)
 import Data.ByteString.Lazy qualified as BSL
-import Numeric
 import Data.Word (Word8)
+import Numeric
 import Plutus.V1.Ledger.Scripts (Validator)
 
 validatorToHexString :: Validator -> String
