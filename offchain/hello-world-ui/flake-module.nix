@@ -69,7 +69,6 @@
       };
       devShells.${projectName} = pkgs.mkShell {
         name = projectName;
-        inputsFrom = builtins.attrValues self'.packages;
         buildInputs = (with pkgs; [
           nodejs-16_x
           (ps.command {})
