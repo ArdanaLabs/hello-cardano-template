@@ -1,4 +1,12 @@
-module Hello (helloValidator, helloLogic, helloValidatorHash, helloAddress) where
+module Hello (
+  helloValidator,
+  helloLogic,
+  helloValidatorHash,
+  helloAddress,
+  helloWorldHexString,
+) where
+
+import Utils (validatorToHexString)
 
 import Plutus.V1.Ledger.Address (Address (..))
 import Plutus.V1.Ledger.Credential (Credential (..))
@@ -8,6 +16,9 @@ import Plutarch.Api.V1 (PScriptContext, mkValidator, validatorHash)
 import Plutarch.Extensions.Api (passert, pgetContinuingDatum)
 import Plutarch.Prelude
 import Plutarch.Unsafe (punsafeCoerce)
+
+helloWorldHexString :: String
+helloWorldHexString = validatorToHexString helloValidator
 
 helloValidator :: Validator
 helloValidator = mkValidator validator

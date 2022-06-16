@@ -31,8 +31,9 @@ ci
 # accidentally.
 *result*
 
-# Ignore direnv cache
+# Ignore direnv cache and envrc
 .direnv
+.envrc
 
 # Ignore flake.nix anywhere except for the root
 flake.nix
