@@ -1,4 +1,5 @@
 {-# LANGUAGE UndecidableInstances #-}
+
 module Hello (
   helloValidator,
   helloLogic,
@@ -6,11 +7,12 @@ module Hello (
   helloAddress,
   helloWorldHexString,
   paramHelloCBOR,
+  HelloRedemer (..),
 ) where
 
-import Utils (validatorToHexString,closedTermToHexString)
 import GHC.Generics qualified as GHC
 import Generics.SOP (Generic, I (I))
+import Utils (closedTermToHexString, validatorToHexString)
 
 import Plutus.V1.Ledger.Address (Address (..))
 import Plutus.V1.Ledger.Credential (Credential (..))
@@ -18,11 +20,11 @@ import Plutus.V1.Ledger.Scripts (Validator, ValidatorHash)
 
 import Plutarch.Prelude
 
-import Plutarch.Api.V1 (PValidator,PScriptContext, mkValidator, validatorHash)
+import Plutarch.Api.V1 (PScriptContext, PValidator, mkValidator, validatorHash)
+import Plutarch.Builtin (pforgetData)
 import Plutarch.DataRepr (PIsDataReprInstances (PIsDataReprInstances))
 import Plutarch.Extensions.Api (passert, pgetContinuingDatum)
 import Plutarch.Unsafe (punsafeCoerce)
-import Plutarch.Builtin (pforgetData)
 
 import Plutarch.Extra.TermCont (pmatchC)
 
@@ -68,8 +70,7 @@ paramValidator = plam $ \dCountBy dn dunit dsc -> do
   let n = pfromData (punsafeCoerce dn)
       u = pfromData (punsafeCoerce dunit)
       res cb = paramValidator' # cb # n # u # dsc
-   in
-      ptryFrom @(PAsData PInteger) dCountBy $ \(_,i) -> popaque $ res i
+   in ptryFrom @(PAsData PInteger) dCountBy $ \(_, i) -> popaque $ res i
 
 -- TODO Try wrapping the counter in a newtype to
 -- test shareing newtypes/datatypes with apps
