@@ -13,7 +13,8 @@ import Contract.Monad
   )
 
 main :: Effect Unit
-main = launchAff_ $ do
+main =
+  launchAff_ $ do
   wallet <- Just <$> mkNamiWalletAff
   cfg <- over ContractConfig _ { wallet = wallet } <$> traceTestnetContractConfig
   runContract_ cfg helloUnitTest
