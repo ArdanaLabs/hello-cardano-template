@@ -83,6 +83,7 @@ library
   build-depends:
     , base
     , bytestring
+    , generics-sop
     , plutarch
     , plutarch-extra
     , plutus-core

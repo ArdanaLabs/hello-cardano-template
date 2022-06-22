@@ -17,7 +17,7 @@ main = do
     [out] -> do
       exists <- doesDirectoryExist out
       unless exists $ die $ "directory: " <> out <> " does not exist"
-      writeFile (out ++ "/hello_world.cbor.txt") helloWorldHexString
+      writeFile (out ++ "/hello_world.cbor.txt") paramHelloCBOR
     _ -> do
       die "usage: cabal run hello-world <file_path>"
 

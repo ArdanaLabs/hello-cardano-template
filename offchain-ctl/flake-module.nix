@@ -40,7 +40,7 @@
         ''
         mkdir $out; cd $out
         export BROWSER_RUNTIME=1
-        cp ${ps.modules.Main.bundle {}} output.js
+        cp ${ps.modules.Main.bundle {main = true;} } output.js
         cp ${./index.js} index.js
         cp ${./index.html} index.html
         cp ${./webpack.config.js} webpack.config.js
