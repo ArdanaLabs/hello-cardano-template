@@ -1179,17 +1179,17 @@
         "servant-purescript": "servant-purescript"
       },
       "locked": {
-        "lastModified": 1655190482,
-        "narHash": "sha256-NHk1zoXkUpvCSfwnlh7dzC3SSS2gVmFMV9ck3UtuRJE=",
+        "lastModified": 1655911658,
+        "narHash": "sha256-RhLoeytvx/iquz+uMdbJ9PJyt5UQFwxHDRX3RtCZ5cM=",
         "owner": "Plutonomicon",
         "repo": "cardano-transaction-lib",
-        "rev": "74f2a2e15ff8519368d2ab94bf003afa76684462",
+        "rev": "6d47a100781379b54debc801b4f13a21ea182c23",
         "type": "github"
       },
       "original": {
         "owner": "Plutonomicon",
         "repo": "cardano-transaction-lib",
-        "rev": "74f2a2e15ff8519368d2ab94bf003afa76684462",
+        "rev": "6d47a100781379b54debc801b4f13a21ea182c23",
         "type": "github"
       }
     },
@@ -4841,11 +4841,11 @@
         "utils": "utils_9"
       },
       "locked": {
-        "lastModified": 1655401303,
-        "narHash": "sha256-83/U8BwqjvI7gX8fdP8yC80ko0074ucV7XDADaOVoj4=",
+        "lastModified": 1655932771,
+        "narHash": "sha256-3nj0dYMEWECMEuPfEsu7ku4w3EEM8AyyxY/Kl7Phl/o=",
         "owner": "ursi",
         "repo": "purs-nix",
-        "rev": "4ed9bf6997da71702e36c43e6c93150d372b1e02",
+        "rev": "203cd6a2efbce26d5cdabe1d5f55299ee730843b",
         "type": "github"
       },
       "original": {

@@ -9,7 +9,7 @@
       type = "github";
       owner = "Plutonomicon";
       repo = "cardano-transaction-lib";
-      rev = "74f2a2e15ff8519368d2ab94bf003afa76684462";
+      rev = "6d47a100781379b54debc801b4f13a21ea182c23";
     };
     #   used for libsodium-vrf
     plutus.url = "github:input-output-hk/plutus";
