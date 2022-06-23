@@ -104,7 +104,7 @@
         name = projectName;
         buildInputs = (with pkgs; [
           nodejs-16_x
-          (hello-world-api-browser.ps.command {})
+          (hello-world-browser.ps.command {})
           purs-nix.ps-pkgs.psci-support
           purs-nix.purescript
           purs-nix.purescript-language-server
