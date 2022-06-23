@@ -3,22 +3,53 @@
   perSystem = system: { config, self', inputs', ... }:
     let
       pkgs = inputs'.nixpkgs.legacyPackages;
-      projectName = "hello-world-api";
+      projectName = "hello-world";
       purs-nix = self.inputs.purs-nix-0-14 { inherit system; };
       npmlock2nix = pkgs.callPackages self.inputs.npmlock2nix {};
 
-      ps =
-        purs-nix.purs
-          { dependencies =
-              with purs-nix.ps-pkgs;
-              [ aeson
-                aff
-                bigints
-                cardano-transaction-lib
-              ];
+      hello-world-api = {
+        dependencies = 
+          with purs-nix.ps-pkgs;
+            [ aeson
+              aff
+              bigints
+              cardano-transaction-lib
+            ];
+        ps =
+          purs-nix.purs
+            { inherit (hello-world-api) dependencies;
+              srcs = [ ./hello-world-api/src ];
+            };
+        package = (purs-nix.build
+          { name = "hello-world-api";
+            inherit (hello-world-api) dependencies;
+            repo = ""; rev = "";
+          }).local ./hello-world-api;
+      };
+      
+      hello-world-browser = {
+        ps =
+          purs-nix.purs
+            { dependencies =
+                with purs-nix.ps-pkgs;
+                [ cardano-transaction-lib
+                  hello-world-api.package
+                ];
+              srcs = [ ./hello-world-browser/src ];
+            };
+      };
 
-            srcs = [ ./hello-world-api/src ];
-          };
+      hello-world-cli = {
+        ps =
+          purs-nix.purs
+            { dependencies =
+                with purs-nix.ps-pkgs;
+                [ prelude
+                  hello-world-api.package
+                ];
+              srcs = [ ./hello-world-browser/src ];
+            };
+      };
 
       ctl-pkgs = import self.inputs.nixpkgs {
                    inherit system;
@@ -33,14 +64,14 @@
       };
     in
     {
-      packages.${projectName} =
-        pkgs.runCommand "build-ctl-project" { }
+      packages.hello-world-browser =
+        pkgs.runCommand "build-hello-world-browser" { }
         # see buildPursProjcet: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
         # see bundlePursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L149
         ''
         mkdir $out; cd $out
         export BROWSER_RUNTIME=1
-        cp ${ps.modules.Main.bundle {main = true;} } output.js
+        cp ${hello-world-browser.ps.modules.Main.bundle {main = true;} } output.js
         cp ${./index.js} index.js
         cp ${./index.html} index.html
         cp ${./webpack.config.js} webpack.config.js
@@ -51,10 +82,12 @@
         webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
         '';
 
+      packages.hello-world-cli = hello-world-browser.ps.modules.Main.bundle {main = true;};
+
       apps = {
         ctl-runtime = ctl-pkgs.launchCtlRuntime config;
 
-        "serve-${projectName}" = {
+        serve-hello-world-browser = {
           type = "app";
           program = pkgs.writeShellApplication
             {
@@ -62,16 +95,16 @@
               runtimeInputs = [
                 pkgs.nodePackages.http-server
               ];
-              text = "http-server -c-1 ${self'.packages.${projectName}}";
+              text = "http-server -c-1 ${self'.packages.hello-world-browser}";
             };
         };
       };
 
-      devShells.${projectName} = pkgs.mkShell {
+      devShells.hello-world-browser = pkgs.mkShell {
         name = projectName;
         buildInputs = (with pkgs; [
           nodejs-16_x
-          (ps.command {})
+          (hello-world-api-browser.ps.command {})
           purs-nix.ps-pkgs.psci-support
           purs-nix.purescript
           purs-nix.purescript-language-server

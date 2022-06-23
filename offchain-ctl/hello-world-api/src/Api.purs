@@ -3,6 +3,7 @@ module Api
   ,setDatumAtScript
   ,redeemFromScript
   ,helloScript
+  ,enoughForFees
   ) where
 
 import Contract.Prelude
