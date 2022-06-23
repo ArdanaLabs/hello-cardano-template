@@ -1188,6 +1188,7 @@
       },
       "original": {
         "owner": "Plutonomicon",
+        "ref": "develop",
         "repo": "cardano-transaction-lib",
         "rev": "6d47a100781379b54debc801b4f13a21ea182c23",
         "type": "github"

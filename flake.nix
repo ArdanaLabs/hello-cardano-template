@@ -9,6 +9,7 @@
       type = "github";
       owner = "Plutonomicon";
       repo = "cardano-transaction-lib";
+      ref = "develop";
       rev = "6d47a100781379b54debc801b4f13a21ea182c23";
     };
     #   used for libsodium-vrf
