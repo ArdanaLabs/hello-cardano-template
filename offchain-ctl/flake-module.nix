@@ -14,6 +14,7 @@
               aff
               bigints
               cardano-transaction-lib
+              spec
             ];
         ps =
           purs-nix.purs
