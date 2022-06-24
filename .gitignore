@@ -54,3 +54,4 @@ Thumbs.db
 *output
 .psci_modules
 .psc-ide-port
+.purs-nix-run.js
