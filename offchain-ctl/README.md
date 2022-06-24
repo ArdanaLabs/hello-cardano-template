@@ -2,13 +2,13 @@
 
 To obtain a repl:
 ```
-nix develop .#hello-world-api
+nix develop .#hello-world-browser
 purs-nix srcs repl
 ```
 
 To build the bundle:
 ```
-nix build .#hello-world-api
+nix build .#hello-world-browser
 ```
 
 To try out the app after building do:
@@ -22,5 +22,5 @@ http-server -c-1 result
 ```
 or
 ```
-nix run .#serve-hello-world-api
+nix run .#serve-hello-world-browser
 ```

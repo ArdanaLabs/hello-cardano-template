@@ -3,6 +3,7 @@ module Api
   ,setDatumAtScript
   ,redeemFromScript
   ,helloScript
+  ,enoughForFees
   ) where
 
 import Contract.Prelude
@@ -113,5 +114,4 @@ spendRedeemer :: Redeemer
 spendRedeemer = Redeemer (toData Spend)
 
 enoughForFees :: Value.Value
-enoughForFees = Value.lovelaceValueOf $ BigInt.fromInt 2_000_000
-
+enoughForFees = Value.lovelaceValueOf $ BigInt.fromInt 6_000_000
