@@ -6,35 +6,17 @@ module Test.Encoding
 import Contract.Prelude
 
 import CBOR as CBOR
-import Test.Spec(Spec,it)
-import Data.Log.Level (LogLevel(Trace))
-import Serialization.Address (NetworkId(TestnetId))
+import Test.Spec(Spec,it,describe)
+import Test.Spec.Assertions(shouldNotEqual)
 import Contract.Aeson (decodeAeson, fromString)
 import Contract.Scripts (Validator)
-import Contract.Monad
-  ( Contract
-  , ContractConfig(ContractConfig)
-  , runContract_
-  , configWithLogLevel
-  , liftContractM
-  )
---import CBOR as CBOR
 
 spec :: Spec Unit
 spec = do
-  it "hello" $ testCborDecodes CBOR.hello
+  describe "hello" $ testCborDecodes CBOR.hello
 
-testCborDecodes :: String -> Aff Unit
-testCborDecodes cbor = do
-  cfg <- over ContractConfig _ { wallet = Nothing } <$> configWithLogLevel TestnetId undefined Trace
-  runContract_ cfg $ do
-    decodeCbor $ cbor
+testCborDecodes :: String -> Spec Unit
+testCborDecodes cbor = it "decode test" $ decodeCbor cbor `shouldNotEqual` Nothing
 
-decodeCbor :: String -> Contract () Validator
-decodeCbor cbor =
-  liftContractM "decode failed" $ cbor
-    # fromString
-    # decodeAeson
-    # hush
-    # map wrap
-
+decodeCbor :: String -> Maybe Validator
+decodeCbor = fromString >>> decodeAeson >>> hush >>> map wrap
