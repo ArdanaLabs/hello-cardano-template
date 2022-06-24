@@ -24,3 +24,10 @@ or
 ```
 nix run .#serve-hello-world-browser
 ```
+
+To run the api tests (currently just cbor encoding tests):
+```
+nix develop .#hello-world-api
+cd offchain-ctl/hello-world-api
+purs-nix test Main
+```
