@@ -7,13 +7,93 @@
       purs-nix = self.inputs.purs-nix-0-14 { inherit system; };
       npmlock2nix = pkgs.callPackages self.inputs.npmlock2nix {};
 
+      ctl = ( purs-nix.build
+              { name = "ctl";
+                src.git={
+                  repo = "https://github.com/Plutonomicon/cardano-transaction-lib.git";
+                  ref = "develop";
+                  rev = "472650f725ba77ab06b501be9a1b10a5fe72ee76";
+                };
+                info = {
+                  version = "";
+                  dependencies = with purs-nix.ps-pkgs;
+                    [  aeson
+                       aeson-helpers
+                       aff
+                       aff-promise
+                       affjax
+                       arraybuffer-types
+                       arrays
+                       bifunctors
+                       bigints
+                       checked-exceptions
+                       console
+                       const
+                       control
+                       debug
+                       effect
+                       either
+                       encoding
+                       enums
+                       exceptions
+                       foldable-traversable
+                       foreign-object
+                       http-methods
+                       identity
+                       integers
+                       js-date
+                       lattice
+                       lists
+                       maybe
+                       medea
+                       media-types
+                       monad-logger
+                       mote
+                       newtype
+                       node-buffer
+                       node-fs
+                       node-fs-aff
+                       node-path
+                       nonempty
+                       ordered-collections
+                       orders
+                       partial
+                       prelude
+                       profunctor
+                       profunctor-lenses
+                       quickcheck
+                       quickcheck-laws
+                       quickcheck-combinators
+                       rationals
+                       record
+                       refs
+                       spec
+                       spec-quickcheck
+                       strings
+                       tailrec
+                       text-encoding
+                       these
+                       transformers
+                       tuples
+                       typelevel
+                       typelevel-prelude
+                       uint
+                       undefined
+                       unfoldable
+                       untagged-union
+                       variant
+                    ];
+                };
+              }
+      ) ;
+
       hello-world-api = {
-        dependencies = 
+        dependencies =
           with purs-nix.ps-pkgs;
             [ aeson
               aff
               bigints
-              cardano-transaction-lib
+              ctl
             ];
         ps =
           purs-nix.purs
@@ -29,14 +109,13 @@
             };
           });
       };
-      
+
       hello-world-browser = {
         ps =
           purs-nix.purs
             { dependencies =
                 with purs-nix.ps-pkgs;
-                [ cardano-transaction-lib
-                  hello-world-api.package
+                [ hello-world-api.package
                 ];
               srcs = [ ./hello-world-browser/src ];
             };
