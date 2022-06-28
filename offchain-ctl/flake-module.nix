@@ -22,9 +22,12 @@
             };
         package = (purs-nix.build
           { name = "hello-world-api";
-            inherit (hello-world-api) dependencies;
-            repo = ""; rev = "";
-          }).local ./hello-world-api;
+            src.path = ./hello-world-api;
+            info = {
+              inherit (hello-world-api) dependencies;
+              version = "0.0.1";
+            };
+          });
       };
       
       hello-world-browser = {
@@ -47,7 +50,7 @@
                 [ prelude
                   hello-world-api.package
                 ];
-              srcs = [ ./hello-world-browser/src ];
+              srcs = [ ./hello-world-cli/src ];
             };
       };
 
@@ -73,7 +76,7 @@
         ''
         mkdir $out; cd $out
         export BROWSER_RUNTIME=1
-        cp ${hello-world-browser.ps.modules.Main.bundle {main = true;} } output.js
+        cp -r ${hello-world-browser.ps.modules.Main.output {}} output
         cp ${./hello-world-browser/index.js} index.js
         cp ${./hello-world-browser/index.html} index.html
         cp ${./webpack.config.js} webpack.config.js
