@@ -14,7 +14,6 @@
                   inherit (self.inputs.cardano-transaction-lib) rev;
                 };
                 info = {
-                  version = "";
                   dependencies = (import ./ctl-deps).dependencies purs-nix.ps-pkgs;
                 };
               }
