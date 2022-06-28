@@ -5,7 +5,6 @@
 // You also need to call `spago bundle-module` to generate the module that is
 // imported here. From the repository root, run:
 //   spago bundle-module -m <MAIN> --to output.js
-import("./output.js") //.then((m) => {m.main()});
-// purs-nix automaticly adds the main() call
+import("./output/Main/index.js").then((m) => {m.main()});
 
 console.log("app starting");
