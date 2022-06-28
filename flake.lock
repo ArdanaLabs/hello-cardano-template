@@ -1816,6 +1816,21 @@
         "type": "github"
       }
     },
+    "get-flake_2": {
+      "locked": {
+        "lastModified": 1644686428,
+        "narHash": "sha256-zkhYsURWFrvEZLkIoBeqFBzSu+cA2u5mo6M8vq9LN7M=",
+        "owner": "ursi",
+        "repo": "get-flake",
+        "rev": "703f15558daa56dfae19d1858bb3046afe68831a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ursi",
+        "repo": "get-flake",
+        "type": "github"
+      }
+    },
     "ghc-8.6.5-iohk": {
       "flake": false,
       "locked": {
@@ -4845,21 +4860,22 @@
         "builders": "builders",
         "deadnix": "deadnix",
         "easy-ps": "easy-ps",
+        "get-flake": "get-flake",
         "make-shell": "make-shell",
         "nixpkgs": "nixpkgs_13",
         "purescript-language-server": "purescript-language-server",
         "utils": "utils_7"
       },
       "locked": {
-        "lastModified": 1653680808,
-        "narHash": "sha256-67c65LVDrscS0wdHV4NSVnkgdnhFs63Lq3cyIp68hSE=",
-        "owner": "ursi",
+        "lastModified": 1656308289,
+        "narHash": "sha256-aa9c8uhK7mvY1N0gHUklfQo4ogYRBRy+K1COSQaX58M=",
+        "owner": "Geometer1729",
         "repo": "purs-nix",
-        "rev": "163680803f6fe8bd602d4bf617bdb5f938617dd2",
+        "rev": "c3e932c19c54c15ac9be82b1022d058b859e7e35",
         "type": "github"
       },
       "original": {
-        "owner": "ursi",
+        "owner": "Geometer1729",
         "repo": "purs-nix",
         "type": "github"
       }
@@ -4869,22 +4885,22 @@
         "builders": "builders_2",
         "deadnix": "deadnix_2",
         "easy-ps": "easy-ps_2",
-        "get-flake": "get-flake",
+        "get-flake": "get-flake_2",
         "make-shell": "make-shell_2",
         "nixpkgs": "nixpkgs_17",
         "purescript-language-server": "purescript-language-server_2",
         "utils": "utils_9"
       },
       "locked": {
-        "lastModified": 1656438195,
-        "narHash": "sha256-FPlQh3PwcVwEeBHmLFuC3gIAHuNXw6JPBceEyjdcZNQ=",
-        "owner": "ursi",
+        "lastModified": 1656449143,
+        "narHash": "sha256-5riybK5cDjETXdIvgyitHke+KEKkkkByLy7PJXURZuY=",
+        "owner": "Geometer1729",
         "repo": "purs-nix",
-        "rev": "81158e4effb7b2b8a350ef75b9e989789eb46d52",
+        "rev": "b9442ef5a7c7d863f5f65651553d9fb7769f17b1",
         "type": "github"
       },
       "original": {
-        "owner": "ursi",
+        "owner": "Geometer1729",
         "ref": "ps-0.14",
         "repo": "purs-nix",
         "type": "github"
