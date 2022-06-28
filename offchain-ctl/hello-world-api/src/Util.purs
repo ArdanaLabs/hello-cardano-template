@@ -16,8 +16,7 @@ import Contract.Monad
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (ValidatorHash)
 import Contract.Transaction
-  ( BalancedSignedTransaction(BalancedSignedTransaction)
-  , TransactionHash
+  ( TransactionHash
   , TransactionOutput
   , TransactionInput(TransactionInput)
   , balanceAndSignTx
@@ -71,11 +70,25 @@ buildBalanceSignAndSubmitTx
   -> Contract () TransactionHash
 buildBalanceSignAndSubmitTx lookups constraints = do
   ubTx <- liftedE $ Lookups.mkUnbalancedTx lookups constraints
+  bsTx <-
+    liftedM "Failed to balance/sign tx" $ balanceAndSignTx ubTx
+  txId <- submit bsTx
+  logInfo' $ "Tx ID: " <> show txId
+  pure txId
+
+{-
+buildBalanceSignAndSubmitTx
+  :: Lookups.ScriptLookups PlutusData
+  -> TxConstraints Unit Unit
+  -> Contract () TransactionHash
+buildBalanceSignAndSubmitTx lookups constraints = do
+  ubTx <- liftedE $ Lookups.mkUnbalancedTx lookups constraints
   BalancedSignedTransaction bsTx <-
     liftedM "Failed to balance/sign tx" $ balanceAndSignTx ubTx
   txId <- submit bsTx.signedTxCbor
   logInfo' $ "Tx ID: " <> show txId
   pure txId
+-}
 
 getUtxos :: ValidatorHash -> Contract () (Map TransactionInput TransactionOutput)
 getUtxos vhash = do
