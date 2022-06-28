@@ -15,73 +15,7 @@
                 };
                 info = {
                   version = "";
-                  dependencies = with purs-nix.ps-pkgs;
-                    [  aeson
-                       aeson-helpers
-                       aff
-                       aff-promise
-                       affjax
-                       arraybuffer-types
-                       arrays
-                       bifunctors
-                       bigints
-                       checked-exceptions
-                       console
-                       const
-                       control
-                       debug
-                       effect
-                       either
-                       encoding
-                       enums
-                       exceptions
-                       foldable-traversable
-                       foreign-object
-                       http-methods
-                       identity
-                       integers
-                       js-date
-                       lattice
-                       lists
-                       maybe
-                       medea
-                       media-types
-                       monad-logger
-                       mote
-                       newtype
-                       node-buffer
-                       node-fs
-                       node-fs-aff
-                       node-path
-                       nonempty
-                       ordered-collections
-                       orders
-                       partial
-                       prelude
-                       profunctor
-                       profunctor-lenses
-                       quickcheck
-                       quickcheck-laws
-                       quickcheck-combinators
-                       rationals
-                       record
-                       refs
-                       spec
-                       spec-quickcheck
-                       strings
-                       tailrec
-                       text-encoding
-                       these
-                       transformers
-                       tuples
-                       typelevel
-                       typelevel-prelude
-                       uint
-                       undefined
-                       unfoldable
-                       untagged-union
-                       variant
-                    ];
+                  dependencies = (import ./ctl-deps).dependencies purs-nix.ps-pkgs;
                 };
               }
       ) ;
