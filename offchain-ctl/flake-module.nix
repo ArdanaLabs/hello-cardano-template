@@ -11,8 +11,7 @@
               { name = "ctl";
                 src.git={
                   repo = "https://github.com/Plutonomicon/cardano-transaction-lib.git";
-                  ref = "develop";
-                  rev = "472650f725ba77ab06b501be9a1b10a5fe72ee76";
+                  inherit (self.inputs.cardano-transaction-lib) ref rev;
                 };
                 info = {
                   version = "";
