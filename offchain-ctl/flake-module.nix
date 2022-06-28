@@ -48,7 +48,8 @@
           purs-nix.purs
             { dependencies =
                 with purs-nix.ps-pkgs;
-                [ hello-world-api.package
+                [ ctl
+                  hello-world-api.package
                 ];
               srcs = [ ./hello-world-browser/src ];
             };
