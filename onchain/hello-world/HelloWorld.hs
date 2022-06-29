@@ -2,11 +2,11 @@ module Main (main) where
 
 import Hello
 
+import Utils(CBOR(..),toPs)
 import Control.Monad (unless)
 import System.Directory (doesDirectoryExist)
 import System.Environment (getArgs)
 import System.Exit (die)
-import Data.List (intercalate)
 
 {- | Main takes a directory as a comand line argument
   and creates a file CBOR.purs in that directory
@@ -29,14 +29,3 @@ cbors =
   [ CBOR "paramHello" paramHelloCBOR
   , CBOR "hello" helloWorldHexString
   ]
-
-data CBOR = CBOR{name :: String,cbor :: String}
-
-toPs :: [CBOR] -> String
-toPs cs =
-  "module CBOR (\n  " <> intercalate ",\n  " (name <$> cs) <> "\n) where\n\n"
-  <> intercalate "\n\n" (toDec <$> cs)
-
-toDec :: CBOR -> String
-toDec c = name c <> " :: String\n" <> name c <> " = \""
-  <> cbor c <> "\""

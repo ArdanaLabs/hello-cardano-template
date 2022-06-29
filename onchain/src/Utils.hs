@@ -1,8 +1,15 @@
-module Utils (validatorToHexString, trivialHexString, closedTermToHexString) where
+module Utils
+  (validatorToHexString
+  , trivialHexString
+  , closedTermToHexString
+  , CBOR(..)
+  , toPs
+  ) where
 
 import Codec.Serialise (serialise)
 import Data.ByteString.Lazy qualified as BSL
 import Data.Word (Word8)
+import Data.List (intercalate)
 import Numeric
 import Plutarch (compile)
 import Plutarch.Api.V1
@@ -32,3 +39,14 @@ trivialHexString = validatorToHexString $ mkValidator trivialValidator
 
 trivialValidator :: ClosedTerm (PData :--> PData :--> PScriptContext :--> POpaque)
 trivialValidator = plam $ \_ _ _ -> popaque $ pcon PUnit
+
+data CBOR = CBOR{name :: String,cbor :: String}
+
+toPs :: [CBOR] -> String
+toPs cs =
+  "module CBOR (\n  " <> intercalate ",\n  " (name <$> cs) <> "\n) where\n\n"
+  <> intercalate "\n\n" (toDec <$> cs)
+
+toDec :: CBOR -> String
+toDec c = name c <> " :: String\n" <> name c <> " = \""
+  <> cbor c <> "\""

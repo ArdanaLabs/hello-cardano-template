@@ -38,18 +38,6 @@ data HelloRedemer (s :: S)
     (PlutusType, PIsData, PEq)
     via (PIsDataReprInstances HelloRedemer)
 
-import Plutarch.Extra.TermCont (pmatchC)
-
-data HelloRedemer (s :: S)
-  = Inc (Term s (PDataRecord '[]))
-  | Spend (Term s (PDataRecord '[]))
-  deriving stock (GHC.Generic)
-  deriving anyclass (Generic)
-  deriving anyclass (PIsDataRepr)
-  deriving
-    (PlutusType, PIsData, PEq)
-    via (PIsDataReprInstances HelloRedemer)
-
 helloWorldHexString :: String
 helloWorldHexString = validatorToHexString helloValidator
 
