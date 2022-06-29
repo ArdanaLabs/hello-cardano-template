@@ -82,8 +82,8 @@
       # use more recent slot to avoid long sync time
       config = {
         datumCache.blockFetcher.firstBlock = {
-          slot = 60854917;
-          id = "1c157a01120772c35d468b425e6ef228d5b6cec5977f7897540aa8d0870f9ab9";
+          slot = 62153233;
+          id = "631c621b7372445acf82110282ba72f4b52dafa09c53864ddc2e58be24955b2a";
         };
       };
     in
@@ -110,7 +110,13 @@
         webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
         '';
 
-      packages.hello-world-cli = hello-world-cli.ps.modules.Main.bundle {main = true;};
+      packages.hello-world-cli =
+        let js = "${hello-world-cli.ps.modules.Main.output {}}/Main/index.js"; in
+        pkgs.writeScriptBin "hello-world-cli"
+          ''
+          export NODE_PATH=${npmlock2nix.node_modules { src = ./.; }}/node_modules
+          echo 'require("${js}").main()' | ${pkgs.nodejs}/bin/node
+          '';
 
       apps = {
         ctl-runtime = ctl-pkgs.launchCtlRuntime config;
