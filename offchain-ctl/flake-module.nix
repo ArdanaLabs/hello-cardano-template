@@ -7,6 +7,17 @@
       purs-nix = self.inputs.purs-nix-0-14 { inherit system; };
       npmlock2nix = pkgs.callPackages self.inputs.npmlock2nix {};
 
+      ps-pkgs-ctl =
+        let
+          f = self:
+            import ./ps-pkgs-ctl.nix { ps-pkgs = purs-nix.ps-pkgs // self; };
+        in
+        pkgs.lib.fix
+          (self:
+            builtins.mapAttrs (n: v: purs-nix.build (v // { name = n; })) (f self)
+          );
+      all-ps-pkgs = purs-nix.ps-pkgs // ps-pkgs-ctl;
+
       hello-world-cbor = purs-nix.build
         { name = "hello-world-cbor";
           src.path = self'.packages.hello-world-cbor-purs;
@@ -15,8 +26,8 @@
         };
 
       hello-world-api = {
-        dependencies = 
-          with purs-nix.ps-pkgs;
+        dependencies =
+          with all-ps-pkgs;
             [ aeson
               aff
               bigints
@@ -39,12 +50,12 @@
             };
           });
       };
-      
+
       hello-world-browser = {
         ps =
           purs-nix.purs
             { dependencies =
-                with purs-nix.ps-pkgs;
+                with all-ps-pkgs;
                 [ cardano-transaction-lib
                   hello-world-api.package
                 ];
@@ -56,7 +67,7 @@
         ps =
           purs-nix.purs
             { dependencies =
-                with purs-nix.ps-pkgs;
+              with all-ps-pkgs;
                 [ prelude
                   hello-world-api.package
                 ];
