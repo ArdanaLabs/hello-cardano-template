@@ -110,7 +110,13 @@
         webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
         '';
 
-      packages.hello-world-cli = hello-world-cli.ps.modules.Main.bundle {main = true;};
+      packages.hello-world-cli =
+        let js = "${hello-world-cli.ps.modules.Main.output {}}/Main/index.js"; in
+        pkgs.writeScriptBin "hello-world-cli"
+          ''
+          export NODE_PATH=${npmlock2nix.node_modules { src = ./.; }}/node_modules
+          echo 'require("${js}").main()' | ${pkgs.nodejs}/bin/node
+          '';
 
       apps = {
         ctl-runtime = ctl-pkgs.launchCtlRuntime config;
