@@ -14,6 +14,7 @@
               aff
               bigints
               cardano-transaction-lib
+              ordered-collections
               spec
             ];
         ps =
