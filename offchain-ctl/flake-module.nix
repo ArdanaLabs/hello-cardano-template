@@ -7,6 +7,13 @@
       purs-nix = self.inputs.purs-nix-0-14 { inherit system; };
       npmlock2nix = pkgs.callPackages self.inputs.npmlock2nix {};
 
+      hello-world-cbor = purs-nix.build
+        { name = "hello-world-cbor";
+          src.path = self'.packages.hello-world-cbor-purs;
+          info.dependencies = [ ];
+          info.version = "0.0.1";
+        };
+
       hello-world-api = {
         dependencies = 
           with purs-nix.ps-pkgs;
@@ -14,6 +21,7 @@
               aff
               bigints
               cardano-transaction-lib
+              hello-world-cbor
               ordered-collections
               spec
             ];
@@ -69,6 +77,8 @@
       };
     in
     {
+      packages.hello-world-cbor = hello-world-cbor;
+
       packages.hello-world-api = hello-world-api.package;
 
       packages.hello-world-browser =
@@ -89,7 +99,7 @@
         webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
         '';
 
-      packages.hello-world-cli = hello-world-browser.ps.modules.Main.bundle {main = true;};
+      packages.hello-world-cli = hello-world-cli.ps.modules.Main.bundle {main = true;};
 
       apps = {
         ctl-runtime = ctl-pkgs.launchCtlRuntime config;
