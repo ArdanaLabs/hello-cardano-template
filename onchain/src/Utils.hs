@@ -1,15 +1,15 @@
-module Utils
-  (validatorToHexString
-  , trivialHexString
-  , closedTermToHexString
-  , CBOR(..)
-  , toPureScript
-  ) where
+module Utils (
+  validatorToHexString,
+  trivialHexString,
+  closedTermToHexString,
+  CBOR (..),
+  toPureScript,
+) where
 
 import Codec.Serialise (serialise)
 import Data.ByteString.Lazy qualified as BSL
-import Data.Word (Word8)
 import Data.List (intercalate)
+import Data.Word (Word8)
 import Numeric
 import Plutarch (compile)
 import Plutarch.Api.V1
@@ -41,14 +41,16 @@ trivialValidator :: ClosedTerm (PData :--> PData :--> PScriptContext :--> POpaqu
 trivialValidator = plam $ \_ _ _ -> popaque $ pcon PUnit
 
 -- | Represents a declaration of a constant cbor string in purescript
-data CBOR = CBOR{name :: String,cbor :: String}
+data CBOR = CBOR {name :: String, cbor :: String}
 
 -- | Turns a list of CBOR objects into the text of a purescript module which declares them all
 toPureScript :: [CBOR] -> String
 toPureScript cs =
   "module CBOR (\n  " <> intercalate ",\n  " (name <$> cs) <> "\n) where\n\n"
-  <> intercalate "\n\n" (toDec <$> cs)
+    <> intercalate "\n\n" (toDec <$> cs)
 
 toDec :: CBOR -> String
-toDec c = name c <> " :: String\n" <> name c <> " = \""
-  <> cbor c <> "\""
+toDec c =
+  name c <> " :: String\n" <> name c <> " = \""
+    <> cbor c
+    <> "\""
