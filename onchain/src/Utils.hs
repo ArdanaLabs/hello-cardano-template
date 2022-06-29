@@ -40,7 +40,7 @@ trivialHexString = validatorToHexString $ mkValidator trivialValidator
 trivialValidator :: ClosedTerm (PData :--> PData :--> PScriptContext :--> POpaque)
 trivialValidator = plam $ \_ _ _ -> popaque $ pcon PUnit
 
--- | Represetns a declaration of a constant cbor string in purescript
+-- | Represents a declaration of a constant cbor string in purescript
 data CBOR = CBOR{name :: String,cbor :: String}
 
 -- | Turns a list of CBOR objects into the text of a purescript module which declares them all
