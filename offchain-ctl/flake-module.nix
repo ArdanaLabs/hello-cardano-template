@@ -25,6 +25,8 @@
               aff
               bigints
               cardano-transaction-lib
+              ordered-collections
+              spec
             ];
         ps =
           purs-nix.purs
@@ -121,6 +123,18 @@
         buildInputs = (with pkgs; [
           nodejs-16_x
           (hello-world-browser.ps.command {})
+          purs-nix.ps-pkgs.psci-support
+          purs-nix.purescript
+          purs-nix.purescript-language-server
+          nodePackages.purs-tidy
+        ]);
+        shellHook = "export NODE_PATH=${npmlock2nix.node_modules { src = ./.; }}/node_modules/";
+      };
+      devShells.hello-world-api = pkgs.mkShell {
+        name = projectName;
+        buildInputs = (with pkgs; [
+          nodejs-16_x
+          (hello-world-api.ps.command {})
           purs-nix.ps-pkgs.psci-support
           purs-nix.purescript
           purs-nix.purescript-language-server
