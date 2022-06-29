@@ -4867,15 +4867,15 @@
         "utils": "utils_7"
       },
       "locked": {
-        "lastModified": 1656308289,
-        "narHash": "sha256-aa9c8uhK7mvY1N0gHUklfQo4ogYRBRy+K1COSQaX58M=",
-        "owner": "Geometer1729",
+        "lastModified": 1656476413,
+        "narHash": "sha256-bgrZoWZSvDYUeYs6Cnjke6OEORv0b2MWO9yR0vyJxAg=",
+        "owner": "ursi",
         "repo": "purs-nix",
-        "rev": "c3e932c19c54c15ac9be82b1022d058b859e7e35",
+        "rev": "c0eb46369632423dfeebf13d63fccc8b352eaaae",
         "type": "github"
       },
       "original": {
-        "owner": "Geometer1729",
+        "owner": "ursi",
         "repo": "purs-nix",
         "type": "github"
       }
@@ -4892,15 +4892,15 @@
         "utils": "utils_9"
       },
       "locked": {
-        "lastModified": 1656449143,
-        "narHash": "sha256-5riybK5cDjETXdIvgyitHke+KEKkkkByLy7PJXURZuY=",
-        "owner": "Geometer1729",
+        "lastModified": 1656476453,
+        "narHash": "sha256-ejxMGQmnVafKmptdmPBrW76MxfPE/0HeJnZhf083GUU=",
+        "owner": "ursi",
         "repo": "purs-nix",
-        "rev": "b9442ef5a7c7d863f5f65651553d9fb7769f17b1",
+        "rev": "b1115c74fb7c284c141ac6cc22c53b24dc6d94f8",
         "type": "github"
       },
       "original": {
-        "owner": "Geometer1729",
+        "owner": "ursi",
         "ref": "ps-0.14",
         "repo": "purs-nix",
         "type": "github"
