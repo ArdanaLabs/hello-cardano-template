@@ -1,0 +1,5 @@
+#!/bin/sh
+# this is a temporary workaround
+# purs-nix run will do this soonish
+purs-nix compile
+echo 'require("./output/Main/index.js").main()' | node
