@@ -49,6 +49,10 @@
             mkdir $out
           '';
         };
+        hello-world-cbor-purs = pkgs.runCommand "hello-world-cbor-purs" {} ''
+            mkdir -p $out/src
+            ${haskellNixFlake.packages."dUSD-onchain:exe:hello-world"}/bin/hello-world $out/src
+          '';
       };
       checks = haskellNixFlake.checks // {
       };
