@@ -118,8 +118,29 @@
           echo 'require("${js}").main()' | ${pkgs.nodejs}/bin/node
           '';
 
+      packages.docs = pkgs.runCommand "docs" {} ''
+                        mkdir $out; cd $out
+                        ${hello-world-browser.ps.command {}}/bin/purs-nix docs
+                        mv generated-docs/html/* .
+                        rm -rf generated-docs
+                      '';
+
+
       apps = {
+
         ctl-runtime = ctl-pkgs.launchCtlRuntime config;
+
+        serve-docs = {
+          type = "app";
+          program = pkgs.writeShellApplication
+            {
+              name = projectName;
+              runtimeInputs = [
+                pkgs.nodePackages.http-server
+              ];
+              text = "http-server -c-1 ${self'.packages.docs}";
+              };
+          };
 
         serve-hello-world-browser = {
           type = "app";
