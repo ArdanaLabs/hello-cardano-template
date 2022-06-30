@@ -1,4 +1,4 @@
-{ ps-pkgs, ... }:
+{ ps-pkgs, ctl-rev, ... }:
   with ps-pkgs;
     { aeson =
         { src.git =
@@ -92,7 +92,7 @@
       cardano-transaction-lib =
         { src.git =
             { repo = "https://github.com/Plutonomicon/cardano-transaction-lib.git";
-              rev = "21d5d39ecdb75822da2bd004d16d12565e105669";
+              rev = ctl-rev;
             };
 
           info =
@@ -237,7 +237,7 @@
               dependencies = [ these transformers arrays ];
             };
         };
-  
+
         properties =
             { src.git =
                 { repo = "https://github.com/Risto-Stevcev/purescript-properties.git";

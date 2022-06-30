@@ -7,10 +7,15 @@
       purs-nix = self.inputs.purs-nix-0-14 { inherit system; };
       npmlock2nix = pkgs.callPackages self.inputs.npmlock2nix {};
 
+      ctl-rev = self.inputs.cardano-transaction-lib.rev;
+
       ps-pkgs-ctl =
         let
           f = self:
-            import ./ps-pkgs-ctl.nix { ps-pkgs = purs-nix.ps-pkgs // self; };
+          import ./ps-pkgs-ctl.nix {
+            ps-pkgs = purs-nix.ps-pkgs // self;
+            inherit ctl-rev;
+          };
         in
         pkgs.lib.fix
           (self:
