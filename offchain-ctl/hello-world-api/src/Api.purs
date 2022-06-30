@@ -104,8 +104,8 @@ data HelloRedemer = Inc | Spend
 -- TODO this should probably be generics, but
 -- I couldn't get generics to work
 instance ToData HelloRedemer where
-  toData Inc = Constr zero []
-  toData Spend = Constr one []
+  toData Inc = Constr (BigInt.fromInt 0) []
+  toData Spend = Constr (BigInt.fromInt 1) []
 
 incRedeemer :: Redeemer
 incRedeemer = Redeemer (toData Inc)

@@ -1179,17 +1179,17 @@
         "servant-purescript": "servant-purescript"
       },
       "locked": {
-        "lastModified": 1656606009,
-        "narHash": "sha256-TsLEIka09iZSNEJLbFhdV1Vb4aCxjQvAmryEygG56Wo=",
+        "lastModified": 1656613586,
+        "narHash": "sha256-yoHjMmiVmTKw4+0YpZ7+tPfPwqpvTWwdDpYS2p3iDVE=",
         "owner": "Plutonomicon",
         "repo": "cardano-transaction-lib",
-        "rev": "6e17929c823ec86319948c8f6e8a8c93c5401535",
+        "rev": "90dd68ab3821f62d33ff2deb70ea0c9bbee8c6e4",
         "type": "github"
       },
       "original": {
         "owner": "Plutonomicon",
         "repo": "cardano-transaction-lib",
-        "rev": "6e17929c823ec86319948c8f6e8a8c93c5401535",
+        "rev": "90dd68ab3821f62d33ff2deb70ea0c9bbee8c6e4",
         "type": "github"
       }
     },
@@ -4867,11 +4867,11 @@
         "utils": "utils_7"
       },
       "locked": {
-        "lastModified": 1656476413,
-        "narHash": "sha256-bgrZoWZSvDYUeYs6Cnjke6OEORv0b2MWO9yR0vyJxAg=",
+        "lastModified": 1656552286,
+        "narHash": "sha256-M+CF16eIfd3+iYwys7IIR2PRleyI9m7sCOOwAtQkmnU=",
         "owner": "ursi",
         "repo": "purs-nix",
-        "rev": "c0eb46369632423dfeebf13d63fccc8b352eaaae",
+        "rev": "2ed6b9a256675c4f65feabd26b4507a6383696ce",
         "type": "github"
       },
       "original": {
@@ -4892,11 +4892,11 @@
         "utils": "utils_9"
       },
       "locked": {
-        "lastModified": 1656476453,
-        "narHash": "sha256-ejxMGQmnVafKmptdmPBrW76MxfPE/0HeJnZhf083GUU=",
+        "lastModified": 1656538545,
+        "narHash": "sha256-EFkDiT9us2XfObKsjAYYuJuesADzyhHw6M7ao576uds=",
         "owner": "ursi",
         "repo": "purs-nix",
-        "rev": "b1115c74fb7c284c141ac6cc22c53b24dc6d94f8",
+        "rev": "6202f4309f82a241b9bb627d3186c8aeeafd0088",
         "type": "github"
       },
       "original": {
