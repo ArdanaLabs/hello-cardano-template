@@ -92,7 +92,6 @@
       cardano-transaction-lib =
         { src.git =
             { repo = "https://github.com/Plutonomicon/cardano-transaction-lib.git";
-              ref = "brian/key-wallet-collateral";
               rev = ctl-rev;
             };
 
