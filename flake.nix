@@ -5,7 +5,7 @@
     };
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     cardano-node.url = "github:input-output-hk/cardano-node?rev=73f9a746362695dc2cb63ba757fbcabb81733d23";
-    cardano-transaction-lib.url = "github:Plutonomicon/cardano-transaction-lib?rev=b7e9c30c9b3b1d588f4f2a43fbb3bdf7e394a5d5";
+    cardano-transaction-lib.url = "github:Plutonomicon/cardano-transaction-lib?rev=9df5632a69611878eac353915948bd885d57d45a";
     #   used for libsodium-vrf
     plutus.url = "github:input-output-hk/plutus";
     plutus-apps.url = "github:input-output-hk/plutus-apps?rev=e4062bca213f233cdf9822833b07aa69dff6d22a";
