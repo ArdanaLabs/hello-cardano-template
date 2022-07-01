@@ -108,7 +108,7 @@
         cp ${./hello-world-browser/index.js} index.js
         cp ${./hello-world-browser/index.html} index.html
         cp ${./webpack.config.js} webpack.config.js
-        cp -r ${npmlock2nix.node_modules { src = ./.; }}/* .
+        cp -r ${npmlock2nix.node_modules { src = self.cardano-transaction-lib ; }}/* .
         export NODE_PATH="node_modules"
         export PATH="bin:$PATH"
         mkdir dist
@@ -119,7 +119,7 @@
         let js = "${hello-world-cli.ps.modules.Main.output {}}/Main/index.js"; in
         pkgs.writeScriptBin "hello-world-cli"
           ''
-          export NODE_PATH=${npmlock2nix.node_modules { src = ./.; }}/node_modules
+          export NODE_PATH=${npmlock2nix.node_modules { src = self.cardano-transaction-lib; }}/node_modules
           echo 'require("${js}").main()' | ${pkgs.nodejs}/bin/node
           '';
 
@@ -149,7 +149,7 @@
           purs-nix.purescript-language-server
           nodePackages.purs-tidy
         ]);
-        shellHook = "export NODE_PATH=${npmlock2nix.node_modules { src = ./.; }}/node_modules/";
+        shellHook = "export NODE_PATH=${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib ; }}/node_modules/";
       };
       devShells.hello-world-browser = pkgs.mkShell {
         name = projectName;
