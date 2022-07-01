@@ -15,7 +15,6 @@ import Data.Log.Level (LogLevel(Trace))
 
 main :: Effect Unit
 main = launchAff_ $ do
-  --wallet <- mkKeyWalletFromFile "wallet.skey" -- (Just "staking.skey")
-  wallet <- mkKeyWalletFromFiles "wallet.skey" (Just "staking.skey")
+  wallet <- mkKeyWalletFromFiles "wallet.skey" $ Just "staking.skey"
   cfg <- configWithLogLevel TestnetId wallet Trace
   runContract_ cfg helloUnitTest
