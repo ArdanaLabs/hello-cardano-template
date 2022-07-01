@@ -161,7 +161,7 @@
           purs-nix.purescript-language-server
           nodePackages.purs-tidy
         ]);
-        shellHook = "export NODE_PATH=${npmlock2nix.node_modules { src = ./.; }}/node_modules/";
+        shellHook = "export NODE_PATH=${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules/";
       };
       devShells.hello-world-api = pkgs.mkShell {
         name = projectName;
@@ -173,7 +173,7 @@
           purs-nix.purescript-language-server
           nodePackages.purs-tidy
         ]);
-        shellHook = "export NODE_PATH=${npmlock2nix.node_modules { src = ./.; }}/node_modules/";
+        shellHook = "export NODE_PATH=${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules/";
       };
     };
   flake = {
