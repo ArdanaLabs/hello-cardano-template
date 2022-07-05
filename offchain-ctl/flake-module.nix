@@ -36,6 +36,7 @@
               ordered-collections
               spec
             ];
+        test-dependencies = self.dependencies;
         ps =
           purs-nix.purs
             { inherit (hello-world-api) dependencies;
@@ -91,6 +92,23 @@
       packages.hello-world-cbor = hello-world-cbor;
 
       packages.hello-world-api = hello-world-api.package;
+
+      packages.hello-world-api-tests = pkgs.runCommandNoCC "api-tests" {}
+        ''
+        cp -r ${./hello-world-api/src} .
+        cp -r ${npmlock2nix.node_modules { src = ./.; }}/* .
+        export NODE_PATH="node_modules"
+        export PATH="bin:$PATH"
+        ls
+        ls ${ ./hello-world-api/src }
+        ${hello-world-api.ps.command {srcs = [ ./hello-world-api/src ] ;}}/bin/purs-nix compile
+        ls output
+        #ls output/Test.Main
+        mkdir $out
+        cp -r output $out
+        cd $out
+        ${hello-world-api.ps.command {srcs = [./hello-world-api/src ./hello-world-api/test ]; }}/bin/purs-nix test
+        '';
 
       packages.hello-world-browser =
         pkgs.runCommand "build-hello-world-browser" { }
