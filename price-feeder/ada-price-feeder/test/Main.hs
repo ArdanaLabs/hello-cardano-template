@@ -1,7 +1,7 @@
 module Main where
 
-import Test.Syd
 import System.Process (proc, readCreateProcess)
+import Test.Syd
 
 main :: IO ()
 main = sydTest $ do
