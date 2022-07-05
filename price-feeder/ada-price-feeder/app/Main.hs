@@ -15,15 +15,16 @@ main = do
           , settingDisableSession = False
           , settingUseServerName = False
           }
-      managerSettings = if _disableCerticicateValidation options
-                          then mkManagerSettings dontValidateCertTlsSettings Nothing
-                          else tlsManagerSettings
+      managerSettings =
+        if _disableCerticicateValidation options
+          then mkManagerSettings dontValidateCertTlsSettings Nothing
+          else tlsManagerSettings
   print =<< getMedianPriceFromSources (_minNumberOfPrices options) managerSettings
 
-data PriceFeederOptions = PriceFeederOptions {
-  _disableCerticicateValidation :: Bool
-, _minNumberOfPrices :: Int
-}
+data PriceFeederOptions = PriceFeederOptions
+  { _disableCerticicateValidation :: Bool
+  , _minNumberOfPrices :: Int
+  }
 
 priceFeederOptions :: ParserInfo PriceFeederOptions
 priceFeederOptions =
@@ -38,10 +39,13 @@ disableCerticicateValidation :: Parser Bool
 disableCerticicateValidation = flag False True (long "disable-cert-validation")
 
 minNumberOfPrices :: Parser Int
-minNumberOfPrices = option auto
-  ( long "min-prices"
-  <> short 'N'
-  <> metavar "INT"
-  <> help "The minimal number of prices that needs to be fetched succesfully for the program to succeed"
-  <> value 5
-  <> showDefault )
+minNumberOfPrices =
+  option
+    auto
+    ( long "min-prices"
+        <> short 'N'
+        <> metavar "INT"
+        <> help "The minimal number of prices that needs to be fetched succesfully for the program to succeed"
+        <> value 5
+        <> showDefault
+    )
