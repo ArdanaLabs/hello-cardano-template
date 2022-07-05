@@ -25,7 +25,16 @@
     {
       devShells.price-feeder = haskellNixFlake.devShell;
 
-      packages = haskellNixFlake.packages;
+      packages = haskellNixFlake.packages // {
+        ada-price-feeder-test = pkgs.runCommand "ada-price-feeder-test" {
+            buildInputs = [ pkgs.makeWrapper ];
+          }
+          ''
+              mkdir -p $out/bin
+              makeWrapper ${self'.packages."ada-price-feeder:exe:ada-price-feeder-test"}/bin/ada-price-feeder-test $out/bin/ada-price-feeder-test \
+                --set PATH ${pkgs.lib.makeBinPath [ self'.packages."ada-price-feeder:exe:ada-price-feeder" ]}
+          '';
+      };
 
       apps = haskellNixFlake.apps;
     };

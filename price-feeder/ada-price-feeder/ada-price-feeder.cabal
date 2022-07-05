@@ -66,34 +66,20 @@ executable ada-price-feeder
     , ada-price-feeder
     , base
     , connection
-    , http-client-tls
     , optparse-applicative
 
   hs-source-dirs:   app
   ghc-options:      -Wall -Werror
   default-language: Haskell2010
 
--- executable ada-price-feeder-test
---   ghc-options:      -Wall -Werror
---   default-language: Haskell2010
---   type:             exitcode-stdio-1.0
+executable ada-price-feeder-test
+  ghc-options:      -Wall -Werror
+  default-language: Haskell2010
+  type:             exitcode-stdio-1.0
 
---   -- Directories containing source files.
---   hs-source-dirs:   test
---   main-is:          Main.hs
---   other-modules:    ClientsSpec
---   build-depends:
---     , ada-price-feeder
---     , aeson
---     , base
---     , binance-servant-api
---     , coinbase-servant-api
---     , genvalidity
---     , huobi-servant-api
---     , kraken-servant-api
---     , kucoin-servant-api
---     , QuickCheck
---     , sydtest
---     , sydtest-servant
---     , time
---     , unliftio
+  hs-source-dirs:   test
+  main-is:          Main.hs
+  build-depends:
+    , base
+    , process
+    , sydtest

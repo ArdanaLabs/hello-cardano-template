@@ -6,8 +6,7 @@ module PriceFetcher (getMedianPriceFromSources) where
 import Data.Either (partitionEithers)
 import Data.Foldable (traverse_)
 import Data.Vector qualified as V (fromList)
-import Network.HTTP.Client (ManagerSettings)
-import Network.HTTP.Client.TLS (newTlsManagerWith)
+import Network.HTTP.Client.TLS (newTlsManager)
 import Servant.Client (BaseUrl, ClientEnv, mkClientEnv)
 import Statistics.Quantile (median, medianUnbiased)
 import System.IO (hPrint, stderr)
@@ -25,9 +24,9 @@ fetchers mkEnv =
   , getKucoinPrice (mkEnv kucoinBaseUrl)
   ]
 
-getMedianPriceFromSources :: Int -> ManagerSettings -> IO Double
-getMedianPriceFromSources minNumberOfPrices managerSettings = do
-  manager <- newTlsManagerWith managerSettings
+getMedianPriceFromSources :: Int -> IO Double
+getMedianPriceFromSources minNumberOfPrices = do
+  manager <- newTlsManager
   let clientEnv = mkClientEnv manager
   (errors, prices) <- partitionEithers <$> mapConcurrently tryAny (fetchers clientEnv)
   traverse_ (hPrint stderr) errors
