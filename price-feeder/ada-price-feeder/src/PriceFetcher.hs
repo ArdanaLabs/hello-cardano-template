@@ -12,6 +12,7 @@ import Servant.Client (BaseUrl, ClientEnv, mkClientEnv)
 import Statistics.Quantile (median, medianUnbiased)
 import System.IO (hPrint, stderr)
 import UnliftIO.Exception (throwString, tryAny)
+import UnliftIO.Internals.Async (mapConcurrently)
 
 import Clients
 
@@ -28,7 +29,7 @@ getMedianPriceFromSources :: Int -> ManagerSettings -> IO Double
 getMedianPriceFromSources minNumberOfPrices managerSettings = do
   manager <- newTlsManagerWith managerSettings
   let clientEnv = mkClientEnv manager
-  (errors, prices) <- partitionEithers <$> traverse tryAny (fetchers clientEnv)
+  (errors, prices) <- partitionEithers <$> mapConcurrently tryAny (fetchers clientEnv)
   traverse_ (hPrint stderr) errors
   if length prices >= minNumberOfPrices
     then return $ median medianUnbiased $ V.fromList prices
