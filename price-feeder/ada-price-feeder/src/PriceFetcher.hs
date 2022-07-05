@@ -3,14 +3,14 @@
 
 module PriceFetcher (getMedianPriceFromSources) where
 
-import Control.Monad (void)
 import Data.Either (partitionEithers)
+import Data.Foldable (traverse_)
 import Data.Vector qualified as V (fromList)
 import Network.HTTP.Client (ManagerSettings)
 import Network.HTTP.Client.TLS (newTlsManagerWith)
 import Servant.Client (BaseUrl, ClientEnv, mkClientEnv)
 import Statistics.Quantile (median, medianUnbiased)
-import System.IO (hPutStrLn, stderr)
+import System.IO (hPrint, stderr)
 import UnliftIO.Exception (throwString, tryAny)
 
 import Clients
@@ -24,13 +24,13 @@ fetchers mkEnv =
   , getKucoinPrice (mkEnv kucoinBaseUrl)
   ]
 
-getMedianPriceFromSources :: ManagerSettings -> IO Double
-getMedianPriceFromSources managerSettings = do
+getMedianPriceFromSources :: Int -> ManagerSettings -> IO Double
+getMedianPriceFromSources minNumberOfPrices managerSettings = do
   manager <- newTlsManagerWith managerSettings
   let clientEnv = mkClientEnv manager
   (errors, prices) <- partitionEithers <$> traverse tryAny (fetchers clientEnv)
-  void $ traverse (hPutStrLn stderr . show) errors
-  if length prices > 0
+  traverse_ (hPrint stderr) errors
+  if length prices >= minNumberOfPrices
     then return $ median medianUnbiased $ V.fromList prices
     else do
-      throwString "Unable to fetch at least one price"
+      throwString "Unable to fetch the minimal required number of prices"

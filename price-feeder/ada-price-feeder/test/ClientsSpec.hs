@@ -79,7 +79,7 @@ testGetKrakenPrice =
           it "should successfully get the price" $ \clientEnv -> do
             forAll (genValid @Price) $ \(Price expectedPrice) -> do
               liftIO $ encodeFile priceDataPath (krakenPriceData expectedPrice)
-              getKrakenPrice clientEnv >>= (`shouldSatisfy` (approximately defaultTheta expectedPrice))
+              getKrakenPrice clientEnv >>= (`shouldSatisfy` approximately defaultTheta expectedPrice)
 
 testGetKucoinPrice :: Spec
 testGetKucoinPrice =
@@ -89,4 +89,4 @@ testGetKucoinPrice =
           it "should successfully get the price" $ \clientEnv -> do
             forAll (genValid @Price) $ \(Price expectedPrice) -> do
               liftIO $ encodeFile priceDataPath (kucoinPriceData expectedPrice)
-              getKucoinPrice clientEnv >>= (`shouldSatisfy` (approximately defaultTheta expectedPrice))
+              getKucoinPrice clientEnv >>= (`shouldSatisfy` approximately defaultTheta expectedPrice)
