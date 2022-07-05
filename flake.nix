@@ -33,9 +33,9 @@
         imports = [
           ./offchain
           ./onchain
-          ./price-feeder/flake-module.nix
           ./docs
           ./nix/flake-modules
+          ./price-feeder
         ];
       }
     ).config.flake;
