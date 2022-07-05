@@ -26,19 +26,8 @@
       devShells.price-feeder = haskellNixFlake.devShell;
 
       packages = haskellNixFlake.packages;
-      checks = {
-        price-feeder-integration-test = inputs'.nixpkgs.legacyPackages.callPackage ./test.nix {
-          sslCertificate = "${self.inputs.nixpkgs}/nixos/tests/common/acme/server/acme.test.cert.pem";
-          sslCertificateKey = "${self.inputs.nixpkgs}/nixos/tests/common/acme/server/acme.test.key.pem";
-          priceFeederExe = self'.packages."ada-price-feeder:exe:ada-price-feeder";
-          binanceMockServerExe = self'.packages."binance-mock-servant-server:exe:binance-mock-servant-server";
-          coinbaseMockServerExe = self'.packages."coinbase-mock-servant-server:exe:coinbase-mock-servant-server";
-          huobiMockServerExe = self'.packages."huobi-mock-servant-server:exe:huobi-mock-servant-server";
-          krakenMockServerExe = self'.packages."kraken-mock-servant-server:exe:kraken-mock-servant-server";
-          kucoinMockServerExe = self'.packages."kucoin-mock-servant-server:exe:kucoin-mock-servant-server";
-        };
-        
-      };
+
+      apps = haskellNixFlake.apps;
     };
 
   flake = {};

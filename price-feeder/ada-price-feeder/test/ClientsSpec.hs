@@ -12,15 +12,10 @@ import Test.Syd.Servant
 
 import Clients
 import Network.Binance.API (tickerAPIProxy)
-import Network.Binance.Server.Mock (mockTickerPriceHandler)
 import Network.Coinbase.API (pricesAPIProxy)
-import Network.Coinbase.Server.Mock (mockSpotPriceHandler)
 import Network.Huobi.API (marketDataAPIProxy)
-import Network.Huobi.Server.Mock (mockGetTick)
 import Network.Kraken.API qualified as Kraken (marketDataAPIProxy)
-import Network.Kraken.Server.Mock (marketDataServer)
 import Network.Kucoin.API (fiatPriceAPIProxy)
-import Network.Kucoin.Server.Mock (mockFiatPriceHandler)
 
 import PriceData (Price (..), binancePriceData, coinbasePriceData, huobiPriceData, krakenPriceData, kucoinPriceData)
 

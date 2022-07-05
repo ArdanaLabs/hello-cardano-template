@@ -1,16 +1,10 @@
 packages:
     ada-price-feeder
     binance-servant-api
-    binance-mock-servant-server
     coinbase-servant-api
-    coinbase-mock-servant-server
     huobi-servant-api
-    huobi-mock-servant-server
     kraken-servant-api
-    kraken-mock-servant-server
     kucoin-servant-api
-    kucoin-mock-servant-server
-    mock-servant-server-utils
           
 -- Always build tests and benchmarks.
 tests: true
