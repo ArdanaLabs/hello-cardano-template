@@ -1,10 +1,20 @@
-module Main where
+module Main
+  ( main
+  ) where
 
-import Prelude
-import Effect.Console (log)
-import Effect(Effect)
-import Api (enoughForFees)
+import Contract.Prelude
+import UnitTest (helloUnitTest)
+import Contract.Monad
+  ( launchAff_
+  , runContract_
+  , configWithLogLevel
+  )
+import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
+import Serialization.Address (NetworkId(TestnetId))
+import Data.Log.Level (LogLevel(Trace))
 
 main :: Effect Unit
-main = do
-  log $ show enoughForFees
+main = launchAff_ $ do
+  wallet <- mkKeyWalletFromFiles "wallet.skey" $ Just "staking.skey"
+  cfg <- configWithLogLevel TestnetId wallet Trace
+  runContract_ cfg helloUnitTest
