@@ -2,7 +2,7 @@ module Main (main) where
 
 import Test.Tasty
 
-import HelloWorld.ContractSpec (testTree)
+import HelloWorld.ContractSpec qualified (testTree)
 
 main :: IO ()
 main = do
