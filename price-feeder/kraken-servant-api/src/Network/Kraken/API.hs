@@ -8,6 +8,7 @@
 module Network.Kraken.API (MarketDataAPI, KrakenResponse (..), AssetTickerInfoResponse (..), AssetTickerInfo (..), OHLCResponse (..), marketDataAPIProxy, findLast) where
 
 import Data.Aeson
+import Data.Aeson.KeyMap (delete, union)
 import Data.Aeson.Types
 import Data.Map qualified as M
 import Data.Monoid
@@ -16,8 +17,6 @@ import Data.Text qualified as T
 import Data.Time.Clock.POSIX (POSIXTime)
 import GHC.Generics
 import Servant.API
-
-import Data.HashMap.Lazy qualified as HML
 
 findLast :: Foldable t => (a -> Bool) -> t a -> Maybe a
 findLast p =
@@ -103,11 +102,11 @@ data OHLCResponse = OHLCResponse
 instance FromJSON OHLCResponse where
   parseJSON = withObject "OHCLResponse" $ \objectMap -> do
     _last <- objectMap .: "last"
-    let objectWithoutLast = Object $ HML.delete "last" objectMap
+    let objectWithoutLast = Object $ delete "last" objectMap
     maybe (parseFail "No pairs found") (return . (OHLCResponse _last)) $ parseMaybe parseJSON objectWithoutLast
 
 instance ToJSON OHLCResponse where
   toJSON (OHLCResponse lastResult pairsResult) = object ["last" .= toJSON lastResult] `unionObjects` toJSON pairsResult
     where
-      unionObjects (Object x) (Object y) = Object $ x `HML.union` y
+      unionObjects (Object x) (Object y) = Object $ x `union` y
       unionObjects _ _ = undefined

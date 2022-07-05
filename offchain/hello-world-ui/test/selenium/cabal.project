@@ -1,0 +1,12 @@
+
+packages: .
+
+source-repository-package
+  type: git
+  location: https://github.com/NorfairKing/sydtest
+  subdir:
+    sydtest
+    sydtest-typed-process
+    sydtest-webdriver
+    sydtest-wai
+  tag: a446095558bc9f67bc3b8ca2e9ce230150c049ff

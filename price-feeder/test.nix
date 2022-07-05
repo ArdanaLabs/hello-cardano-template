@@ -78,11 +78,6 @@ in nixosTest {
           inherit sslCertificateKey;
           locations."/0/".proxyPass = "http://127.0.0.1:${toString krakenPort}/";
         };
-        # virtualHosts."ipfs.damnft.io" = {
-        #   forceSSL = true;
-        #   enableACME = true;
-        #   locations."/".proxyPass = "http://localhost:${toString config.services.pinata-mock.port}";
-        # };
       };
     };
     client = { config, pkgs, ... }: {

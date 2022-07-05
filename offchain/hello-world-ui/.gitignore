@@ -1,0 +1,15 @@
+/bower_components/
+/node_modules/
+/.pulp-cache/
+/output/
+/dce-output/
+/dist/main.js
+/generated-docs/
+/.psc-package/
+/.psc*
+/.purs*
+/.psa*
+
+/tmp
+/logs
+*.log
