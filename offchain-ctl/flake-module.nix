@@ -97,13 +97,6 @@
 
       packages.hello-world-api = hello-world-api.package;
 
-      packages.hello-world-api-tests = pkgs.runCommandNoCC "api-tests" {}
-        ''
-        mkdir $out; cd $out
-        cp -r ${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/* .
-        ${hello-world-api.ps.command {srcs = [ ./hello-world-api/src ];}}/bin/purs-nix test
-        '';
-
       packages.hello-world-browser =
         pkgs.runCommand "build-hello-world-browser" { }
         # see buildPursProjcet: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
@@ -129,6 +122,14 @@
           export NODE_PATH=${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules
           echo 'require("${js}").main()' | ${pkgs.nodejs}/bin/node
           '';
+
+      checks.hello-world-api-tests = pkgs.runCommandNoCC "api-tests" {}
+        ''
+        mkdir $out; cd $out
+        cp -r ${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/* .
+        ${hello-world-api.ps.command {srcs = [ ./hello-world-api/src ];}}/bin/purs-nix test
+        '';
+
 
       apps = {
         ctl-runtime = ctl-pkgs.launchCtlRuntime config;
