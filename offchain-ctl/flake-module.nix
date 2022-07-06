@@ -100,19 +100,13 @@
 
       packages.hello-world-api-tests = pkgs.runCommandNoCC "api-tests" {}
         ''
+        mkdir $out
+        cd $out
         cp -r ${./hello-world-api/src} .
-        cp -r ${npmlock2nix.node_modules { src = ./.; }}/* .
+        cp -r ${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/* .
         export NODE_PATH="node_modules"
         export PATH="bin:$PATH"
-        ls
-        ls ${ ./hello-world-api/src }
-        ${hello-world-api.ps.command {srcs = [ ./hello-world-api/src ] ;}}/bin/purs-nix compile
-        ls output
-        #ls output/Test.Main
-        mkdir $out
-        cp -r output $out
-        cd $out
-        ${hello-world-api.ps.command {srcs = [./hello-world-api/src ./hello-world-api/test ]; }}/bin/purs-nix test
+        ${hello-world-api.ps.command {srcs = [ ./hello-world-api/src ]; }}/bin/purs-nix test
         '';
 
       packages.hello-world-browser =
