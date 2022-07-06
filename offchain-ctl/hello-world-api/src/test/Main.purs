@@ -14,4 +14,3 @@ import Test.Spec.Reporter.Console (consoleReporter)
 main :: Effect Unit
 main = launchAff_ $ runSpec [ consoleReporter ] do
   Encoding.spec
-  it "should fail" $ 0 `shouldEqual` 1
