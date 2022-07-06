@@ -41,7 +41,6 @@
               ordered-collections
               spec
             ];
-        test-dependencies = self.dependencies;
         ps =
           purs-nix.purs
             { inherit (hello-world-api) dependencies;

@@ -6,8 +6,6 @@ import Prelude
 import Effect (Effect)
 import Test.Encoding as Encoding
 import Effect.Aff (launchAff_)
-import Test.Spec(it)
-import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Runner (runSpec)
 import Test.Spec.Reporter.Console (consoleReporter)
 
