@@ -16,6 +16,6 @@ command = "cabal-fmt"
 options = ["--inplace"]
 includes = ["*.cabal"]
 
-#[formatter.nix]
-#command = "nixpkgs-fmt"
-#includes = ["*.nix"]
+[formatter.nix]
+command = "nixpkgs-fmt"
+includes = ["*.nix"]
