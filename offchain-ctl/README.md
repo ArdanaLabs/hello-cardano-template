@@ -31,3 +31,8 @@ nix develop .#hello-world-api
 cd offchain-ctl/hello-world-api
 purs-nix test Main
 ```
+
+To run the browser integration tests
+```
+nix build -L .#hello-world-browser-test:test:integration
+```

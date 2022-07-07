@@ -61,7 +61,8 @@
           purs-nix.purs
             { dependencies =
                 with all-ps-pkgs;
-                [ cardano-transaction-lib
+                [ halogen
+                  cardano-transaction-lib
                   hello-world-api.package
                 ];
               srcs = [ ./hello-world-browser/src ];
