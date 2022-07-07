@@ -123,10 +123,11 @@
           echo 'require("${js}").main()' | ${pkgs.nodejs}/bin/node
           '';
 
-      checks.hello-world-api-tests = pkgs.runCommandNoCC "api-tests" {}
+      checks.hello-world-api-tests = pkgs.runCommand
+        "api-tests"
+        {NODE_PATH = "${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules";}
         ''
-        mkdir $out; cd $out
-        cp -r ${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/* .
+        mkdir $out;cd $out
         ${hello-world-api.ps.command {srcs = [ ./hello-world-api/src ];}}/bin/purs-nix test
         '';
 
