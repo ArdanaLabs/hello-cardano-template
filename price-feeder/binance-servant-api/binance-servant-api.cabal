@@ -19,7 +19,6 @@ maintainer:         marijan.petricevic94@gmail.com
 -- A copyright notice.
 -- copyright:
 -- category:
-extra-source-files: CHANGELOG.md
 
 library
   exposed-modules:  Network.Binance.API
