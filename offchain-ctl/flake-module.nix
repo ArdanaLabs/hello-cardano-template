@@ -131,7 +131,6 @@
         ${hello-world-api.ps.command {srcs = [ ./hello-world-api/src ];}}/bin/purs-nix test
         '';
 
-
       apps = {
         ctl-runtime = ctl-pkgs.launchCtlRuntime config;
 
