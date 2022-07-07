@@ -1,5 +1,5 @@
 cabal-version:      2.4
-name:               ada-price-feeder
+name:               ada-price-fetcher
 version:            0.1.0.0
 
 -- A short (one-line) description of the package.
@@ -54,7 +54,7 @@ library
   ghc-options:      -Wall -Werror
   default-language: Haskell2010
 
-executable ada-price-feeder
+executable ada-price-fetcher
   main-is:          Main.hs
 
   -- Modules included in this executable, other than Main.
@@ -63,7 +63,7 @@ executable ada-price-feeder
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
   build-depends:
-    , ada-price-feeder
+    , ada-price-fetcher
     , base
     , connection
     , optparse-applicative
@@ -72,7 +72,7 @@ executable ada-price-feeder
   ghc-options:      -Wall -Werror
   default-language: Haskell2010
 
-executable ada-price-feeder-test
+executable ada-price-fetcher-test
   ghc-options:      -Wall -Werror
   default-language: Haskell2010
   type:             exitcode-stdio-1.0

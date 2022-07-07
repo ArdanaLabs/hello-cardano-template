@@ -6,16 +6,16 @@ import PriceFetcher (getMedianPriceFromSources)
 
 main :: IO ()
 main = do
-  n <- execParser priceFeederOptions
+  n <- execParser priceFetcherOptions
   print =<< getMedianPriceFromSources n
 
-priceFeederOptions :: ParserInfo Int
-priceFeederOptions =
+priceFetcherOptions :: ParserInfo Int
+priceFetcherOptions =
   info
     (minNumberOfPrices <**> helper)
     ( fullDesc
         <> progDesc "Fetches the current Ada price from Binance, Coinbase, Huobi, Kraken and Kukoin and computes the median"
-        <> header "ada-price-feeder"
+        <> header "ada-price-fetcher"
     )
 
 minNumberOfPrices :: Parser Int

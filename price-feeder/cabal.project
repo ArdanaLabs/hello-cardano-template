@@ -1,5 +1,5 @@
 packages:
-    ada-price-feeder
+    ada-price-fetcher
     binance-servant-api
     coinbase-servant-api
     huobi-servant-api
