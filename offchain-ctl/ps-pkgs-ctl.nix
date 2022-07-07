@@ -280,4 +280,46 @@
                     ];
                 };
             };
+
+
+        # not actually ctl related
+        # maybe this should be a seperate file?
+        node-readline-aff =
+          { src.git =
+              { repo = "https://github.com/ChrisPenner/purescript-node-readline-aff";
+                rev = "47968009d811432f7201321945bc01296b8ebc74";
+              };
+              info =
+              { version = "0.3.0";
+
+                dependencies =
+                  [ exceptions
+                    console
+                    either
+                    node-streams
+                    aff
+                    prelude
+                    options
+                    psci-support
+                    node-readline
+                  ];
+              };
+          };
+
+          node-readline =
+            { src.git =
+                { repo = "https://github.com/purescript-node/purescript-node-readline.git";
+                  rev = "0d61e645aa33142ddd46f63048fe16605f9b8b2a";
+                };
+
+              info =
+                { version = "4.0.0";
+
+                  dependencies =
+                    [ effect foreign node-process node-streams options prelude
+                    ];
+                };
+            };
+
+
     }

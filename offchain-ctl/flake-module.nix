@@ -75,6 +75,8 @@
               with all-ps-pkgs;
                 [ prelude
                   hello-world-api.package
+                  stringutils
+                  node-readline-aff
                 ];
               srcs = [ ./hello-world-cli/src ];
             };

@@ -1,5 +1,6 @@
 module Main
   ( main
+  , runUnitTest
   ) where
 
 import Contract.Prelude
@@ -10,11 +11,19 @@ import Contract.Monad
   , configWithLogLevel
   )
 import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
-import Serialization.Address (NetworkId(TestnetId))
 import Data.Log.Level (LogLevel(Trace))
+import Effect.Class (liftEffect)
+import Serialization.Address (NetworkId(TestnetId))
+import Parse(getCmd)
 
 main :: Effect Unit
 main = launchAff_ $ do
+  cmd <- getCmd
+  log $ show cmd
+
+runUnitTest :: Effect Unit
+runUnitTest = launchAff_ $ do
   wallet <- mkKeyWalletFromFiles "wallet.skey" $ Just "staking.skey"
   cfg <- configWithLogLevel TestnetId wallet Trace
-  runContract_ cfg helloUnitTest
+  runContract_ cfg $ do
+    helloUnitTest
