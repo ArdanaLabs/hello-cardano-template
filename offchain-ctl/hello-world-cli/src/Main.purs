@@ -17,9 +17,13 @@ import Serialization.Address (NetworkId(TestnetId))
 import Parse(getCmd)
 
 main :: Effect Unit
-main = launchAff_ $ do
-  cmd <- getCmd
-  log $ show cmd
+main = launchAff_ $ loop
+  where
+    -- TODO this has a bug where your keystrokes start to count twice
+    loop = do
+      cmd <- getCmd
+      log $ show cmd
+      loop
 
 runUnitTest :: Effect Unit
 runUnitTest = launchAff_ $ do

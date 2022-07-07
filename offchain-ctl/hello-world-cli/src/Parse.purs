@@ -28,7 +28,7 @@ instance showCliCmd :: Show CliCmd where
 getCmd :: Aff CliCmd
 getCmd = do
   interface <- liftEffect $ createConsoleInterface noCompletion
-  (cmdStr :: String) <- question "$" interface
+  (cmdStr :: String) <- question "hello-world-cli$" interface
   case parseCommand cmdStr of
     Just cmd -> pure cmd
     Nothing -> do
