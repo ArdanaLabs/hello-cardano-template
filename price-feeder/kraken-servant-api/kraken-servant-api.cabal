@@ -28,7 +28,7 @@ library
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
-  ghc-options:      -Wall -Werror
+  ghc-options:      -Wall -Werror -Wunused-packages
   build-depends:
     , aeson
     , base
@@ -42,7 +42,7 @@ library
   default-language: Haskell2010
 
 test-suite kraken-servant-api-test
-  ghc-options:      -Wall -Werror
+  ghc-options:      -Wall -Werror -Wunused-packages
   default-language: Haskell2010
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
