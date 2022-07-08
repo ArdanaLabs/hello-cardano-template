@@ -34,7 +34,6 @@
             } + "/bin/dusd-feedback-loop";
         };
       };
-  };
-  flake = {
-  };
+    };
+  flake = { };
 }

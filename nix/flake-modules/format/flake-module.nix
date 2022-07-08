@@ -28,9 +28,10 @@
       };
       checks = {
         # Checks that the project tree is *already* formatted.
-        format = pkgs.runCommandLocal "format-check" {
-          buildInputs = dependencies;
-        } ''
+        format = pkgs.runCommandLocal "format-check"
+          {
+            buildInputs = dependencies;
+          } ''
           set -e
           # treefmt uses a cache at $HOME. But we can use --no-cache
           # to make treefmt not use a cache. We still seem to need
@@ -44,6 +45,5 @@
         '';
       };
     };
-  flake = {
-  };
+  flake = { };
 }
