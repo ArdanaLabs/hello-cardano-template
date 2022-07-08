@@ -1,4 +1,4 @@
-module Parse(CliCmd(..),getCmd) where
+module Parse(CliCmd(..)) where
 
 import Prelude
 import Data.Maybe(Maybe(Nothing,Just))
@@ -8,7 +8,6 @@ import Data.Generic.Rep (class Generic)
 import Data.Int(fromString)
 import Effect.Aff(Aff)
 import Effect.Class (liftEffect)
-import Node.ReadLine.Aff(question,createConsoleInterface,noCompletion)
 
 data CliCmd
   = Start
@@ -25,6 +24,7 @@ derive instance genericCliCmd :: Generic CliCmd _
 instance showCliCmd :: Show CliCmd where
   show = genericShow
 
+{-
 getCmd :: Aff CliCmd
 getCmd = do
   interface <- liftEffect $ createConsoleInterface noCompletion
@@ -34,6 +34,7 @@ getCmd = do
     Nothing -> do
       -- TODO warn user that the parse failed
       getCmd
+-}
 
 parseCommand :: String -> Maybe CliCmd
 parseCommand cmd = case words cmd of

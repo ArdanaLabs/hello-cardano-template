@@ -12,18 +12,10 @@ import Contract.Monad
   )
 import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
 import Data.Log.Level (LogLevel(Trace))
-import Effect.Class (liftEffect)
 import Serialization.Address (NetworkId(TestnetId))
-import Parse(getCmd)
 
 main :: Effect Unit
-main = launchAff_ $ loop
-  where
-    -- TODO this has a bug where your keystrokes start to count twice
-    loop = do
-      cmd <- getCmd
-      log $ show cmd
-      loop
+main = launchAff_ $ pure unit
 
 runUnitTest :: Effect Unit
 runUnitTest = launchAff_ $ do
