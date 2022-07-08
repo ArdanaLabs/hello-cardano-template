@@ -12,7 +12,7 @@
       inherit (dusd-lib) commonPlutusModules commonPlutusShell fixHaskellDotNix;
 
       haskellNixFlake =
-        fixHaskellDotNix (project.flake {})
+        fixHaskellDotNix (project.flake { })
           [ ./dUSD-offchain.cabal ./hello-world/hello-world.cabal ];
 
       onchain-scripts = self'.packages.onchain-scripts;
@@ -23,7 +23,7 @@
           inherit name text;
         }) + "/bin/${name}";
       project = pkgs.haskell-nix.cabalProject' {
-        src = pkgs.runCommand "fakesrc-offchain" {} ''
+        src = pkgs.runCommand "fakesrc-offchain" { } ''
           cp -rT ${./.} $out
           chmod u+w $out/cabal.project
           cat $out/cabal-haskell.nix.project >> $out/cabal.project
@@ -99,11 +99,9 @@
     in
     {
       devShells.offchain = haskellNixFlake.devShell;
-      packages = haskellNixFlake.packages // {
-      };
+      packages = haskellNixFlake.packages // { };
     };
-  flake = {
-  };
+  flake = { };
 }
 
 
