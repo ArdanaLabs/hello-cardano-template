@@ -76,6 +76,7 @@
                 [ prelude
                   hello-world-api.package
                   stringutils
+                  optparse
                 ];
               srcs = [ ./hello-world-cli/src ];
             };
