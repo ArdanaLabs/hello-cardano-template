@@ -24,7 +24,7 @@ pricesAPIProxy = Proxy
 
 type PricesAPI = "prices" :> SpotPriceAPI
 
--- https://developers.coinbase.com/api/v2#get-spot-price
+-- https://docs.cloud.coinbase.com/sign-in-with-coinbase/docs/api-prices#get-spot-price
 type SpotPriceAPI = Capture "currency_pair" T.Text :> "spot" :> QueryParam "date" T.Text :> Get '[JSON] (CoinbaseResponse SpotPrice)
 
 data CoinbaseError = CoinbaseError

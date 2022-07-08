@@ -20,7 +20,7 @@ dropLeadingUnderscoreOptions = defaultOptions {fieldLabelModifier = drop 1}
 marketDataAPIProxy :: Proxy MarketDataAPI
 marketDataAPIProxy = Proxy
 
--- https://binance-docs.github.io/apidocs/spot/en/#symbol-price-ticker
+-- https://huobiapi.github.io/docs/spot/v1/en/#get-latest-aggregated-ticker
 type MarketDataAPI = "market" :> "detail" :> "merged" :> QueryParam "symbol" T.Text :> Get '[JSON] TickResponse
 
 data TickResponse = TickResponse
