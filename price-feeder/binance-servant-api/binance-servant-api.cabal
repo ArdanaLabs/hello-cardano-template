@@ -1,6 +1,6 @@
-cabal-version:      2.4
-name:               binance-servant-api
-version:            0.1.0.0
+cabal-version: 2.4
+name:          binance-servant-api
+version:       0.1.0.0
 
 -- A short (one-line) description of the package.
 -- synopsis:
@@ -13,8 +13,8 @@ version:            0.1.0.0
 
 -- The license under which the package is released.
 -- license:
-author:             Marijan Petričević
-maintainer:         marijan.petricevic94@gmail.com
+author:        Marijan Petričević
+maintainer:    marijan.petricevic94@gmail.com
 
 -- A copyright notice.
 -- copyright:
