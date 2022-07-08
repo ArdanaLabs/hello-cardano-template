@@ -309,7 +309,7 @@
           node-readline =
             { src.git =
                 { repo = "https://github.com/purescript-node/purescript-node-readline.git";
-                  rev = "0d61e645aa33142ddd46f63048fe16605f9b8b2a";
+                  rev = "72bed94d47d768dfe38ec8935126316b1e3f307c";
                 };
 
               info =
