@@ -9,9 +9,11 @@
 
       ps =
         purs-nix.purs
-          { dependencies =
+          {
+            dependencies =
               with purs-nix.ps-pkgs;
-              [ aff
+              [
+                aff
                 affjax
                 affjax-web
                 argonaut-codecs
@@ -34,11 +36,11 @@
     in
     {
       packages = {
-        "${projectName}" = pkgs.runCommand projectName {}
+        "${projectName}" = pkgs.runCommand projectName { }
           ''
-          mkdir $out; cd $out
-          ln -s ${ps.modules.Main.bundle { esbuild.minify = false; }} main.js
-          ln -s ${./dist/index.html} index.html
+            mkdir $out; cd $out
+            ln -s ${ps.modules.Main.bundle { esbuild.minify = false; }} main.js
+            ln -s ${./dist/index.html} index.html
           '';
       };
       apps = {
@@ -71,7 +73,7 @@
         name = projectName;
         buildInputs = (with pkgs; [
           nodejs-16_x
-          (ps.command {})
+          (ps.command { })
           purs-nix.esbuild
           purs-nix.purescript
           purs-nix.purescript-language-server
@@ -79,6 +81,5 @@
         ]);
       };
     };
-  flake = {
-  };
+  flake = { };
 }
