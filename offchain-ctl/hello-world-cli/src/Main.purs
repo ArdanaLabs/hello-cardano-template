@@ -3,15 +3,12 @@ module Main
   ) where
 
 import Contract.Prelude
-import UnitTest (helloUnitTest)
-import Contract.Monad
-  ( launchAff_
-  , runContract_
-  , configWithLogLevel
-  )
-import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
-import Data.Log.Level (LogLevel(Trace))
-import Serialization.Address (NetworkId(TestnetId))
+import Contract.Monad ( launchAff_)
+import Options.Applicative(execParser)
+import Parser(parser)
 
 main :: Effect Unit
-main = launchAff_ $ pure unit
+main = do
+  parsedCfg <- execParser parser
+  log $ show parsedCfg
+  launchAff_ $ pure unit

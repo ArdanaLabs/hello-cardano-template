@@ -1,7 +1,16 @@
-module Types(Command(..),SubCommand(..),CliState(..),Conf(..)) where
+module Types
+  (Command(..)
+  ,SubCommand(..)
+  ,CliState(..)
+  ,Conf(..)
+  ,ParsedOptions(..)
+  ) where
 
+import Prelude
 import Contract.Transaction ( TransactionInput)
 import Serialization.Address(NetworkId)
+import Data.Generic.Rep (class Generic)
+import Data.Show.Generic(genericShow)
 
 data Command = Command
   { subCommand :: SubCommand
@@ -30,3 +39,31 @@ data Conf
   , stakingPath :: String
   , network :: NetworkId
   }
+
+-- same as Command but the config hasn't been read from a file
+data ParsedOptions = ParsedOptions
+  { subCommand :: SubCommand
+  , statePath :: String
+  , configFile :: String
+  }
+
+-- I don't get why the instances have names
+-- or why there is so much boiler plate
+-- maybe these names should be better
+-- I don't know if it matters
+
+derive instance a1 :: Generic Command _
+instance a2 :: Show Command where
+  show = genericShow
+
+derive instance b1 :: Generic ParsedOptions _
+instance b2 :: Show ParsedOptions where
+  show = genericShow
+
+derive instance c1 :: Generic SubCommand _
+instance c2 :: Show SubCommand where
+  show = genericShow
+
+derive instance d1 :: Generic Conf _
+instance d2 :: Show Conf where
+  show = genericShow

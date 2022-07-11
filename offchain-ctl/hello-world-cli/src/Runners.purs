@@ -1,13 +1,14 @@
 module Runners
   (runCmd
   -- todo these are exported to supress warnings
+  ,readConfig
   ,makeConfig
   ) where
 
 import Contract.Prelude
 
 import Effect(Effect)
-import Types(Command(..),Conf(..))
+import Types(Command(..),Conf(..),ParsedOptions(..))
 import Contract.Monad
   ( DefaultContractConfig
   , launchAff_
@@ -16,7 +17,14 @@ import Contract.Monad
   )
 import Data.Log.Level(LogLevel(Trace))
 import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
+import Node.FS.Sync (readTextFile)
+import Node.Encoding (Encoding(UTF8))
 
+readConfig :: ParsedOptions -> Effect Command
+readConfig (ParsedOptions o)= do
+  _txt <- readTextFile UTF8 o.configFile
+  -- TODO parse config return real command
+  pure undefined
 
 runCmd :: Command -> Effect Unit
 runCmd (Command {conf}) = launchAff_ do
