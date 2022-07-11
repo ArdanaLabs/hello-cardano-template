@@ -96,8 +96,8 @@
       # use more recent slot to avoid long sync time
       config = {
         datumCache.blockFetcher.firstBlock = {
-          slot = 62153233;
-          id = "631c621b7372445acf82110282ba72f4b52dafa09c53864ddc2e58be24955b2a";
+          slot = 63181679;
+          id = "3697256b3c1b594a39c2cc50daf15df0c0d9b15e2e07d7c44987c26b5aa099a2";
         };
       };
     in

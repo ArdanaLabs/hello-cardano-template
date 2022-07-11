@@ -102,8 +102,8 @@ with ps-pkgs;
     {
       src.git =
         {
-          repo = "https://github.com/Plutonomicon/cardano-transaction-lib.git";
-          ref = "develop";
+          repo = "https://github.com/yusdacra/cardano-transaction-lib.git";
+          ref = "brian/tryYusdacraFix";
           rev = ctl-rev;
         };
 

@@ -1179,16 +1179,16 @@
         "servant-purescript": "servant-purescript"
       },
       "locked": {
-        "lastModified": 1657506409,
-        "narHash": "sha256-9eJJ1iVC/1OlkMHmFqeAbkLZrKscaNEEcc+BonpDdR4=",
-        "owner": "yusdacra",
+        "lastModified": 1657550719,
+        "narHash": "sha256-/THKU4kBSSwo9iT6Rp1yM1v4+96Amn9tVtEzmmchGWE=",
+        "owner": "Plutonomicon",
         "repo": "cardano-transaction-lib",
-        "rev": "682de85e82d3633c936349662625459e8534aa93",
+        "rev": "c52ab0218d13d53f49ee069bb453822d0f5d9169",
         "type": "github"
       },
       "original": {
-        "owner": "yusdacra",
-        "ref": "fix-nix-overlay",
+        "owner": "Plutonomicon",
+        "ref": "brian/tryYusdacraFix",
         "repo": "cardano-transaction-lib",
         "type": "github"
       }
