@@ -1,4 +1,4 @@
-module Main
+module Test.Main
   ( main
   ) where
 
@@ -14,4 +14,8 @@ import Data.Log.Level (LogLevel(Trace))
 import Serialization.Address (NetworkId(TestnetId))
 
 main :: Effect Unit
-main = launchAff_ $ pure unit
+main = launchAff_ $ do
+  wallet <- mkKeyWalletFromFiles "wallet.skey" $ Just "staking.skey"
+  cfg <- configWithLogLevel TestnetId wallet Trace
+  runContract_ cfg $ do
+    helloUnitTest
