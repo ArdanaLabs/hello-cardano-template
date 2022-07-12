@@ -87,6 +87,7 @@
                   stringutils
                   optparse
                   simple-json
+                  node-fs-aff
                 ];
               srcs = [ ./hello-world-cli/src ];
             };

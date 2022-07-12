@@ -16,6 +16,7 @@ import Types
   ,SubCommand(..)
   ,ParsedOptions(..)
   ,ParsedConf
+  ,ParsedState
   )
 import Contract.Monad
   ( DefaultContractConfig
@@ -28,7 +29,11 @@ import Contract.Monad
 import Data.Log.Level(LogLevel(Trace))
 import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
 import Contract.Scripts (validatorHash)
-import Node.FS.Sync (readTextFile)
+import Node.FS.Aff
+  (readTextFile
+  ,writeTextFile
+  ,unlink
+  )
 import Node.Encoding (Encoding(UTF8))
 import Simple.JSON(readJSON)
 import Serialization.Address (NetworkId(TestnetId,MainnetId))
@@ -39,7 +44,7 @@ import Api
   ,redeemFromScript
   )
 
-readConfig :: ParsedOptions -> Effect Command
+readConfig :: ParsedOptions -> Aff Command
 readConfig (ParsedOptions o)= do
   confTxt <- readTextFile UTF8 o.configFile
   conf' <- throwE $ readJSON confTxt
@@ -60,12 +65,12 @@ lookupNetwork p =
     Right net -> Right $ Conf p{network=net}
     Left name -> Left $ "unknown network: " <> name
 
-throwE :: forall a b. Show a => Either a b -> Effect b
-throwE (Left a) = throw $ show a
+throwE :: forall a b. Show a => Either a b -> Aff b
+throwE (Left a) = liftEffect $ throw $ show a
 throwE (Right b) = pure b
 
-runCmd :: Command -> Effect Unit
-runCmd (Command {conf,statePath,subCommand}) = launchAff_ do
+runCmd :: Command -> Aff Unit
+runCmd (Command {conf,statePath,subCommand}) = do
   cfg <- makeConfig conf
   case subCommand of
     Lock {contractParam:param,initialDatum:init} -> do
@@ -92,13 +97,19 @@ runCmd (Command {conf,statePath,subCommand}) = launchAff_ do
       clearState statePath
 
 writeState :: String -> CliState -> Aff Unit
-writeState _ _ = pure unit
+writeState statePath (State o) = do
+  writeTextFile UTF8 statePath $ show o
 
 readState :: String -> Aff CliState
-readState = undefined
+readState statePath = do
+  stateTxt <- readTextFile UTF8 statePath
+  readTxid <$> (throwE $ readJSON stateTxt)
+
+readTxid :: ParsedState -> CliState
+readTxid = undefined
 
 clearState :: String -> Aff Unit
-clearState = undefined
+clearState = unlink
 
 makeConfig :: Conf -> Aff DefaultContractConfig
 makeConfig

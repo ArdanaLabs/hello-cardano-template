@@ -5,6 +5,7 @@ module Types
   ,Conf(..)
   ,ParsedOptions(..)
   ,ParsedConf
+  ,ParsedState
   ) where
 
 import Prelude
@@ -26,6 +27,12 @@ data SubCommand
     }
   | Increment
   | End
+
+type ParsedState =
+  { param :: Int
+  , lastOutput :: String
+  , datum :: Int
+  }
 
 data CliState
   = State
