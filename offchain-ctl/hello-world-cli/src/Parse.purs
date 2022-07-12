@@ -58,8 +58,8 @@ lock  = command "lock" (info (Lock <$> lockOptions) (progDesc "lock some ada wit
         <*> option int (long "init" <> short 'i' <> metavar "INITIAL_DATUM")
 
 increment ::  Mod CommandFields SubCommand
-increment = command "lock" (info (pure Increment) (progDesc "lock some ada with the contract"))
+increment = command "inc" (info (pure Increment) (progDesc "lock some ada with the contract"))
 
 end ::  Mod CommandFields SubCommand
-end = command "lock" (info (pure End) (progDesc "lock some ada with the contract"))
+end = command "end" (info (pure End) (progDesc "lock some ada with the contract"))
 
