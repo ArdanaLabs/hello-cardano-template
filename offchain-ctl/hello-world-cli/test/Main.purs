@@ -19,3 +19,4 @@ main = launchAff_ $ do
   cfg <- configWithLogLevel TestnetId wallet Trace
   runContract_ cfg $ do
     helloUnitTest
+    -- TODO this seems to work but also hangs
