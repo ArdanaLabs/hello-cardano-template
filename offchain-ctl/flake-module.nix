@@ -86,6 +86,7 @@
                   hello-world-api.package
                   stringutils
                   optparse
+                  simple-json
                 ];
               srcs = [ ./hello-world-cli/src ];
             };

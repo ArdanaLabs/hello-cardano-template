@@ -4,6 +4,7 @@ module Types
   ,CliState(..)
   ,Conf(..)
   ,ParsedOptions(..)
+  ,ParsedConf
   ) where
 
 import Prelude
@@ -38,6 +39,13 @@ data Conf
   { walletPath :: String
   , stakingPath :: String
   , network :: NetworkId
+  }
+
+type ParsedConf
+  =
+  { walletPath :: String
+  , stakingPath :: String
+  , network :: String
   }
 
 -- same as Command but the config hasn't been read from a file

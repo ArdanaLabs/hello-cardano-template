@@ -25,6 +25,8 @@ import Options.Applicative
 import Types(ParsedOptions(..),SubCommand(..))
 
 
+-- TODO better help text in general
+
 parser :: ParserInfo ParsedOptions
 parser = info rawParser
   (fullDesc
@@ -33,11 +35,10 @@ parser = info rawParser
     )
 
 rawParser :: Parser ParsedOptions
-rawParser = ParsedOptions <$> ({configFile:_,statePath:_,subCommand:_}
+rawParser = (ParsedOptions <$> _) $ {configFile:_,statePath:_,subCommand:_}
   <$> config
   <*> stateFile
   <*> subCommand
-    )
 
 config :: Parser String
 config = strOption (long "config" <> short 'c' <> metavar "CONFIG_FILE")
