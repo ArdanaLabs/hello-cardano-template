@@ -4,7 +4,7 @@
     let
       pkgs = inputs'.nixpkgs.legacyPackages;
       projectName = "hello-world";
-      purs-nix = self.inputs.purs-nix-0-14 { inherit system; };
+      purs-nix = self.inputs.purs-nix { inherit system; };
       npmlock2nix = pkgs.callPackages self.inputs.npmlock2nix { };
 
       ctl-rev = self.inputs.cardano-transaction-lib.rev;
