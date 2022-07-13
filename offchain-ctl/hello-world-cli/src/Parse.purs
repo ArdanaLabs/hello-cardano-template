@@ -18,14 +18,13 @@ import Options.Applicative
   ,progDesc
   ,short
   ,strOption
-  ,subparser
+  ,hsubparser
   ,fullDesc
   ,header
+  ,commandGroup
+  ,helper
   )
 import Types(ParsedOptions(..),SubCommand(..))
-
-
--- TODO better help text in general
 
 parser :: ParserInfo ParsedOptions
 parser = info rawParser
@@ -35,7 +34,9 @@ parser = info rawParser
     )
 
 rawParser :: Parser ParsedOptions
-rawParser = (ParsedOptions <$> _) $ {configFile:_,statePath:_,subCommand:_}
+rawParser = (helper <*>  _)
+  $ map ParsedOptions
+  $ {configFile:_,statePath:_,subCommand:_}
   <$> config
   <*> stateFile
   <*> subCommand
@@ -47,7 +48,9 @@ stateFile :: Parser String
 stateFile = strOption (long "state-file" <> short 's' <> metavar "STATE_FILE")
 
 subCommand :: Parser SubCommand
-subCommand = subparser $ lock <> increment <> end
+subCommand = hsubparser $
+  (commandGroup "Cli commands:") <>
+  lock <> increment <> end
 
 lock :: Mod CommandFields SubCommand
 lock  = command "lock" (info (Lock <$> lockOptions) (progDesc "lock some ada with the contract"))
@@ -59,8 +62,8 @@ lock  = command "lock" (info (Lock <$> lockOptions) (progDesc "lock some ada wit
         <*> option int (long "init" <> short 'i' <> metavar "INITIAL_DATUM")
 
 increment ::  Mod CommandFields SubCommand
-increment = command "inc" (info (pure Increment) (progDesc "lock some ada with the contract"))
+increment = command "inc" (info (pure Increment) (progDesc "increment the datum"))
 
 end ::  Mod CommandFields SubCommand
-end = command "end" (info (pure End) (progDesc "lock some ada with the contract"))
+end = command "end" (info (pure End) (progDesc "redeem the value"))
 
