@@ -36,3 +36,10 @@ To run the browser integration tests
 ```
 nix build -L .#hello-world-browser-test:test:integration
 ```
+
+# Test-wallet
+
+The test wallet addres is:
+`addr_test1qqevfdhu80jsmjhzkf8lkkv5rza9h6k0u6hmwwr0r7vyjt9j3f374a2all0hc6vzxa6v7sax7du2lk5fu5q592d5fhqswar4hc`.
+Here's a link to faucet: https://testnets.cardano.org/en/testnets/cardano/tools/faucet/ .
+If the wallet runs out tests can fail.
