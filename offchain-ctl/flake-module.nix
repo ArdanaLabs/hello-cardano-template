@@ -88,6 +88,7 @@
                   optparse
                   simple-json
                   node-fs-aff
+                  read
                 ];
               srcs = [ ./hello-world-cli/src ];
             };

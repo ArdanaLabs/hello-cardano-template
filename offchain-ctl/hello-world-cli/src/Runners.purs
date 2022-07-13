@@ -7,7 +7,6 @@ module Runners
 
 import Contract.Prelude
 
-import Effect(Effect)
 import Effect.Exception(throw)
 import Types
   (Command(..)
@@ -16,11 +15,10 @@ import Types
   ,SubCommand(..)
   ,ParsedOptions(..)
   ,ParsedConf
-  ,ParsedState
+  ,FileState
   )
 import Contract.Monad
   ( DefaultContractConfig
-  , launchAff_
   , runContract
   , runContract_
   , configWithLogLevel
@@ -35,7 +33,7 @@ import Node.FS.Aff
   ,unlink
   )
 import Node.Encoding (Encoding(UTF8))
-import Simple.JSON(readJSON)
+import Simple.JSON(readJSON,writeJSON)
 import Serialization.Address (NetworkId(TestnetId,MainnetId))
 import Api
   (helloScript
@@ -43,6 +41,10 @@ import Api
   ,setDatumAtScript
   ,redeemFromScript
   )
+import Types.Transaction (TransactionInput(TransactionInput),TransactionHash(TransactionHash))
+import Data.UInt(toInt,fromInt)
+import Types.ByteArray (byteArrayToHex,hexToByteArrayUnsafe)
+import Node.Process(exit)
 
 readConfig :: ParsedOptions -> Aff Command
 readConfig (ParsedOptions o)= do
@@ -95,18 +97,36 @@ runCmd (Command {conf,statePath,subCommand}) = do
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
         redeemFromScript vhash validator state.lastOutput
       clearState statePath
+  log "finished"
+  liftEffect $ exit 1
+  {- imo this exit shouldn't be needed
+   - but the odc doesn't exit on its own
+   - we will ask ctl about it
+   -}
 
 writeState :: String -> CliState -> Aff Unit
-writeState statePath (State o) = do
-  writeTextFile UTF8 statePath $ show o
+writeState statePath s = do
+  writeTextFile UTF8 statePath $ writeJSON $ logState s
 
 readState :: String -> Aff CliState
 readState statePath = do
   stateTxt <- readTextFile UTF8 statePath
-  readTxid <$> (throwE $ readJSON stateTxt)
+  praseState <$> (throwE $ readJSON stateTxt)
 
-readTxid :: ParsedState -> CliState
-readTxid = undefined
+praseState :: FileState -> CliState
+praseState {param,datum,lastOutput} = State {param,datum,lastOutput:parseTxId lastOutput}
+
+logState :: CliState -> FileState
+logState (State {param,datum,lastOutput}) = {param,datum,lastOutput:logTxId lastOutput}
+
+logTxId :: TransactionInput -> {index :: Int , transactionId :: String}
+logTxId (TransactionInput {index,transactionId:TransactionHash bytes})
+  = {index:toInt index,transactionId:byteArrayToHex bytes}
+
+parseTxId :: {index :: Int,transactionId :: String} -> TransactionInput
+parseTxId {index,transactionId}
+  = TransactionInput
+    {index:fromInt index,transactionId:TransactionHash $ hexToByteArrayUnsafe transactionId}
 
 clearState :: String -> Aff Unit
 clearState = unlink

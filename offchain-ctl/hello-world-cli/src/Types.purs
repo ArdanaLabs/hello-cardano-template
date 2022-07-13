@@ -5,7 +5,7 @@ module Types
   ,Conf(..)
   ,ParsedOptions(..)
   ,ParsedConf
-  ,ParsedState
+  ,FileState
   ) where
 
 import Prelude
@@ -28,10 +28,13 @@ data SubCommand
   | Increment
   | End
 
-type ParsedState =
+type FileState =
   { param :: Int
-  , lastOutput :: String
   , datum :: Int
+  , lastOutput ::
+    { index :: Int
+    , transactionId :: String
+    }
   }
 
 data CliState
