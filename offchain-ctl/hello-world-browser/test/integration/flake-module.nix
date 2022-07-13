@@ -35,7 +35,10 @@
           };
         }];
         name = "hello-world-browser-test";
-        src = ./.;
+        src = pkgs.runCommand "hello-world-browser-test" { } ''
+          cp -rT ${./.} $out
+          cp ${./Nami.crx} Nami.crx
+        '';
         compiler-nix-name = "ghc8107";
         sha256map = import ./sha256map;
         # This is used by `nix develop .` to open a shell for use with

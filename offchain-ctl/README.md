@@ -36,3 +36,4 @@ To run the browser integration tests
 ```
 nix build -L .#hello-world-browser-test:test:integration
 ```
+the test output will be there in `result` folder, it could be viewed in color with `less -r result/test-stdout`

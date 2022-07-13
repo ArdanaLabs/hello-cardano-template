@@ -11,13 +11,19 @@ import GHC.Generics (Generic)
 import Network.HTTP.Client as HTTP
 import Network.URI
 import Network.Wai.Application.Static (defaultFileServerSettings, staticApp)
+import Path
+import Path.IO
 import System.Environment (getEnv)
+import System.Exit
 import Test.QuickCheck (mapSize, withMaxSuccess)
 import Test.Syd
 import Test.Syd.Validity
 import Test.Syd.Wai
 import Test.Syd.Webdriver
 import Test.WebDriver
+import Test.WebDriver.Capabilities
+import Test.WebDriver.Chrome.Extension (loadExtension)
+import UnliftIO.Path.Directory
 
 data Command = Init | Incr
   deriving (Show, Eq, Generic)
@@ -45,7 +51,21 @@ setupWebdriverTestEnv :: URI -> SetupFunc (WebdriverTestEnv ())
 setupWebdriverTestEnv uri = do
   ssh <- seleniumServerSetupFunc
   manager <- liftIO $ HTTP.newManager HTTP.defaultManagerSettings
-  webdriverTestEnvSetupFunc ssh manager uri ()
+  webdriverTestEnv <- webdriverTestEnvSetupFunc ssh manager uri ()
+  let wdConfig = webdriverTestEnvConfig webdriverTestEnv
+  let wdBrowser = browser $ wdCapabilities wdConfig
+  case wdBrowser of
+    Chrome {} -> do
+      currentDir <- liftIO getCurrentDirectory
+      path <- resolveFile currentDir "Nami.crx"
+      mbNamiWallet <- liftIO $ forgivingAbsence $ loadExtension (fromAbsFile path)
+      case mbNamiWallet of
+        Nothing -> liftIO $ die "Nami wallet not loaded"
+        Just namiWallet -> do
+          let newBrowser = wdBrowser {chromeExtensions = [namiWallet]}
+          let newWdConfig = useBrowser newBrowser wdConfig
+          pure $ webdriverTestEnv {webdriverTestEnvConfig = newWdConfig}
+    _ -> liftIO $ die "not chrome"
 
 main :: IO ()
 main = sydTest $

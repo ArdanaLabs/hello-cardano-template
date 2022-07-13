@@ -10,11 +10,14 @@ common hello-world-browser-test
     , genvalidity-sydtest
     , http-client
     , network-uri
+    , path
+    , path-io
     , QuickCheck
     , sydtest
     , sydtest-wai
     , sydtest-webdriver
     , text
+    , unliftio-path
     , wai-app-static
     , webdriver
 
