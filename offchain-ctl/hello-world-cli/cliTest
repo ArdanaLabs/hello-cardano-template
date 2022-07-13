@@ -1,5 +1,5 @@
 #!/bin/sh
-purs-nix run -c testWalletCfg -s aaa lock -i 0 -p 1
-purs-nix run -c testWalletCfg -s aaa inc
-purs-nix run -c testWalletCfg -s aaa end
+purs-nix run -c testWalletCfg -s script.clistate lock -i 0 -p 1
+purs-nix run -c testWalletCfg -s script.clistate inc
+purs-nix run -c testWalletCfg -s script.clistate end
 
