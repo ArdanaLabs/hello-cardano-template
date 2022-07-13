@@ -154,51 +154,14 @@ When the redeem transaction is complete, the following should be true:
 
 \subsection{Command-line App}
 
-\begin{itemize}
-  \item increment from 0 to 1
-  \item increment from 1 to 2
-\end{itemize}
+Tests should be modeled after acceptance criteria
+
+(Specific tests DBD)
 
 \subsection{Browser App}
 
-\begin{itemize}
-  \item Apropos-tx testing for the on-chain code
-  \begin{itemize}
-    \item the plutarch increment function satisfies the property (increment(n) = n + 1)
-    \item the compiled validator validates if and only if the output datum returns to the script address, is of type integer, and is equal to increment(input datum)
-  \end{itemize}
-  \item Unit test for on-chain code:
-  \begin{itemize}
-    \item increment from 0 to 1
-    \item increment from 1 to 2
-  \end{itemize}
-  \item E2E frontend testing: Set up NixOS VM, launch browser, connect to Nami
-  \begin{itemize}
-    \item Selenium
-      \begin{itemize}
-        \item Check that when the server is initialized, the website shows the
-          number $0$
-        \item Check that incrementing works: $0$ to $1$, $1$ to $2$
-        \item Open two browsers, connected to two separate wallets, and check
-          that incrementing on one updates the number on the other after
-          refresh: $0$ to $1$, $1$ to $2$
-        \item Launch the two browsers in separate VMs.
-          \todo{See issue \url{https://github.com/ArdanaLabs/dUSD/issues/87}.}
-      \end{itemize}
-    \item Lighthouse score above $90$, to check website performance
-  \end{itemize}
-  \item This project will be deployed to mainnet to run manual tests
-\end{itemize}
+Tests should be modeled after acceptance criteria
 
-\section{Features to be added}
-
-\begin{itemize}
-  \item Frontend integration with Yoroi, Daedelus. Any other browser wallets?
-  \item Replace datum to something not-builtin, to test encoding/decoding match
-    between on-chain and off-chain
-  \item Maeserat: Volume tests, benchmarks for time and memory consumption
-  \item Set up an NFT-system to persistently identify and track the Hello World
-    UTXOs
-\end{itemize}
+(Specific tests DBD)
 
 \end{document}
