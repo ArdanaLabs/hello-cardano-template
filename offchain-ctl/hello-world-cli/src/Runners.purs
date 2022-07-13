@@ -1,8 +1,5 @@
 module Runners
-  (runCmd
-  -- todo these are exported to supress warnings
-  ,readConfig
-  ,makeConfig
+  (runCLI
   ) where
 
 import Contract.Prelude
@@ -45,6 +42,9 @@ import Types.Transaction (TransactionInput(TransactionInput),TransactionHash(Tra
 import Data.UInt(toInt,fromInt)
 import Types.ByteArray (byteArrayToHex,hexToByteArrayUnsafe)
 import Node.Process(exit)
+
+runCLI :: ParsedOptions -> Aff Unit
+runCLI opts = readConfig opts >>= runCmd
 
 readConfig :: ParsedOptions -> Aff Command
 readConfig (ParsedOptions o)= do

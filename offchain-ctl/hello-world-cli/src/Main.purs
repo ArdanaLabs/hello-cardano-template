@@ -6,10 +6,9 @@ import Contract.Prelude
 import Effect.Aff(launchAff_)
 import Options.Applicative(execParser)
 import Parser(parser)
-import Runners(readConfig,runCmd)
+import Runners(runCLI)
 
 main :: Effect Unit
 main = do
   parsedCmd <- execParser parser
-  launchAff_ $
-    readConfig parsedCmd >>= runCmd
+  launchAff_ $ runCLI parsedCmd
