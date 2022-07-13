@@ -9,15 +9,12 @@
 # This also holds true for GitHub teams.
 
 # This file
-/.github/CODEOWNERS @CSVdB @delicious-lemon
+/.github/CODEOWNERS @CSVdB
 
-*.nix @ArdanaLabs/devops
-
-# onchain nix code
-onchain/*.nix @srid @delicious-lemon
+*.nix @yusdacra
 
 # Monorepo projects
 offchain/hello-world-ui/* @toastal
-offchain/* @CSVdB
-docs/* @CSVdB
-onchain/* @delicious-lemon
+offchain/* @CSVdB @epiro-ps
+docs/* @CSVdB @epiro-ps
+onchain/* @Geometer1729
