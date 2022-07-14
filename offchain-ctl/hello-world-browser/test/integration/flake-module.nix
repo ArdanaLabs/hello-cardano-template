@@ -1,7 +1,7 @@
 # test for dUSD Hello World Browser
 { self, ... }:
 {
-  perSystem = system: { config, self', inputs', ... }:
+  perSystem = { config, self', inputs', system, ... }:
     let
       # dusd-lib contains helper functions for dealing with haskell.nix. From it,
       # we inherit fixHaskellDotNix
@@ -35,7 +35,10 @@
           };
         }];
         name = "hello-world-browser-test";
-        src = ./.;
+        src = pkgs.runCommand "hello-world-browser-test" { } ''
+          cp -rT ${./.} $out
+          cp ${./Nami.crx} Nami.crx
+        '';
         compiler-nix-name = "ghc8107";
         sha256map = import ./sha256map;
         # This is used by `nix develop .` to open a shell for use with

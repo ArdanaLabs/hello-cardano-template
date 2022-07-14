@@ -5,9 +5,7 @@
     };
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     cardano-node.url = "github:input-output-hk/cardano-node?rev=73f9a746362695dc2cb63ba757fbcabb81733d23";
-    cardano-transaction-lib = {
-      url = "github:Plutonomicon/cardano-transaction-lib?rev=fdcfcb3578eb354bd6ab3ca288d0440be7668d23";
-    };
+    cardano-transaction-lib.url = "github:Plutonomicon/cardano-transaction-lib?rev=fdcfcb3578eb354bd6ab3ca288d0440be7668d23";
     #   used for libsodium-vrf
     plutus.url = "github:input-output-hk/plutus";
     plutus-apps.url = "github:input-output-hk/plutus-apps?rev=e4062bca213f233cdf9822833b07aa69dff6d22a";
@@ -17,8 +15,8 @@
       ref = "overengineered";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    flake-modules-core = {
-      url = "github:hercules-ci/flake-modules-core";
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     dream2nix = {
@@ -32,8 +30,8 @@
     purs-nix.url = "github:ursi/purs-nix/ps-0.14";
   };
 
-  outputs = { self, flake-modules-core, ... }:
-    (flake-modules-core.lib.evalFlakeModule
+  outputs = { self, flake-parts, ... }:
+    (flake-parts.lib.evalFlakeModule
       { inherit self; }
       {
         systems = [ "x86_64-linux" ];

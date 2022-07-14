@@ -78,7 +78,7 @@ skeleton template will be created in your current directory.
 ```
 { self, ... }:
 {
-  perSystem = system: { config, self', inputs', ... }: {
+  perSystem = { config, self', inputs', system, ... }: {
   };
   flake = {
   };
@@ -86,7 +86,7 @@ skeleton template will be created in your current directory.
 ```
 
 This is part of the
-[flake-modules-core](https://github.com/hercules-ci/flake-modules-core)
+[flake-parts](https://github.com/hercules-ci/flake-parts)
 framework. Each of these `flake-module.nix` files can be thought of as a
 subflake. They can also be thought of as a `default.nix` similar to what you see
 in Nixpkgs next to every package. The real name for this, though, is a "flake

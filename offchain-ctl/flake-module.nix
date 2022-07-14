@@ -1,6 +1,6 @@
 { self, ... }:
 {
-  perSystem = system: { config, self', inputs', ... }:
+  perSystem = { config, self', inputs', system, ... }:
     let
       pkgs = inputs'.nixpkgs.legacyPackages;
       projectName = "hello-world";
@@ -126,6 +126,7 @@
             export NODE_PATH="node_modules"
             export PATH="bin:$PATH"
             mkdir dist
+            cp ${./hello-world-browser/main.css} dist/main.css
             webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
           '';
 
