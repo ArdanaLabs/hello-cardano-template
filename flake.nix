@@ -6,7 +6,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     cardano-node.url = "github:input-output-hk/cardano-node?rev=73f9a746362695dc2cb63ba757fbcabb81733d23";
     cardano-transaction-lib = {
-      url = "github:Plutonomicon/cardano-transaction-lib?rev=302aebc537dc0ed6144189bd0bc5b4a468be8fa8";
+      url = "github:Plutonomicon/cardano-transaction-lib?rev=fdcfcb3578eb354bd6ab3ca288d0440be7668d23";
     };
     #   used for libsodium-vrf
     plutus.url = "github:input-output-hk/plutus";
