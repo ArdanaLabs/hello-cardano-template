@@ -1,6 +1,6 @@
 { self, ... }:
 {
-  perSystem = system: { config, self', inputs', ... }:
+  perSystem = { config, self', inputs', system, ... }:
     let
       # TODO: We should be able to get rid of this once
       # https://github.com/numtide/treefmt/issues/165 is implemented upstream.

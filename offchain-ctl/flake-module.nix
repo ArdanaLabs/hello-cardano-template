@@ -1,6 +1,6 @@
 { self, ... }:
 {
-  perSystem = system: { config, self', inputs', ... }:
+  perSystem = { config, self', inputs', system, ... }:
     let
       pkgs = inputs'.nixpkgs.legacyPackages;
       projectName = "hello-world";

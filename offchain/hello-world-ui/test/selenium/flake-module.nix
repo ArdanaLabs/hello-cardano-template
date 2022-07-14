@@ -1,6 +1,6 @@
 { self, ... }:
 {
-  perSystem = system: { config, self', inputs', ... }:
+  perSystem = { config, self', inputs', system, ... }:
     let
       description = "Selenium test for dUSD Hello World UI";
       # dusd-lib contains helper functions for dealing with haskell.nix. From it,

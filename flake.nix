@@ -15,8 +15,8 @@
       ref = "overengineered";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    flake-modules-core = {
-      url = "github:hercules-ci/flake-modules-core";
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     dream2nix = {
@@ -31,8 +31,8 @@
     purs-nix-0-14.url = "github:ursi/purs-nix/ps-0.14";
   };
 
-  outputs = { self, flake-modules-core, ... }:
-    (flake-modules-core.lib.evalFlakeModule
+  outputs = { self, flake-parts, ... }:
+    (flake-parts.lib.evalFlakeModule
       { inherit self; }
       {
         systems = [ "x86_64-linux" ];
