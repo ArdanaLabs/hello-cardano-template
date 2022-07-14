@@ -97,6 +97,12 @@ runCmd (Command {conf,statePath,subCommand}) = do
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
         redeemFromScript vhash validator state.lastOutput
       clearState statePath
+    Querry -> do
+      (State state) <- readState statePath
+      log $ "Contract param:" <> show state.param <> "\n"
+      log $ "Current datum:" <> show state.datum <> "\n"
+      log $ "Last txid:" <> show state.lastOutput <> "\n"
+      -- TODO make this a link to cardano scan
   log "finished"
   liftEffect $ exit 1
   {- imo this exit shouldn't be needed

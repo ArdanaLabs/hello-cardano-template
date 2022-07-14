@@ -50,7 +50,7 @@ stateFile = strOption (long "state-file" <> short 's' <> metavar "STATE_FILE")
 subCommand :: Parser SubCommand
 subCommand = hsubparser $
   (commandGroup "Cli commands:") <>
-  lock <> increment <> end
+  lock <> increment <> end <> querry
 
 lock :: Mod CommandFields SubCommand
 lock  = command "lock" (info (Lock <$> lockOptions) (progDesc "lock some ada with the contract"))
@@ -66,4 +66,7 @@ increment = command "inc" (info (pure Increment) (progDesc "increment the datum"
 
 end ::  Mod CommandFields SubCommand
 end = command "end" (info (pure End) (progDesc "redeem the value"))
+
+querry ::  Mod CommandFields SubCommand
+querry = command "querry" (info (pure Querry) (progDesc "querry info about a state file"))
 
