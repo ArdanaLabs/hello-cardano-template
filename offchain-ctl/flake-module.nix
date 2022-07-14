@@ -121,6 +121,7 @@
             export NODE_PATH="node_modules"
             export PATH="bin:$PATH"
             mkdir dist
+            cp ${./hello-world-browser/main.css} dist/main.css
             webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
           '';
 
