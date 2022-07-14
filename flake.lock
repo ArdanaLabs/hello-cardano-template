@@ -1536,23 +1536,23 @@
         "type": "github"
       }
     },
-    "flake-modules-core": {
+    "flake-parts": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1652600765,
-        "narHash": "sha256-p69zfGnl53euO1kI9yki2FN+Q5a8pv0b/pVnmDMMlt8=",
+        "lastModified": 1657102481,
+        "narHash": "sha256-62Fuw8JgPub38OdgNefkIKOodM9nC3M0AG6lS+7smf4=",
         "owner": "hercules-ci",
-        "repo": "flake-modules-core",
-        "rev": "022938a1deb3f9496b7f19f463ed2c3348ca4d3b",
+        "repo": "flake-parts",
+        "rev": "608ed3502263d6f4f886d75c48fc2b444a4ab8d8",
         "type": "github"
       },
       "original": {
         "owner": "hercules-ci",
-        "repo": "flake-modules-core",
+        "repo": "flake-parts",
         "type": "github"
       }
     },
@@ -4911,7 +4911,7 @@
         "cardano-node": "cardano-node",
         "cardano-transaction-lib": "cardano-transaction-lib",
         "dream2nix": "dream2nix",
-        "flake-modules-core": "flake-modules-core",
+        "flake-parts": "flake-parts",
         "haskell-nix": "haskell-nix_3",
         "lint-utils": "lint-utils",
         "nixpkgs": "nixpkgs_8",
