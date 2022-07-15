@@ -39,6 +39,18 @@ nix build -L .#hello-world-browser-test:test:integration
 
 the test output will be there in `result` folder, it could be viewed in color with `less -r result/test-stdout`
 
+# cli
+
+The cli can be used either by running
+```
+nix run .#hello-world-cli -- <args>
+```
+or from the dev shell with
+```
+nix develop .#hello-world-cli
+# and then
+purs-nix run <args>
+```
 
 # Test-wallet
 
