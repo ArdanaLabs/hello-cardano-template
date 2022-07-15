@@ -31,7 +31,6 @@ data SubCommand
 
 type FileState =
   { param :: Int
-  , datum :: Int
   , lastOutput ::
     { index :: Int
     , transactionId :: String
@@ -42,7 +41,6 @@ data CliState
   = State
   { param :: Int
   , lastOutput :: TransactionInput
-  , datum :: Int
   }
 
 data Conf

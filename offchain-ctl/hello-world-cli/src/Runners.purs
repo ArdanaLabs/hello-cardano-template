@@ -16,14 +16,22 @@ import Types
   )
 import Contract.Monad
   ( DefaultContractConfig
+  , Contract
   , runContract
   , runContract_
   , configWithLogLevel
   , liftContractAffM
+  , liftContractM
   )
-import Data.Log.Level(LogLevel(Trace))
+import Contract.Address(getWalletAddress)
+import Contract.Utxos(getUtxo,utxosAt,getWalletBalance)
+import Contract.PlutusData(getDatumByHash)
 import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
 import Contract.Scripts (validatorHash)
+import Data.Log.Level(LogLevel(Trace))
+import Types.Datum(Datum(Datum))
+import Types.RawBytes(rawBytesToHex)
+import Types.PlutusData(PlutusData(Integer))
 import Node.FS.Aff
   (readTextFile
   ,writeTextFile
@@ -32,16 +40,32 @@ import Node.FS.Aff
 import Node.Encoding (Encoding(UTF8))
 import Simple.JSON(readJSON,writeJSON)
 import Serialization.Address (NetworkId(TestnetId,MainnetId))
+import Serialization.Hash(ed25519KeyHashToBytes)
 import Api
   (helloScript
   ,sendDatumToScript
   ,setDatumAtScript
   ,redeemFromScript
   )
-import Types.Transaction (TransactionInput(TransactionInput),TransactionHash(TransactionHash))
+
+import Types.PubKeyHash (PubKeyHash(PubKeyHash))
+import Types.Transaction
+  (TransactionInput(TransactionInput)
+  ,TransactionHash(TransactionHash)
+  )
+import Plutus.Types.Transaction(TransactionOutput(TransactionOutput))
+import Plutus.Types.Address(Address(Address))
+import Plutus.Types.Credential
+  (Credential(PubKeyCredential)
+  ,StakingCredential(StakingHash)
+  )
+import Plutus.Types.Value(flattenValue)
 import Data.UInt(toInt,fromInt)
+import Data.BigInt as Big
 import Types.ByteArray (byteArrayToHex,hexToByteArrayUnsafe)
 import Node.Process(exit)
+import Data.Tuple.Nested((/\))
+import Data.Foldable(traverse_)
 
 runCLI :: ParsedOptions -> Aff Unit
 runCLI opts = readConfig opts >>= runCmd
@@ -80,16 +104,17 @@ runCmd (Command {conf,statePath,subCommand}) = do
         validator <- helloScript param
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
         txid <- sendDatumToScript init vhash
-        pure $ State {param,datum:init,lastOutput:txid}
+        pure $ State {param,lastOutput:txid}
       writeState statePath state
     Increment -> do
       (State state) <- readState statePath
-      let newDatum = state.datum+state.param
       newState <- runContract cfg $ do
         validator <- helloScript state.param
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+        oldDatum <- getDatumFromState $ State state
+        let newDatum = oldDatum + state.param
         txid <- setDatumAtScript newDatum vhash validator state.lastOutput
-        pure $ State $ state{lastOutput=txid,datum=newDatum}
+        pure $ State $ state{lastOutput=txid}
       writeState statePath newState
     End -> do
       (State state) <- readState statePath
@@ -100,18 +125,42 @@ runCmd (Command {conf,statePath,subCommand}) = do
       clearState statePath
     Querry -> do
       (State state) <- readState statePath
+      (datum /\ bal) <- runContract cfg $ do
+        datum <- getDatumFromState $ State state
+        bal <- getWalletBalance
+          >>= liftContractM "wallet balance failed"
+        pure $ datum /\ bal
       log $ "Contract param:" <> show state.param
-      log $ "Current datum:" <> show state.datum
+      log $ "Current datum:" <> show datum
       let TransactionInput out = state.lastOutput
       let TransactionHash hash = out.transactionId
       log $ "Last txid: https://testnet.cardanoscan.io/transaction/" <> byteArrayToHex hash
       log $ "txid index: " <> show out.index
+      log "wallet bal: "
+      for_ (flattenValue bal)
+        $ \(cs/\tn/\amt) -> do
+          log $ "  " <> (Big.toString amt) <> " of: "
+          log $ "    " <> show cs <> "," <> show tn
   log "finished"
   liftEffect $ exit 1
   {- imo this exit shouldn't be needed
    - but the odc doesn't exit on its own
    - we will ask ctl about it
    -}
+
+getDatumFromState :: CliState -> Contract () Int
+getDatumFromState (State state) = do
+  TransactionOutput utxo <- getUtxo state.lastOutput
+    >>= liftContractM "couldn't find utxo"
+  oldDatum <-
+    utxo.dataHash
+    # liftContractM "utxo had not datum hash"
+    >>= getDatumByHash
+    >>= liftContractM "Couldn't find datum by hash"
+  asBigInt <- liftContractM "datum wasn't an integer" $ case oldDatum of
+    Datum (Integer n) -> Just n
+    _ -> Nothing
+  liftContractM "Datum was actually big. We should support this but currently don't" $ Big.toInt asBigInt
 
 writeState :: String -> CliState -> Aff Unit
 writeState statePath s = do
@@ -120,13 +169,14 @@ writeState statePath s = do
 readState :: String -> Aff CliState
 readState statePath = do
   stateTxt <- readTextFile UTF8 statePath
-  praseState <$> (throwE $ readJSON stateTxt)
-
-praseState :: FileState -> CliState
-praseState {param,datum,lastOutput} = State {param,datum,lastOutput:parseTxId lastOutput}
+  (partial :: FileState) <- throwE $ readJSON stateTxt
+  pure $ State $
+    {param:partial.param
+    ,lastOutput:parseTxId partial.lastOutput
+    }
 
 logState :: CliState -> FileState
-logState (State {param,datum,lastOutput}) = {param,datum,lastOutput:logTxId lastOutput}
+logState (State {param,lastOutput}) = {param,lastOutput:logTxId lastOutput}
 
 logTxId :: TransactionInput -> {index :: Int , transactionId :: String}
 logTxId (TransactionInput {index,transactionId:TransactionHash bytes})
