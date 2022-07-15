@@ -24,6 +24,7 @@ import Node.FS.Aff
   ,writeTextFile
   ,unlink
   )
+import Node.FS.Sync(exists)
 import Node.Encoding (Encoding(UTF8))
 import Node.Process(exit)
 import Effect.Exception(throw)
@@ -93,6 +94,10 @@ runCmd (Command {conf,statePath,subCommand}) = do
   cfg <- makeConfig conf
   case subCommand of
     Lock {contractParam:param,initialDatum:init} -> do
+      stateExists <- liftEffect $ exists statePath
+      when stateExists $ do
+        log "Can't use lock when state file already exists"
+        liftEffect $ exit (0-1) -- afaict you have to do this?
       state <- runContract cfg $ do
         validator <- helloScript param
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
@@ -161,6 +166,10 @@ writeState statePath s = do
 
 readState :: String -> Aff CliState
 readState statePath = do
+  stateExists <- liftEffect $ exists statePath
+  unless stateExists $ do
+    log "State file could not be read because it doesn't exist"
+    liftEffect $ exit (0-1) -- afaict you have to do this?
   stateTxt <- readTextFile UTF8 statePath
   (partial :: FileState) <- throwE $ readJSON stateTxt
   pure $ State $
