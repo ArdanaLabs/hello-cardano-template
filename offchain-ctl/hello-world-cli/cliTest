@@ -1,9 +1,28 @@
 #!/bin/sh
-purs-nix run -c testWalletCfg -s script.clistate lock -i 0 -p 1
-purs-nix run -c testWalletCfg -s script.clistate querry
-purs-nix run -c testWalletCfg -s script.clistate inc
-purs-nix run -c testWalletCfg -s script.clistate querry
-purs-nix run -c testWalletCfg -s script.clistate inc
-purs-nix run -c testWalletCfg -s script.clistate querry
-purs-nix run -c testWalletCfg -s script.clistate end
-purs-nix run -c testWalletCfg -s script.clistate querry
+
+declare_wait_run(){
+	echo press enter to run $@
+	read $_
+	$@
+}
+
+echo lock initial value
+declare_wait_run purs-nix run -c testWalletCfg -s script.clistate lock -i 0 -p 1
+
+echo querry state
+declare_wait_run purs-nix run -c testWalletCfg -s script.clistate querry
+
+echo increment datum
+declare_wait_run purs-nix run -c testWalletCfg -s script.clistate inc
+
+echo querry state
+declare_wait_run purs-nix run -c testWalletCfg -s script.clistate querry
+
+echo increment datum again
+declare_wait_run purs-nix run -c testWalletCfg -s script.clistate inc
+
+echo querry state
+declare_wait_run purs-nix run -c testWalletCfg -s script.clistate querry
+
+echo redeem value
+declare_wait_run purs-nix run -c testWalletCfg -s script.clistate end
