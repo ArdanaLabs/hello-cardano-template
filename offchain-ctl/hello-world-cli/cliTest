@@ -1,5 +1,9 @@
 #!/bin/sh
 purs-nix run -c testWalletCfg -s script.clistate lock -i 0 -p 1
+purs-nix run -c testWalletCfg -s script.clistate querry
 purs-nix run -c testWalletCfg -s script.clistate inc
+purs-nix run -c testWalletCfg -s script.clistate querry
+purs-nix run -c testWalletCfg -s script.clistate inc
+purs-nix run -c testWalletCfg -s script.clistate querry
 purs-nix run -c testWalletCfg -s script.clistate end
-
+purs-nix run -c testWalletCfg -s script.clistate querry

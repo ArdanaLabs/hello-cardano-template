@@ -84,11 +84,12 @@ runCmd (Command {conf,statePath,subCommand}) = do
       writeState statePath state
     Increment -> do
       (State state) <- readState statePath
+      let newDatum = state.datum+state.param
       newState <- runContract cfg $ do
         validator <- helloScript state.param
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-        txid <- setDatumAtScript (state.param+state.datum) vhash validator state.lastOutput
-        pure $ State $ state{lastOutput=txid}
+        txid <- setDatumAtScript newDatum vhash validator state.lastOutput
+        pure $ State $ state{lastOutput=txid,datum=newDatum}
       writeState statePath newState
     End -> do
       (State state) <- readState statePath
@@ -99,10 +100,12 @@ runCmd (Command {conf,statePath,subCommand}) = do
       clearState statePath
     Querry -> do
       (State state) <- readState statePath
-      log $ "Contract param:" <> show state.param <> "\n"
-      log $ "Current datum:" <> show state.datum <> "\n"
-      log $ "Last txid:" <> show state.lastOutput <> "\n"
-      -- TODO make this a link to cardano scan
+      log $ "Contract param:" <> show state.param
+      log $ "Current datum:" <> show state.datum
+      let TransactionInput out = state.lastOutput
+      let TransactionHash hash = out.transactionId
+      log $ "Last txid: https://testnet.cardanoscan.io/transaction/" <> byteArrayToHex hash
+      log $ "txid index: " <> show out.index
   log "finished"
   liftEffect $ exit 1
   {- imo this exit shouldn't be needed
