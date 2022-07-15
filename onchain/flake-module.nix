@@ -35,6 +35,21 @@
       };
     in
     {
+      apps = {
+        "onchain:test" = {
+          type = "app";
+          program = pkgs.writeShellApplication {
+            name = "run-onchain-test";
+            runtimeInputs = with pkgs; [ jq coreutils ];
+            text = ''
+              # run tests
+              PROJ_DIR="$(nix flake metadata --json | jq .locked.url -cr | cut --characters=8-)"
+              cd "$PROJ_DIR"/onchain
+              nix develop .#onchain -c cabal test
+            '';
+          };
+        };
+      };
       packages = haskellNixFlake.packages // {
         onchain-scripts = pkgs.stdenv.mkDerivation {
           name = "onchain-scripts";
