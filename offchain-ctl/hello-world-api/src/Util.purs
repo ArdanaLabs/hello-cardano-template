@@ -10,7 +10,6 @@ import Contract.Address (scriptHashAddress)
 import Contract.Monad
   ( Contract
   , liftedE
-  , liftedM
   , logInfo'
   )
 import Contract.ScriptLookups as Lookups

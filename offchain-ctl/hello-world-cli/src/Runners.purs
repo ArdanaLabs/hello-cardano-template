@@ -2,18 +2,8 @@ module Runners
   (runCLI
   ) where
 
+-- Contract
 import Contract.Prelude
-
-import Effect.Exception(throw)
-import Types
-  (Command(..)
-  ,Conf(..)
-  ,CliState(..)
-  ,SubCommand(..)
-  ,ParsedOptions(..)
-  ,ParsedConf
-  ,FileState
-  )
 import Contract.Monad
   ( DefaultContractConfig
   , Contract
@@ -23,49 +13,52 @@ import Contract.Monad
   , liftContractAffM
   , liftContractM
   )
-import Contract.Address(getWalletAddress)
-import Contract.Utxos(getUtxo,utxosAt,getWalletBalance)
+import Contract.Utxos(getUtxo,getWalletBalance)
 import Contract.PlutusData(getDatumByHash)
 import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
 import Contract.Scripts (validatorHash)
-import Data.Log.Level(LogLevel(Trace))
-import Types.Datum(Datum(Datum))
-import Types.RawBytes(rawBytesToHex)
-import Types.PlutusData(PlutusData(Integer))
+
+-- Node
 import Node.FS.Aff
   (readTextFile
   ,writeTextFile
   ,unlink
   )
 import Node.Encoding (Encoding(UTF8))
+import Node.Process(exit)
+import Effect.Exception(throw)
 import Simple.JSON(readJSON,writeJSON)
+
+-- Types
+import Data.UInt as U
+import Data.BigInt as Big
+import Data.Tuple.Nested((/\))
+import Data.Log.Level(LogLevel(Trace))
+import Types.ByteArray (byteArrayToHex,hexToByteArrayUnsafe)
+import Types.Datum(Datum(Datum))
+import Types.PlutusData(PlutusData(Integer))
+import Types.Transaction (TransactionInput(TransactionInput), TransactionHash(TransactionHash))
+import Plutus.Types.Transaction(TransactionOutput(TransactionOutput))
+import Plutus.Types.Value(flattenValue)
 import Serialization.Address (NetworkId(TestnetId,MainnetId))
-import Serialization.Hash(ed25519KeyHashToBytes)
+
+-- Local
 import Api
   (helloScript
   ,sendDatumToScript
   ,setDatumAtScript
   ,redeemFromScript
   )
+import Types
+  (Command(..)
+  ,Conf(..)
+  ,CliState(..)
+  ,SubCommand(..)
+  ,ParsedOptions(..)
+  ,ParsedConf
+  ,FileState
+  )
 
-import Types.PubKeyHash (PubKeyHash(PubKeyHash))
-import Types.Transaction
-  (TransactionInput(TransactionInput)
-  ,TransactionHash(TransactionHash)
-  )
-import Plutus.Types.Transaction(TransactionOutput(TransactionOutput))
-import Plutus.Types.Address(Address(Address))
-import Plutus.Types.Credential
-  (Credential(PubKeyCredential)
-  ,StakingCredential(StakingHash)
-  )
-import Plutus.Types.Value(flattenValue)
-import Data.UInt(toInt,fromInt)
-import Data.BigInt as Big
-import Types.ByteArray (byteArrayToHex,hexToByteArrayUnsafe)
-import Node.Process(exit)
-import Data.Tuple.Nested((/\))
-import Data.Foldable(traverse_)
 
 runCLI :: ParsedOptions -> Aff Unit
 runCLI opts = readConfig opts >>= runCmd
@@ -180,12 +173,12 @@ logState (State {param,lastOutput}) = {param,lastOutput:logTxId lastOutput}
 
 logTxId :: TransactionInput -> {index :: Int , transactionId :: String}
 logTxId (TransactionInput {index,transactionId:TransactionHash bytes})
-  = {index:toInt index,transactionId:byteArrayToHex bytes}
+  = {index:U.toInt index,transactionId:byteArrayToHex bytes}
 
 parseTxId :: {index :: Int,transactionId :: String} -> TransactionInput
 parseTxId {index,transactionId}
   = TransactionInput
-    {index:fromInt index,transactionId:TransactionHash $ hexToByteArrayUnsafe transactionId}
+    {index:U.fromInt index,transactionId:TransactionHash $ hexToByteArrayUnsafe transactionId}
 
 clearState :: String -> Aff Unit
 clearState = unlink
