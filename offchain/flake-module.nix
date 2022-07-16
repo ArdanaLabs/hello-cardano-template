@@ -144,7 +144,7 @@
         { NODE_PATH = "${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules"; }
         ''
           mkdir $out && cd $out
-          ${hello-world-api.ps.command {srcs = [ ./hello-world-api/src ];}}/bin/purs-nix test
+          ${hello-world-api.ps.command {srcs = [ ./hello-world-api ];}}/bin/purs-nix test
         '';
 
       apps = {
@@ -172,6 +172,14 @@
               ];
               text = "http-server -c-1 ${self'.packages.hello-world-browser}";
             };
+        };
+
+        "offchain-ctl:hello-world-api:test" = {
+          type = "app";
+          program = pkgs.writeShellApplication {
+            name = "run-hello-world-api-tests";
+            text = ''nix build -L .#checks.\"${system}\".hello-world-api-tests'';
+          };
         };
       };
 
