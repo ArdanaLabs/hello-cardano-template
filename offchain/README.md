@@ -45,12 +45,41 @@ The cli can be used either by running
 ```
 nix run .#hello-world-cli -- <args>
 ```
-or from the dev shell with
+, from the dev shell with
 ```
 nix develop .#hello-world-cli
 # and then
 purs-nix run <args>
 ```
+or building it and using the result with
+```
+nix build .#hello-world-cli
+# and then
+./result/bin/hello-world-cli <args>
+```
+
+## wallet configs
+
+The wallet config is a json file who's path must be provided in the `CONFIG_FILE` argument of each cli command.
+It must provide the fields:
+- `walletPath` which needs to be the path to a skey file for the wallet
+- `stakingPath` which needs to be the path to a skey file for the staking credential
+- network which needs to be `Testnet` or `Mainnet` and must indicate which network the wallet belongs to and the test will use.
+
+Here's an example config:
+```
+{ "walletPath" : "wallet.skey"
+, "stakingPath" : "staking.skey"
+, "network" : "Testnet"
+}
+```
+
+## cli tests
+
+The `offchain/hello-world-cli/test-scripts` directory contains `cliDemo.sh` and `cliTest.sh`.
+`cliTest.sh` is a script which runs an end to end test of the cli.
+`cliDemo.sh` is an interactive script which demonstrates the various features help pages and error messages.
+The main goal of `cliDemo.sh` is to make it easier to review the cli pr, but hopefully it's also usefull as documentation.
 
 # Test-wallet
 

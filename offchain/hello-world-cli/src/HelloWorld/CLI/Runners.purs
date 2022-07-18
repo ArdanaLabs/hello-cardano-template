@@ -134,7 +134,7 @@ runCmd (Command {conf,statePath,subCommand}) = do
       (datum /\ bal) <- runContract cfg $ do
         datum <- getDatumFromState $ State state
         bal <- getWalletBalance
-          >>= liftContractM "wallet balance failed"
+          >>= liftContractM "Get wallet balance failed"
         pure $ datum /\ bal
       log $ "Contract param:" <> show state.param
       log $ "Current datum:" <> show datum
@@ -166,7 +166,9 @@ getDatumFromState (State state) = do
   asBigInt <- liftContractM "datum wasn't an integer" $ case oldDatum of
     Datum (Integer n) -> Just n
     _ -> Nothing
-  liftContractM "Datum was actually big. We should support this but currently don't" $ Big.toInt asBigInt
+  liftContractM
+    "Datum was actually big. We should support this but currently don't"
+    $ Big.toInt asBigInt
 
 writeState :: String -> CliState -> Aff Unit
 writeState statePath s = do
