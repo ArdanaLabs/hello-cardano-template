@@ -27,7 +27,7 @@ data SubCommand
     }
   | Increment
   | End
-  | Querry
+  | Query
 
 type FileState =
   { param :: Int

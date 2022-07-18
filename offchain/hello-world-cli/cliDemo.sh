@@ -67,14 +67,14 @@ echo example: lock initial value
 rm script.clistate # just to make sure it doesn't exist at this point
 declare_wait_run $cmd -c testWalletCfg -s script.clistate lock -i 0 -p 1
 
-echo example: querry state
-declare_wait_run $cmd -c testWalletCfg -s script.clistate querry
+echo example: query state
+declare_wait_run $cmd -c testWalletCfg -s script.clistate query
 
 echo example: increment datum
 declare_wait_run $cmd -c testWalletCfg -s script.clistate inc
 
-echo example: querry state
-declare_wait_run $cmd -c testWalletCfg -s script.clistate querry
+echo example: query state
+declare_wait_run $cmd -c testWalletCfg -s script.clistate query
 
 echo example: end
 declare_wait_run $cmd -c testWalletCfg -s script.clistate end

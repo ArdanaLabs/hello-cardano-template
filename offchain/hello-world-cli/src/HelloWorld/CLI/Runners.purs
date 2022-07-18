@@ -121,7 +121,7 @@ runCmd (Command {conf,statePath,subCommand}) = do
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
         redeemFromScript vhash validator state.lastOutput
       clearState statePath
-    Querry -> do
+    Query -> do
       (State state) <- readState statePath
       (datum /\ bal) <- runContract cfg $ do
         datum <- getDatumFromState $ State state
