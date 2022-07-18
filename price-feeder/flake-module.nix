@@ -26,13 +26,14 @@
       devShells.price-feeder = haskellNixFlake.devShell;
 
       packages = haskellNixFlake.packages // {
-        ada-price-fetcher-test = pkgs.runCommand "ada-price-fetcher-test" {
+        ada-price-fetcher-test = pkgs.runCommand "ada-price-fetcher-test"
+          {
             buildInputs = [ pkgs.makeWrapper ];
           }
           ''
-              mkdir -p $out/bin
-              makeWrapper ${self'.packages."ada-price-fetcher:exe:ada-price-fetcher-test"}/bin/ada-price-fetcher-test $out/bin/ada-price-fetcher-test \
-                --set PATH ${pkgs.lib.makeBinPath [ self'.packages."ada-price-fetcher:exe:ada-price-fetcher" ]}
+            mkdir -p $out/bin
+            makeWrapper ${self'.packages."ada-price-fetcher:exe:ada-price-fetcher-test"}/bin/ada-price-fetcher-test $out/bin/ada-price-fetcher-test \
+              --set PATH ${pkgs.lib.makeBinPath [ self'.packages."ada-price-fetcher:exe:ada-price-fetcher" ]}
           '';
       };
 
