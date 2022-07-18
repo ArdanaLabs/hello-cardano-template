@@ -33,6 +33,8 @@ import Aeson(decodeAeson,parseJsonStringToAeson,encodeAeson)
 -- Types
 import Data.UInt as U
 import Data.BigInt as Big
+import Data.String.CodeUnits(lastIndexOf,take)
+import Data.String.Pattern(Pattern(Pattern))
 import Data.Tuple.Nested((/\))
 import Data.Log.Level(LogLevel(Trace))
 import Types.ByteArray (byteArrayToHex,hexToByteArrayUnsafe)
@@ -67,12 +69,18 @@ runCLI opts = readConfig opts >>= runCmd
 readConfig :: ParsedOptions -> Aff Command
 readConfig (ParsedOptions o)= do
   confTxt <- readTextFile UTF8 o.configFile
+  let dir = case lastIndexOf (Pattern "/") o.configFile of
+              Just n -> take (n+1) o.configFile
+              Nothing -> ""
   conf' <- throwE =<< decodeAeson <$> throwE (parseJsonStringToAeson confTxt)
-  conf <- throwE $ lookupNetwork conf'
+  Conf conf <- throwE $ lookupNetwork conf'
   pure $ Command
     {subCommand: o.subCommand
     ,statePath: o.statePath
-    ,conf:conf
+    ,conf:Conf conf
+      {walletPath=dir<>conf.walletPath
+      ,stakingPath=dir<>conf.stakingPath
+      }
     }
 
 lookupNetwork :: ParsedConf -> Either String Conf
@@ -140,7 +148,7 @@ runCmd (Command {conf,statePath,subCommand}) = do
           log $ "  " <> (Big.toString amt) <> " of: "
           log $ "    " <> show cs <> "," <> show tn
   log "finished"
-  liftEffect $ exit 1
+  liftEffect $ exit 0
   {- imo this exit shouldn't be needed
    - but the odc doesn't exit on its own
    - we will ask ctl about it

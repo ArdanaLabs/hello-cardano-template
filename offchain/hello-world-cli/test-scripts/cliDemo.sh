@@ -12,16 +12,9 @@ declare_wait_run(){
 }
 
 
-if [[ purs == $1 ]]
-then
-	echo runing purs-nix compile
-	purs-nix compile
-	cmd="purs-nix run"
-else
-	echo runing nix build
-	nix build .\#hello-world-cli
-	cmd="./result/bin/hello-world-cli"
-fi
+echo runing nix build
+nix build .\#hello-world-cli
+cmd="./result/bin/hello-world-cli"
 
 echo
 echo Error examples
