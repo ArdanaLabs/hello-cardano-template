@@ -133,7 +133,7 @@
         pkgs.writeScriptBin "hello-world-cli"
           ''
             export NODE_PATH=${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules
-            echo 'require("${js}").main()' | ${pkgs.nodejs}/bin/node
+            ${hello-world-cli.ps.command {srcs = [ ./hello-world-cli ];}}/bin/purs-nix run $@
           '';
 
       checks.hello-world-api-tests = pkgs.runCommand
@@ -141,7 +141,7 @@
         { NODE_PATH = "${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules"; }
         ''
           mkdir $out && cd $out
-          ${hello-world-api.ps.command {srcs = [ ./hello-world-api/src ];}}/bin/purs-nix test
+          ${hello-world-api.ps.command {srcs = [ ./hello-world-api ];}}/bin/purs-nix test
         '';
 
       apps = {

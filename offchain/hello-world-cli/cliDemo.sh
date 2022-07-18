@@ -20,7 +20,7 @@ then
 else
 	echo runing nix build
 	nix build .\#hello-world-cli
-	cmd="nix run .#hello-world-cli --"
+	cmd="./result/bin/hello-world-cli"
 fi
 
 echo
