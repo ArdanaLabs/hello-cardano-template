@@ -12,6 +12,7 @@ import Test.Syd.Hedgehog
 
 import Plutus.V1.Ledger.Address (pubKeyHashAddress)
 import Plutus.V1.Ledger.Api (
+  BuiltinData (BuiltinData),
   Redeemer (..),
   Value (..),
   toBuiltinData,
@@ -20,12 +21,15 @@ import Plutus.V1.Ledger.Scripts (Context (..), Datum (..), applyValidator)
 import Plutus.V1.Ledger.Value (currencySymbol, tokenName)
 import Plutus.V2.Ledger.Api (fromList)
 
-import Hello (helloAddress, helloValidator)
+import Plutarch.Prelude
+
+import Hello (HelloRedemer (Inc), helloAddress, helloValidator)
+import Plutarch.Builtin (pforgetData)
 
 data HelloModel = HelloModel
   { isContinuing :: Bool
   , isMalformed :: Bool
-  , isUnitRedeemer :: Bool
+  , isIncRedeemer :: Bool
   , inDatum :: Integer
   , outDatum :: Integer
   }
@@ -36,7 +40,7 @@ data HelloProp
   | IsInvalid
   | IsMalformed
   | IsContinuing
-  | IsUnitRedeemer
+  | IsIncRedeemer
   deriving stock (Show, Eq, Ord, Enum, Bounded, Generic)
   deriving anyclass (Enumerable, Hashable)
 
@@ -48,7 +52,7 @@ instance HasLogicalModel HelloProp HelloModel where
   satisfiesProperty IsInvalid p = not $ satisfiesProperty IsValid p
   satisfiesProperty IsMalformed HelloModel {..} = isMalformed
   satisfiesProperty IsContinuing HelloModel {..} = isContinuing
-  satisfiesProperty IsUnitRedeemer HelloModel {..} = isUnitRedeemer
+  satisfiesProperty IsIncRedeemer HelloModel {..} = isIncRedeemer
 
 instance HasPermutationGenerator HelloProp HelloModel where
   sources =
@@ -91,10 +95,10 @@ instance HasPermutationGenerator HelloProp HelloModel where
         , morphism = \hm@HelloModel {..} -> pure hm {isContinuing = not isContinuing}
         }
     , Morphism
-        { name = "ToggleIsUnitRedeemer"
+        { name = "ToggleIsIncRedeemer"
         , match = Yes
-        , contract = toggle IsUnitRedeemer
-        , morphism = \hm@HelloModel {..} -> pure hm {isUnitRedeemer = not isUnitRedeemer}
+        , contract = toggle IsIncRedeemer
+        , morphism = \hm@HelloModel {..} -> pure hm {isIncRedeemer = not isIncRedeemer}
         }
     ]
 
@@ -126,9 +130,9 @@ mkCtx HelloModel {..} =
     someAda = Value (fromList [(currencySymbol "", fromList [(tokenName "", 10)])])
 
 instance ScriptModel HelloProp HelloModel where
-  expect = Var IsValid :&&: Not (Var IsMalformed) :&&: Var IsContinuing
+  expect = Var IsValid :&&: Not (Var IsMalformed) :&&: Var IsContinuing :&&: Var IsIncRedeemer
   script hm@HelloModel {..} =
-    let redeemer = Redeemer $ if isUnitRedeemer then toBuiltinData () else toBuiltinData (42 :: Integer)
+    let redeemer = if isIncRedeemer then incRedeemer else Redeemer $ toBuiltinData (42 :: Integer)
      in applyValidator (mkCtx hm) helloValidator (Datum (toBuiltinData inDatum)) redeemer
 
 spec :: Spec
@@ -143,3 +147,6 @@ spec = do
       fromHedgehogGroup
       [ runScriptTestsWhere @HelloProp "AcceptsValid" Yes
       ]
+
+incRedeemer :: Redeemer
+incRedeemer = Redeemer $ BuiltinData $ plift $ pforgetData $ pdata (pcon $ Inc pdnil)

@@ -1,0 +1,9 @@
+body > noscript:only-child {
+	display: flex;
+	flex-flow: column nowrap;
+	gap: 1rem;
+	margin: auto;
+	padding: 2rem 1rem;
+	max-width: 54ex;
+	line-height: 1.5;
+}

@@ -6,7 +6,7 @@ let
     ;
 in
 {
-  perSystem = system: { config, self', inputs', ... }: {
+  perSystem = { config, self', inputs', system, ... }: {
     options = {
       haskell-nix = {
         pkgs = mkOption {
