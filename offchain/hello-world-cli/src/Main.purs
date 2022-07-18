@@ -5,8 +5,8 @@ module Main
 import Contract.Prelude
 import Effect.Aff(launchAff_)
 import Options.Applicative(execParser)
-import HelloWorld.CLI.Parser(parser)
-import HelloWorld.CLI.Runners(runCLI)
+import HelloWorld.Cli.Parser(parser)
+import HelloWorld.Cli.Runners(runCLI)
 
 main :: Effect Unit
-main = launchAff_ $ runCLI =<< liftEffect (execParser parser)
+main = launchAff_ $ runCli =<< liftEffect (execParser parser)

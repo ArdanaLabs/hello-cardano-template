@@ -1,4 +1,4 @@
-module HelloWorld.CLI.Parser
+module HelloWorld.Cli.Parser
   (parser
   ) where
 
@@ -25,7 +25,7 @@ import Options.Applicative
   ,helper
   )
 
-import HelloWorld.CLI.Types(ParsedOptions(..),SubCommand(..))
+import HelloWorld.Cli.Types(ParsedOptions(..),SubCommand(..))
 
 parser :: ParserInfo ParsedOptions
 parser = info rawParser

@@ -1,5 +1,5 @@
-module HelloWorld.CLI.Runners
-  (runCLI
+module HelloWorld.Cli.Runners
+  (runCli
   ) where
 
 -- Contract
@@ -53,7 +53,7 @@ import Api
   ,redeemFromScript
   )
 import Util(getTxScanUrl)
-import HelloWorld.CLI.Types
+import HelloWorld.Cli.Types
   (Command(..)
   ,Conf(..)
   ,CliState(..)
@@ -64,8 +64,8 @@ import HelloWorld.CLI.Types
   )
 
 
-runCLI :: ParsedOptions -> Aff Unit
-runCLI opts = readConfig opts >>= runCmd
+runCli :: ParsedOptions -> Aff Unit
+runCli opts = readConfig opts >>= runCmd
 
 readConfig :: ParsedOptions -> Aff Command
 readConfig (ParsedOptions o)= do
