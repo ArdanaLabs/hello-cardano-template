@@ -2,106 +2,197 @@
 {
   perSystem = { config, self', inputs', system, ... }:
     let
-      # A flake-module in nix/flake-modules/haskell.nix defines haskell-nix
-      # packages once, so we can reuse it here, it's more performant.
-      pkgs = config.haskell-nix.pkgs;
-      # dusd-lib contains helper functions for dealing with haskell.nix. From it,
-      # we inherit fixHaskellDotNix and some common attributes to give to
-      # cabalProject'
-      dusd-lib = import "${self}/nix/lib/haskell.nix" { inherit system self pkgs; };
-      inherit (dusd-lib) commonPlutusModules commonPlutusShell fixHaskellDotNix;
+      pkgs = inputs'.nixpkgs.legacyPackages;
+      projectName = "hello-world";
+      purs-nix = self.inputs.purs-nix-0-14 { inherit system; };
+      npmlock2nix = pkgs.callPackages self.inputs.npmlock2nix { };
 
-      haskellNixFlake =
-        fixHaskellDotNix (project.flake { })
-          [ ./dUSD-offchain.cabal ./hello-world/hello-world.cabal ];
+      ctl-rev = self.inputs.cardano-transaction-lib.rev;
 
-      onchain-scripts = self'.packages.onchain-scripts;
-      subdir = "offchain";
-      # Checks the shell script using ShellCheck
-      checkedShellScript = system: name: text:
-        (pkgs.writeShellApplication {
-          inherit name text;
-        }) + "/bin/${name}";
-      project = pkgs.haskell-nix.cabalProject' {
-        src = pkgs.runCommand "fakesrc-offchain" { } ''
-          cp -rT ${./.} $out
-          chmod u+w $out/cabal.project
-          cat $out/cabal-haskell.nix.project >> $out/cabal.project
-        '';
-        compiler-nix-name = "ghc8107";
-        cabalProjectFileName = "cabal.project";
-        shell = commonPlutusShell // {
-          additional = ps: [
-            ps.plutus-contract
-            ps.plutus-ledger
-            ps.plutus-ledger-api
-            ps.plutus-ledger-constraints
-            ps.plutus-pab
-            ps.plutus-use-cases
-          ];
-          DUSD_SCRIPTS = onchain-scripts;
-          propagatedBuildInputs = [
-            # cardano-node and cardano-cli need to be on the PATH to run the
-            # cluster + PAB.
-            self.inputs.cardano-node.outputs.packages.${system}."cardano-node:exe:cardano-node"
-            self.inputs.cardano-node.outputs.packages.${system}."cardano-cli:exe:cardano-cli"
-          ];
-          tools = {
-            ghcid = { };
-            haskell-language-server = { };
-          };
+      ps-pkgs-ctl =
+        let
+          f = self:
+            import ./ps-pkgs-ctl.nix {
+              ps-pkgs = purs-nix.ps-pkgs // self;
+              inherit ctl-rev;
+            };
+        in
+        pkgs.lib.fix
+          (self:
+            builtins.mapAttrs (n: v: purs-nix.build (v // { name = n; })) (f self)
+          );
+      all-ps-pkgs = purs-nix.ps-pkgs // ps-pkgs-ctl;
+
+      hello-world-cbor = purs-nix.build
+        {
+          name = "hello-world-cbor";
+          src.path = self'.packages.hello-world-cbor-purs;
+          info.dependencies = [ ];
+          info.version = "0.0.1";
         };
-        modules = commonPlutusModules ++ [{
-          packages = {
-            hello-world.components.library.preBuild = "export DUSD_SCRIPTS=${onchain-scripts}";
-            hello-world.components.exes.hello-world-cluster = {
-              pkgconfig = [ [ pkgs.makeWrapper ] ];
-              postInstall = with pkgs; ''
-                wrapProgram $out/bin/hello-world-cluster \
-                  --set 'SHELLEY_TEST_DATA' '${self.inputs.plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley' \
-                  --prefix PATH : "${pkgs.lib.makeBinPath [
-                    self.inputs.cardano-node.outputs.packages.${system}."cardano-node:exe:cardano-node"
-                    self.inputs.cardano-node.outputs.packages.${system}."cardano-cli:exe:cardano-cli"
-                  ]}"
-              '';
+
+      hello-world-api = {
+        dependencies =
+          with all-ps-pkgs;
+          [
+            aeson
+            aff
+            bigints
+            cardano-transaction-lib
+            hello-world-cbor
+            ordered-collections
+            spec
+          ];
+        ps =
+          purs-nix.purs
+            {
+              inherit (hello-world-api) dependencies;
+              srcs = [ ./hello-world-api/src ];
             };
-            dUSD-offchain.components.tests.tests = {
-              pkgconfig = [ [ pkgs.makeWrapper ] ];
-              postInstall = with pkgs; ''
-                wrapProgram $out/bin/tests \
-                  --set 'DUSD_SCRIPTS' '${onchain-scripts}'
-              '';
+        package = (purs-nix.build
+          {
+            name = "hello-world-api";
+            src.path = ./hello-world-api;
+            info = {
+              inherit (hello-world-api) dependencies;
+              version = "0.0.1";
             };
-            hello-world.components.tests.hello-world-e2e = {
-              pkgconfig = [ [ pkgs.makeWrapper ] ];
-              postInstall = with pkgs; ''
-                wrapProgram $out/bin/hello-world-e2e \
-                  --set 'SHELLEY_TEST_DATA' '${self.inputs.plutus-apps}/plutus-pab/local-cluster/cluster-data/cardano-node-shelley' \
-                  --prefix PATH : "${pkgs.lib.makeBinPath [
-                    self.inputs.cardano-node.outputs.packages.${system}."cardano-node:exe:cardano-node"
-                    self.inputs.cardano-node.outputs.packages.${system}."cardano-cli:exe:cardano-cli"
-                  ]}"
-              '';
+          });
+      };
+
+      hello-world-browser = {
+        ps =
+          purs-nix.purs
+            {
+              dependencies =
+                with all-ps-pkgs;
+                [
+                  halogen
+                  cardano-transaction-lib
+                  hello-world-api.package
+                ];
+              srcs = [ ./hello-world-browser/src ];
             };
-          };
-        }];
-        sha256map = import ./sha256map;
-        pkg-def-extras = [
-          (hackage: {
-            packages = {
-              cryptostore = (((hackage."cryptostore")."0.2.1.0").revisions).default;
-              jwt = (((hackage."jwt")."0.11.0").revisions).default;
-              random = (((hackage.random)."1.2.1").revisions).default;
+      };
+
+      hello-world-cli = {
+        ps =
+          purs-nix.purs
+            {
+              dependencies =
+                with all-ps-pkgs;
+                [
+                  prelude
+                  hello-world-api.package
+                ];
+              srcs = [ ./hello-world-cli/src ];
             };
-          })
-        ];
+      };
+
+      ctl-pkgs = import self.inputs.nixpkgs {
+        inherit system;
+        overlays = [ self.inputs.cardano-transaction-lib.overlay ];
+      };
+      # use more recent slot to avoid long sync time
+      config = {
+        datumCache.blockFetcher.firstBlock = {
+          slot = 62153233;
+          id = "631c621b7372445acf82110282ba72f4b52dafa09c53864ddc2e58be24955b2a";
+        };
       };
     in
     {
-      devShells.offchain = haskellNixFlake.devShell;
-      packages = haskellNixFlake.packages // { };
+      packages.hello-world-cbor = hello-world-cbor;
+
+      packages.hello-world-api = hello-world-api.package;
+
+      packages.hello-world-browser =
+        pkgs.runCommand "build-hello-world-browser" { }
+          # see buildPursProjcet: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
+          # see bundlePursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L149
+          ''
+            mkdir $out && cd $out
+            export BROWSER_RUNTIME=1
+            cp -r ${hello-world-browser.ps.modules.Main.output {}} output
+            cp ${./hello-world-browser/index.js} index.js
+            cp ${./hello-world-browser/index.html} index.html
+            cp ${./webpack.config.js} webpack.config.js
+            cp -r ${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib ; }}/* .
+            export NODE_PATH="node_modules"
+            export PATH="bin:$PATH"
+            mkdir dist
+            cp ${./hello-world-browser/main.css} dist/main.css
+            webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
+          '';
+
+      packages.hello-world-cli =
+        let js = "${hello-world-cli.ps.modules.Main.output {}}/Main/index.js"; in
+        pkgs.writeScriptBin "hello-world-cli"
+          ''
+            export NODE_PATH=${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules
+            echo 'require("${js}").main()' | ${pkgs.nodejs}/bin/node
+          '';
+
+      checks.hello-world-api-tests = pkgs.runCommand
+        "api-tests"
+        { NODE_PATH = "${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules"; }
+        ''
+          mkdir $out && cd $out
+          ${hello-world-api.ps.command {srcs = [ ./hello-world-api/src ];}}/bin/purs-nix test
+        '';
+
+      apps = {
+        ctl-runtime = ctl-pkgs.launchCtlRuntime config;
+
+        serve-hello-world-browser = {
+          type = "app";
+          program = pkgs.writeShellApplication
+            {
+              name = projectName;
+              runtimeInputs = [
+                pkgs.nodePackages.http-server
+              ];
+              text = "http-server -c-1 ${self'.packages.hello-world-browser}";
+            };
+        };
+      };
+
+      devShells.hello-world-cli = pkgs.mkShell {
+        name = projectName;
+        buildInputs = (with pkgs; [
+          nodejs-16_x
+          (hello-world-cli.ps.command { })
+          purs-nix.ps-pkgs.psci-support
+          purs-nix.purescript
+          purs-nix.purescript-language-server
+          nodePackages.purs-tidy
+        ]);
+        shellHook = "export NODE_PATH=${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib ; }}/node_modules/";
+      };
+      devShells.hello-world-browser = pkgs.mkShell {
+        name = projectName;
+        buildInputs = (with pkgs; [
+          nodejs-16_x
+          (hello-world-browser.ps.command { })
+          purs-nix.ps-pkgs.psci-support
+          purs-nix.purescript
+          purs-nix.purescript-language-server
+          nodePackages.purs-tidy
+        ]);
+        shellHook = "export NODE_PATH=${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules/";
+      };
+      devShells.hello-world-api = pkgs.mkShell {
+        name = projectName;
+        buildInputs = (with pkgs; [
+          nodejs-16_x
+          (hello-world-api.ps.command { })
+          purs-nix.ps-pkgs.psci-support
+          purs-nix.purescript
+          purs-nix.purescript-language-server
+          nodePackages.purs-tidy
+        ]);
+        shellHook = "export NODE_PATH=${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules/";
+      };
     };
   flake = { };
 }
-
-
