@@ -52,6 +52,7 @@ import Api
   ,setDatumAtScript
   ,redeemFromScript
   )
+import Util(getTxScanUrl)
 import HelloWorld.CLI.Types
   (Command(..)
   ,Conf(..)
@@ -139,8 +140,9 @@ runCmd (Command {conf,statePath,subCommand}) = do
       log $ "Contract param:" <> show state.param
       log $ "Current datum:" <> show datum
       let TransactionInput out = state.lastOutput
-      let TransactionHash hash = out.transactionId
-      log $ "Last txid: https://testnet.cardanoscan.io/transaction/" <> byteArrayToHex hash
+      let Conf {network:network} = conf
+      --let TransactionHash hash = out.transactionId
+      log $ "Last txid: " <> getTxScanUrl network state.lastOutput
       log $ "txid index: " <> show out.index
       log "wallet bal: "
       for_ (flattenValue bal)
@@ -207,5 +209,4 @@ makeConfig
   (Conf{walletPath,stakingPath,network}) = do
   wallet <- mkKeyWalletFromFiles walletPath $ Just stakingPath
   configWithLogLevel network wallet Trace
-
 
