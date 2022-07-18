@@ -9,6 +9,4 @@ import HelloWorld.CLI.Parser(parser)
 import HelloWorld.CLI.Runners(runCLI)
 
 main :: Effect Unit
-main = do
-  parsedCmd <- execParser parser
-  launchAff_ $ runCLI parsedCmd
+main = launchAff_ $ runCLI =<<  execParser parser
