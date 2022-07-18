@@ -4,7 +4,7 @@
     let
       pkgs = inputs'.nixpkgs.legacyPackages;
       projectName = "hello-world";
-      purs-nix = self.inputs.purs-nix-0-14 { inherit system; };
+      purs-nix = self.inputs.purs-nix { inherit system; };
       npmlock2nix = pkgs.callPackages self.inputs.npmlock2nix { };
 
       ctl-rev = self.inputs.cardano-transaction-lib.rev;
@@ -107,8 +107,9 @@
       packages.hello-world-api = hello-world-api.package;
 
       packages.docs = pkgs.runCommandNoCC "docs" {} ''
-                        mkdir $out
-                        ${hello-world-browser.ps.command {}}/bin/purs-nix docs -o $out
+                        mkdir $out && cd $out
+                        # it may make sense to eventually add cli and browser to the srcs, but we need to not define Main twice
+                        ${hello-world-api.ps.command{ srcs = [ ./hello-world-api/src ];} }/bin/purs-nix docs
                       '';
 
       packages.hello-world-browser =
@@ -157,7 +158,7 @@
               runtimeInputs = [
                 pkgs.nodePackages.http-server
               ];
-              text = "http-server -c-1 ${self'.packages.docs}";
+              text = "http-server -c-1 ${self'.packages.docs}/generated-docs/html/";
               };
           };
 
