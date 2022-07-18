@@ -102,42 +102,41 @@ component =
       H.modify_ \_ -> Unlocked
 
   render :: forall slots. State -> H.ComponentHTML Action slots m
-  render state =
-    case state of
-      Unlocked ->
-        HH.main_
-          [ HH.button
-              [ HP.id "lock"
-              , HE.onClick \_ -> Lock
-              ]
-              [ HH.text "Initialize"
-              ]
-          ]
-      Locking ->
-        HH.main_
-          [ HH.text "Initializing"
-          ]
-      Locked payload@{ datum: datum, fundsLocked: fundsLocked } ->
-        HH.main_
-          [ HH.table_
-              [ HH.tr_
-                  [ HH.td_ [ HH.text "Current Value" ]
-                  , HH.td_ [ HH.text "Funds Locked" ]
-                  ]
-              , HH.tr_
-                  [ HH.td_ [ HH.text $ show datum ]
-                  , HH.td_ [ HH.text $ show fundsLocked <> " ADA" ]
-                  ]
-              , HH.tr_
-                  [ HH.td_ [ HH.button [ HP.id "incr", HE.onClick \_ -> Incr payload ] [ HH.text "Increment" ] ]
-                  , HH.td_ [ HH.button [ HP.id "redeem", HE.onClick \_ -> Redeem payload ] [ HH.text "Redeem" ] ]
-                  ]
-              ]
-          ]
-      Incrementing from to ->
-        HH.main_
-          [ HH.text $ "Incrementing " <> show from <> " to " <> show to <> "..."
-          ]
-      Redeeming funds ->
-        HH.main_
-          [ HH.text $ "Redeeming " <> show funds <> " ADA..." ]
+  render = case _ of
+    Unlocked ->
+      HH.main_
+        [ HH.button
+            [ HP.id "lock"
+            , HE.onClick \_ -> Lock
+            ]
+            [ HH.text "Initialize"
+            ]
+        ]
+    Locking ->
+      HH.main_
+        [ HH.text "Initializing"
+        ]
+    Locked payload@{ datum: datum, fundsLocked: fundsLocked } ->
+      HH.main_
+        [ HH.table_
+            [ HH.tr_
+                [ HH.td_ [ HH.text "Current Value" ]
+                , HH.td_ [ HH.text "Funds Locked" ]
+                ]
+            , HH.tr_
+                [ HH.td_ [ HH.text $ show datum ]
+                , HH.td_ [ HH.text $ show fundsLocked <> " ADA" ]
+                ]
+            , HH.tr_
+                [ HH.td_ [ HH.button [ HP.id "incr", HE.onClick \_ -> Incr payload ] [ HH.text "Increment" ] ]
+                , HH.td_ [ HH.button [ HP.id "redeem", HE.onClick \_ -> Redeem payload ] [ HH.text "Redeem" ] ]
+                ]
+            ]
+        ]
+    Incrementing from to ->
+      HH.main_
+        [ HH.text $ "Incrementing " <> show from <> " to " <> show to <> "..."
+        ]
+    Redeeming funds ->
+      HH.main_
+        [ HH.text $ "Redeeming " <> show funds <> " ADA..." ]
