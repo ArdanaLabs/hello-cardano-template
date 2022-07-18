@@ -106,7 +106,7 @@
 
       packages.hello-world-api = hello-world-api.package;
 
-      packages.docs = pkgs.runCommandNoCC "docs" { } ''
+      packages.offchain-docs = pkgs.runCommandNoCC "offchain-docs" { } ''
         mkdir $out && cd $out
         # it may make sense to eventually add cli and browser to the srcs, but we need to not define Main twice
         ${hello-world-api.ps.command{ srcs = [ ./hello-world-api/src ];} }/bin/purs-nix docs
@@ -150,7 +150,7 @@
       apps = {
         ctl-runtime = ctl-pkgs.launchCtlRuntime config;
 
-        serve-docs = {
+        serve-offchain-docs = {
           type = "app";
           program = pkgs.writeShellApplication
             {
@@ -158,7 +158,7 @@
               runtimeInputs = [
                 pkgs.nodePackages.http-server
               ];
-              text = "http-server -c-1 ${self'.packages.docs}/generated-docs/html/";
+              text = "http-server -c-1 ${self'.packages.offchain-docs}/generated-docs/html/";
             };
         };
 
