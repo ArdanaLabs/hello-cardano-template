@@ -160,7 +160,7 @@ getDatumFromState (State state) = do
     >>= liftContractM "couldn't find utxo"
   oldDatum <-
     utxo.dataHash
-    # liftContractM "utxo had not datum hash"
+    # liftContractM "UTxO had no datum hash"
     >>= getDatumByHash
     >>= liftContractM "Couldn't find datum by hash"
   asBigInt <- liftContractM "datum wasn't an integer" $ case oldDatum of
