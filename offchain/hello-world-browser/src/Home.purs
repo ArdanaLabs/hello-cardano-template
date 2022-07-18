@@ -17,6 +17,12 @@ import Halogen.HTML.Properties as HP
 import Plutus.Types.Value (Value)
 import Scripts (validatorHash)
 
+initDatum :: Int
+initDatum = 1
+
+incrAmount :: Int
+incrAmount = 2
+
 type Payload =
   { datum :: Int
   , fundsLocked :: Value
@@ -71,26 +77,26 @@ component =
       H.modify_ \_ -> Locking
       cfg <- asks _.contractConfig
       (lastOutput /\ fundsLocked) <- H.liftAff $ runContract cfg $ do
-        validator <- helloScript 1
+        validator <- helloScript initDatum
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-        txId <- sendDatumToScript 3 vhash
+        txId <- sendDatumToScript incrAmount vhash
         TransactionOutput utxo <- getUtxo txId >>= liftContractM "couldn't find utxo"
         pure (txId /\ utxo.amount)
-      H.modify_ \_ -> Locked { datum: 3, fundsLocked, lastOutput }
+      H.modify_ \_ -> Locked { datum: initDatum + incrAmount, fundsLocked, lastOutput }
     Incr { datum, fundsLocked, lastOutput } -> do
       H.modify_ \_ -> Incrementing datum (datum + 2)
       cfg <- asks _.contractConfig
       lastOutput' <- H.liftAff $ runContract cfg $ do
-        validator <- helloScript 1
+        validator <- helloScript datum
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
         oldDatum <- getDatumFromState lastOutput
-        setDatumAtScript (oldDatum + 2) vhash validator lastOutput
-      H.modify_ \_ -> Locked $ { datum: datum + 2, fundsLocked, lastOutput: lastOutput' }
-    Redeem { fundsLocked, lastOutput } -> do
+        setDatumAtScript (oldDatum + incrAmount) vhash validator lastOutput
+      H.modify_ \_ -> Locked $ { datum: datum + incrAmount, fundsLocked, lastOutput: lastOutput' }
+    Redeem { datum, fundsLocked, lastOutput } -> do
       H.modify_ \_ -> Redeeming fundsLocked
       cfg <- asks _.contractConfig
       H.liftAff $ runContract_ cfg $ do
-        validator <- helloScript 1
+        validator <- helloScript datum
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
         redeemFromScript vhash validator lastOutput
       H.modify_ \_ -> Unlocked
