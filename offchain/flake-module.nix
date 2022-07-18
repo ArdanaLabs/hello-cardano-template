@@ -106,6 +106,11 @@
 
       packages.hello-world-api = hello-world-api.package;
 
+      packages.docs = pkgs.runCommandNoCC "docs" {} ''
+                        mkdir $out
+                        ${hello-world-browser.ps.command {}}/bin/purs-nix docs -o $out
+                      '';
+
       packages.hello-world-browser =
         pkgs.runCommand "build-hello-world-browser" { }
           # see buildPursProjcet: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
@@ -143,6 +148,18 @@
 
       apps = {
         ctl-runtime = ctl-pkgs.launchCtlRuntime config;
+
+        serve-docs = {
+          type = "app";
+          program = pkgs.writeShellApplication
+            {
+              name = projectName;
+              runtimeInputs = [
+                pkgs.nodePackages.http-server
+              ];
+              text = "http-server -c-1 ${self'.packages.docs}";
+              };
+          };
 
         serve-hello-world-browser = {
           type = "app";
