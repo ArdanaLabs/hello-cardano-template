@@ -84,12 +84,9 @@
                 [
                   prelude
                   hello-world-api.package
-                  stringutils
                   optparse
-                  simple-json
                   node-fs-aff
                   node-fs
-                  read
                 ];
               srcs = [ ./hello-world-cli/src ];
             };
