@@ -28,7 +28,7 @@ import Node.FS.Sync(exists)
 import Node.Encoding (Encoding(UTF8))
 import Node.Process(exit)
 import Effect.Exception(throw)
-import Simple.JSON(readJSON,writeJSON)
+import Aeson(decodeAeson,parseJsonStringToAeson,encodeAeson)
 
 -- Types
 import Data.UInt as U
@@ -67,7 +67,7 @@ runCLI opts = readConfig opts >>= runCmd
 readConfig :: ParsedOptions -> Aff Command
 readConfig (ParsedOptions o)= do
   confTxt <- readTextFile UTF8 o.configFile
-  conf' <- throwE $ readJSON confTxt
+  conf' <- throwE =<< decodeAeson <$> throwE (parseJsonStringToAeson confTxt)
   conf <- throwE $ lookupNetwork conf'
   pure $ Command
     {subCommand: o.subCommand
@@ -162,7 +162,7 @@ getDatumFromState (State state) = do
 
 writeState :: String -> CliState -> Aff Unit
 writeState statePath s = do
-  writeTextFile UTF8 statePath $ writeJSON $ logState s
+  writeTextFile UTF8 statePath $ s # logState # encodeAeson # show
 
 readState :: String -> Aff CliState
 readState statePath = do
@@ -171,7 +171,7 @@ readState statePath = do
     log "State file could not be read because it doesn't exist"
     liftEffect $ exit (0-1) -- afaict you have to do this?
   stateTxt <- readTextFile UTF8 statePath
-  (partial :: FileState) <- throwE $ readJSON stateTxt
+  (partial :: FileState) <- throwE =<< decodeAeson <$> throwE (parseJsonStringToAeson stateTxt)
   pure $ State $
     {param:partial.param
     ,lastOutput:parseTxId partial.lastOutput

@@ -9,4 +9,4 @@ import HelloWorld.CLI.Parser(parser)
 import HelloWorld.CLI.Runners(runCLI)
 
 main :: Effect Unit
-main = launchAff_ $ runCLI =<<  execParser parser
+main = launchAff_ $ runCLI =<< liftEffect (execParser parser)
