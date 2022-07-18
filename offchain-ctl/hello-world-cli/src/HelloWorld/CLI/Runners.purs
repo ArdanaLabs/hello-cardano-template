@@ -1,4 +1,4 @@
-module Runners
+module HelloWorld.CLI.Runners
   (runCLI
   ) where
 
@@ -50,7 +50,7 @@ import Api
   ,setDatumAtScript
   ,redeemFromScript
   )
-import Types
+import HelloWorld.CLI.Types
   (Command(..)
   ,Conf(..)
   ,CliState(..)

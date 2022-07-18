@@ -1,4 +1,4 @@
-module Types
+module HelloWorld.CLI.Types
   (Command(..)
   ,SubCommand(..)
   ,CliState(..)
