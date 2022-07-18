@@ -169,7 +169,8 @@ getDatumFromState (State state) = do
     Datum (Integer n) -> Just n
     _ -> Nothing
   liftContractM
-    "Datum was actually big. We should support this but currently don't"
+    "Datum exceeds maximum size for conversion to 64 bit int"
+    -- There's not hard reason not to support this it just doesn't seem worth the refactor
     $ Big.toInt asBigInt
 
 writeState :: String -> CliState -> Aff Unit
