@@ -49,3 +49,9 @@ Icon?
 ehthumbs.db
 Thumbs.db
 .Trash*
+
+.spago*
+*output
+.psci_modules
+.psc-ide-port
+.purs-nix-run.js

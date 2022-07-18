@@ -1,7 +1,5 @@
 { self, ... }:
 {
-  perSystem = system: { config, self', inputs', ... }: {
-  };
-  flake = {
-  };
+  perSystem = { config, self', inputs', system, ... }: { };
+  flake = { };
 }

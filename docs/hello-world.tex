@@ -11,90 +11,157 @@
 
 \section{Interactions}
 
+\subsection{Browser App}
+
+The browser app supports the following interactions:
+
 \begin{itemize}
-  \item UTXO with a datum that is an int
-  \item Website shows the int
-  \item Website lets you increment the int
+  \item Viewing current datum
+  \item Viewing transaction status 
+  \item Locking funds
+  \item Incrementing datum
+  \item Redeeming funds
 \end{itemize}
+
+\subsection{Command-line App}
+
+The command-line app supports the following interactions:
+
+\begin{itemize}
+  \item Viewing supported commands
+  \item Viewing UTxO state 
+  \item Locking funds
+  \item Incrementing datum
+  \item Redeeming funds
+\end{itemize}
+
 
 \section{Acceptance Criteria}
 
+\subsection{Command-line App}
+
+As a command-line user with a key wallet containing ADA, the following should be true:
+
+\subsubsection{Send Datum}
+Given increment interval i and initial value n, I want to publish a UTxO where the following
+is true:
 \begin{itemize}
-  \item Anyone can increment the int (no authentication)
+  \item The UTxO belongs to the validator script address.
+  \item The UTxO contains n as the datum hash.
+  \item The UTxO locks an arbitrary amount of ADA.
+  \item The UTxO can be used as an input in a transaction that creates a new UTxO at the script
+        address with a datum containing the value n + i.
+  \item The locked funds in the UTxO can be redeemed by any user.      
 \end{itemize}
+
+
+\subsubsection{Increment Datum}
+Given increment interval i, initial value n, and an existing UTxO at the validator script address, 
+I want to publish a UTxO where the following is true:
+\begin{itemize}
+  \item The new UTxO belongs to the validator script address.
+  \item The new UTxO contains the amount of ADA contained in the existing UTxO.
+  \item The new UTxO contains n + i as the datum hash.    
+\end{itemize}
+
+\subsubsection{Redeem Funds}
+Given a UTxO at a validator address, I want to publish a UTxO where the following is true:
+\begin{itemize}
+  \item I can unlock the funds in the validator UTxO.
+  \item The new UTxO belongs to my script address.
+\end{itemize}
+
+\subsection{Browser App}
+
+As a browser user with a Nami wallet containing ADA, the following should be true:
+
+\subsubsection{Initialization}
+
+I would like to be able to click a button where once clicked the following is true:
+
+\begin{itemize}
+  \item The click will trigger Nami to prompt for a signature.
+  \item The button will show loading dialogue.
+  \item The button will be disabled
+\end{itemize}
+
+\subsubsection{State Management}
+
+Once the initialization is complete, I would like to be able to click two buttons,
+One to increment the value in the UTxO and one to redeem the funds locked in the
+validator script UTxO.
+
+I would like to be able to view the state of the increment value where the following
+is true:
+
+\begin{itemize}
+  \item There should be an integer that represents the current increment value of the
+        UTxO.
+\end{itemize}
+
+For the increment button, when clicked, the following should be true:
+
+\begin{itemize}
+  \item The click will trigger Nami to prompt for a signature.
+  \item The button will show loading dialogue.
+  \item The button will be disabled.
+\end{itemize}
+
+When the increment transaction is complete, the following should be true:
+
+\begin{itemize}
+  \item The button should be reenabled.
+  \item The loading dialogue should be removed.
+  \item The integer that represents the current increment value of the
+        UTxO should be incremented
+\end{itemize}
+
+For the redeem button, when clicked, the following should be true:
+
+\begin{itemize}
+  \item The click will trigger Nami to prompt for a signature.
+  \item The button will show loading dialogue.
+  \item The button will be disabled.
+\end{itemize}
+
+When the redeem transaction is complete, the following should be true:
+
+\begin{itemize}
+  \item The increment button will be removed.
+  \item The redeem button will be removed.
+  \item The increment value will be removed.
+  \item The initialize button will return.
+\end{itemize}
+
 
 \section{Implementation Details}
 
 \begin{itemize}
   \item This all happens in the dUSD repo
   \item On-chain code written in Plutarch
-  \item Off-chain code written in PAB
+  \item Off-chain code written in Purescript
   \item Plutarch code gets compiled into a ByteString, which can be included in
-    the PAB transactions as it would for PlutusTx
+    the CTL transactions
   \item Front-end
   \begin{itemize}
-    \item Foundations built in HTML/CSS, with one Purescript component to link
-      with the PAB and browser wallets (TBD)
-    \item User wallet: Nami (for first version)
+    \item Foundations built in HTML/CSS, driven by a Purescript app
+    \item User wallet: Nami (for first version).
   \end{itemize}
-  \item Once we’re done, we can `git tag' the commit where that’s done and then
-    upgrade this to the price module implementation in-place.
-  \item How to balance transactions?
-    \todo{
-      \url{https://github.com/input-output-hk/plutus-apps/issues/249\#issuecomment-1085834665}
-    }
+
 \end{itemize}
 
 \section{Tests}
 
-\begin{itemize}
-  \item Apropos-tx testing for the on-chain code
-  \begin{itemize}
-    \item the plutarch increment function satisfies the property (increment(n) = n + 1)
-    \item the compiled validator validates if and only if the output datum returns to the script address, is of type integer, and is equal to increment(input datum)
-  \end{itemize}
-  \item Unit test for on-chain code:
-  \begin{itemize}
-    \item increment from 0 to 1
-    \item increment from 1 to 2
-  \end{itemize}
-  \item E2E frontend testing: Set up NixOS VM, launch browser, connect to Nami
-  \begin{itemize}
-    \item Selenium
-      \begin{itemize}
-        \item Check that when the server is initialized, the website shows the
-          number $0$
-        \item Check that incrementing works: $0$ to $1$, $1$ to $2$
-        \item Open two browsers, connected to two separate wallets, and check
-          that incrementing on one updates the number on the other after
-          refresh: $0$ to $1$, $1$ to $2$
-        \item Launch the two browsers in separate VMs.
-          \todo{See issue \url{https://github.com/ArdanaLabs/dUSD/issues/87}.}
-      \end{itemize}
-    \item Lighthouse score above $90$, to check website performance
-  \end{itemize}
-  \item PAB E2E testing: The same tests will be ran as for the frontend tests,
-    but using a second PAB to sign and submit transactions.
-    The tests will be ran against a local testnet set up through Maeserat.
-  \item Contract Model Tests with PAB
-  \begin{itemize}
-    \item Wallet signs and submits a transaction
-    \item Transactions are submitted by separate wallets (i.e. determine
-      atomicity constraints)
-    \item \todo{@Dan: Which tests do we want to run? `noFundsLocked'?}
-  \end{itemize}
-  \item This project will be deployed to mainnet to run manual tests
-\end{itemize}
+\subsection{Command-line App}
 
-\section{Features to be added}
+Tests should be modeled after acceptance criteria
 
-\begin{itemize}
-  \item Frontend integration with Yoroi, Daedelus. Any other browser wallets?
-  \item Replace datum to something not-builtin, to test encoding/decoding match
-    between on-chain and off-chain
-  \item Maeserat: Volume tests, benchmarks for time and memory consumption
-  \item Set up an NFT-system to persistently identify and track the Hello World
-    UTXOs
-\end{itemize}
+(Specific tests DBD)
+
+\subsection{Browser App}
+
+Tests should be modeled after acceptance criteria
+
+(Specific tests DBD)
 
 \end{document}
