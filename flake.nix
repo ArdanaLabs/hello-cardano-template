@@ -37,8 +37,7 @@
       {
         systems = [ "x86_64-linux" ];
         imports = [
-          ./offchain-ctl
-          #./offchain
+          ./offchain
           ./onchain
           ./docs
           ./nix/flake-modules
