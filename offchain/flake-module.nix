@@ -106,11 +106,11 @@
 
       packages.hello-world-api = hello-world-api.package;
 
-      packages.docs = pkgs.runCommandNoCC "docs" {} ''
-                        mkdir $out && cd $out
-                        # it may make sense to eventually add cli and browser to the srcs, but we need to not define Main twice
-                        ${hello-world-api.ps.command{ srcs = [ ./hello-world-api/src ];} }/bin/purs-nix docs
-                      '';
+      packages.docs = pkgs.runCommandNoCC "docs" { } ''
+        mkdir $out && cd $out
+        # it may make sense to eventually add cli and browser to the srcs, but we need to not define Main twice
+        ${hello-world-api.ps.command{ srcs = [ ./hello-world-api/src ];} }/bin/purs-nix docs
+      '';
 
       packages.hello-world-browser =
         pkgs.runCommand "build-hello-world-browser" { }
@@ -159,8 +159,8 @@
                 pkgs.nodePackages.http-server
               ];
               text = "http-server -c-1 ${self'.packages.docs}/generated-docs/html/";
-              };
-          };
+            };
+        };
 
         serve-hello-world-browser = {
           type = "app";
