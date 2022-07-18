@@ -1,6 +1,6 @@
 { self, ... }:
 {
-  perSystem = system: { config, self', inputs', ... }:
+  perSystem = { config, self', inputs', ... }:
     let
       description = "The price fetcher clients and price fetcher for the price-module";
       # A flake-module in nix/flake-modules/haskell.nix defines haskell-nix
@@ -38,6 +38,5 @@
 
       apps = haskellNixFlake.apps;
     };
-
-  flake = {};
+  flake = { };
 }
