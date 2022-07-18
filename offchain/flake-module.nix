@@ -88,7 +88,7 @@
                   node-fs-aff
                   node-fs
                 ];
-              srcs = [ ./hello-world-cli/src ];
+              srcs = [ ./hello-world-cli ];
             };
       };
 
@@ -99,8 +99,8 @@
       # use more recent slot to avoid long sync time
       config = {
         datumCache.blockFetcher.firstBlock = {
-          slot = 63181679;
-          id = "3697256b3c1b594a39c2cc50daf15df0c0d9b15e2e07d7c44987c26b5aa099a2";
+          slot = 62153233;
+          id = "631c621b7372445acf82110282ba72f4b52dafa09c53864ddc2e58be24955b2a";
         };
       };
     in
@@ -133,7 +133,7 @@
         pkgs.writeScriptBin "hello-world-cli"
           ''
             export NODE_PATH=${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules
-            ${hello-world-cli.ps.command {srcs = [ ./hello-world-cli ];}}/bin/purs-nix run $@
+            echo 'require("${js}").main()' | ${pkgs.nodejs}/bin/node
           '';
 
       checks.hello-world-api-tests = pkgs.runCommand
@@ -141,11 +141,10 @@
         { NODE_PATH = "${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules"; }
         ''
           mkdir $out && cd $out
-          ${hello-world-api.ps.command {srcs = [ ./hello-world-api ];}}/bin/purs-nix test
+          ${hello-world-api.ps.command {srcs = [ ./hello-world-api/src ];}}/bin/purs-nix test
         '';
 
       apps = {
-
         ctl-runtime = ctl-pkgs.launchCtlRuntime config;
 
         serve-hello-world-browser = {
