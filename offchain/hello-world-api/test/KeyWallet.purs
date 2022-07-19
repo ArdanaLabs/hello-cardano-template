@@ -15,6 +15,9 @@ import Test.Spec(Spec,describe,it)
 import Test.Spec.Assertions(shouldReturn)
 
 
+toFixturePath :: String -> String
+toFixturePath = (<>) "./fixtures/" 
+
 spec :: Spec Unit
 spec = do
   describe "Full tests" do
@@ -22,7 +25,7 @@ spec = do
 
 integrationTest :: Aff Unit
 integrationTest = do
-  wallet <- mkKeyWalletFromFiles "wallet.skey" $ Just "staking.skey"
+  wallet <- mkKeyWalletFromFiles (toFixturePath "wallet.skey") $ Just $ toFixturePath "staking.skey"
   cfg <- configWithLogLevel TestnetId wallet Trace
   runContract_ cfg $ do
     helloUnitTest
