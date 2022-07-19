@@ -147,6 +147,14 @@
           ${hello-world-api.ps.command {srcs = [ ./hello-world-api ];}}/bin/purs-nix test
         '';
 
+      checks.hello-world-cli-tests = pkgs.runCommand
+        "cli-tests"
+        { NODE_PATH = "${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules"; }
+        ''
+          mkdir $out && cd $out
+          ${hello-world-cli.ps.command {srcs = [ ./hello-world-cli ];}}/bin/purs-nix test
+        '';
+
       apps = {
         ctl-runtime = ctl-pkgs.launchCtlRuntime config;
 
@@ -174,11 +182,18 @@
             };
         };
 
-        "offchain-ctl:hello-world-api:test" = {
+        "offchain:hello-world-api:test" = {
           type = "app";
           program = pkgs.writeShellApplication {
             name = "run-hello-world-api-tests";
             text = ''nix build -L .#checks.\"${system}\".hello-world-api-tests'';
+          };
+        };
+        "offchain:hello-world-cli:test" = {
+          type = "app";
+          program = pkgs.writeShellApplication {
+            name = "run-hello-world-cli-tests";
+            text = ''nix build -L .#checks.\"${system}\".hello-world-cli-tests'';
           };
         };
       };
