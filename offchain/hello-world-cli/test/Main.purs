@@ -3,20 +3,21 @@ module Test.Main
   ) where
 
 import Contract.Prelude
-import UnitTest (helloUnitTest)
-import Contract.Monad
-  ( launchAff_
-  , runContract_
-  , configWithLogLevel
-  )
-import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
-import Data.Log.Level (LogLevel(Trace))
-import Serialization.Address (NetworkId(TestnetId))
+import Node.ChildProcess(Exit,spawn,defaultSpawnOptions,onExit)
+import Effect.Aff(makeAff,launchAff_)
 
 main :: Effect Unit
-main = launchAff_ $ do
-  wallet <- mkKeyWalletFromFiles "wallet.skey" $ Just "staking.skey"
-  cfg <- configWithLogLevel TestnetId wallet Trace
-  runContract_ cfg $ do
-    helloUnitTest
-    -- TODO this seems to work but also hangs
+main = launchAff_ do
+  res1 <- spawnAff "ls" ["bad_path"]
+  res2 <- spawnAff "ls" ["-a"]
+  log $ show res1
+  log $ show res2
+  pure unit
+
+spawnAff :: String -> Array String -> Aff Exit
+spawnAff cmd args = makeAff (\callBack ->
+  do
+  child <- spawn cmd args defaultSpawnOptions
+  onExit child (callBack <<< Right)
+  pure mempty
+  )

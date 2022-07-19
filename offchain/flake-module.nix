@@ -43,6 +43,7 @@
             ordered-collections
             spec
             dotenv
+            node-child-process
           ];
         ps =
           purs-nix.purs
