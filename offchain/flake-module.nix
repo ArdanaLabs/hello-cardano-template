@@ -110,6 +110,12 @@
 
       packages.hello-world-api = hello-world-api.package;
 
+      packages.offchain-docs = pkgs.runCommandNoCC "offchain-docs" { } ''
+        mkdir $out && cd $out
+        # it may make sense to eventually add cli and browser to the srcs, but we need to not define Main twice
+        ${hello-world-api.ps.command{ srcs = [ ./hello-world-api/src ];} }/bin/purs-nix docs
+      '';
+
       packages.hello-world-browser =
         pkgs.runCommand "build-hello-world-browser" { }
           # see buildPursProjcet: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
@@ -148,6 +154,18 @@
 
       apps = {
         ctl-runtime = ctl-pkgs.launchCtlRuntime config;
+
+        serve-offchain-docs = {
+          type = "app";
+          program = pkgs.writeShellApplication
+            {
+              name = projectName;
+              runtimeInputs = [
+                pkgs.nodePackages.http-server
+              ];
+              text = "http-server -c-1 ${self'.packages.offchain-docs}/generated-docs/html/";
+            };
+        };
 
         serve-hello-world-browser = {
           type = "app";

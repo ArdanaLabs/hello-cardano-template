@@ -1213,6 +1213,22 @@
         "type": "github"
       }
     },
+    "docs-search": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1658038328,
+        "narHash": "sha256-OrsN8vyk0jTBUwcUs4nif/zivylvVh5KLHr9tZdr0KA=",
+        "owner": "purs-nix",
+        "repo": "purescript-docs-search",
+        "rev": "9fb444a444476196894542bd25372e5f5d3677c8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "purs-nix",
+        "repo": "purescript-docs-search",
+        "type": "github"
+      }
+    },
     "dream2nix": {
       "inputs": {
         "alejandra": "alejandra",
@@ -4535,6 +4551,7 @@
       "inputs": {
         "builders": "builders",
         "deadnix": "deadnix",
+        "docs-search": "docs-search",
         "easy-ps": "easy-ps",
         "get-flake": "get-flake",
         "make-shell": "make-shell",
@@ -4543,11 +4560,11 @@
         "utils": "utils_6"
       },
       "locked": {
-        "lastModified": 1657669369,
-        "narHash": "sha256-Tr2mHA5E+Ky5U9Y/0jFHLhYcjGqaFO4gaEs+/1o/6a8=",
+        "lastModified": 1658119116,
+        "narHash": "sha256-7EWl61EbO2L43hz4bzrQIS19D7Weq1sgQQpRBJkaw2M=",
         "owner": "ursi",
         "repo": "purs-nix",
-        "rev": "257bab6873bf60015558c50858a5ed0764b8b93b",
+        "rev": "9b3a620ba08dbbfd363617ee1ee7a3ab8f38ecb1",
         "type": "github"
       },
       "original": {
