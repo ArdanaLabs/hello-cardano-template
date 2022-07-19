@@ -151,10 +151,8 @@ runCmd (Command {conf,statePath,subCommand}) = do
           log $ "    " <> show cs <> "," <> show tn
   log "finished"
   liftEffect $ exit 0
-  {- imo this exit shouldn't be needed
-   - but the odc doesn't exit on its own
-   - we will ask ctl about it
-   -}
+  -- this shouldn't be needed
+  -- should be fixed once https://github.com/Plutonomicon/cardano-transaction-lib/pull/731 merges
 
 getDatumFromState :: CliState -> Contract () Int
 getDatumFromState (State state) = do
