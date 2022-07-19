@@ -142,7 +142,7 @@
         { NODE_PATH = "${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules"; }
         ''
           mkdir $out && cd $out
-          NO_RUNTIME=True
+          export NO_RUNTIME=True
           ${hello-world-api.ps.command {srcs = [ ./hello-world-api ];}}/bin/purs-nix test
         '';
 
