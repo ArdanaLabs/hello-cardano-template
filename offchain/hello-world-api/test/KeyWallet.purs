@@ -25,7 +25,9 @@ spec = do
 
 integrationTest :: Aff Unit
 integrationTest = do
-  wallet <- mkKeyWalletFromFiles (toFixturePath "wallet.skey") $ Just $ toFixturePath "staking.skey"
+  wallet <- mkKeyWalletFromFiles
+              (toFixturePath "wallet.skey") 
+              (Just $ toFixturePath "staking.skey")
   cfg <- configWithLogLevel TestnetId wallet Trace
   runContract_ cfg $ do
     helloUnitTest
