@@ -44,6 +44,7 @@
             spec
             dotenv
             node-child-process
+            stringutils
           ];
         ps =
           purs-nix.purs
