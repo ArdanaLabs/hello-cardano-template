@@ -69,7 +69,7 @@
             text = ''
               nix build -L .#checks.\"${system}\".\"hello-world-browser-test:test:integration\" \
                 && less -r result/test-stdout
-              '';
+            '';
           };
         };
       };
