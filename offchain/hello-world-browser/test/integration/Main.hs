@@ -5,8 +5,10 @@
 module Main where
 
 import Control.Monad
+import qualified Data.ByteString.Lazy as BSL
 import Data.String
-import Data.Text (unpack)
+import qualified Data.Text as T
+import Debug.Trace
 import GHC.Generics (Generic)
 import Network.HTTP.Client as HTTP
 import Network.URI
@@ -23,9 +25,10 @@ import Test.Syd.Webdriver
 import Test.WebDriver
 import Test.WebDriver.Capabilities
 import Test.WebDriver.Chrome.Extension (loadExtension)
+import Test.WebDriver.JSON
 import UnliftIO.Path.Directory
 
-data Command = Init | Incr
+data Command = Lock | Incr
   deriving (Show, Eq, Generic)
 
 instance Validity Command -- Implementation is derived via Generic
@@ -35,8 +38,8 @@ instance GenValid Command
 evalCommands :: [Command] -> Int
 evalCommands = foldl f 0
   where
-    f _ Init = 0
-    f c Incr = c + 1
+    f _ Lock = 3
+    f c Incr = c + 2
 
 startHelloWorldBrowser :: SetupFunc URI
 startHelloWorldBrowser = do
@@ -51,8 +54,8 @@ setupWebdriverTestEnv :: URI -> SetupFunc (WebdriverTestEnv ())
 setupWebdriverTestEnv uri = do
   ssh <- seleniumServerSetupFunc
   manager <- liftIO $ HTTP.newManager HTTP.defaultManagerSettings
-  webdriverTestEnv <- webdriverTestEnvSetupFunc ssh manager uri ()
-  let wdConfig = webdriverTestEnvConfig webdriverTestEnv
+  wdTestEnv <- webdriverTestEnvSetupFunc ssh manager uri ()
+  let wdConfig = webdriverTestEnvConfig wdTestEnv
   let wdBrowser = browser $ wdCapabilities wdConfig
   case wdBrowser of
     Chrome {} -> do
@@ -64,7 +67,7 @@ setupWebdriverTestEnv uri = do
         Just namiWallet -> do
           let newBrowser = wdBrowser {chromeExtensions = [namiWallet]}
           let newWdConfig = useBrowser newBrowser wdConfig
-          pure $ webdriverTestEnv {webdriverTestEnvConfig = newWdConfig}
+          pure $ wdTestEnv {webdriverTestEnvConfig = newWdConfig}
     _ -> liftIO $ die "not chrome"
 
 main :: IO ()
@@ -74,16 +77,30 @@ main = sydTest $
       withMaxSuccess 5 $
         forAllValid $ \commands ->
           runWebdriverTestM wte $ do
+            openPage "chrome-extension://lpfcbjknijpeeillifnkikgncikgfhdo/mainPopup.html"
+
+            ss <- screenshot
+
+            liftIO $ BSL.writeFile "a.png" ss
+
+            importBtn <- findElem $ ByName "Import"
+            click importBtn
+
+            selectInput <- findElem (ByCSS "input[type='select']")
+            lastOption <- findElemsFrom selectInput $ ByCSS "input[type='option' value='24']"
+
+            liftIO $ print lastOption
+
             openPath ""
-            initialize <- findElem $ ById "initialize"
+            lock <- findElem $ ById "lock"
             increment <- findElem $ ById "increment"
             counter <- findElem $ ById "counter"
 
             let interpret c = click $ case c of
-                  Init -> initialize
+                  Lock -> lock
                   Incr -> increment
 
             mapM_ interpret commands
-            n <- unpack <$> getText counter
+            n <- T.unpack <$> getText counter
 
             when (n /= show (evalCommands commands)) $ error "fail"
