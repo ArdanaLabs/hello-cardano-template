@@ -62,13 +62,13 @@
       devShells.hello-world-browser-test = haskellNixFlake.devShell;
       checks = haskellNixFlake.checks // { };
       apps = {
-        "offchain-ctl:hello-world-browser:test" = {
+        "offchain:hello-world-browser:test" = {
           type = "app";
           program = pkgs.writeShellApplication {
             name = "run-hello-world-browser-tests";
             text = ''
               nix build -L .#checks.\"${system}\".\"hello-world-browser-test:test:integration\" \
-                && less -r result/test-stdout
+                && cat result/test-stdout
             '';
           };
         };
