@@ -8,11 +8,18 @@ import Test.Encoding as Encoding
 import KeyWallet as KeyWallet
 
 import Effect.Aff (launchAff_)
+import Node.Process(lookupEnv)
+import Test.Spec(describe,pending)
 import Test.Spec.Runner (runSpec',defaultConfig)
 import Test.Spec.Reporter.Console (consoleReporter)
-import Data.Maybe(Maybe(Nothing))
+import Data.Maybe(Maybe(Nothing),isNothing)
 
 main :: Effect Unit
-main = launchAff_ $ runSpec' defaultConfig{timeout=Nothing} [ consoleReporter ] do
-  Encoding.spec
-  KeyWallet.spec
+main = do
+  runtime <- isNothing <$> lookupEnv "NO_RUNTIME"
+  launchAff_ $ runSpec' defaultConfig{timeout=Nothing} [ consoleReporter ] do
+    Encoding.spec
+    if runtime
+      then describe "runtime tests"  do
+        KeyWallet.spec
+      else pending "runtime tests dellayed"
