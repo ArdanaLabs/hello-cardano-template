@@ -35,14 +35,14 @@ declare_wait_run $cmd -c badWalletCfg -s script.clistate lock -i 0 -p 1
 echo example: no state arg example
 declare_wait_run $cmd -c testWalletCfg lock -i 0 -p 1
 
-echo example: no state file on inc example
-declare_wait_run $cmd -c testWalletCfg -s bad_path inc
+echo example: no state file on increment example
+declare_wait_run $cmd -c testWalletCfg -s bad_path increment
 
 echo example: yes state file on lock
 declare_wait_run $cmd -c testWalletCfg -s badState lock -i 0 -p 1
 
-echo example: bad state file on inc example
-declare_wait_run $cmd -c badWalletCfg -s badState inc
+echo example: bad state file on increment example
+declare_wait_run $cmd -c badWalletCfg -s badState increment
 echo this error isn't great but you shouldn't be hand writing state files anyway
 
 echo
@@ -64,10 +64,10 @@ echo example: query state
 declare_wait_run $cmd -c testWalletCfg -s script.clistate query
 
 echo example: increment datum
-declare_wait_run $cmd -c testWalletCfg -s script.clistate inc
+declare_wait_run $cmd -c testWalletCfg -s script.clistate increment
 
 echo example: query state
 declare_wait_run $cmd -c testWalletCfg -s script.clistate query
 
-echo example: end
-declare_wait_run $cmd -c testWalletCfg -s script.clistate end
+echo example: unlock
+declare_wait_run $cmd -c testWalletCfg -s script.clistate unlock
