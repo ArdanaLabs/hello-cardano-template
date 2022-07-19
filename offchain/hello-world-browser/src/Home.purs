@@ -14,18 +14,12 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Plutus.Types.Value (Value)
+import Plutus.Types.Value (Coin(..), Value, valueToCoin)
 import Scripts (validatorHash)
-
-initDatum :: Int
-initDatum = 1
-
-incrAmount :: Int
-incrAmount = 2
 
 type Payload =
   { datum :: Int
-  , fundsLocked :: Value
+  , fundsLocked :: Coin
   , lastOutput :: TransactionInput
   }
 
@@ -39,7 +33,7 @@ data State
   | Locking
   | Locked Payload
   | Incrementing Int Int
-  | Redeeming Value
+  | Redeeming Coin
 
 getDatumFromState :: TransactionInput -> Contract () Int
 getDatumFromState txId = do
@@ -77,12 +71,12 @@ component =
       H.modify_ \_ -> Locking
       cfg <- asks _.contractConfig
       (lastOutput /\ fundsLocked) <- H.liftAff $ runContract cfg $ do
-        validator <- helloScript initDatum
+        validator <- helloScript 2
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-        txId <- sendDatumToScript incrAmount vhash
+        txId <- sendDatumToScript 1 vhash
         TransactionOutput utxo <- getUtxo txId >>= liftContractM "couldn't find utxo"
-        pure (txId /\ utxo.amount)
-      H.modify_ \_ -> Locked { datum: initDatum + incrAmount, fundsLocked, lastOutput }
+        pure (txId /\ valueToCoin utxo.amount)
+      H.modify_ \_ -> Locked { datum: 3, fundsLocked, lastOutput }
     Incr { datum, fundsLocked, lastOutput } -> do
       H.modify_ \_ -> Incrementing datum (datum + 2)
       cfg <- asks _.contractConfig
@@ -90,8 +84,8 @@ component =
         validator <- helloScript datum
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
         oldDatum <- getDatumFromState lastOutput
-        setDatumAtScript (oldDatum + incrAmount) vhash validator lastOutput
-      H.modify_ \_ -> Locked $ { datum: datum + incrAmount, fundsLocked, lastOutput: lastOutput' }
+        setDatumAtScript (oldDatum + 2) vhash validator lastOutput
+      H.modify_ \_ -> Locked $ { datum: datum + 2, fundsLocked, lastOutput: lastOutput' }
     Redeem { datum, fundsLocked, lastOutput } -> do
       H.modify_ \_ -> Redeeming fundsLocked
       cfg <- asks _.contractConfig
