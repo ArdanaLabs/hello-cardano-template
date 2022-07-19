@@ -13,34 +13,48 @@
       # A flake-module in nix/flake-modules/haskell.nix defines haskell-nix
       # packages once, so we can reuse it here, it's more performant.
       pkgs = config.haskell-nix.pkgs;
-      haskellNixFlake =
-        fixHaskellDotNix (project.flake { })
-          [ ./hello-world-browser-test.cabal ];
+
+      # runtime dependencies required for the integration test.
+      integrationTestRuntimeDeps = with realNixpkgs; [
+        chromedriver
+        chromium
+        selenium-server-standalone
+      ];
+
       project = pkgs.haskell-nix.cabalProject {
-        modules = [{
-          packages = {
-            hello-world-browser-test.components.tests.integration = {
-              pkgconfig = [ [ realNixpkgs.makeWrapper ] ];
-              postInstall = with realNixpkgs; ''
-                wrapProgram $out/bin/integration \
-                  --set FONTCONFIG_FILE ${makeFontsConf { fontDirectories = [ twitter-color-emoji roboto ]; }} \
-                  --set HELLO_WORLD_BROWSER_INDEX ${self'.packages.hello-world-browser} \
-                  --prefix PATH : "${realNixpkgs.lib.makeBinPath [
-                    chromedriver
-                    chromium
-                    selenium-server-standalone
-                  ]}"
-              '';
-            };
-          };
-        }];
         name = "hello-world-browser-test";
+
         src = pkgs.runCommand "hello-world-browser-test" { } ''
           cp -rT ${./.} $out
           cp ${./Nami.crx} Nami.crx
         '';
+
         compiler-nix-name = "ghc8107";
         sha256map = import ./sha256map;
+
+        modules = [{
+          packages = {
+            hello-world-browser-test.components.tests.integration =
+              let
+                fontconfigFile =
+                  with realNixpkgs;
+                  makeFontsConf {
+                    fontDirectories = [ twitter-color-emoji roboto ];
+                  };
+                pathEnv = realNixpkgs.lib.makeBinPath integrationTestRuntimeDeps;
+              in
+              {
+                pkgconfig = [ [ realNixpkgs.makeWrapper ] ];
+                postInstall = with realNixpkgs; ''
+                  wrapProgram $out/bin/integration \
+                    --set FONTCONFIG_FILE ${fontconfigFile} \
+                    --set HELLO_WORLD_BROWSER_INDEX ${self'.packages.hello-world-browser} \
+                    --prefix PATH : "${pathEnv}"
+                '';
+              };
+          };
+        }];
+
         # This is used by `nix develop .` to open a shell for use with
         # `cabal`, `hlint` and `haskell-language-server`
         shell = {
@@ -49,13 +63,13 @@
             hlint = { };
             haskell-language-server = { };
           };
-          buildInputs = with realNixpkgs; [
-            chromedriver
-            chromium
-            selenium-server-standalone
-          ];
+          buildInputs = integrationTestRuntimeDeps;
         };
       };
+
+      haskellNixFlake =
+        fixHaskellDotNix (project.flake { })
+          [ ./hello-world-browser-test.cabal ];
     in
     {
       packages = haskellNixFlake.packages;
