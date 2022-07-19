@@ -63,7 +63,7 @@ lock  = command "lock" (info (Lock <$> lockOptions) (progDesc "lock some ada wit
         <*> option int (long "init" <> short 'i' <> metavar "INITIAL_DATUM")
 
 increment :: Mod CommandFields SubCommand
-increment = command "inc" (info (pure Increment) (progDesc "increment the datum"))
+increment = command "increment" (info (pure Increment) (progDesc "increment the datum"))
 
 unlock :: Mod CommandFields SubCommand
 unlock = command "unlock" (info (pure Unlock) (progDesc "unlock the value back to your wallet"))
