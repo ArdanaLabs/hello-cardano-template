@@ -8,18 +8,18 @@ import Contract.PlutusData (Datum(..), PlutusData(..), getDatumByHash)
 import Contract.Transaction (TransactionInput, TransactionOutput(..))
 import Contract.Utxos (getUtxo)
 import Control.Monad.Reader (class MonadAsk, asks)
-import Data.BigInt as Big
+import Data.BigInt (BigInt, fromInt, toInt)
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Plutus.Types.Value (Coin(..), Value, valueToCoin)
+import Plutus.Types.Value (getLovelace, valueToCoin)
 import Scripts (validatorHash)
 
 type Payload =
   { datum :: Int
-  , fundsLocked :: Coin
+  , fundsLocked :: BigInt
   , lastOutput :: TransactionInput
   }
 
@@ -33,7 +33,7 @@ data State
   | Locking
   | Locked Payload
   | Incrementing Int Int
-  | Redeeming Coin
+  | Redeeming BigInt
 
 getDatumFromState :: TransactionInput -> Contract () Int
 getDatumFromState txId = do
@@ -46,7 +46,7 @@ getDatumFromState txId = do
   asBigInt <- liftContractM "datum wasn't an integer" $ case oldDatum of
     Datum (Integer n) -> Just n
     _ -> Nothing
-  liftContractM "Datum was actually big. We should support this but currently don't" $ Big.toInt asBigInt
+  liftContractM "Datum was actually big. We should support this but currently don't" $ toInt asBigInt
 
 component
   :: forall q o r m
@@ -68,32 +68,32 @@ component =
   handleAction :: forall slots. Action -> H.HalogenM State Action slots o m Unit
   handleAction = case _ of
     Lock -> do
-      H.modify_ \_ -> Locking
+      H.modify_ $ const Locking
       cfg <- asks _.contractConfig
       (lastOutput /\ fundsLocked) <- H.liftAff $ runContract cfg $ do
         validator <- helloScript 2
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
         txId <- sendDatumToScript 1 vhash
         TransactionOutput utxo <- getUtxo txId >>= liftContractM "couldn't find utxo"
-        pure (txId /\ valueToCoin utxo.amount)
-      H.modify_ \_ -> Locked { datum: 3, fundsLocked, lastOutput }
+        pure (txId /\ ((getLovelace $ valueToCoin utxo.amount) / fromInt 1_000_000))
+      H.modify_ $ const $ Locked { datum: 3, fundsLocked, lastOutput }
     Incr { datum, fundsLocked, lastOutput } -> do
-      H.modify_ \_ -> Incrementing datum (datum + 2)
+      H.modify_ $ const $ Incrementing datum (datum + 2)
       cfg <- asks _.contractConfig
       lastOutput' <- H.liftAff $ runContract cfg $ do
-        validator <- helloScript datum
+        validator <- helloScript 2
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
         oldDatum <- getDatumFromState lastOutput
         setDatumAtScript (oldDatum + 2) vhash validator lastOutput
-      H.modify_ \_ -> Locked $ { datum: datum + 2, fundsLocked, lastOutput: lastOutput' }
-    Redeem { datum, fundsLocked, lastOutput } -> do
-      H.modify_ \_ -> Redeeming fundsLocked
+      H.modify_ $ const $ Locked { datum: datum + 2, fundsLocked, lastOutput: lastOutput' }
+    Redeem { fundsLocked, lastOutput } -> do
+      H.modify_ $ const $ Redeeming fundsLocked
       cfg <- asks _.contractConfig
       H.liftAff $ runContract_ cfg $ do
-        validator <- helloScript datum
+        validator <- helloScript 2
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
         redeemFromScript vhash validator lastOutput
-      H.modify_ \_ -> Unlocked
+      H.modify_ $ const Unlocked
 
   render :: forall slots. State -> H.ComponentHTML Action slots m
   render = case _ of
