@@ -123,7 +123,7 @@ runCmd (Command {conf,statePath,subCommand}) = do
         txid <- setDatumAtScript newDatum vhash validator state.lastOutput
         pure $ State $ state{lastOutput=txid}
       writeState statePath newState
-    End -> do
+    Unlock -> do
       (State state) <- readState statePath
       runContract_ cfg $ do
         validator <- helloScript state.param

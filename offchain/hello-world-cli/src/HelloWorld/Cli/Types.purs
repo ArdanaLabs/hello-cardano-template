@@ -26,7 +26,7 @@ data SubCommand
     ,initialDatum :: Int
     }
   | Increment
-  | End
+  | Unlock
   | Query
 
 type FileState =

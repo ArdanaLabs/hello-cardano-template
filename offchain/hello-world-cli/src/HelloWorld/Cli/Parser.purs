@@ -51,7 +51,7 @@ stateFile = strOption (long "state-file" <> short 's' <> metavar "STATE_FILE")
 subCommand :: Parser SubCommand
 subCommand = hsubparser $
   (commandGroup "Cli commands:") <>
-  lock <> increment <> end <> query
+  lock <> increment <> unlock <> query
 
 lock :: Mod CommandFields SubCommand
 lock  = command "lock" (info (Lock <$> lockOptions) (progDesc "lock some ada with the contract"))
@@ -62,12 +62,12 @@ lock  = command "lock" (info (Lock <$> lockOptions) (progDesc "lock some ada wit
         <$> option int (long "param" <> short 'p' <> metavar "CONTRACT_PARAMETER")
         <*> option int (long "init" <> short 'i' <> metavar "INITIAL_DATUM")
 
-increment ::  Mod CommandFields SubCommand
+increment :: Mod CommandFields SubCommand
 increment = command "inc" (info (pure Increment) (progDesc "increment the datum"))
 
-end ::  Mod CommandFields SubCommand
-end = command "end" (info (pure End) (progDesc "redeem the value"))
+unlock :: Mod CommandFields SubCommand
+unlock = command "unlock" (info (pure Unlock) (progDesc "unlock the value back to your wallet"))
 
-query ::  Mod CommandFields SubCommand
+query :: Mod CommandFields SubCommand
 query = command "query" (info (pure Query) (progDesc "query info about a state file"))
 
