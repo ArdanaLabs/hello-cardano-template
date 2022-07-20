@@ -25,6 +25,7 @@ import Test.Syd.Webdriver
 import Test.WebDriver
 import Test.WebDriver.Capabilities
 import Test.WebDriver.Chrome.Extension (loadExtension)
+import Test.WebDriver.Commands.Wait (waitUntil)
 import Test.WebDriver.JSON
 import UnliftIO.Path.Directory
 
@@ -79,8 +80,9 @@ main = sydTest $
           runWebdriverTestM wte $ do
             openPage "chrome-extension://lpfcbjknijpeeillifnkikgncikgfhdo/mainPopup.html"
 
-            ss <- screenshot
+            waitUntil 5 $ findElem $ ByName "Import"
 
+            ss <- screenshot
             liftIO $ BSL.writeFile "a.png" ss
 
             importBtn <- findElem $ ByName "Import"
