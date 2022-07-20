@@ -1,4 +1,4 @@
-{ self, system, pkgs }:
+{ self, pkgs }:
 let
   lib = self.inputs.nixpkgs.lib;
 in
@@ -26,9 +26,9 @@ in
         plutus-ledger.flags.defer-plugin-errors = deferPluginErrors;
         plutus-contract.flags.defer-plugin-errors = deferPluginErrors;
         cardano-crypto-praos.components.library.pkgconfig =
-          lib.mkForce [ [ (import self.inputs.plutus { inherit system; }).pkgs.libsodium-vrf ] ];
+          lib.mkForce [ [ (import self.inputs.plutus { inherit (pkgs) system; }).pkgs.libsodium-vrf ] ];
         cardano-crypto-class.components.library.pkgconfig =
-          lib.mkForce [ [ (import self.inputs.plutus { inherit system; }).pkgs.libsodium-vrf ] ];
+          lib.mkForce [ [ (import self.inputs.plutus { inherit (pkgs) system; }).pkgs.libsodium-vrf ] ];
       };
     }];
 }

@@ -5,8 +5,8 @@
     let
       # dusd-lib contains helper functions for dealing with haskell.nix. From it,
       # we inherit fixHaskellDotNix
-      dusd-lib = import "${self}/nix/lib/haskell.nix" { inherit system self pkgs; };
-      inherit (dusd-lib) fixHaskellDotNix;
+      dusd-lib = config.dusd-lib;
+      inherit (dusd-lib.haskell) fixHaskellDotNix;
       # realNixpkgs is required to get chromium and selenium from
       # cache.nixos.org rather than the bloated Haskell.nix Nixpkgs.
       realNixpkgs = inputs'.nixpkgs.legacyPackages;
@@ -61,6 +61,18 @@
       packages = haskellNixFlake.packages;
       devShells.hello-world-browser-test = haskellNixFlake.devShell;
       checks = haskellNixFlake.checks // { };
+      apps = {
+        "offchain:hello-world-browser:test" = {
+          type = "app";
+          program = pkgs.writeShellApplication {
+            name = "run-hello-world-browser-tests";
+            text = ''
+              nix build -L .#checks.\"${system}\".\"hello-world-browser-test:test:integration\" \
+                && cat result/test-stdout
+            '';
+          };
+        };
+      };
     };
   flake = { };
 }
