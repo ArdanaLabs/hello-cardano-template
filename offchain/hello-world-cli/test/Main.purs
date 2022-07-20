@@ -4,7 +4,7 @@ module Test.Main
 
 import Contract.Prelude
 import Effect.Aff(launchAff_)
-import CmdUtils(fails,passes,failsSaying,passesSaying,spawnAff)
+import CmdUtils(fails,failsSaying,passesSaying,spawnAff)
 import Test.Spec(it,describe)
 import Test.Spec.Runner (runSpec',defaultConfig)
 import Test.Spec.Reporter.Console (consoleReporter)
@@ -92,25 +92,25 @@ main = launchAff_ $ do
     describe "integration test" do
       -- TODO I'm not sure why they aren't saying finished
       it "lock"
-        $ passes --Saying
+        $ passesSaying
           (cli <> "-c" <> conf <> "-s" <> state <> "lock -i 0 -p 1")
-          --"finished"
+          "finished"
       it "querry"
         $ passesSaying
         (cli <> "-c" <> conf <> "-s" <> state <> "query")
         "Current datum:0"
       it "increment"
-        $ passes -- Saying
-        (cli <> "-c" <> conf <> "-s" <> state <> "increment")
-        --"finished"
+        $ passesSaying
+          (cli <> "-c" <> conf <> "-s" <> state <> "increment")
+          "finished"
       it "querry"
         $ passesSaying
         (cli <> "-c" <> conf <> "-s" <> state <> "query")
         "Current datum:1"
       it "unlock"
-        $ passes -- Saying
-        (cli <> "-c" <> conf <> "-s" <> state <> "unlock")
-        --"finished"
+        $ passesSaying
+          (cli <> "-c" <> conf <> "-s" <> state <> "unlock")
+          "finished"
       it "state is gone"
         $ failsSaying
           ("ls" <> state)

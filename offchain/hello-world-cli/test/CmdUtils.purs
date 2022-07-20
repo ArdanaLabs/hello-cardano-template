@@ -8,15 +8,11 @@ module CmdUtils
 
 import Contract.Prelude
 import Node.ChildProcess
-  (Exit(Normally)
-  ,ChildProcess
-  ,spawn
-  ,defaultSpawnOptions
-  ,onExit
-  ,stdout
-  ,stderr
+  (ExecResult
+  ,execFile
+  ,defaultExecOptions
   )
-import Node.Stream(readString)
+import Node.Buffer.Class(toString)
 import Node.Encoding(Encoding(UTF8))
 import Effect.Aff(makeAff)
 import Data.Tuple.Nested(type (/\))
@@ -24,65 +20,88 @@ import Data.Array(uncons)
 import Data.String.Utils(words)
 import Test.Spec.Assertions(fail)
 import Data.String(Pattern(Pattern),contains)
+import Effect.Exception(Error)
 
 passes :: String -> Aff Unit
 passes cmd = do
-  (exit /\ _) <- spawnAff' cmd
-  unless (exit # isSuccess) $
-    fail $ "unexpected failure running: " <> cmd
-            <> "\nexited with: " <> show exit
+  (exit /\ out) <- spawnAff cmd
+  case exit of
+    Just err ->
+      fail $
+        "unexpected failure running: " <> cmd <>
+        "\nerred with: " <> show err <>
+        "\noutput was:\n:" <> out
+    Nothing -> pure unit
 
 passesSaying :: String -> String -> Aff Unit
 passesSaying cmd msg = do
   (exit /\ output) <- spawnAff cmd
-  unless (exit # isSuccess) $
-    fail $ "unexpected failure running: " <> cmd
-            <> "\nexited with: " <> show exit
-  unless (contains (Pattern msg) output) $
-    fail $
-      "output did not match running:" <> cmd <>
-      "\nexpected to contain: " <> msg <>
-      "\noutput was:\n" <> output
+  case exit of
+    Just err ->
+      fail $
+        "unexpected failure running: " <> cmd <>
+        "\nexited with: " <> show err <>
+        "\noutput was:\n:" <> output
+    Nothing ->
+      unless (contains (Pattern msg) output) $
+        fail $
+        "output did not match running:" <> cmd <>
+        "\nexpected to contain: " <> msg <>
+        "\noutput was:\n" <> output
 
 fails :: String -> Aff Unit
 fails cmd = do
-  (exit /\ _) <- spawnAff' cmd
-  when (exit # isSuccess) $
-    fail $ "unexpected succes running: " <> cmd
+  (exit /\ output) <- spawnAff cmd
+  case exit of
+    Nothing ->
+      fail $
+      "unexpected succes running: " <> cmd <>
+      "\noutput was:\n" <> output
+    Just _ -> pure unit
 
 failsSaying :: String -> String -> Aff Unit
 failsSaying cmd errMsg = do
   (exit /\ output) <- spawnAff cmd
-  when (exit # isSuccess) $
-    fail $ "unexpected succes running: " <> cmd
-  unless (contains (Pattern errMsg) output) $
-    fail $
+  case exit of
+    Nothing ->
+      fail $
+      "unexpected succes running: " <> cmd <>
+      "\noutput was:\n" <> output
+    Just _ ->
+      unless (contains (Pattern errMsg) output) $
+      fail $
       "errMsg did not match running:" <> cmd <>
       "\nexpected to contain: " <> errMsg <>
       "\noutput was:\n" <> output
 
-testCmd :: String -> Aff Boolean
-testCmd cmd = spawnAff' cmd <#> fst >>> isSuccess
-
-isSuccess :: Exit -> Boolean
-isSuccess (Normally 0) = true
-isSuccess _ = false
-
-spawnAff :: String -> Aff (Exit /\ String)
+spawnAff :: String -> Aff (Maybe Error /\ String)
 spawnAff cmd = do
-  (exit /\ child) <- spawnAff' cmd
-  out <- liftEffect $ readString (stdout child) Nothing UTF8
-  err <- liftEffect $ readString (stderr child) Nothing UTF8
-  pure $ (exit /\ fromMaybe "" (out <> err))
+  let (file /\ args) = parseCmd cmd
+  (res :: ExecResult) <- execAff file args
+  out <- liftEffect $ toString UTF8 res.stdout
+  err <- liftEffect $ toString UTF8 res.stderr
+  pure $ (res.error /\ (out <> err))
+
+
+execAff :: String -> Array String -> Aff ExecResult
+execAff file args = makeAff $ \callBack -> do
+    _child <- execFile file args defaultExecOptions (callBack <<< Right)
+    pure mempty
+
+{-
+readStream :: forall w. Readable w -> Aff String
+readStream stream = do
+  partials <- replicateM 100 (liftEffect $ readString stream Nothing UTF8)
+  pure $ fold $ catMaybes partials
 
 spawnAff' :: String -> Aff (Exit /\ ChildProcess)
-spawnAff' cmd = makeAff (\callBack ->
-  do
+spawnAff' cmd = makeAff (\callBack -> do
   let (exec /\ args) = parseCmd cmd
   child <- spawn exec args defaultSpawnOptions
   onExit child (callBack <<< Right <<< (_ /\ child))
   pure mempty
   )
+-}
 
 parseCmd :: String -> (String /\ Array String)
 parseCmd str = case uncons (words str) of
