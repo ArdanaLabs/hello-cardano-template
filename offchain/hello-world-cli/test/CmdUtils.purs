@@ -1,6 +1,8 @@
 module CmdUtils
   (passes
   ,fails
+  ,failsSaying
+  ,passesSaying
   ,spawnAff
   ) where
 
@@ -20,14 +22,44 @@ import Effect.Aff(makeAff)
 import Data.Tuple.Nested(type (/\))
 import Data.Array(uncons)
 import Data.String.Utils(words)
-import Effect.Exception(Error)
-import Test.Spec.Assertions(shouldReturn)
+import Test.Spec.Assertions(fail)
+import Data.String(Pattern(Pattern),contains)
 
 passes :: String -> Aff Unit
-passes cmd = shouldReturn (testCmd cmd) true
+passes cmd = do
+  (exit /\ _) <- spawnAff' cmd
+  unless (exit # isSuccess) $
+    fail $ "unexpected failure running: " <> cmd
+            <> "\nexited with: " <> show exit
+
+passesSaying :: String -> String -> Aff Unit
+passesSaying cmd msg = do
+  (exit /\ output) <- spawnAff cmd
+  unless (exit # isSuccess) $
+    fail $ "unexpected failure running: " <> cmd
+            <> "\nexited with: " <> show exit
+  unless (contains (Pattern msg) output) $
+    fail $
+      "output did not match running:" <> cmd <>
+      "\nexpected to contain: " <> msg <>
+      "\noutput was:\n" <> output
 
 fails :: String -> Aff Unit
-fails cmd = shouldReturn (testCmd cmd) false
+fails cmd = do
+  (exit /\ _) <- spawnAff' cmd
+  when (exit # isSuccess) $
+    fail $ "unexpected succes running: " <> cmd
+
+failsSaying :: String -> String -> Aff Unit
+failsSaying cmd errMsg = do
+  (exit /\ output) <- spawnAff cmd
+  when (exit # isSuccess) $
+    fail $ "unexpected succes running: " <> cmd
+  unless (contains (Pattern errMsg) output) $
+    fail $
+      "errMsg did not match running:" <> cmd <>
+      "\nexpected to contain: " <> errMsg <>
+      "\noutput was:\n" <> output
 
 testCmd :: String -> Aff Boolean
 testCmd cmd = spawnAff' cmd <#> fst >>> isSuccess

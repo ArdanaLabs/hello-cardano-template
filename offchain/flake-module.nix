@@ -144,6 +144,7 @@
             export NODE_PATH=${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules
             ${hello-world-cli.ps.command {srcs = [ ./hello-world-cli ];}}/bin/purs-nix run $@
           '';
+            #${hello-world-cli.ps.modules.Main.app{ name = "test-name";}}/bin/purs-nix run $@
 
       checks.hello-world-api-tests = pkgs.runCommand
         "api-tests"
