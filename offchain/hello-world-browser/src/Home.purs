@@ -8,7 +8,7 @@ import Contract.PlutusData (Datum(..), PlutusData(..), getDatumByHash)
 import Contract.Transaction (TransactionInput, TransactionOutput(..))
 import Contract.Utxos (getUtxo)
 import Control.Monad.Reader (class MonadAsk, asks)
-import Data.BigInt (BigInt, fromInt, toInt)
+import Data.BigInt (fromInt, toInt, toNumber)
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.HTML as HH
@@ -19,7 +19,7 @@ import Scripts (validatorHash)
 
 type Payload =
   { datum :: Int
-  , fundsLocked :: BigInt
+  , fundsLocked :: Number
   , lastOutput :: TransactionInput
   }
 
@@ -33,7 +33,7 @@ data State
   | Locking
   | Locked Payload
   | Incrementing Int Int
-  | Redeeming BigInt
+  | Redeeming Number
 
 getDatumFromState :: TransactionInput -> Contract () Int
 getDatumFromState txId = do
@@ -75,7 +75,7 @@ component =
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
         txId <- sendDatumToScript 1 vhash
         TransactionOutput utxo <- getUtxo txId >>= liftContractM "couldn't find utxo"
-        pure (txId /\ ((getLovelace $ valueToCoin utxo.amount) / fromInt 1_000_000))
+        pure (txId /\ (toNumber ((getLovelace $ valueToCoin utxo.amount) / fromInt 1_000_000)))
       H.modify_ $ const $ Locked { datum: 3, fundsLocked, lastOutput }
     Incr { datum, fundsLocked, lastOutput } -> do
       H.modify_ $ const $ Incrementing datum (datum + 2)
