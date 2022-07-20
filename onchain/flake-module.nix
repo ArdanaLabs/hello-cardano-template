@@ -8,8 +8,8 @@
       # dusd-lib contains helper functions for dealing with haskell.nix. From it,
       # we inherit fixHaskellDotNix and some common attributes to give to
       # cabalProject'
-      dusd-lib = import "${self}/nix/lib/haskell.nix" { inherit system self pkgs; };
-      inherit (dusd-lib) commonPlutusModules commonPlutusShell fixHaskellDotNix;
+      dusd-lib = config.dusd-lib;
+      inherit (dusd-lib.haskell) commonPlutusModules commonPlutusShell fixHaskellDotNix;
       haskellNixFlake = fixHaskellDotNix (project.flake { }) [ ./dUSD-onchain.cabal ];
 
       project = pkgs.haskell-nix.cabalProject' {
@@ -36,19 +36,13 @@
     in
     {
       apps = {
-        "onchain:test" = {
-          type = "app";
-          program = pkgs.writeShellApplication {
-            name = "run-onchain-test";
-            runtimeInputs = with pkgs; [ jq coreutils ];
-            text = ''
-              # run tests
-              PROJ_DIR="$(nix flake metadata --json | jq .locked.url -cr | cut --characters=8-)"
-              cd "$PROJ_DIR"/onchain
-              nix develop .#onchain -c cabal test
-            '';
-          };
-        };
+        "onchain:test" =
+          dusd-lib.mkRunCmdInShellApp
+            {
+              scriptName = "run-onchain-test";
+              devshellName = "onchain";
+              command = "cd onchain && cabal test";
+            };
       };
       packages = haskellNixFlake.packages // {
         onchain-scripts = pkgs.stdenv.mkDerivation {
