@@ -112,7 +112,7 @@
 
         hello-world-api = hello-world-api.package;
         offchain-docs =
-          pkgs.runCommandNoCC "offchain-docs" { }
+          pkgs.runCommand "offchain-docs" { }
             ''
               mkdir $out && cd $out
               # it may make sense to eventually add cli and browser to the srcs, but we need to not define Main twice
