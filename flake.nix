@@ -27,8 +27,7 @@
       flake = false;
       url = "github:nix-community/npmlock2nix";
     };
-    purs-nix.url = "github:ursi/purs-nix";
-    purs-nix-0-14.url = "github:ursi/purs-nix/ps-0.14";
+    purs-nix.url = "github:ursi/purs-nix/ps-0.14";
   };
 
   outputs = { self, flake-parts, ... }:
