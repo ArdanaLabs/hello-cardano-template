@@ -4,30 +4,61 @@
 
 module Main where
 
-import Control.Monad
-import qualified Data.ByteString.Lazy as BSL
-import Data.String
+import Control.Monad (unless, when)
+import Data.Aeson (KeyValue ((.=)), Value (Null), object)
+import Data.String (IsString (fromString))
 import qualified Data.Text as T
-import Debug.Trace
 import GHC.Generics (Generic)
+import GHC.Stack (HasCallStack)
 import Network.HTTP.Client as HTTP
-import Network.URI
+  ( defaultManagerSettings,
+    newManager,
+  )
+import Network.URI (URI, parseURI)
 import Network.Wai.Application.Static (defaultFileServerSettings, staticApp)
-import Path
-import Path.IO
+import Path (fromAbsFile)
+import Path.IO (forgivingAbsence, getCurrentDir, resolveFile)
 import System.Environment (getEnv)
-import System.Exit
+import System.Exit (die)
 import Test.QuickCheck (mapSize, withMaxSuccess)
 import Test.Syd
-import Test.Syd.Validity
-import Test.Syd.Wai
+  ( MonadIO (liftIO),
+    SetupFunc,
+    expectationFailure,
+    it,
+    setupAround,
+    sydTest,
+  )
+import Test.Syd.Validity (GenValid, Validity, forAllValid)
+import Test.Syd.Wai (applicationSetupFunc, methodDelete, methodGet, methodPost)
 import Test.Syd.Webdriver
+  ( WebdriverTestEnv (webdriverTestEnvConfig),
+    openPath,
+    runWebdriverTestM,
+    seleniumServerSetupFunc,
+    webdriverTestEnvSetupFunc,
+  )
 import Test.WebDriver
-import Test.WebDriver.Capabilities
+  ( Browser (Chrome, chromeExtensions, chromeOptions),
+    Capabilities (browser),
+    Selector (ByClass, ById, ByXPath),
+    WDConfig (wdCapabilities),
+    click,
+    findElem,
+    getText,
+    openPage,
+    sendKeys,
+    useBrowser,
+    windows,
+  )
+import Test.WebDriver as WD hiding (closeWindow, focusWindow, getCurrentWindow)
 import Test.WebDriver.Chrome.Extension (loadExtension)
-import Test.WebDriver.Commands.Wait (waitUntil)
-import Test.WebDriver.JSON
-import UnliftIO.Path.Directory
+import Test.WebDriver.Class (WebDriver (..))
+import Test.WebDriver.Commands (WindowHandle)
+import qualified Test.WebDriver.Commands.Internal as WD
+import Test.WebDriver.Commands.Wait (expect, waitUntil)
+import qualified Test.WebDriver.JSON as WD
+import UnliftIO.Path.Directory (getCurrentDirectory)
 
 data Command = Lock | Incr
   deriving (Show, Eq, Generic)
@@ -66,10 +97,34 @@ setupWebdriverTestEnv uri = do
       case mbNamiWallet of
         Nothing -> liftIO $ die "Nami wallet not loaded"
         Just namiWallet -> do
-          let newBrowser = wdBrowser {chromeExtensions = [namiWallet]}
+          let newBrowser =
+                wdBrowser
+                  { chromeExtensions = [namiWallet],
+                    chromeOptions =
+                      [ "--no-sandbox", -- Bypass OS security model to run on nix as well
+                        "--disable-dev-shm-usage", -- Overcome limited resource problem
+                        "--disable-gpu",
+                        "--use-gl=angle",
+                        "--use-angle=swiftshader",
+                        "--window-size=1920,1080"
+                      ]
+                  }
           let newWdConfig = useBrowser newBrowser wdConfig
           pure $ wdTestEnv {webdriverTestEnvConfig = newWdConfig}
     _ -> liftIO $ die "not chrome"
+
+getCurrentWindow :: (HasCallStack, WebDriver wd) => wd WindowHandle
+getCurrentWindow = WD.doSessCommand methodGet "/window_handle" Null
+
+focusWindow :: (HasCallStack, WebDriver wd) => WindowHandle -> wd ()
+focusWindow (WindowHandle h) = WD.noReturn $ WD.doSessCommand methodPost "/window" $ object ["name" .= h]
+
+closeWindow :: (HasCallStack, WebDriver wd) => WindowHandle -> wd ()
+closeWindow w = do
+  cw <- getCurrentWindow
+  focusWindow w
+  WD.ignoreReturn $ WD.doSessCommand methodDelete "/window" Null
+  unless (w == cw) $ focusWindow cw
 
 main :: IO ()
 main = sydTest $
@@ -80,18 +135,28 @@ main = sydTest $
           runWebdriverTestM wte $ do
             openPage "chrome-extension://lpfcbjknijpeeillifnkikgncikgfhdo/mainPopup.html"
 
-            waitUntil 5 $ findElem $ ByName "Import"
+            firstWindow <- getCurrentWindow
 
-            ss <- screenshot
-            liftIO $ BSL.writeFile "a.png" ss
-
-            importBtn <- findElem $ ByName "Import"
+            importBtn <- findElem $ ByXPath "//button[text()='Import']"
             click importBtn
 
-            selectInput <- findElem (ByCSS "input[type='select']")
-            lastOption <- findElemsFrom selectInput $ ByCSS "input[type='option' value='24']"
+            selectInput <- findElem $ ByXPath "//select"
+            sendKeys "24" selectInput
 
-            liftIO $ print lastOption
+            agreeBtn <- findElem $ ByClass "chakra-checkbox"
+            click agreeBtn
+
+            continueBtn <- findElem $ ByXPath "//button[text()='Continue']"
+            click continueBtn
+
+            waitUntil 5 $ (expect . (== 2)) . length =<< windows
+            closeWindow firstWindow
+
+            word1Input <- findElem $ ByXPath "//input[@placeholder='Word 1']"
+            sendKeys "abc" word1Input
+
+            word2Input <- findElem $ ByXPath "//input[@placeholder='Word 2']"
+            sendKeys "def" word2Input
 
             openPath ""
             lock <- findElem $ ById "lock"
