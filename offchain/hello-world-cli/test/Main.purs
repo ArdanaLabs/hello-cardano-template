@@ -5,6 +5,7 @@ module Test.Main
 import Contract.Prelude
 import Effect.Aff(launchAff_)
 import CmdUtils(fails,failsSaying,passesSaying,spawnAff)
+import Node.Process(lookupEnv)
 import Test.Spec(it,describe)
 import Test.Spec.Runner (runSpec',defaultConfig)
 import Test.Spec.Reporter.Console (consoleReporter)
