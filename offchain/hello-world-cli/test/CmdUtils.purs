@@ -88,21 +88,6 @@ execAff file args = makeAff $ \callBack -> do
     _child <- execFile file args defaultExecOptions (callBack <<< Right)
     pure mempty
 
-{-
-readStream :: forall w. Readable w -> Aff String
-readStream stream = do
-  partials <- replicateM 100 (liftEffect $ readString stream Nothing UTF8)
-  pure $ fold $ catMaybes partials
-
-spawnAff' :: String -> Aff (Exit /\ ChildProcess)
-spawnAff' cmd = makeAff (\callBack -> do
-  let (exec /\ args) = parseCmd cmd
-  child <- spawn exec args defaultSpawnOptions
-  onExit child (callBack <<< Right <<< (_ /\ child))
-  pure mempty
-  )
--}
-
 parseCmd :: String -> (String /\ Array String)
 parseCmd str = case uncons (words str) of
   Just {head,tail} -> (head /\ tail)

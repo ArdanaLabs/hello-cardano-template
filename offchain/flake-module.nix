@@ -43,6 +43,7 @@
             hello-world-cbor
             ordered-collections
             spec
+            node-process
           ];
         ps =
           purs-nix.purs
