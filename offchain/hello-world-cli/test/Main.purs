@@ -12,14 +12,18 @@ import Test.Spec.Reporter.Console (consoleReporter)
 
 main :: Effect Unit
 main = do
-  runtime <- liftEffect $ isNothing <$> lookupEnv "NO_RUNTIME"
+  runtime <- isNothing <$> lookupEnv "NO_RUNTIME"
+  maybePath <- lookupEnv "CLI_PATH"
   launchAff_ do
     -- TODO
     -- this seems like a hack to me
-    _ <- spawnAff "nix build .#hello-world-cli"
+    cli <- case maybePath of
+      Just somePath -> pure $ somePath <> " "
+      Nothing -> do
+        _ <- spawnAff "nix build .#hello-world-cli"
+        pure "./result/bin/hello-world-cli "
     -- needs runtime
     let nr = when runtime
-    let cli = "./result/bin/hello-world-cli "
     let jsonsPath = " ./fixtures/jsons/"
     let conf = jsonsPath <> "testWalletCfg.json "
     let badConf = jsonsPath <> "badWalletCfg.json "
@@ -53,7 +57,9 @@ main = do
           $ fails $ cli <> "-c" <> conf <> "-s" <> state <> "lock -i 0"
         it "fails bad conf"
           $ fails $ cli <> "-c" <> badConf <> "-s" <> state <> "lock -i 0 -p 1"
-        it "fails when state exists"
+        -- There's no hard reason this couldn't be made to work without the runtime
+        -- but it happens to look up the datum before noticing the state shouldn't exist
+        nr $ it "fails when state exists"
           $ failsSaying
             (cli <> "-c" <> conf <> "-s" <> badState <> "lock -i 0 -p 1")
             "Can't use lock when state file already exists"
