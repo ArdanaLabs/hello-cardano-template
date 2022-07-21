@@ -2,18 +2,11 @@
   nixosTest
 , cardano-ogmios
 , ogmios-datum-cache
+, cardano-node
 }:
 let
-  serverIpAddress = "192.168.1.199";
-  binancePort = 5000;
-  coinbasePort = 5001;
-  huobiPort = 5002;
-  krakenPort = 5003;
-  kucoinPort = 5004;
-  testUser = "test";
-  workingDir = "/tmp/test";
-  priceDataJSONFile = "${workingDir}/pricedata.json";
-
+  psDbName = "ctxlib";
+  psDbUser = "ogmios-datum-cache";
 in nixosTest {
   name = "ogmios-datum-cache";
 
@@ -22,6 +15,7 @@ in nixosTest {
 
       imports = [
         cardano-ogmios.nixosModules.ogmios
+        cardano-node.nixosModules.cardano-node
         ogmios-datum-cache
       ];
 
@@ -32,14 +26,33 @@ in nixosTest {
 
       services.postgresql = {
         enable = true;
+        ensureDatabases = [ psDbName ];
+        ensureUsers = [ 
+          {
+            name = psDbUser;
+            ensurePermissions = {
+              "DATABASE \"${psDbName}\"" = "ALL PRIVILEGES";
+            };
+          }
+        ];
+      };
+
+      services.cardano-node = {
+        enable = true;
+        nodeConfigFile = "${cardano-node}/configuration/cardano/testnet-config.json";
       };
 
       services.cardano-ogmios = {
         enable = true;
+        nodeConfig = "${cardano-node}/configuration/cardano/testnet-config.json"; 
+        nodeSocket = config.services.cardano-node.socketPath;
       };
 
       services.ogmios-datum-cache = {
         enable = true;
+        postgresql = {
+          user = psDbUser;
+        };
       };
 
     };

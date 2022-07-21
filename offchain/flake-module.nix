@@ -161,7 +161,7 @@
               ${hello-world-cli.ps.command {srcs = [ ./hello-world-cli ];}}/bin/purs-nix test
             '';
         ogmios-datum-cache-module-test = inputs'.nixpkgs.legacyPackages.callPackage ./nixos/tests/ogmios-datum-cache.nix {
-          inherit (self.inputs) cardano-ogmios;
+          inherit (self.inputs) cardano-ogmios cardano-node;
           inherit (self.nixosModules) ogmios-datum-cache;
         };
       };
