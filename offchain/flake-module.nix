@@ -158,7 +158,8 @@
       checks = {
         hello-world-api-tests =
           pkgs.runCommand "api-tests"
-            { NODE_PATH = "${ctlNodeModules}/node_modules";
+            {
+              NODE_PATH = "${ctlNodeModules}/node_modules";
             }
             ''
               mkdir $out && cd $out
@@ -166,9 +167,10 @@
             '';
         hello-world-cli-tests =
           pkgs.runCommand "cli-tests"
-            { NODE_PATH = "${ctlNodeModules}/node_modules";
-              CLI_PATH="${self.packages.x86_64-linux.hello-world-cli}/bin/hello-world-cli";
-              FIXTURES_PATH="${self}/offchain/hello-world-cli/fixtures";
+            {
+              NODE_PATH = "${ctlNodeModules}/node_modules";
+              CLI_PATH = "${self.packages.x86_64-linux.hello-world-cli}/bin/hello-world-cli";
+              FIXTURES_PATH = "${self}/offchain/hello-world-cli/fixtures";
             }
             ''
               mkdir $out && cd $out
