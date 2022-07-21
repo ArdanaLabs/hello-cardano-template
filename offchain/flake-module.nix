@@ -160,6 +160,10 @@
               mkdir $out && cd $out
               ${hello-world-cli.ps.command {srcs = [ ./hello-world-cli ];}}/bin/purs-nix test
             '';
+        ogmios-datum-cache-module-test = inputs'.nixpkgs.legacyPackages.callPackage ./nixos/tests/ogmios-datum-cache.nix {
+          inherit (self.inputs) cardano-ogmios;
+          inherit (self.nixosModules) ogmios-datum-cache;
+        };
       };
 
       apps =
@@ -223,5 +227,10 @@
           hello-world-api = makeProjectShell hello-world-api { };
         };
     };
-  flake = { };
+  flake = {
+    nixosModules.ogmios-datum-cache = { pkgs, lib, ...}: {
+      imports = [ ./nixos/modules/ogmios-datum-cache.nix ];
+      services.ogmios-datum-cache.package = lib.mkDefault self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system};
+    };
+  };
 }
