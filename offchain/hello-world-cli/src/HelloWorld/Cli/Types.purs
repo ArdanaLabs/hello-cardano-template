@@ -64,23 +64,18 @@ data ParsedOptions = ParsedOptions
   , configFile :: String
   }
 
--- I don't get why the instances have names
--- or why there is so much boiler plate
--- maybe these names should be better
--- I don't know if it matters
-
-derive instance a1 :: Generic Command _
-instance a2 :: Show Command where
+derive instance Generic Command _
+instance Show Command where
   show = genericShow
 
-derive instance b1 :: Generic ParsedOptions _
-instance b2 :: Show ParsedOptions where
+derive instance Generic ParsedOptions _
+instance Show ParsedOptions where
   show = genericShow
 
-derive instance c1 :: Generic SubCommand _
-instance c2 :: Show SubCommand where
+derive instance Generic SubCommand _
+instance Show SubCommand where
   show = genericShow
 
-derive instance d1 :: Generic Conf _
-instance d2 :: Show Conf where
+derive instance Generic Conf _
+instance Show Conf where
   show = genericShow
