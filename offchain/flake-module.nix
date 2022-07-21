@@ -94,7 +94,7 @@
         overlays = [ self.inputs.cardano-transaction-lib.overlay ];
       };
       # use more recent slot to avoid long sync time
-      config = {
+      ctlRuntimeConfig = {
         datumCache.blockFetcher.firstBlock = {
           slot = 62153233;
           id = "631c621b7372445acf82110282ba72f4b52dafa09c53864ddc2e58be24955b2a";
@@ -144,11 +144,19 @@
         { NODE_PATH = "${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules"; }
         ''
           mkdir $out && cd $out
-          ${hello-world-api.ps.command {srcs = [ ./hello-world-api/src ];}}/bin/purs-nix test
+          ${hello-world-api.ps.command {srcs = [ ./hello-world-api ];}}/bin/purs-nix test
+        '';
+
+      checks.hello-world-cli-tests = pkgs.runCommand
+        "cli-tests"
+        { NODE_PATH = "${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules"; }
+        ''
+          mkdir $out && cd $out
+          ${hello-world-cli.ps.command {srcs = [ ./hello-world-cli ];}}/bin/purs-nix test
         '';
 
       apps = {
-        ctl-runtime = ctl-pkgs.launchCtlRuntime config;
+        ctl-runtime = ctl-pkgs.launchCtlRuntime ctlRuntimeConfig;
 
         serve-offchain-docs = {
           type = "app";
@@ -173,6 +181,21 @@
               text = "http-server -c-1 ${self'.packages.hello-world-browser}";
             };
         };
+
+        "offchain:hello-world-api:test" =
+          config.dusd-lib.mkRunCmdInShellApp
+            {
+              scriptName = "run-hello-world-api-tests";
+              devshellName = "hello-world-api";
+              command = "cd offchain/hello-world-api && purs-nix test";
+            };
+        "offchain:hello-world-cli:test" =
+          config.dusd-lib.mkRunCmdInShellApp
+            {
+              scriptName = "run-hello-world-cli-tests";
+              devshellName = "hello-world-cli";
+              command = "cd offchain/hello-world-cli && purs-nix test";
+            };
       };
 
       devShells.hello-world-cli = pkgs.mkShell {
