@@ -1,0 +1,53 @@
+cabal-version: 2.4
+name:          binance-servant-api
+version:       0.1.0.0
+
+-- A short (one-line) description of the package.
+-- synopsis:
+
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+-- The license under which the package is released.
+-- license:
+author:        Marijan Petričević
+maintainer:    marijan.petricevic94@gmail.com
+
+-- A copyright notice.
+-- copyright:
+-- category:
+
+library
+  exposed-modules:  Network.Binance.API
+
+  -- Modules included in this library but not exported.
+  -- other-modules:
+
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+  ghc-options:      -Wall -Werror -Wunused-packages
+  build-depends:
+    , aeson
+    , base
+    , servant
+    , text
+
+  hs-source-dirs:   src
+  default-language: Haskell2010
+
+test-suite binance-servant-api-test
+  ghc-options:      -Wall -Werror -Wunused-packages
+  default-language: Haskell2010
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
+  other-modules:    Network.Binance.APISpec
+  build-depends:
+    , aeson
+    , base
+    , binance-servant-api
+    , sydtest
+
+  hs-source-dirs:   test

@@ -42,6 +42,7 @@
           ./onchain
           ./docs
           ./nix/flake-modules
+          ./price-feeder
         ];
       }
     ).config.flake;

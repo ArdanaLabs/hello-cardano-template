@@ -1,0 +1,81 @@
+cabal-version: 2.4
+name:          ada-price-fetcher
+version:       0.1.0.0
+
+-- A short (one-line) description of the package.
+-- synopsis:
+
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+-- The license under which the package is released.
+-- license:
+author:        Marijan Petričević
+maintainer:    marijan.petricevic94@gmail.com
+
+-- A copyright notice.
+-- copyright:
+-- category:
+
+library
+  exposed-modules:
+    Clients
+    PriceFetcher
+    Types
+
+  -- Modules included in this library but not exported.
+  -- other-modules:
+
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+  build-depends:
+    , base
+    , binance-servant-api
+    , coinbase-servant-api
+    , containers
+    , http-client
+    , http-client-tls
+    , huobi-servant-api
+    , kraken-servant-api
+    , kucoin-servant-api
+    , retry
+    , servant
+    , servant-client
+    , statistics
+    , text
+    , unliftio
+    , vector
+
+  hs-source-dirs:   src
+  ghc-options:      -Wall -Werror -Wunused-packages
+  default-language: Haskell2010
+
+executable ada-price-fetcher
+  main-is:          Main.hs
+
+  -- Modules included in this executable, other than Main.
+  -- other-modules:
+
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+  build-depends:
+    , ada-price-fetcher
+    , base
+    , optparse-applicative
+
+  hs-source-dirs:   app
+  ghc-options:      -Wall -Werror -Wunused-packages
+  default-language: Haskell2010
+
+executable ada-price-fetcher-test
+  ghc-options:      -Wall -Werror -Wunused-packages
+  default-language: Haskell2010
+  hs-source-dirs:   test
+  main-is:          Main.hs
+  build-depends:
+    , base
+    , process
+    , sydtest

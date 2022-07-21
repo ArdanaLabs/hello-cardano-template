@@ -27,12 +27,20 @@ nix run .#serve-hello-world-browser
 
 To run the api tests (currently just cbor encoding tests):
 ```
+nix run .#"offchain:hello-world-api:test"
+```
+or
+```
 nix develop .#hello-world-api
 cd offchain/hello-world-api
 purs-nix test Main
 ```
 
 To run the browser integration tests
+```
+nix run .#"offchain:hello-world-browser:test"
+```
+the test output will be outputted to stdout, or
 ```
 nix build -L .#hello-world-browser-test:test:integration
 ```
@@ -76,10 +84,15 @@ Here's an example config:
 
 ## cli tests
 
+TODO OUTDATED
 The `offchain/hello-world-cli/test-scripts` directory contains `cliDemo.sh` and `cliTest.sh`.
 `cliTest.sh` is a script which runs an end to end test of the cli.
 `cliDemo.sh` is an interactive script which demonstrates the various features help pages and error messages.
 The main goal of `cliDemo.sh` is to make it easier to review the cli pr, but hopefully it's also usefull as documentation.
+To run the CLI tests, run:
+```
+nix run .#"offchain:hello-world-cli:test"
+```
 
 # Test-wallet
 
@@ -87,3 +100,4 @@ The test wallet addres is:
 `addr_test1qqevfdhu80jsmjhzkf8lkkv5rza9h6k0u6hmwwr0r7vyjt9j3f374a2all0hc6vzxa6v7sax7du2lk5fu5q592d5fhqswar4hc`.
 Here's a link to faucet: https://testnets.cardano.org/en/testnets/cardano/tools/faucet/ .
 If the wallet runs out tests can fail.
+
