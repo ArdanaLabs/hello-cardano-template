@@ -138,7 +138,7 @@ in {
         args = escapeShellArgs [
           "--log-level warn"
           "--use-latest"
-          "--server-api '${cfg.controlApiToken}'"
+          "--server-api \"${cfg.controlApiToken}\""
           "--server-port ${toString cfg.port}"
           "--ogmios-address ${config.services.cardano-ogmios.hostAddr}"
           "--ogmios-port ${toString config.services.cardano-ogmios.port}"
@@ -147,8 +147,8 @@ in {
           "--db-user ${cfg.postgresql.user}"
           "--db-password ${cfg.postgresql.password}"
           "--block-slot ${toString cfg.blockFetcher.firstBlock.slot}"
-          "--block-hash '${cfg.blockFetcher.firstBlock.blockHash}'"
-          "--block-filter '${cfg.blockFetcher.filter}'"
+          "--block-hash \"${cfg.blockFetcher.firstBlock.blockHash}\""
+          "--block-filter \"${cfg.blockFetcher.filter}\""
         ];
       in {
         description = "ogmios-datum-cache";
