@@ -158,6 +158,17 @@
           ${hello-world-api.ps.command {srcs = [ ./hello-world-api ];}}/bin/purs-nix test
         '';
 
+      checks.hello-world-cli-tests = pkgs.runCommand
+        "api-tests"
+        { NODE_PATH = "${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}/node_modules";
+          CLI_PATH="${self.packages.x86_64-linux.hello-world-cli}/bin/hello-world-cli";
+          FIXTURES_PATH="${self}/offchain/hello-world-cli/fixtures";
+        }
+        ''
+          mkdir $out && cd $out
+          ${hello-world-cli.ps.command {srcs = [ ./hello-world-cli ];}}/bin/purs-nix test
+        '';
+
       apps = {
         ctl-runtime = ctl-pkgs.launchCtlRuntime config;
 
