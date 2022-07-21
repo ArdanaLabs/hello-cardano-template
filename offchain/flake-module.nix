@@ -167,7 +167,8 @@
             '';
         hello-world-cli-tests =
           pkgs.runCommand "cli-tests"
-            { NODE_PATH = "${ctlNodeModules}/node_modules";
+            {
+              NODE_PATH = "${ctlNodeModules}/node_modules";
               CLI_PATH = "${self.packages.x86_64-linux.hello-world-cli}/bin/hello-world-cli";
             }
             ''
