@@ -30,7 +30,11 @@ main = launchAff_ $ do
       it "ls pass"
         $ passesSaying "ls -a"
           "src"
-
+    describe "help page" do
+      it "knows its own name" -- it used to call itself `purs-nix run`
+        $ passesSaying
+          (cli <> "--help")
+          "Usage: hello-world-cli"
     describe "lock" do
       it "fails no conf"
         $ failsSaying
