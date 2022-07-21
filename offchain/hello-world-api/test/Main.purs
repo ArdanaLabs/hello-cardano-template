@@ -22,4 +22,4 @@ main = do
     if runtime
       then describe "runtime tests"  do
         KeyWallet.spec
-      else pending "runtime tests dellayed"
+      else pending "runtime tests delayed"

@@ -43,19 +43,19 @@ main = do
             (cli <> "--help")
             "Usage: hello-world-cli"
       describe "lock" do
-        it "fails no conf"
+        it "fails on no conf"
           $ failsSaying
             (cli <> "-s" <> state <> "lock -i 0 -p 1")
             "Missing: (-c|--config CONFIG_FILE)"
-        it "fails no state"
+        it "fails on no state"
           $ failsSaying
             (cli <> "-c" <> conf <> "lock -i 0 -p 1")
             "Missing: (-s|--state-file STATE_FILE)"
-        it "fails no inc"
+        it "fails on no inc"
           $ fails $ cli <> "-c" <> conf <> "-s" <> state <> "lock -p 1"
-        it "fails no param"
+        it "fails on no param"
           $ fails $ cli <> "-c" <> conf <> "-s" <> state <> "lock -i 0"
-        it "fails bad conf"
+        it "fails on bad conf"
           $ fails $ cli <> "-c" <> badConf <> "-s" <> state <> "lock -i 0 -p 1"
         -- There's no hard reason this couldn't be made to work without the runtime
         -- but it happens to look up the datum before noticing the state shouldn't exist
@@ -64,11 +64,11 @@ main = do
             (cli <> "-c" <> conf <> "-s" <> badState <> "lock -i 0 -p 1")
             "Can't use lock when state file already exists"
       describe "increment" do
-        it "fails no conf"
+        it "fails on no conf"
           $ failsSaying
             (cli <> "-s" <> state <> "increment")
             "Missing: (-c|--config CONFIG_FILE)"
-        it "fails no state"
+        it "fails on no state"
           $ failsSaying
             (cli <> "-c" <> conf <> "increment")
             "Missing: (-s|--state-file STATE_FILE)"
@@ -77,11 +77,11 @@ main = do
             (cli <> "-c bad_path -s" <> state <> "increment")
             "[Error: ENOENT: no such file or directory, open 'bad_path']"
       describe "unlock" do
-        it "fails no conf"
+        it "fails on no conf"
           $ failsSaying
             (cli <> "-s" <> state <> "unlock")
             "Missing: (-c|--config CONFIG_FILE)"
-        it "fails no state"
+        it "fails on no state"
           $ failsSaying
             (cli <> "-c" <> conf <> "unlock")
             "Missing: (-s|--state-file STATE_FILE)"
@@ -90,11 +90,11 @@ main = do
             (cli <> "-c bad_path -s" <> state <> "unlock")
             "[Error: ENOENT: no such file or directory, open 'bad_path']"
       describe "query" do
-        it "fails no conf"
+        it "fails on no conf"
           $ failsSaying
             (cli <> "-s" <> state <> "query")
             "Missing: (-c|--config CONFIG_FILE)"
-        it "fails no state"
+        it "fails on no state"
           $ failsSaying
             (cli <> "-c" <> conf <> "query")
             "Missing: (-s|--state-file STATE_FILE)"
@@ -104,27 +104,27 @@ main = do
             "[Error: ENOENT: no such file or directory, open 'bad_path']"
       nr $ describe "integration test" do
         -- TODO I'm not sure why they aren't saying finished
-        it "lock"
+        it "locks the value"
           $ passesSaying
             (cli <> "-c" <> conf <> "-s" <> state <> "lock -i 0 -p 1")
             "finished"
-        it "querry"
+        it "querys the state"
           $ passesSaying
           (cli <> "-c" <> conf <> "-s" <> state <> "query")
           "Current datum:0"
-        it "increment"
+        it "increments the datum"
           $ passesSaying
             (cli <> "-c" <> conf <> "-s" <> state <> "increment")
             "finished"
-        it "querry"
+        it "querys the new state"
           $ passesSaying
           (cli <> "-c" <> conf <> "-s" <> state <> "query")
           "Current datum:1"
-        it "unlock"
+        it "it unlocks the value"
           $ passesSaying
             (cli <> "-c" <> conf <> "-s" <> state <> "unlock")
             "finished"
-        it "state is gone"
+        it "removed the state file"
           $ failsSaying
             ("ls" <> state)
             "No such file"
