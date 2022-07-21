@@ -57,7 +57,7 @@ import HelloWorld.Cli.Types
   (Command(..)
   ,Conf(..)
   ,CliState(..)
-  ,SubCommand(..)
+  ,Options(..)
   ,ParsedOptions(..)
   ,ParsedConf
   ,FileState
@@ -67,7 +67,7 @@ import HelloWorld.Cli.Types
 runCli :: ParsedOptions -> Aff Unit
 runCli opts = readConfig opts >>= runCmd
 
-readConfig :: ParsedOptions -> Aff Command
+readConfig :: ParsedOptions -> Aff Options
 readConfig (ParsedOptions o)= do
   confTxt <- readTextFile UTF8 o.configFile
   let dir = case lastIndexOf (Pattern "/") o.configFile of
@@ -75,8 +75,8 @@ readConfig (ParsedOptions o)= do
               Nothing -> ""
   conf' <- throwE =<< decodeAeson <$> throwE (parseJsonStringToAeson confTxt)
   Conf conf <- throwE $ lookupNetwork conf'
-  pure $ Command
-    {subCommand: o.subCommand
+  pure $ Options
+    {command: o.command
     ,statePath: o.statePath
     ,conf:Conf conf
       {walletPath=dir<>conf.walletPath
@@ -98,10 +98,10 @@ throwE :: forall a b. Show a => Either a b -> Aff b
 throwE (Left a) = liftEffect $ throw $ show a
 throwE (Right b) = pure b
 
-runCmd :: Command -> Aff Unit
-runCmd (Command {conf,statePath,subCommand}) = do
+runCmd :: Options -> Aff Unit
+runCmd (Options {conf,statePath,command}) = do
   cfg <- makeConfig conf
-  case subCommand of
+  case command of
     Lock {contractParam:param,initialDatum:init} -> do
       stateExists <- liftEffect $ exists statePath
       when stateExists $ do

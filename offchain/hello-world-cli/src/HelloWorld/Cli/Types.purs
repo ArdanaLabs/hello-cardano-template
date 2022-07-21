@@ -1,6 +1,6 @@
 module HelloWorld.Cli.Types
-  (Command(..)
-  ,SubCommand(..)
+  (Options(..)
+  ,Command(..)
   ,CliState(..)
   ,Conf(..)
   ,ParsedOptions(..)
@@ -14,13 +14,13 @@ import Serialization.Address(NetworkId)
 import Data.Generic.Rep (class Generic)
 import Data.Show.Generic(genericShow)
 
-data Command = Command
-  { subCommand :: SubCommand
+data Options = Options
+  { command :: Command
   , statePath :: String
   , conf :: Conf
   }
 
-data SubCommand
+data Command
   = Lock
     {contractParam :: Int
     ,initialDatum :: Int
@@ -59,7 +59,7 @@ type ParsedConf
 
 -- same as Command but the config hasn't been read from a file
 data ParsedOptions = ParsedOptions
-  { subCommand :: SubCommand
+  { command :: Command
   , statePath :: String
   , configFile :: String
   }
@@ -72,8 +72,8 @@ derive instance Generic ParsedOptions _
 instance Show ParsedOptions where
   show = genericShow
 
-derive instance Generic SubCommand _
-instance Show SubCommand where
+derive instance Generic Options _
+instance Show Options where
   show = genericShow
 
 derive instance Generic Conf _
