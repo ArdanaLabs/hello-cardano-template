@@ -1,0 +1,14 @@
+packages:
+    ada-price-fetcher
+    binance-servant-api
+    coinbase-servant-api
+    huobi-servant-api
+    kraken-servant-api
+    kucoin-servant-api
+          
+-- Always build tests and benchmarks.
+tests: true
+benchmarks: true
+
+-- The only sensible test display option
+test-show-details: direct
