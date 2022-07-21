@@ -5,7 +5,6 @@
 module Main where
 
 import Control.Monad (unless, when)
-import Data.Aeson (KeyValue ((.=)), Value (Null), object)
 import Data.String (IsString (fromString))
 import qualified Data.Text as T
 import GHC.Generics (Generic)
@@ -44,20 +43,18 @@ import Test.WebDriver
     Selector (ByClass, ById, ByXPath),
     WDConfig (wdCapabilities),
     click,
+    closeWindow,
     findElem,
+    getCurrentWindow,
     getText,
     openPage,
     sendKeys,
     useBrowser,
     windows,
   )
-import Test.WebDriver as WD hiding (closeWindow, focusWindow, getCurrentWindow)
 import Test.WebDriver.Chrome.Extension (loadExtension)
 import Test.WebDriver.Class (WebDriver (..))
-import Test.WebDriver.Commands (WindowHandle)
-import qualified Test.WebDriver.Commands.Internal as WD
 import Test.WebDriver.Commands.Wait (expect, waitUntil)
-import qualified Test.WebDriver.JSON as WD
 import UnliftIO.Path.Directory (getCurrentDirectory)
 
 data Command = Lock | Incr
@@ -101,7 +98,8 @@ setupWebdriverTestEnv uri = do
                 wdBrowser
                   { chromeExtensions = [namiWallet],
                     chromeOptions =
-                      [ "--no-sandbox", -- Bypass OS security model to run on nix as well
+                      [ --"--headless=chrome",
+                        "--no-sandbox", -- Bypass OS security model to run on nix as well
                         "--disable-dev-shm-usage", -- Overcome limited resource problem
                         "--disable-gpu",
                         "--use-gl=angle",
@@ -113,19 +111,6 @@ setupWebdriverTestEnv uri = do
           pure $ wdTestEnv {webdriverTestEnvConfig = newWdConfig}
     _ -> liftIO $ die "not chrome"
 
-getCurrentWindow :: (HasCallStack, WebDriver wd) => wd WindowHandle
-getCurrentWindow = WD.doSessCommand methodGet "/window_handle" Null
-
-focusWindow :: (HasCallStack, WebDriver wd) => WindowHandle -> wd ()
-focusWindow (WindowHandle h) = WD.noReturn $ WD.doSessCommand methodPost "/window" $ object ["name" .= h]
-
-closeWindow :: (HasCallStack, WebDriver wd) => WindowHandle -> wd ()
-closeWindow w = do
-  cw <- getCurrentWindow
-  focusWindow w
-  WD.ignoreReturn $ WD.doSessCommand methodDelete "/window" Null
-  unless (w == cw) $ focusWindow cw
-
 main :: IO ()
 main = sydTest $
   setupAround (startHelloWorldBrowser >>= setupWebdriverTestEnv) $
@@ -134,8 +119,6 @@ main = sydTest $
         forAllValid $ \commands ->
           runWebdriverTestM wte $ do
             openPage "chrome-extension://lpfcbjknijpeeillifnkikgncikgfhdo/mainPopup.html"
-
-            firstWindow <- getCurrentWindow
 
             importBtn <- findElem $ ByXPath "//button[text()='Import']"
             click importBtn
@@ -149,8 +132,7 @@ main = sydTest $
             continueBtn <- findElem $ ByXPath "//button[text()='Continue']"
             click continueBtn
 
-            waitUntil 5 $ (expect . (== 2)) . length =<< windows
-            closeWindow firstWindow
+            getCurrentWindow >>= closeWindow
 
             word1Input <- findElem $ ByXPath "//input[@placeholder='Word 1']"
             sendKeys "abc" word1Input
