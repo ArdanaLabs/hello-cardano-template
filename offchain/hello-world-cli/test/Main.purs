@@ -14,6 +14,9 @@ main = launchAff_ do
   -- TODO
   -- this seems like a hack to me
   _ <- spawnAff "nix build .#hello-world-cli"
+  runtime <- isNothing <$> lookupEnv "NO_RUNTIME"
+  -- needs runtime
+  let nr = when runtime
   let cli = "./result/bin/hello-world-cli "
   let jsonsPath = " ./fixtures/jsons/"
   let conf = jsonsPath <> "testWalletCfg.json "
@@ -91,7 +94,7 @@ main = launchAff_ do
         $ failsSaying
           (cli <> "-c bad_path -s" <> state <> "query")
           "[Error: ENOENT: no such file or directory, open 'bad_path']"
-    describe "integration test" do
+    nr $ describe "integration test" do
       -- TODO I'm not sure why they aren't saying finished
       it "lock"
         $ passesSaying

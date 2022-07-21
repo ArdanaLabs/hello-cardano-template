@@ -170,6 +170,7 @@
             { NODE_PATH = "${ctlNodeModules}/node_modules"; }
             ''
               mkdir $out && cd $out
+              export NO_RUNTIME=TRUE
               ${hello-world-cli.ps.command {srcs = [ ./hello-world-cli ];}}/bin/purs-nix test
             '';
       };
