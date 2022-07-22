@@ -6,7 +6,7 @@
     in
     {
       packages = {
-        build-docs = pkgs.stdenv.mkDerivation {
+        docs = pkgs.stdenv.mkDerivation {
           name = "build-docs";
           src = ./.;
 
@@ -32,7 +32,7 @@
         };
       };
       apps = {
-        feedback-loop = {
+        "docs:feedback-loop" = {
           type = "app";
           program =
             pkgs.writeShellApplication
@@ -40,7 +40,7 @@
                 name = "dusd-feedback-loop";
                 runtimeInputs = [ pkgs.entr ];
                 text = ''
-                  find docs -name "*.tex" | entr nix build .#build-docs
+                  find docs -name "*.tex" | entr nix build .#docs
                 '';
               };
         };

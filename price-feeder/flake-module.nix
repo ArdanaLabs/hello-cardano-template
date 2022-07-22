@@ -6,6 +6,7 @@
       # A flake-module in nix/flake-modules/haskell.nix defines haskell-nix
       # packages once, so we can reuse it here, it's more performant.
       pkgs = config.haskell-nix.pkgs;
+
       price-feeder = pkgs.haskell-nix.cabalProject {
         name = "price-feeder";
         src = ./.;
@@ -20,24 +21,26 @@
           exactDeps = true;
         };
       };
+
       haskellNixFlake = price-feeder.flake { };
     in
     {
-      devShells.price-feeder = haskellNixFlake.devShell;
+      apps = haskellNixFlake.apps;
 
-      packages = haskellNixFlake.packages // {
-        ada-price-fetcher-test = pkgs.runCommand "ada-price-fetcher-test"
-          {
-            buildInputs = [ pkgs.makeWrapper ];
-          }
-          ''
-            mkdir -p $out/bin
-            makeWrapper ${self'.packages."ada-price-fetcher:exe:ada-price-fetcher-test"}/bin/ada-price-fetcher-test $out/bin/ada-price-fetcher-test \
-              --set PATH ${pkgs.lib.makeBinPath [ self'.packages."ada-price-fetcher:exe:ada-price-fetcher" ]}
-          '';
+      checks = {
+        ada-price-fetcher-test =
+          pkgs.runCommand "ada-price-fetcher-test"
+            { buildInputs = [ pkgs.makeWrapper ]; }
+            ''
+              mkdir -p $out/bin
+              makeWrapper ${self'.packages."ada-price-fetcher:exe:ada-price-fetcher-test"}/bin/ada-price-fetcher-test $out/bin/ada-price-fetcher-test \
+                --set PATH ${pkgs.lib.makeBinPath [ self'.packages."ada-price-fetcher:exe:ada-price-fetcher" ]}
+            '';
       };
 
-      apps = haskellNixFlake.apps;
+      devShells.price-feeder = haskellNixFlake.devShell;
+
+      packages = haskellNixFlake.packages;
     };
   flake = { };
 }
