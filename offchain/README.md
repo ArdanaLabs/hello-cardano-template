@@ -85,14 +85,12 @@ Here's an example config:
 ## cli tests
 
 TODO OUTDATED
-The `offchain/hello-world-cli/test-scripts` directory contains `cliDemo.sh` and `cliTest.sh`.
-`cliTest.sh` is a script which runs an end to end test of the cli.
-`cliDemo.sh` is an interactive script which demonstrates the various features help pages and error messages.
-The main goal of `cliDemo.sh` is to make it easier to review the cli pr, but hopefully it's also usefull as documentation.
+
 To run the CLI tests, run:
 ```
 nix run .#"offchain:hello-world-cli:test"
 ```
+or use `purs-nix test` in the `.#hello-world-cli` dev shell.
 
 # Test-wallet
 

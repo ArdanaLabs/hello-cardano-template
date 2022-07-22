@@ -30,7 +30,7 @@ import HelloWorld.Cli.Types(ParsedOptions(..),Command(..))
 parser :: ParserInfo ParsedOptions
 parser = info rawParser
   (fullDesc
-    <> progDesc "This command can be used to automate transactions with the hello-world api"
+    <> progDesc "This comand-line tool can be used to automate transactions with the hello-world api"
     <> header "Hello-World cli"
     )
 

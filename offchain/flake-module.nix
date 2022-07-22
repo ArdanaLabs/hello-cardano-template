@@ -159,10 +159,12 @@
       checks = {
         hello-world-api-tests =
           pkgs.runCommand "api-tests"
-            { NODE_PATH = "${ctlNodeModules}/node_modules"; }
+            {
+              NODE_PATH = "${ctlNodeModules}/node_modules";
+              NO_RUNTIME = "TRUE";
+            }
             ''
               mkdir $out && cd $out
-              export NO_RUNTIME=TRUE
               ${hello-world-api.ps.command {srcs = [ ./hello-world-api ];}}/bin/purs-nix test
             '';
         hello-world-cli-tests =
@@ -170,10 +172,10 @@
             {
               NODE_PATH = "${ctlNodeModules}/node_modules";
               CLI_PATH = "${self.packages.x86_64-linux.hello-world-cli}/bin/hello-world-cli";
+              NO_RUNTIME = "TRUE";
             }
             ''
               mkdir $out && cd $out
-              export NO_RUNTIME=TRUE
               ${hello-world-cli.ps.command {srcs = [ ./hello-world-cli ];}}/bin/purs-nix test
             '';
       };

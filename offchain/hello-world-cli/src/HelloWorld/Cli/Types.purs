@@ -22,8 +22,8 @@ data Options = Options
 
 data Command
   = Lock
-    {contractParam :: Int
-    ,initialDatum :: Int
+    { contractParam :: Int
+    , initialDatum :: Int
     }
   | Increment
   | Unlock
