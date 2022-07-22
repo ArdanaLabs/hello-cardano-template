@@ -19,7 +19,4 @@ main = do
   runtime <- isNothing <$> lookupEnv "NO_RUNTIME"
   launchAff_ $ runSpec' defaultConfig{timeout=Nothing} [ consoleReporter ] do
     Encoding.spec
-    if runtime
-      then describe "runtime tests"  do
-        KeyWallet.spec
-      else pending "runtime tests dellayed"
+    when runtime $ KeyWallet.spec

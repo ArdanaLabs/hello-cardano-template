@@ -4,6 +4,7 @@ module Api
   ,redeemFromScript
   ,helloScript
   ,enoughForFees
+  ,datumLookup
   ) where
 
 import Contract.Prelude
@@ -16,13 +17,15 @@ import Data.Time.Duration(Minutes(..))
 
 import Contract.Aeson (decodeAeson, fromString)
 import Contract.Monad ( Contract , liftContractM , logInfo')
-import Contract.PlutusData (Datum(Datum),Redeemer(Redeemer))
+import Contract.PlutusData (Datum(Datum),Redeemer(Redeemer),getDatumByHash)
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (Validator, ValidatorHash, applyArgsM)
 import Contract.Transaction ( TransactionInput)
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
+import Contract.Utxos(getUtxo)
 import Contract.Value as Value
+import Plutus.Types.Transaction(TransactionOutput(TransactionOutput))
 import ToData(class ToData,toData)
 import Types.PlutusData (PlutusData(Constr,Integer))
 
@@ -101,6 +104,23 @@ helloScript n = do
   paramValidator <- liftContractM "decoding failed" maybeParamValidator
   liftContractM "apply args failed" =<< applyArgsM paramValidator [Integer $ BigInt.fromInt n]
          -- TODO It'd be cool if this could be an Integer not Data
+
+datumLookup :: TransactionInput -> Contract () Int
+datumLookup lastOutput = do
+  TransactionOutput utxo <- getUtxo lastOutput
+    >>= liftContractM "couldn't find utxo"
+  oldDatum <-
+    utxo.dataHash
+    # liftContractM "UTxO had no datum hash"
+    >>= getDatumByHash
+    >>= liftContractM "Couldn't find datum by hash"
+  asBigInt <- liftContractM "datum wasn't an integer" $ case oldDatum of
+    Datum (Integer n) -> Just n
+    _ -> Nothing
+  liftContractM
+    "Datum exceeds maximum size for conversion to 64 bit int"
+    -- There's not hard reason not to support this it just doesn't seem worth the refactor
+    $ BigInt.toInt asBigInt
 
 data HelloRedemer = Inc | Spend
 

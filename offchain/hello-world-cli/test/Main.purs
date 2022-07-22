@@ -23,7 +23,7 @@ main = do
         _ <- spawnAff "nix build .#hello-world-cli"
         pure "./result/bin/hello-world-cli "
     -- needs runtime
-    let nr = when runtime
+    let needsRuntime = when runtime
     let jsonsPath = " ./fixtures/jsons/"
     let conf = jsonsPath <> "testWalletCfg.json "
     let badConf = jsonsPath <> "badWalletCfg.json "
@@ -59,7 +59,7 @@ main = do
           $ fails $ cli <> "-c" <> badConf <> "-s" <> state <> "lock -i 0 -p 1"
         -- There's no hard reason this couldn't be made to work without the runtime
         -- but it happens to look up the datum before noticing the state shouldn't exist
-        nr $ it "fails when state exists"
+        needsRuntime $ it "fails when state exists"
           $ failsSaying
             (cli <> "-c" <> conf <> "-s" <> badState <> "lock -i 0 -p 1")
             "Can't use lock when state file already exists"
@@ -102,7 +102,7 @@ main = do
           $ failsSaying
             (cli <> "-c bad_path -s" <> state <> "query")
             "[Error: ENOENT: no such file or directory, open 'bad_path']"
-      nr $ describe "integration test" do
+      needsRuntime $ describe "integration test" do
         -- TODO I'm not sure why they aren't saying finished
         it "lock"
           $ passesSaying

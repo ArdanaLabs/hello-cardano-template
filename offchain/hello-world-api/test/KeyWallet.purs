@@ -3,32 +3,33 @@ module KeyWallet
   ) where
 
 import Contract.Prelude
-import UnitTest (helloUnitTest)
+import Api(helloScript,sendDatumToScript,setDatumAtScript,redeemFromScript,datumLookup)
 import Contract.Monad
   ( runContract_
   , configWithLogLevel
+  , liftContractAffM
   )
 import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
-import Data.Log.Level (LogLevel(Trace))
+import Contract.Scripts (validatorHash)
+import Data.Log.Level (LogLevel(Error))
 import Serialization.Address (NetworkId(TestnetId))
 import Test.Spec(Spec,describe,it)
-import Test.Spec.Assertions(shouldReturn)
+import Test.Spec.Assertions(shouldReturn,shouldEqual)
+import IntegrationTest(integrationTest)
 
 
 toFixturePath :: String -> String
-toFixturePath = (<>) "./fixtures/" 
+toFixturePath = (<>) "./fixtures/"
 
 spec :: Spec Unit
 spec = do
   describe "Full tests" do
-    it "integration test" $ shouldReturn integrationTest unit
+    it "integration test" $ shouldReturn runIntegrationTest unit
 
-integrationTest :: Aff Unit
-integrationTest = do
+runIntegrationTest :: Aff Unit
+runIntegrationTest = do
   wallet <- mkKeyWalletFromFiles
-              (toFixturePath "wallet.skey") 
+              (toFixturePath "wallet.skey")
               (Just $ toFixturePath "staking.skey")
-  cfg <- configWithLogLevel TestnetId wallet Trace
-  runContract_ cfg $ do
-    helloUnitTest
-    -- TODO this seems to work but also hangs
+  cfg <- configWithLogLevel TestnetId wallet Error
+  runContract_ cfg integrationTest
