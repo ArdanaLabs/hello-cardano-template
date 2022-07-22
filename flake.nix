@@ -7,7 +7,8 @@
     cardano-node.url = "github:input-output-hk/cardano-node?rev=73f9a746362695dc2cb63ba757fbcabb81733d23";
     cardano-transaction-lib.url = "github:Plutonomicon/cardano-transaction-lib?rev=fdcfcb3578eb354bd6ab3ca288d0440be7668d23";
     cardano-ogmios.url = "github:input-output-hk/cardano-ogmios";
-    ogmios-datum-cache.url = "github:mlabs-haskell/ogmios-datum-cache";
+    mlabs-ogmios.url = "github:mlabs-haskell/ogmios/e406801eaeb32b28cd84357596ca1512bff27741";
+    ogmios-datum-cache.url = "github:mlabs-haskell/ogmios-datum-cache/1c7a4af3f18bd3fa94a59e5a52e0ad6d974233e8";
     #   used for libsodium-vrf
     plutus.url = "github:input-output-hk/plutus";
     plutus-apps.url = "github:input-output-hk/plutus-apps?rev=e4062bca213f233cdf9822833b07aa69dff6d22a";

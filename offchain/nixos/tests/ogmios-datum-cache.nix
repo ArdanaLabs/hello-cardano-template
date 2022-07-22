@@ -1,33 +1,34 @@
-{
-  nixosTest
+{ nixosTest
 , cardano-ogmios
+, mlabs-ogmios
 , ogmios-datum-cache
 , cardano-node
 }:
 let
   psDbName = "ctxlib";
   psDbUser = "ogmios-datum-cache";
-in nixosTest {
+in
+nixosTest {
   name = "ogmios-datum-cache";
 
   nodes = {
     server = { config, pkgs, ... }: {
 
       imports = [
-        cardano-ogmios.nixosModules.ogmios
         cardano-node.nixosModules.cardano-node
+        cardano-ogmios.nixosModules.ogmios
         ogmios-datum-cache
       ];
 
       virtualisation.vlans = [ 1 ];
       systemd.tmpfiles.rules = [
-        "D '${workingDir}' 755 ${testUser} ${testUser} - -"
+        # "D '${workingDir}' 755 ${testUser} ${testUser} - -"
       ];
 
       services.postgresql = {
         enable = true;
         ensureDatabases = [ psDbName ];
-        ensureUsers = [ 
+        ensureUsers = [
           {
             name = psDbUser;
             ensurePermissions = {
@@ -40,11 +41,13 @@ in nixosTest {
       services.cardano-node = {
         enable = true;
         nodeConfigFile = "${cardano-node}/configuration/cardano/testnet-config.json";
+        systemdSocketActivation = true;
+        extraSocketConfig = i: { socketConfig.SocketMode = "0666"; }; # for some reason ogmios needs write access for the socket
       };
 
       services.cardano-ogmios = {
         enable = true;
-        nodeConfig = "${cardano-node}/configuration/cardano/testnet-config.json"; 
+        nodeConfig = "${cardano-node}/configuration/cardano/testnet-config.json";
         nodeSocket = config.services.cardano-node.socketPath;
       };
 
@@ -52,6 +55,7 @@ in nixosTest {
         enable = true;
         postgresql = {
           user = psDbUser;
+          dbName = psDbName;
         };
       };
 
@@ -59,6 +63,8 @@ in nixosTest {
   };
   testScript = ''
     start_all()
+    server.wait_for_unit("cardano-node.service")
+    server.wait_for_unit("cardano-ogmios.service")
     server.wait_for_unit("ogmios-datum-cache.service")
   '';
 }

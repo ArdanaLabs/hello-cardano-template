@@ -2,7 +2,8 @@
 with lib;
 let
   cfg = config.services.ogmios-datum-cache;
-in {
+in
+{
   options.services.ogmios-datum-cache = {
 
     enable = mkEnableOption "enable the ogmios-datum-cache service";
@@ -49,34 +50,17 @@ in {
           type = types.str;
           default = "3afd8895c7b270f8250b744ec8d2b3c53ee2859c9d5711d906c47fe51b800988";
           description = ''
-            The first blocks id.
-          '';  
+            The first blocks id hash.
+          '';
         };
       };
 
-      autoStart = mkOption {
-        type = types.bool;
-        default = true;
-        description = ''
-          Whether the fetching of blocks should be started automatically.
-        '';
-      };
-
-      startFromLast = mkOption {
-        type = types.bool;
-        default = false;
-        description = ''
-          Whether it should start from the last block.
-        '';
-      };
-
       filter = mkOption {
-        type = types.str;
-        default = ''
-        {
-          "const": true;
-        }
-        '';
+        type = types.anything;
+        default =
+          {
+            const = true;
+          };
         description = ''
           A filter description in JSON format.
         '';
@@ -86,7 +70,7 @@ in {
     postgresql = {
       host = mkOption {
         type = types.str;
-        default = "127.0.0.1";
+        default = "/run/postgresql";
         description = ''
           Address to listen on.
         '';
@@ -100,24 +84,13 @@ in {
         '';
       };
 
-      password = mkOption {
+      dbName = mkOption {
         type = types.str;
         default = "ogmios-datum-cache";
         description = ''
-          The postgresql users password.
+          The postgresql database name.
         '';
       };
-    };
-
-    stateDir = mkOption {
-      type = types.path;
-      default = "/var/lib/ogmios-datum-cache";
-      description = ''
-        Path the service has access to. If left as the default value this
-        directory will automatically be created before the ogmios-datum-cache server
-        starts, otherwise the sysadmin is responsible for ensuring the
-        directory exists with appropriate ownership and permissions.
-      '';
     };
   };
 
@@ -127,46 +100,53 @@ in {
       name = "ogmios-datum-cache";
       group = "ogmios-datum-cache";
       isSystemUser = true;
-      home = cfg.stateDir;
       useDefaultShell = true;
     };
 
-    users.groups.ogmios-datum-cache = {};
+    users.groups.ogmios-datum-cache = { };
 
     systemd.services.ogmios-datum-cache =
       let
         args = escapeShellArgs [
-          "--log-level warn"
+          "--log-level"
+          "warn"
           "--use-latest"
-          "--server-api \"${cfg.controlApiToken}\""
-          "--server-port ${toString cfg.port}"
-          "--ogmios-address ${config.services.cardano-ogmios.hostAddr}"
-          "--ogmios-port ${toString config.services.cardano-ogmios.port}"
-          "--db-port ${toString config.services.postgresql.port}"
-          "--db-host ${cfg.postgresql.host}"
-          "--db-user ${cfg.postgresql.user}"
-          "--db-password ${cfg.postgresql.password}"
-          "--block-slot ${toString cfg.blockFetcher.firstBlock.slot}"
-          "--block-hash \"${cfg.blockFetcher.firstBlock.blockHash}\""
-          "--block-filter \"${cfg.blockFetcher.filter}\""
+          "--server-api"
+          cfg.controlApiToken
+          "--server-port"
+          (toString cfg.port)
+          "--ogmios-address"
+          config.services.cardano-ogmios.hostAddr
+          "--ogmios-port"
+          (toString config.services.cardano-ogmios.port)
+          "--db-host"
+          cfg.postgresql.host
+          "--db-port"
+          (toString config.services.postgresql.port)
+          "--db-user"
+          cfg.postgresql.user
+          "--db-name"
+          cfg.postgresql.dbName
+          "--block-slot"
+          (toString cfg.blockFetcher.firstBlock.slot)
+          "--block-hash"
+          cfg.blockFetcher.firstBlock.blockHash
+          "--block-filter"
+          (lib.strings.replaceStrings [ "\"" "\\" ] [ "\\\"" "\\\\" ] (builtins.toJSON cfg.blockFetcher.filter))
         ];
-      in {
+      in
+      {
         description = "ogmios-datum-cache";
         documentation = [ "https://github.com/mlabs-haskell/ogmios-datum-cache" ];
         wantedBy = [ "multi-user.target" ];
-        after = [ "cardano-ogmios.target" "networking.target" "postgresql.target" ];
+        after = [ "cardano-ogmios.service" "networking.target" "postgresql.service" ];
         serviceConfig = mkMerge [
           {
             ExecStart = "${cfg.package}/bin/ogmios-datum-cache ${args}";
             Restart = "always";
-            WorkingDirectory = cfg.stateDir;
             User = "ogmios-datum-cache";
             Group = "ogmios-datum-cache";
-            PrivateTmp = true;
           }
-          (mkIf (cfg.stateDir == "/var/lib/ogmios-datum-cache") {
-            StateDirectory = "ogmios-datum-cache";
-          })
         ];
       };
   };
