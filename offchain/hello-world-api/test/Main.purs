@@ -9,7 +9,6 @@ import KeyWallet as KeyWallet
 
 import Effect.Aff (launchAff_)
 import Node.Process(lookupEnv)
-import Test.Spec(describe,pending)
 import Test.Spec.Runner (runSpec',defaultConfig)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Data.Maybe(Maybe(Nothing),isNothing)

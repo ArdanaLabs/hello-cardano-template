@@ -30,8 +30,9 @@ import Plutus.Types.Transaction(TransactionOutput(TransactionOutput))
 import ToData(class ToData,toData)
 import Types.PlutusData (PlutusData(Constr,Integer))
 import Data.Map(keys)
+import Data.Set as Set
 import Data.Foldable(for_)
-import Data.List((..))
+import Data.List((..),List)
 
 waitTime :: Minutes
 waitTime = Minutes 2.0
@@ -138,12 +139,14 @@ cleanupOne n = do
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.validator validator
       <> Lookups.unspentOutputs utxos
-    constraints :: TxConstraints Unit Unit
-    constraints = foldMap
+    constraintsList :: List (TxConstraints Unit Unit)
+    constraintsList =
       (\input -> Constraints.mustSpendScriptOutput input spendRedeemer)
-      (keys utxos)
-  _ <- buildBalanceSignAndSubmitTx lookups constraints
-  logInfo' "finished"
+      <$>
+      (Set.toUnfoldable $ keys utxos)
+  logInfo' $ "starting balance" <> show n
+  traverse_ (buildBalanceSignAndSubmitTx lookups) constraintsList
+  logInfo' $ "finished: " <> show n
 
 
 data HelloRedemer = Inc | Spend
