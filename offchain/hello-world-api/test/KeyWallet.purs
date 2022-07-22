@@ -12,7 +12,7 @@ import Contract.Monad
 import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
 import Data.Log.Level (LogLevel(Error))
 import Serialization.Address (NetworkId(TestnetId))
-import Test.Spec(Spec,describe,it)
+import Test.Spec(Spec,describe,it,itOnly)
 import Test.Spec.Assertions(shouldReturn)
 import IntegrationTest
   (integrationTest
@@ -29,7 +29,10 @@ toFixturePath = (<>) "./fixtures/"
 
 spec :: Spec Unit
 spec = do
-  describe "Full tests" do
+  describe "Testnet" do
+    -- I'm not sure why but this only works if it goes first
+    it"cleans up" $
+      testContract $ cleanup `shouldReturn` unit
     it "locks value" $
       testContract $ lockTest `shouldReturn` unit
     it "looks up datum" $
@@ -42,8 +45,6 @@ spec = do
       testContract $ unlockTest `shouldReturn` unit
     it "full integrationTest" $
       testContract $ integrationTest `shouldReturn` unit
-    it "cleans up" $
-      testContract $ cleanup `shouldReturn` unit
 
 testContract :: Contract () Unit -> Aff Unit
 testContract contract = do

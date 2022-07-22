@@ -128,7 +128,7 @@ datumLookup lastOutput = do
     $ BigInt.toInt asBigInt
 
 cleanup :: Contract () Unit
-cleanup = for_ (0 .. 100) cleanupOne
+cleanup = for_ (0 .. 10) cleanupOne
 
 cleanupOne :: Int -> Contract () Unit
 cleanupOne n = do
