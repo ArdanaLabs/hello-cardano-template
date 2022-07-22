@@ -184,7 +184,7 @@
             "docs:serve" =
               makeServeApp "${self'.packages."offchain:docs"}/generated-docs/html/";
             "hello-world-browser:serve" =
-              makeServeApp self'.packages.hello-world-browser;
+              makeServeApp self'.packages."offchain:hello-world-browser";
 
             "hello-world-api:test" =
               dusd-lib.mkRunCmdInShellApp
