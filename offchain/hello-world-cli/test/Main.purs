@@ -22,7 +22,6 @@ main = do
       Nothing -> do
         _ <- spawnAff "nix build .#hello-world-cli"
         pure "./result/bin/hello-world-cli "
-    -- needs runtime
     let needsRuntime = when runtime
     let jsonsPath = " ./fixtures/jsons/"
     let conf = jsonsPath <> "testWalletCfg.json "
