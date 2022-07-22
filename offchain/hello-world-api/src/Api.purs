@@ -5,6 +5,7 @@ module Api
   ,helloScript
   ,enoughForFees
   ,datumLookup
+  ,cleanup
   ) where
 
 import Contract.Prelude
@@ -16,10 +17,10 @@ import Data.BigInt as BigInt
 import Data.Time.Duration(Minutes(..))
 
 import Contract.Aeson (decodeAeson, fromString)
-import Contract.Monad ( Contract , liftContractM , logInfo')
+import Contract.Monad ( Contract , liftContractM,liftContractAffM , logInfo')
 import Contract.PlutusData (Datum(Datum),Redeemer(Redeemer),getDatumByHash)
 import Contract.ScriptLookups as Lookups
-import Contract.Scripts (Validator, ValidatorHash, applyArgsM)
+import Contract.Scripts (Validator, ValidatorHash, applyArgsM,validatorHash)
 import Contract.Transaction ( TransactionInput)
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
@@ -28,6 +29,9 @@ import Contract.Value as Value
 import Plutus.Types.Transaction(TransactionOutput(TransactionOutput))
 import ToData(class ToData,toData)
 import Types.PlutusData (PlutusData(Constr,Integer))
+import Data.Map(keys)
+import Data.Foldable(for_)
+import Data.List((..))
 
 waitTime :: Minutes
 waitTime = Minutes 2.0
@@ -121,6 +125,26 @@ datumLookup lastOutput = do
     "Datum exceeds maximum size for conversion to 64 bit int"
     -- There's not hard reason not to support this it just doesn't seem worth the refactor
     $ BigInt.toInt asBigInt
+
+cleanup :: Contract () Unit
+cleanup = for_ (0 .. 100) cleanupOne
+
+cleanupOne :: Int -> Contract () Unit
+cleanupOne n = do
+  validator <- helloScript n
+  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  utxos <- getUtxos vhash
+  let
+    lookups :: Lookups.ScriptLookups PlutusData
+    lookups = Lookups.validator validator
+      <> Lookups.unspentOutputs utxos
+    constraints :: TxConstraints Unit Unit
+    constraints = foldMap
+      (\input -> Constraints.mustSpendScriptOutput input spendRedeemer)
+      (keys utxos)
+  _ <- buildBalanceSignAndSubmitTx lookups constraints
+  logInfo' "finished"
+
 
 data HelloRedemer = Inc | Spend
 
