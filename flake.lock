@@ -3611,6 +3611,23 @@
         "type": "indirect"
       }
     },
+    "nixpkgs-selenium-server": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1507569860,
+        "narHash": "sha256-lsN6lmBLdK/ws3P/JHytSALTJZNSEd47vHjmCXxPE2s=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "4bba6650a6a5a2009e25bdeed8c1e871601a9bfb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "4bba6650a6a5a2009e25bdeed8c1e871601a9bfb",
+        "type": "github"
+      }
+    },
     "nixpkgs-unstable": {
       "locked": {
         "lastModified": 1641285291,
@@ -4583,6 +4600,7 @@
         "haskell-nix": "haskell-nix_3",
         "lint-utils": "lint-utils",
         "nixpkgs": "nixpkgs_10",
+        "nixpkgs-selenium-server": "nixpkgs-selenium-server",
         "npmlock2nix": "npmlock2nix",
         "plutus": "plutus_3",
         "plutus-apps": "plutus-apps",

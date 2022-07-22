@@ -6,13 +6,13 @@ module Main where
 
 import Control.Monad (unless, when)
 import Data.String (IsString (fromString))
-import qualified Data.Text as T
+import Data.Text qualified as T
 import GHC.Generics (Generic)
 import GHC.Stack (HasCallStack)
-import Network.HTTP.Client as HTTP
-  ( defaultManagerSettings,
-    newManager,
-  )
+import Network.HTTP.Client as HTTP (
+  defaultManagerSettings,
+  newManager,
+ )
 import Network.URI (URI, parseURI)
 import Network.Wai.Application.Static (defaultFileServerSettings, staticApp)
 import Path (fromAbsFile)
@@ -20,38 +20,38 @@ import Path.IO (forgivingAbsence, getCurrentDir, resolveFile)
 import System.Environment (getEnv)
 import System.Exit (die)
 import Test.QuickCheck (mapSize, withMaxSuccess)
-import Test.Syd
-  ( MonadIO (liftIO),
-    SetupFunc,
-    expectationFailure,
-    it,
-    setupAround,
-    sydTest,
-  )
+import Test.Syd (
+  MonadIO (liftIO),
+  SetupFunc,
+  expectationFailure,
+  it,
+  setupAround,
+  sydTest,
+ )
 import Test.Syd.Validity (GenValid, Validity, forAllValid)
 import Test.Syd.Wai (applicationSetupFunc, methodDelete, methodGet, methodPost)
-import Test.Syd.Webdriver
-  ( WebdriverTestEnv (webdriverTestEnvConfig),
-    openPath,
-    runWebdriverTestM,
-    seleniumServerSetupFunc,
-    webdriverTestEnvSetupFunc,
-  )
-import Test.WebDriver
-  ( Browser (Chrome, chromeExtensions, chromeOptions),
-    Capabilities (browser),
-    Selector (ByClass, ById, ByXPath),
-    WDConfig (wdCapabilities),
-    click,
-    closeWindow,
-    findElem,
-    getCurrentWindow,
-    getText,
-    openPage,
-    sendKeys,
-    useBrowser,
-    windows,
-  )
+import Test.Syd.Webdriver (
+  WebdriverTestEnv (webdriverTestEnvConfig),
+  openPath,
+  runWebdriverTestM,
+  seleniumServerSetupFunc,
+  webdriverTestEnvSetupFunc,
+ )
+import Test.WebDriver (
+  Browser (Chrome, chromeExtensions, chromeOptions),
+  Capabilities (browser),
+  Selector (ByClass, ById, ByXPath),
+  WDConfig (wdCapabilities),
+  click,
+  closeWindow,
+  findElem,
+  getCurrentWindow,
+  getText,
+  openPage,
+  sendKeys,
+  useBrowser,
+  windows,
+ )
 import Test.WebDriver.Chrome.Extension (loadExtension)
 import Test.WebDriver.Class (WebDriver (..))
 import Test.WebDriver.Commands.Wait (expect, waitUntil)
@@ -96,15 +96,15 @@ setupWebdriverTestEnv uri = do
         Just namiWallet -> do
           let newBrowser =
                 wdBrowser
-                  { chromeExtensions = [namiWallet],
-                    chromeOptions =
+                  { chromeExtensions = [namiWallet]
+                  , chromeOptions =
                       [ --"--headless=chrome",
-                        "--no-sandbox", -- Bypass OS security model to run on nix as well
-                        "--disable-dev-shm-usage", -- Overcome limited resource problem
-                        "--disable-gpu",
-                        "--use-gl=angle",
-                        "--use-angle=swiftshader",
-                        "--window-size=1920,1080"
+                        "--no-sandbox" -- Bypass OS security model to run on nix as well
+                      , "--disable-dev-shm-usage" -- Overcome limited resource problem
+                      , "--disable-gpu"
+                      , "--use-gl=angle"
+                      , "--use-angle=swiftshader"
+                      , "--window-size=1920,1080"
                       ]
                   }
           let newWdConfig = useBrowser newBrowser wdConfig

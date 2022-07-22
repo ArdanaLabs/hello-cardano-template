@@ -14,11 +14,14 @@
       # packages once, so we can reuse it here, it's more performant.
       pkgs = config.haskell-nix.pkgs;
 
+      # selenium-server-standalone v2.53.1
+      selenium-server-standalone-v2 =
+        (import self.inputs.nixpkgs-selenium-server { inherit system; }).selenium-server-standalone;
       # runtime dependencies required for the integration test.
       integrationTestRuntimeDeps = with realNixpkgs; [
         chromedriver
         chromium
-        selenium-server-standalone
+        selenium-server-standalone-v2
       ];
 
       project = pkgs.haskell-nix.cabalProject {
