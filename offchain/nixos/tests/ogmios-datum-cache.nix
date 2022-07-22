@@ -5,11 +5,10 @@
 , cardano-node
 }:
 let
-  psDbName = "ctxlib";
-  psDbUser = "ogmios-datum-cache";
+  name = "ogmios-datum-cache";
 in
 nixosTest {
-  name = "ogmios-datum-cache";
+  inherit name;
 
   nodes = {
     server = { config, pkgs, ... }: {
@@ -20,19 +19,14 @@ nixosTest {
         ogmios-datum-cache
       ];
 
-      virtualisation.vlans = [ 1 ];
-      systemd.tmpfiles.rules = [
-        # "D '${workingDir}' 755 ${testUser} ${testUser} - -"
-      ];
-
       services.postgresql = {
         enable = true;
-        ensureDatabases = [ psDbName ];
+        ensureDatabases = [ name ];
         ensureUsers = [
           {
-            name = psDbUser;
+            inherit name;
             ensurePermissions = {
-              "DATABASE \"${psDbName}\"" = "ALL PRIVILEGES";
+              "DATABASE \"${name}\"" = "ALL PRIVILEGES";
             };
           }
         ];
@@ -54,8 +48,8 @@ nixosTest {
       services.ogmios-datum-cache = {
         enable = true;
         postgresql = {
-          user = psDbUser;
-          dbName = psDbName;
+          user = name;
+          dbName = name;
         };
       };
 
