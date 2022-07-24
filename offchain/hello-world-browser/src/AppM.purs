@@ -8,7 +8,7 @@ import Contract.PlutusData (Datum(..), PlutusData(..), getDatumByHash)
 import Contract.Transaction (TransactionInput, TransactionOutput(..))
 import Contract.Utxos (getUtxo)
 import Data.BigInt (fromInt, toInt, toNumber)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, try)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect)
 import Halogen as H
@@ -36,35 +36,46 @@ derive newtype instance monadStoreAppM :: MonadStore S.Action S.Store AppM
 instance helloWorldApiAppM :: HelloWorldApi AppM where
   lock (ScriptAddress p) d = do
     { contractConfig } <- getStore
-    (lastOutput /\ fundsLocked) <- liftAff $ runContract contractConfig $ do
+    result <- liftAff $ try $ runContract contractConfig $ do
       validator <- helloScript p
       vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
       lastOutput <- sendDatumToScript d vhash
       TransactionOutput utxo <- getUtxo lastOutput >>= liftContractM "couldn't find utxo"
       pure $ (lastOutput /\ (FundsLocked (toNumber ((getLovelace $ valueToCoin utxo.amount) / fromInt 1_000_000))))
-    updateStore $ S.SetLastOutput lastOutput
-    pure fundsLocked
+    case result of
+      Left err -> pure $ Left err
+      Right (lastOutput /\ fundsLocked) -> do
+        updateStore $ S.SetLastOutput lastOutput
+        pure $ Right fundsLocked
   increment (ScriptAddress p) d = do
     { contractConfig, lastOutput } <- getStore
     case lastOutput of
-      Nothing -> pure unit
+      Nothing -> pure $ Right unit
       Just lastOutput' -> do
-        lastOutput'' <- liftAff $ runContract contractConfig $ do
+        result <- liftAff $ try $ runContract contractConfig $ do
           validator <- helloScript p
           vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
           oldDatum <- getDatumFromState lastOutput'
           setDatumAtScript (oldDatum + d) vhash validator lastOutput'
-        updateStore $ S.SetLastOutput lastOutput''
+        case result of
+          Left err -> pure $ Left err
+          Right lastOutput'' -> do
+            updateStore $ S.SetLastOutput lastOutput''
+            pure $ Right unit
   redeem (ScriptAddress p) = do
     { contractConfig, lastOutput } <- getStore
     case lastOutput of
-      Nothing -> pure unit
+      Nothing -> pure $ Right unit
       Just lastOutput' -> do
-        liftAff $ runContract_ contractConfig $ do
+        result <- liftAff $ try $ runContract_ contractConfig $ do
           validator <- helloScript p
           vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
           redeemFromScript vhash validator lastOutput'
-        updateStore S.ResetLastOutput
+        case result of
+          Left err -> pure $ Left err
+          Right _ -> do
+            updateStore S.ResetLastOutput
+            pure $ Right unit
 
 getDatumFromState :: TransactionInput -> Contract () Int
 getDatumFromState lastOutput = do
