@@ -75,8 +75,10 @@
                   aff
                   bigints
                   halogen
+                  halogen-store
+                  node-process
+                  safe-coerce
                   transformers
-                  type-equality
                   cardano-transaction-lib
                   hello-world-api.package
                 ];
@@ -178,6 +180,25 @@
             ''
               mkdir $out && cd $out
               export BROWSER_RUNTIME=1
+              cp -r ${hello-world-browser.ps.modules.Main.output {}} output
+              cp ${./hello-world-browser/index.js} index.js
+              cp ${./hello-world-browser/index.html} index.html
+              cp ${./webpack.config.js} webpack.config.js
+              cp -r ${ctlNodeModules}/* .
+              export NODE_PATH="node_modules"
+              export PATH="bin:$PATH"
+              mkdir dist
+              cp ${./hello-world-browser/main.css} dist/main.css
+              webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
+            '';
+        hello-world-browser-for-testing =
+          pkgs.runCommand "build-hello-world-browser-for-testing" { }
+            # see buildPursProjcet: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
+            # see bundlePursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L149
+            ''
+              mkdir $out && cd $out
+              export BROWSER_RUNTIME=1
+              export IS_TESTING=1
               cp -r ${hello-world-browser.ps.modules.Main.output {}} output
               cp ${./hello-world-browser/index.js} index.js
               cp ${./hello-world-browser/index.html} index.html
