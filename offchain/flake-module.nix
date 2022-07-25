@@ -160,12 +160,16 @@
         hello-world-api-tests =
           pkgs.runCommand "run-hello-world-api-tests" { NO_RUNTIME = "TRUE"; buildInputs = [ pkgs.coreutils ]; }
             ''
-              ${self'.apps."offchain:hello-world-api:test".program} | tee $out
+              mkdir $out && cd $out
+              cp -r ${./hello-world-api/fixtures} fixtures
+              ${self'.apps."offchain:hello-world-api:test".program.passthru.commandScript} | tee test-report.txt
             '';
         hello-world-cli-tests =
           pkgs.runCommand "run-hello-world-cli-tests" { NO_RUNTIME = "TRUE"; buildInputs = [ pkgs.coreutils ]; }
             ''
-              ${self'.apps."offchain:hello-world-cli:test".program} | tee $out
+              mkdir $out && cd $out
+              cp -r ${./hello-world-cli/fixtures} fixtures
+              ${self'.apps."offchain:hello-world-cli:test".program.passthru.commandScript} | tee test-report.txt
             '';
       };
 
@@ -198,9 +202,9 @@
             config.dusd-lib.mkScript
               {
                 inherit scriptName;
+                directory = "offchain/hello-world-api";
                 command = ''
                   export NODE_PATH=${ctlNodeModules}/node_modules
-                  cd offchain/hello-world-api
                   ${pkgs.nodejs}/bin/node \
                     --preserve-symlinks \
                     --input-type=module \
@@ -222,9 +226,9 @@
             config.dusd-lib.mkScript
               {
                 inherit scriptName;
+                directory = "offchain/hello-world-cli";
                 command = ''
                   export PATH="$PATH:${pathBin}"
-                  cd offchain/hello-world-cli
                   ${testExe}/bin/${scriptName}
                 '';
               };

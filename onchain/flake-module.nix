@@ -44,8 +44,9 @@
           dusd-lib.mkScript
             {
               scriptName = "run-onchain-test";
+              directory = "onchain";
               devshellName = "onchain";
-              devshellCommand = "cd onchain && cabal test";
+              devshellCommand = "cabal test";
             };
       };
       packages = haskellNixFlake.packages // {
