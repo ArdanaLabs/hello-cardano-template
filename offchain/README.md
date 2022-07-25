@@ -2,13 +2,13 @@
 
 To obtain a repl:
 ```
-nix develop .#hello-world-browser
+nix develop .#offchain:hello-world-browser
 purs-nix srcs repl
 ```
 
 To build the bundle:
 ```
-nix build .#hello-world-browser
+nix build .#offchain:hello-world-browser
 ```
 
 To try out the app after building do:
@@ -22,23 +22,23 @@ http-server -c-1 result
 ```
 or
 ```
-nix run .#serve-hello-world-browser
+nix run .#offchain:hello-world-browser:serve
 ```
 
 To run the api tests (currently just cbor encoding tests):
 ```
-nix run .#"offchain:hello-world-api:test"
+nix run .#offchain:hello-world-api:test
 ```
 or
 ```
-nix develop .#hello-world-api
+nix develop .#offchain:hello-world-api
 cd offchain/hello-world-api
 purs-nix test Main
 ```
 
 To run the browser integration tests
 ```
-nix run .#"offchain:hello-world-browser:test"
+nix run .#offchain:hello-world-browser:test
 ```
 the test output will be outputted to stdout, or
 ```
@@ -48,5 +48,5 @@ the test output will be there in `result` folder, it could be viewed in color wi
 
 To run the CLI tests, run:
 ```
-nix run .#"offchain:hello-world-cli:test"
+nix run .#offchain:hello-world-cli:test
 ```

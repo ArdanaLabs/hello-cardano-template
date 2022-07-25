@@ -48,7 +48,7 @@
                 postInstall = with realNixpkgs; ''
                   wrapProgram $out/bin/integration \
                     --set FONTCONFIG_FILE ${fontconfigFile} \
-                    --set HELLO_WORLD_BROWSER_INDEX ${self'.packages.hello-world-browser} \
+                    --set HELLO_WORLD_BROWSER_INDEX ${self'.packages."offchain:hello-world-browser"} \
                     --prefix PATH : "${pathEnv}"
                 '';
               };
@@ -73,7 +73,7 @@
     in
     {
       packages = haskellNixFlake.packages;
-      devShells.hello-world-browser-test = haskellNixFlake.devShell;
+      devShells."offchain:hello-world-browser-test" = haskellNixFlake.devShell;
       checks = haskellNixFlake.checks // { };
       apps = {
         "offchain:hello-world-browser:test" = {

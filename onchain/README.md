@@ -2,5 +2,5 @@
 
 To run tests, run:
 ```
-nix run .#"onchain:test"
+nix run .#onchain:test
 ```

@@ -9,6 +9,8 @@
 
       ctl-rev = self.inputs.cardano-transaction-lib.rev;
 
+      dusd-lib = config.dusd-lib;
+
       ps-pkgs-ctl =
         let
           f = self:
@@ -27,7 +29,7 @@
         purs-nix.build
           {
             name = "hello-world-cbor";
-            src.path = self'.packages.hello-world-cbor-purs;
+            src.path = self'.packages."onchain:hello-world-cbor-purs";
             info.dependencies = [ ];
             info.version = "0.0.1";
           };
@@ -105,13 +107,14 @@
           id = "631c621b7372445acf82110282ba72f4b52dafa09c53864ddc2e58be24955b2a";
         };
       };
+
+      prefixOutputs = dusd-lib.prefixAttrNames "offchain";
     in
     {
-      packages = {
+      packages = prefixOutputs {
         inherit hello-world-cbor;
-
         hello-world-api = hello-world-api.package;
-        offchain-docs =
+        docs =
           pkgs.runCommand "offchain-docs" { }
             ''
               mkdir $out && cd $out
@@ -167,41 +170,42 @@
       };
 
       apps =
-        let
-          mkApp = program: { type = "app"; inherit program; };
-          makeServeApp = pathToServe:
-            mkApp (
-              pkgs.writeShellApplication
+        { ctl-runtime = ctl-pkgs.launchCtlRuntime config; }
+        // (
+          let
+            mkApp = program: { type = "app"; inherit program; };
+            makeServeApp = pathToServe:
+              mkApp (
+                pkgs.writeShellApplication
+                  {
+                    name = projectName;
+                    runtimeInputs = [ pkgs.nodePackages.http-server ];
+                    text = "http-server -c-1 ${pathToServe}";
+                  }
+              );
+          in
+          prefixOutputs {
+            "docs:serve" =
+              makeServeApp "${self'.packages."offchain:docs"}/generated-docs/html/";
+            "hello-world-browser:serve" =
+              makeServeApp self'.packages."offchain:hello-world-browser";
+
+            "hello-world-api:test" =
+              dusd-lib.mkRunCmdInShellApp
                 {
-                  name = projectName;
-                  runtimeInputs = [ pkgs.nodePackages.http-server ];
-                  text = "http-server -c-1 ${pathToServe}";
-                }
-            );
-        in
-        {
-          ctl-runtime = ctl-pkgs.launchCtlRuntime config;
-
-          serve-offchain-docs =
-            makeServeApp "${self'.packages.offchain-docs}/generated-docs/html/";
-          serve-hello-world-browser =
-            makeServeApp self'.packages.hello-world-browser;
-
-          "offchain:hello-world-api:test" =
-            config.dusd-lib.mkRunCmdInShellApp
-              {
-                scriptName = "run-hello-world-api-tests";
-                devshellName = "hello-world-api";
-                command = "cd offchain/hello-world-api && purs-nix test";
-              };
-          "offchain:hello-world-cli:test" =
-            config.dusd-lib.mkRunCmdInShellApp
-              {
-                scriptName = "run-hello-world-cli-tests";
-                devshellName = "hello-world-cli";
-                command = "cd offchain/hello-world-cli && purs-nix test";
-              };
-        };
+                  scriptName = "run-hello-world-api-tests";
+                  devshellName = "hello-world-api";
+                  command = "cd offchain/hello-world-api && purs-nix test";
+                };
+            "hello-world-cli:test" =
+              dusd-lib.mkRunCmdInShellApp
+                {
+                  scriptName = "run-hello-world-cli-tests";
+                  devshellName = "hello-world-cli";
+                  command = "cd offchain/hello-world-cli && purs-nix test";
+                };
+          }
+        );
 
       devShells =
         let
@@ -221,7 +225,7 @@
               shellHook = "export NODE_PATH=${ctlNodeModules}/node_modules/";
             };
         in
-        {
+        prefixOutputs {
           hello-world-cli = makeProjectShell hello-world-cli { };
           hello-world-browser = makeProjectShell hello-world-browser { };
           hello-world-api = makeProjectShell hello-world-api { };
