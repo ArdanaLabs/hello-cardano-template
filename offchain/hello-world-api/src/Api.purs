@@ -26,6 +26,9 @@ import Contract.Value as Value
 import ToData(class ToData,toData)
 import Types.PlutusData (PlutusData(Constr,Integer))
 
+waitTime :: Minutes
+waitTime = Minutes 2.0
+
 sendDatumToScript :: Int -> ValidatorHash -> Contract () TransactionInput
 sendDatumToScript n vhash = do
   let
@@ -41,7 +44,7 @@ sendDatumToScript n vhash = do
         )
         enoughForFees
   txId <- buildBalanceSignAndSubmitTx lookups constraints
-  liftContractM "gave up waiting for sendDatumToScript TX" =<< waitForTx (Minutes 1.0) vhash txId
+  liftContractM "gave up waiting for sendDatumToScript TX" =<< waitForTx waitTime vhash txId
 
 setDatumAtScript
   :: Int
@@ -68,7 +71,7 @@ setDatumAtScript n vhash validator txInput = do
         enoughForFees
       )
   txId <- buildBalanceSignAndSubmitTx lookups constraints
-  liftContractM "failed waiting for increment" =<< waitForTx (Minutes 1.0) vhash txId
+  liftContractM "failed waiting for increment" =<< waitForTx waitTime vhash txId
 
 redeemFromScript
   :: ValidatorHash

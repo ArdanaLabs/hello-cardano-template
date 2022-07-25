@@ -3,18 +3,10 @@ module Main
   ) where
 
 import Contract.Prelude
-import UnitTest (helloUnitTest)
-import Contract.Monad
-  ( launchAff_
-  , runContract_
-  , configWithLogLevel
-  )
-import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
-import Serialization.Address (NetworkId(TestnetId))
-import Data.Log.Level (LogLevel(Trace))
+import Effect.Aff(launchAff_)
+import Options.Applicative(execParser)
+import HelloWorld.Cli.Parser(parser)
+import HelloWorld.Cli.Runners(runCli)
 
 main :: Effect Unit
-main = launchAff_ $ do
-  wallet <- mkKeyWalletFromFiles "wallet.skey" $ Just "staking.skey"
-  cfg <- configWithLogLevel TestnetId wallet Trace
-  runContract_ cfg helloUnitTest
+main = launchAff_ $ runCli =<< liftEffect (execParser parser)

@@ -41,14 +41,20 @@
       prefixOutputs = dusd-lib.prefixAttrNames "onchain";
     in
     {
-      apps = prefixOutputs {
-        test =
-          dusd-lib.mkRunCmdInShellApp
-            {
-              scriptName = "run-onchain-test";
-              devshellName = "onchain";
-              command = "cd onchain && cabal test";
-            };
+      apps = {
+        "onchain:test" =
+          dusd-lib.mkApp
+            (
+              pkgs.writeShellApplication
+                {
+                  name = "run-onchain-tests";
+                  runtimeInputs = [ pkgs.nix ];
+                  text = ''
+                    nix build -L ${self}#checks.\"${system}\".\"dUSD-onchain:test:tests\"
+                    cat result/test-stdout
+                  '';
+                }
+            );
       };
       packages =
         haskellNixFlake.packages
