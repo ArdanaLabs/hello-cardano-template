@@ -10,11 +10,7 @@
 , devshellCommand ? throw "please specify devshellCommand"
 , command ? "nix develop .#${devshellName} -c sh -c \"${devshellCommand}\""
 ,
-}:
-let
-  commandScript = writeScript "command" command;
-in
-{
+}: {
   type = "app";
   program =
     writeShellApplication
@@ -24,8 +20,7 @@ in
         text = ''
           PROJ_DIR="$(nix flake metadata --json | jq .locked.url -cr | cut --characters=8-)"
           cd "$PROJ_DIR"/${directory}
-          ${commandScript}
+          ${command}
         '';
       };
-  passthru = { inherit commandScript; };
 }
