@@ -86,8 +86,7 @@ component =
         ]
     Locking ->
       HH.main_
-        [ HH.text "Initializing"
-        ]
+        [ HH.text "Initializing" ]
     LockFailed err ->
       HH.main_
         [ HH.text $ message err
@@ -102,12 +101,12 @@ component =
       HH.main_
         [ HH.table_
             [ HH.tr_
-                [ HH.td_ [ HH.text "Current Value" ]
-                , HH.td_ [ HH.text "Funds Locked" ]
+                [ HH.td [ HP.id "current-value-header" ] [ HH.text "Current Value" ]
+                , HH.td [ HP.id "funds-locked-header" ] [ HH.text "Funds Locked" ]
                 ]
             , HH.tr_
-                [ HH.td_ [ HH.text $ show datum ]
-                , HH.td_ [ HH.text $ show fundsLocked <> " ADA" ]
+                [ HH.td [ HP.id "current-value-body" ] [ HH.text $ show datum ]
+                , HH.td [ HP.id "funds-locked-body" ] [ HH.text $ show fundsLocked <> " ADA" ]
                 ]
             , HH.tr_
                 [ HH.td_ [ HH.button [ HP.id "increment", HE.onClick \_ -> Increment ] [ HH.text "Increment" ] ]
@@ -117,19 +116,18 @@ component =
         ]
     Incrementing from to ->
       HH.main_
-        [ HH.text $ "Incrementing " <> show from <> " to " <> show to <> "..."
-        ]
+        [ HH.text $ "Incrementing " <> show from <> " to " <> show to <> "..." ]
     IncrementFailed datum fundsLocked err ->
       HH.main_
         [ HH.text $ message err
         , HH.table_
             [ HH.tr_
-                [ HH.td_ [ HH.text "Current Value" ]
-                , HH.td_ [ HH.text "Funds Locked" ]
+                [ HH.td [ HP.id "current-value-header" ] [ HH.text "Current Value" ]
+                , HH.td [ HP.id "funds-locked-header" ] [ HH.text "Funds Locked" ]
                 ]
             , HH.tr_
-                [ HH.td_ [ HH.text $ show datum ]
-                , HH.td_ [ HH.text $ show fundsLocked <> " ADA" ]
+                [ HH.td [ HP.id "current-value-body" ] [ HH.text $ show datum ]
+                , HH.td [ HP.id "funds-locked-body" ] [ HH.text $ show fundsLocked <> " ADA" ]
                 ]
             , HH.tr_
                 [ HH.td_ [ HH.button [ HP.id "increment", HE.onClick \_ -> Increment ] [ HH.text "Increment" ] ]
@@ -145,12 +143,12 @@ component =
         [ HH.text $ message err
         , HH.table_
             [ HH.tr_
-                [ HH.td_ [ HH.text "Current Value" ]
-                , HH.td_ [ HH.text "Funds Locked" ]
+                [ HH.td [ HP.id "current-value-header" ] [ HH.text "Current Value" ]
+                , HH.td [ HP.id "funds-locked-header" ] [ HH.text "Funds Locked" ]
                 ]
             , HH.tr_
-                [ HH.td_ [ HH.text $ show datum ]
-                , HH.td_ [ HH.text $ show fundsLocked <> " ADA" ]
+                [ HH.td [ HP.id "current-value-body" ] [ HH.text $ show datum ]
+                , HH.td [ HP.id "funds-locked-body" ] [ HH.text $ show fundsLocked <> " ADA" ]
                 ]
             , HH.tr_
                 [ HH.td_ [ HH.button [ HP.id "increment", HE.onClick \_ -> Increment ] [ HH.text "Increment" ] ]

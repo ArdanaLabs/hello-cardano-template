@@ -1,74 +1,40 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
 module Main where
 
-import Control.Monad (unless, when)
 import Data.String (IsString (fromString))
-import qualified Data.Text as T
-import GHC.Generics (Generic)
-import GHC.Stack (HasCallStack)
-import Network.HTTP.Client as HTTP
-  ( defaultManagerSettings,
-    newManager,
-  )
+import Data.Text (unpack)
+import Network.HTTP.Client as HTTP (
+  defaultManagerSettings,
+  newManager,
+ )
 import Network.URI (URI, parseURI)
 import Network.Wai.Application.Static (defaultFileServerSettings, staticApp)
-import Path (fromAbsFile)
-import Path.IO (forgivingAbsence, getCurrentDir, resolveFile)
 import System.Environment (getEnv)
-import System.Exit (die)
-import Test.QuickCheck (mapSize, withMaxSuccess)
-import Test.Syd
-  ( MonadIO (liftIO),
-    SetupFunc,
-    expectationFailure,
-    it,
-    setupAround,
-    sydTest,
-  )
-import Test.Syd.Validity (GenValid, Validity, forAllValid)
-import Test.Syd.Wai (applicationSetupFunc, methodDelete, methodGet, methodPost)
-import Test.Syd.Webdriver
-  ( WebdriverTestEnv (webdriverTestEnvConfig),
-    openPath,
-    runWebdriverTestM,
-    seleniumServerSetupFunc,
-    webdriverTestEnvSetupFunc,
-  )
-import Test.WebDriver
-  ( Browser (Chrome, chromeExtensions, chromeOptions),
-    Capabilities (browser),
-    Selector (ByClass, ById, ByXPath),
-    WDConfig (wdCapabilities),
-    click,
-    closeWindow,
-    findElem,
-    getCurrentWindow,
-    getText,
-    openPage,
-    sendKeys,
-    useBrowser,
-    windows,
-  )
-import Test.WebDriver.Chrome.Extension (loadExtension)
-import Test.WebDriver.Class (WebDriver (..))
+import Test.Syd (
+  MonadIO (liftIO),
+  SetupFunc,
+  expectationFailure,
+  it,
+  setupAround,
+  sydTest,
+ )
+import Test.Syd.Wai (applicationSetupFunc)
+import Test.Syd.Webdriver (
+  WebdriverTestEnv,
+  openPath,
+  runWebdriverTestM,
+  seleniumServerSetupFunc,
+  webdriverTestEnvSetupFunc,
+ )
+import Test.WebDriver (
+  Selector (ById, ByTag),
+  click,
+  findElem,
+  getText,
+ )
 import Test.WebDriver.Commands.Wait (expect, waitUntil)
-import UnliftIO.Path.Directory (getCurrentDirectory)
-
-data Command = Lock | Incr
-  deriving (Show, Eq, Generic)
-
-instance Validity Command -- Implementation is derived via Generic
-
-instance GenValid Command
-
-evalCommands :: [Command] -> Int
-evalCommands = foldl f 0
-  where
-    f _ Lock = 3
-    f c Incr = c + 2
 
 startHelloWorldBrowser :: SetupFunc URI
 startHelloWorldBrowser = do
@@ -83,73 +49,48 @@ setupWebdriverTestEnv :: URI -> SetupFunc (WebdriverTestEnv ())
 setupWebdriverTestEnv uri = do
   ssh <- seleniumServerSetupFunc
   manager <- liftIO $ HTTP.newManager HTTP.defaultManagerSettings
-  wdTestEnv <- webdriverTestEnvSetupFunc ssh manager uri ()
-  let wdConfig = webdriverTestEnvConfig wdTestEnv
-  let wdBrowser = browser $ wdCapabilities wdConfig
-  case wdBrowser of
-    Chrome {} -> do
-      currentDir <- liftIO getCurrentDirectory
-      path <- resolveFile currentDir "Nami.crx"
-      mbNamiWallet <- liftIO $ forgivingAbsence $ loadExtension (fromAbsFile path)
-      case mbNamiWallet of
-        Nothing -> liftIO $ die "Nami wallet not loaded"
-        Just namiWallet -> do
-          let newBrowser =
-                wdBrowser
-                  { chromeExtensions = [namiWallet],
-                    chromeOptions =
-                      [ --"--headless=chrome",
-                        "--no-sandbox", -- Bypass OS security model to run on nix as well
-                        "--disable-dev-shm-usage", -- Overcome limited resource problem
-                        "--disable-gpu",
-                        "--use-gl=angle",
-                        "--use-angle=swiftshader",
-                        "--window-size=1920,1080"
-                      ]
-                  }
-          let newWdConfig = useBrowser newBrowser wdConfig
-          pure $ wdTestEnv {webdriverTestEnvConfig = newWdConfig}
-    _ -> liftIO $ die "not chrome"
+  webdriverTestEnvSetupFunc ssh manager uri ()
 
 main :: IO ()
 main = sydTest $
   setupAround (startHelloWorldBrowser >>= setupWebdriverTestEnv) $
-    it "test 1" $ \wte -> mapSize (* 10) $
-      withMaxSuccess 5 $
-        forAllValid $ \commands ->
-          runWebdriverTestM wte $ do
-            openPage "chrome-extension://lpfcbjknijpeeillifnkikgncikgfhdo/mainPopup.html"
+    it "happy path" $ \wte ->
+      runWebdriverTestM wte $ do
+        openPath ""
+        waitUntil 10 $ findElem $ ByTag "main"
+        main <- findElem $ ByTag "main"
 
-            importBtn <- findElem $ ByXPath "//button[text()='Import']"
-            click importBtn
+        waitUntil 10 $ findElem $ ById "lock"
+        lockBtn <- findElem $ ById "lock"
+        click lockBtn
 
-            selectInput <- findElem $ ByXPath "//select"
-            sendKeys "24" selectInput
+        waitUntil 10 $ findElem $ ById "current-value-header"
+        currentValueHeader <- findElem $ ById "current-value-header"
+        waitUntil 10 $ expect . (== "Current Value") =<< getText currentValueHeader
 
-            agreeBtn <- findElem $ ByClass "chakra-checkbox"
-            click agreeBtn
+        waitUntil 10 $ findElem $ ById "funds-locked-header"
+        fundsLockedHeader <- findElem $ ById "funds-locked-header"
+        waitUntil 10 $ expect . (== "Funds Locked") =<< getText fundsLockedHeader
 
-            continueBtn <- findElem $ ByXPath "//button[text()='Continue']"
-            click continueBtn
+        waitUntil 10 $ findElem $ ById "current-value-body"
+        currentValueBody <- findElem $ ById "current-value-body"
+        waitUntil 10 $ expect . (== "3") =<< getText currentValueBody
 
-            getCurrentWindow >>= closeWindow
+        waitUntil 10 $ findElem $ ById "funds-locked-body"
+        fundsLockedBody <- findElem $ ById "funds-locked-body"
+        waitUntil 10 $ expect . (== "6.0 ADA") =<< getText fundsLockedBody
 
-            word1Input <- findElem $ ByXPath "//input[@placeholder='Word 1']"
-            sendKeys "abc" word1Input
+        waitUntil 10 $ findElem $ ById "increment"
+        incrementBtn <- findElem $ ById "increment"
+        click incrementBtn
 
-            word2Input <- findElem $ ByXPath "//input[@placeholder='Word 2']"
-            sendKeys "def" word2Input
+        waitUntil 10 $ findElem $ ById "current-value-body"
+        currentValueBody <- findElem $ ById "current-value-body"
+        waitUntil 10 $ expect . (== "5") =<< getText currentValueBody
 
-            openPath ""
-            lock <- findElem $ ById "lock"
-            increment <- findElem $ ById "increment"
-            counter <- findElem $ ById "counter"
+        waitUntil 10 $ findElem $ ById "redeem"
+        redeemBtn <- findElem $ ById "redeem"
+        click redeemBtn
 
-            let interpret c = click $ case c of
-                  Lock -> lock
-                  Incr -> increment
-
-            mapM_ interpret commands
-            n <- T.unpack <$> getText counter
-
-            when (n /= show (evalCommands commands)) $ error "fail"
+        waitUntil 10 $ findElem $ ById "lock"
+        pure ()
