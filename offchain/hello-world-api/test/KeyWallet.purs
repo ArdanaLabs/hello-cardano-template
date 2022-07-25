@@ -25,8 +25,8 @@ integrationTest :: Aff Unit
 integrationTest = do
   testResourcesDir <- liftEffect $ fromMaybe "." <$> lookupEnv "TEST_RESOURCES"
   wallet <- mkKeyWalletFromFiles
-              (testResourcesDir <> "wallet.skey") 
-              (pure $ testResourcesDir <> "staking.skey")
+              (testResourcesDir <> "/wallet.skey") 
+              (pure $ testResourcesDir <> "/staking.skey")
   cfg <- configWithLogLevel TestnetId wallet Trace
   runContract_ cfg $ do
     helloUnitTest
