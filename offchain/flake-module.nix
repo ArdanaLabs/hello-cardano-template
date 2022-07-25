@@ -9,6 +9,8 @@
 
       ctl-rev = self.inputs.cardano-transaction-lib.rev;
 
+      dusd-lib = config.dusd-lib;
+
       ps-pkgs-ctl =
         let
           f = self:
@@ -27,7 +29,7 @@
         purs-nix.build
           {
             name = "hello-world-cbor";
-            src.path = self'.packages.hello-world-cbor-purs;
+            src.path = self'.packages."onchain:hello-world-cbor-purs";
             info.dependencies = [ ];
             info.version = "0.0.1";
           };
@@ -49,7 +51,7 @@
           purs-nix.purs
             {
               inherit (hello-world-api) dependencies;
-              srcs = [ ./hello-world-api/src ];
+              srcs = [ ./hello-world-api ];
             };
         package =
           purs-nix.build
@@ -74,7 +76,7 @@
                   cardano-transaction-lib
                   hello-world-api.package
                 ];
-              srcs = [ ./hello-world-browser/src ];
+              srcs = [ ./hello-world-browser ];
             };
       };
 
@@ -112,13 +114,53 @@
           id = "631c621b7372445acf82110282ba72f4b52dafa09c53864ddc2e58be24955b2a";
         };
       };
+
+      hello-world-api-tests =
+        let
+          testModule = hello-world-api.ps.modules."Test.Main".output { };
+          scriptName = "hello-world-api-tests";
+        in
+        pkgs.writeShellApplication
+          {
+            name = scriptName;
+            runtimeInputs = [ pkgs.nodejs ];
+            text = ''
+              export TEST_RESOURCES=${./hello-world-api/fixtures}
+              export NODE_PATH=${ctlNodeModules}/node_modules
+              node \
+                --preserve-symlinks \
+                --input-type=module \
+                -e 'import { main } from "${testModule}/Test.Main/index.js"; main()' \
+                -- "${scriptName}" "''$@"
+            '';
+          };
+      hello-world-cli-tests =
+        let
+          testExe =
+            hello-world-cli.ps.modules."Test.Main".app
+              { name = scriptName; };
+          scriptName = "hello-world-cli-tests";
+        in
+        pkgs.writeShellApplication
+          {
+            name = scriptName;
+            runtimeInputs = [
+              testExe
+              self'.packages."offchain:hello-world-cli"
+              pkgs.coreutils
+            ];
+            text = ''
+              export TEST_RESOURCES=${./hello-world-cli/fixtures}
+              ${scriptName}
+            '';
+          };
+      prefixOutputs = dusd-lib.prefixAttrNames "offchain";
     in
     {
-      packages = {
+      packages = prefixOutputs {
         inherit hello-world-cbor;
-
         hello-world-api = hello-world-api.package;
-        offchain-docs =
+        docs =
           pkgs.runCommand "offchain-docs" { }
             ''
               mkdir $out && cd $out
@@ -157,65 +199,42 @@
       };
 
       checks = {
-        hello-world-api-tests =
-          pkgs.runCommand "api-tests"
-            {
-              NODE_PATH = "${ctlNodeModules}/node_modules";
-              NO_RUNTIME = "TRUE";
-            }
-            ''
-              mkdir $out && cd $out
-              ${hello-world-api.ps.command {srcs = [ ./hello-world-api ];}}/bin/purs-nix test
-            '';
-        hello-world-cli-tests =
-          pkgs.runCommand "cli-tests"
-            {
-              NODE_PATH = "${ctlNodeModules}/node_modules";
-              CLI_PATH = "${self.packages.x86_64-linux.hello-world-cli}/bin/hello-world-cli";
-              NO_RUNTIME = "TRUE";
-            }
-            ''
-              mkdir $out && cd $out
-              ${hello-world-cli.ps.command {srcs = [ ./hello-world-cli ];}}/bin/purs-nix test
-            '';
+        run-hello-world-api-tests =
+          let test = hello-world-api-tests; in
+          pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
+            "${test}/bin/${test.meta.mainProgram} | tee $out";
+        run-hello-world-cli-tests =
+          let test = hello-world-cli-tests; in
+          pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
+            "${test}/bin/${test.meta.mainProgram} | tee $out";
       };
 
       apps =
-        let
-          mkApp = program: { type = "app"; inherit program; };
-          makeServeApp = pathToServe:
-            mkApp (
-              pkgs.writeShellApplication
-                {
-                  name = projectName;
-                  runtimeInputs = [ pkgs.nodePackages.http-server ];
-                  text = "http-server -c-1 ${pathToServe}";
-                }
-            );
-        in
-        {
-          ctl-runtime = ctl-pkgs.launchCtlRuntime config;
+        { ctl-runtime = ctl-pkgs.launchCtlRuntime config; }
+        // (
+          let
+            makeServeApp = pathToServe:
+              dusd-lib.mkApp (
+                pkgs.writeShellApplication
+                  {
+                    name = projectName;
+                    runtimeInputs = [ pkgs.nodePackages.http-server ];
+                    text = "http-server -c-1 ${pathToServe}";
+                  }
+              );
+          in
+          prefixOutputs {
+            "docs:serve" =
+              makeServeApp "${self'.packages."offchain:docs"}/generated-docs/html/";
+            "hello-world-browser:serve" =
+              makeServeApp self'.packages."offchain:hello-world-browser";
 
-          serve-offchain-docs =
-            makeServeApp "${self'.packages.offchain-docs}/generated-docs/html/";
-          serve-hello-world-browser =
-            makeServeApp self'.packages.hello-world-browser;
-
-          "offchain:hello-world-api:test" =
-            config.dusd-lib.mkRunCmdInShellApp
-              {
-                scriptName = "run-hello-world-api-tests";
-                devshellName = "hello-world-api";
-                command = "cd offchain/hello-world-api && purs-nix test";
-              };
-          "offchain:hello-world-cli:test" =
-            config.dusd-lib.mkRunCmdInShellApp
-              {
-                scriptName = "run-hello-world-cli-tests";
-                devshellName = "hello-world-cli";
-                command = "cd offchain/hello-world-cli && purs-nix test";
-              };
-        };
+            "hello-world-api:test" =
+              dusd-lib.mkApp hello-world-api-tests;
+            "hello-world-cli:test" =
+              dusd-lib.mkApp hello-world-cli-tests;
+          }
+        );
 
       devShells =
         let
@@ -235,7 +254,7 @@
               shellHook = "export NODE_PATH=${ctlNodeModules}/node_modules/";
             };
         in
-        {
+        prefixOutputs {
           hello-world-cli = makeProjectShell hello-world-cli { };
           hello-world-browser = makeProjectShell hello-world-browser { };
           hello-world-api = makeProjectShell hello-world-api { };
