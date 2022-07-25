@@ -11,6 +11,9 @@
   haskell = pkgs.callPackage ./haskell.nix {
     inherit self;
   };
-  # function to make a flake app that runs a command in a given devshell
-  mkRunCmdInShellApp = realPkgs.callPackage ./mkRunCmdInShellApp.nix { };
+  # function to make a flake app that runs some shell commands from
+  # the root of the repository.
+  # optionally can take `devshellName` and `devshellCommand` to run
+  # inside the command inside the specified devshell.
+  mkScript = realPkgs.callPackage ./mkScript.nix { };
 }

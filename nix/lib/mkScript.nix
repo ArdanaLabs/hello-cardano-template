@@ -3,9 +3,10 @@
 , coreutils
 , ...
 }:
-{ scriptName
-, devshellName
-, command
+{ scriptName ? throw "please specify a script name"
+, devshellName ? throw "please specify devshellName"
+, devshellCommand ? throw "please specify devshellCommand"
+, command ? "nix develop .#${devshellName} -c sh -c \"${devshellCommand}\""
 ,
 }: {
   type = "app";
@@ -15,7 +16,7 @@
     text = ''
       PROJ_DIR="$(nix flake metadata --json | jq .locked.url -cr | cut --characters=8-)"
       cd "$PROJ_DIR"
-      nix develop .#${devshellName} -c sh -c "${command}"
+      ${command}
     '';
   };
 }

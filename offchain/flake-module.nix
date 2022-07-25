@@ -192,42 +192,42 @@
 
           "offchain:hello-world-api:test" =
             let
-              meta.mainProgram = "hello-world-api-tests";
+              testModule = hello-world-api.ps.modules."Test.Main".output { };
+              scriptName = "hello-world-api-tests";
             in
-            {
-              type = "app";
-              program =
-                let
-                  text = ''
-                    export NODE_PATH=${ctlNodeModules}/node_modules
-                    export TEST_RESOURCES=${ ./hello-world-api/fixtures }
-                    ${pkgs.nodejs}/bin/node \
-                      --preserve-symlinks \
-                      --input-type=module \
-                      -e 'import { main } from "${hello-world-api.ps.modules."Test.Main".output {}}/Test.Main/index.js"; main()' \
-                      -- "${ meta.mainProgram }" "''$@"
-                  '';
-                in
-                pkgs.writeTextFile { inherit meta text; name = meta.mainProgram; executable = true; destination = "/bin/${meta.mainProgram}"; };
-            };
+            config.dusd-lib.mkScript
+              {
+                inherit scriptName;
+                command = ''
+                  export NODE_PATH=${ctlNodeModules}/node_modules
+                  cd offchain/hello-world-api
+                  ${pkgs.nodejs}/bin/node \
+                    --preserve-symlinks \
+                    --input-type=module \
+                    -e 'import { main } from "${testModule}/Test.Main/index.js"; main()' \
+                    -- "${scriptName}" "''$@"
+                '';
+              };
 
           "offchain:hello-world-cli:test" =
             let
-              meta.mainProgram = "hello-world-api-tests";
+              pathBin =
+                pkgs.lib.makeBinPath
+                  [ self'.packages.hello-world-cli pkgs.coreutils ];
+              testExe =
+                hello-world-cli.ps.modules."Test.Main".app
+                  { name = scriptName; };
+              scriptName = "hello-world-api-tests";
             in
-            {
-              type = "app";
-              program =
-                let
-                  testExe = hello-world-cli.ps.modules."Test.Main".app { name = meta.mainProgram; };
-                in
-                pkgs.runCommand "wrap-${meta.mainProgram}" { inherit meta; buildInputs = [ pkgs.makeWrapper ]; } ''
-                  mkdir -p $out/bin
-                  makeWrapper ${testExe}/bin/${meta.mainProgram} $out/bin/${meta.mainProgram} \
-                    --set PATH ${ pkgs.lib.makeBinPath [ self'.packages.hello-world-cli pkgs.coreutils ]} \
-                    --set TEST_RESOURCES "${./hello-world-cli/fixtures}"
+            config.dusd-lib.mkScript
+              {
+                inherit scriptName;
+                command = ''
+                  export PATH="$PATH:${pathBin}"
+                  cd offchain/hello-world-cli
+                  ${testExe}/bin/${scriptName}
                 '';
-            };
+              };
         };
 
       devShells =

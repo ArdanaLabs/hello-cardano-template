@@ -41,11 +41,11 @@
     {
       apps = {
         "onchain:test" =
-          dusd-lib.mkRunCmdInShellApp
+          dusd-lib.mkScript
             {
               scriptName = "run-onchain-test";
               devshellName = "onchain";
-              command = "cd onchain && cabal test";
+              devshellCommand = "cd onchain && cabal test";
             };
       };
       packages = haskellNixFlake.packages // {
