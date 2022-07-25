@@ -162,14 +162,14 @@
             ''
               mkdir $out && cd $out
               cp -r ${./hello-world-api/fixtures} fixtures
-              ${self'.apps.hello-world-api-tests.program} | tee test-report.txt
+              ${self'.apps."offchain:hello-world-api:test".program} | tee test-report.txt
             '';
         hello-world-cli-tests =
           pkgs.runCommand "run-hello-world-cli-tests" { NO_RUNTIME = "TRUE"; buildInputs = [ pkgs.coreutils ]; }
             ''
               mkdir $out && cd $out
               cp -r ${./hello-world-cli/fixtures} fixtures
-              ${self'.apps.hello-world-cli-tests.program} | tee test-report.txt
+              ${self'.apps."offchain:hello-world-cli:test".program} | tee test-report.txt
             '';
       };
 
@@ -194,7 +194,7 @@
           serve-hello-world-browser =
             makeServeApp self'.packages.hello-world-browser;
 
-          hello-world-api-tests =
+          "offchain:hello-world-api:test" =
             let
               meta.mainProgram = "hello-world-api-tests";
             in
@@ -214,7 +214,7 @@
                 pkgs.writeTextFile { inherit meta text; name = meta.mainProgram; executable = true; destination = "/bin/${meta.mainProgram}"; };
             };
 
-          hello-world-cli-tests =
+          "offchain:hello-world-cli:test" =
             let
               meta.mainProgram = "hello-world-api-tests";
             in
