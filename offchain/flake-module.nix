@@ -174,7 +174,7 @@
           pkgs.runCommand "cli-tests"
             {
               NODE_PATH = "${ctlNodeModules}/node_modules";
-              CLI_PATH = "${self.packages.x86_64-linux.hello-world-cli}/bin/hello-world-cli";
+              CLI_PATH = "${self.packages.x86_64-linux."offchain:hello-world-cli"}/bin/hello-world-cli";
               NO_RUNTIME = "TRUE";
             }
             ''
