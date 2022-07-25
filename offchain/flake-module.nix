@@ -51,7 +51,7 @@
           purs-nix.purs
             {
               inherit (hello-world-api) dependencies;
-              srcs = [ ./hello-world-api/src ];
+              srcs = [ ./hello-world-api ];
             };
         package =
           purs-nix.build
@@ -76,7 +76,7 @@
                   cardano-transaction-lib
                   hello-world-api.package
                 ];
-              srcs = [ ./hello-world-browser/src ];
+              srcs = [ ./hello-world-browser ];
             };
       };
 
@@ -115,6 +115,45 @@
         };
       };
 
+      hello-world-api-tests =
+        let
+          testModule = hello-world-api.ps.modules."Test.Main".output { };
+          scriptName = "hello-world-api-tests";
+        in
+        pkgs.writeShellApplication
+          {
+            name = scriptName;
+            runtimeInputs = [ pkgs.nodejs ];
+            text = ''
+              export TEST_RESOURCES=${./hello-world-api/fixtures}
+              export NODE_PATH=${ctlNodeModules}/node_modules
+              node \
+                --preserve-symlinks \
+                --input-type=module \
+                -e 'import { main } from "${testModule}/Test.Main/index.js"; main()' \
+                -- "${scriptName}" "''$@"
+            '';
+          };
+      hello-world-cli-tests =
+        let
+          testExe =
+            hello-world-cli.ps.modules."Test.Main".app
+              { name = scriptName; };
+          scriptName = "hello-world-cli-tests";
+        in
+        pkgs.writeShellApplication
+          {
+            name = scriptName;
+            runtimeInputs = [
+              testExe
+              self'.packages."offchain:hello-world-cli"
+              pkgs.coreutils
+            ];
+            text = ''
+              export TEST_RESOURCES=${./hello-world-cli/fixtures}
+              ${scriptName}
+            '';
+          };
       prefixOutputs = dusd-lib.prefixAttrNames "offchain";
     in
     {
@@ -160,36 +199,22 @@
       };
 
       checks = {
-        hello-world-api-tests =
-          pkgs.runCommand "api-tests"
-            {
-              NODE_PATH = "${ctlNodeModules}/node_modules";
-              NO_RUNTIME = "TRUE";
-            }
-            ''
-              mkdir $out && cd $out
-              ${hello-world-api.ps.command {srcs = [ ./hello-world-api ];}}/bin/purs-nix test
-            '';
-        hello-world-cli-tests =
-          pkgs.runCommand "cli-tests"
-            {
-              NODE_PATH = "${ctlNodeModules}/node_modules";
-              CLI_PATH = "${self.packages.x86_64-linux."offchain:hello-world-cli"}/bin/hello-world-cli";
-              NO_RUNTIME = "TRUE";
-            }
-            ''
-              mkdir $out && cd $out
-              ${hello-world-cli.ps.command {srcs = [ ./hello-world-cli ];}}/bin/purs-nix test
-            '';
+        run-hello-world-api-tests =
+          let test = hello-world-api-tests; in
+          pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
+            "${test}/bin/${test.meta.mainProgram} | tee $out";
+        run-hello-world-cli-tests =
+          let test = hello-world-cli-tests; in
+          pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
+            "${test}/bin/${test.meta.mainProgram} | tee $out";
       };
 
       apps =
         { ctl-runtime = ctl-pkgs.launchCtlRuntime config; }
         // (
           let
-            mkApp = program: { type = "app"; inherit program; };
             makeServeApp = pathToServe:
-              mkApp (
+              dusd-lib.mkApp (
                 pkgs.writeShellApplication
                   {
                     name = projectName;
@@ -205,19 +230,9 @@
               makeServeApp self'.packages."offchain:hello-world-browser";
 
             "hello-world-api:test" =
-              dusd-lib.mkRunCmdInShellApp
-                {
-                  scriptName = "run-hello-world-api-tests";
-                  devshellName = "hello-world-api";
-                  command = "cd offchain/hello-world-api && purs-nix test";
-                };
+              dusd-lib.mkApp hello-world-api-tests;
             "hello-world-cli:test" =
-              dusd-lib.mkRunCmdInShellApp
-                {
-                  scriptName = "run-hello-world-cli-tests";
-                  devshellName = "hello-world-cli";
-                  command = "cd offchain/hello-world-cli && purs-nix test";
-                };
+              dusd-lib.mkApp hello-world-cli-tests;
           }
         );
 
