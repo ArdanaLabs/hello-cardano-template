@@ -29,7 +29,7 @@
         purs-nix.build
           {
             name = "hello-world-cbor";
-            src.path = self'.packages.hello-world-cbor-purs;
+            src.path = self'.packages."onchain:hello-world-cbor-purs";
             info.dependencies = [ ];
             info.version = "0.0.1";
           };
@@ -154,13 +154,13 @@
               ${scriptName}
             '';
           };
+      prefixOutputs = dusd-lib.prefixAttrNames "offchain";
     in
     {
-      packages = {
+      packages = prefixOutputs {
         inherit hello-world-cbor;
-
         hello-world-api = hello-world-api.package;
-        offchain-docs =
+        docs =
           pkgs.runCommand "offchain-docs" { }
             ''
               mkdir $out && cd $out
@@ -210,30 +210,31 @@
       };
 
       apps =
-        let
-          makeServeApp = pathToServe:
-            dusd-lib.mkApp (
-              pkgs.writeShellApplication
-                {
-                  name = projectName;
-                  runtimeInputs = [ pkgs.nodePackages.http-server ];
-                  text = "http-server -c-1 ${pathToServe}";
-                }
-            );
-        in
-        {
-          ctl-runtime = ctl-pkgs.launchCtlRuntime config;
+        { ctl-runtime = ctl-pkgs.launchCtlRuntime config; }
+        // (
+          let
+            makeServeApp = pathToServe:
+              dusd-lib.mkApp (
+                pkgs.writeShellApplication
+                  {
+                    name = projectName;
+                    runtimeInputs = [ pkgs.nodePackages.http-server ];
+                    text = "http-server -c-1 ${pathToServe}";
+                  }
+              );
+          in
+          prefixOutputs {
+            "docs:serve" =
+              makeServeApp "${self'.packages."offchain:docs"}/generated-docs/html/";
+            "hello-world-browser:serve" =
+              makeServeApp self'.packages."offchain:hello-world-browser";
 
-          serve-offchain-docs =
-            makeServeApp "${self'.packages.offchain-docs}/generated-docs/html/";
-          serve-hello-world-browser =
-            makeServeApp self'.packages.hello-world-browser;
-
-          "offchain:hello-world-api:test" =
-            dusd-lib.mkApp hello-world-api-tests;
-          "offchain:hello-world-cli:test" =
-            dusd-lib.mkApp hello-world-cli-tests;
-        };
+            "hello-world-api:test" =
+              dusd-lib.mkApp hello-world-api-tests;
+            "hello-world-cli:test" =
+              dusd-lib.mkApp hello-world-cli-tests;
+          }
+        );
 
       devShells =
         let
@@ -253,7 +254,7 @@
               shellHook = "export NODE_PATH=${ctlNodeModules}/node_modules/";
             };
         in
-        {
+        prefixOutputs {
           hello-world-cli = makeProjectShell hello-world-cli { };
           hello-world-browser = makeProjectShell hello-world-browser { };
           hello-world-api = makeProjectShell hello-world-api { };
