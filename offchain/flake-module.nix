@@ -222,7 +222,7 @@
               type = "app";
               program =
                 let
-                  testExe = hello-world-cli.ps.modules."Test.Main".app { name = meta.mainProgram; version = "1.0.0"; };
+                  testExe = hello-world-cli.ps.modules."Test.Main".app { name = meta.mainProgram; };
                 in
                 pkgs.runCommand "wrap-${meta.mainProgram}" { inherit meta; buildInputs = [ pkgs.makeWrapper ]; } ''
                   mkdir -p $out/bin
