@@ -160,16 +160,12 @@
         hello-world-api-tests =
           pkgs.runCommand "run-hello-world-api-tests" { NO_RUNTIME = "TRUE"; buildInputs = [ pkgs.coreutils ]; }
             ''
-              mkdir $out && cd $out
-              cp -r ${./hello-world-api/fixtures} fixtures
-              ${self'.apps."offchain:hello-world-api:test".program} | tee test-report.txt
+              ${self'.apps."offchain:hello-world-api:test".program} | tee $out
             '';
         hello-world-cli-tests =
           pkgs.runCommand "run-hello-world-cli-tests" { NO_RUNTIME = "TRUE"; buildInputs = [ pkgs.coreutils ]; }
             ''
-              mkdir $out && cd $out
-              cp -r ${./hello-world-cli/fixtures} fixtures
-              ${self'.apps."offchain:hello-world-cli:test".program} | tee test-report.txt
+              ${self'.apps."offchain:hello-world-cli:test".program} | tee $out
             '';
       };
 
@@ -204,6 +200,7 @@
                 let
                   text = ''
                     export NODE_PATH=${ctlNodeModules}/node_modules
+                    export TEST_RESOURCES=${ ./hello-world-api/fixtures }
                     ${pkgs.nodejs}/bin/node \
                       --preserve-symlinks \
                       --input-type=module \
@@ -227,7 +224,8 @@
                 pkgs.runCommand "wrap-${meta.mainProgram}" { inherit meta; buildInputs = [ pkgs.makeWrapper ]; } ''
                   mkdir -p $out/bin
                   makeWrapper ${testExe}/bin/${meta.mainProgram} $out/bin/${meta.mainProgram} \
-                    --set PATH ${ pkgs.lib.makeBinPath [ self'.packages.hello-world-cli pkgs.coreutils ]}
+                    --set PATH ${ pkgs.lib.makeBinPath [ self'.packages.hello-world-cli pkgs.coreutils ]} \
+                    --set TEST_RESOURCES "${./hello-world-cli/fixtures}"
                 '';
             };
         };

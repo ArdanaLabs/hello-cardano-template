@@ -12,13 +12,14 @@ import Test.Spec.Reporter.Console (consoleReporter)
 
 main :: Effect Unit
 main = do
+  testResourcesDir <- fromMaybe "." <$> lookupEnv "TEST_RESOURCES"
   runtime <- isNothing <$> lookupEnv "NO_RUNTIME"
   launchAff_ do
     -- TODO
     -- this seems like a hack to me
     let cli = "hello-world-cli "
     let needsRuntime = when runtime
-    let jsonsPath = " ./fixtures/jsons/"
+    let jsonsPath = testResourcesDir <> "/jsons/"
     let conf = jsonsPath <> "testWalletCfg.json "
     let badConf = jsonsPath <> "badWalletCfg.json "
     let state = " script.clistate "

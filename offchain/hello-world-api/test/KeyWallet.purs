@@ -10,13 +10,11 @@ import Contract.Monad
   )
 import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
 import Data.Log.Level (LogLevel(Trace))
+import Node.Process(lookupEnv)
 import Serialization.Address (NetworkId(TestnetId))
 import Test.Spec(Spec,describe,it)
 import Test.Spec.Assertions(shouldReturn)
 
-
-toFixturePath :: String -> String
-toFixturePath = (<>) "./fixtures/" 
 
 spec :: Spec Unit
 spec = do
@@ -25,9 +23,10 @@ spec = do
 
 integrationTest :: Aff Unit
 integrationTest = do
+  testResourcesDir <- liftEffect $ fromMaybe "." <$> lookupEnv "TEST_RESOURCES"
   wallet <- mkKeyWalletFromFiles
-              (toFixturePath "wallet.skey") 
-              (Just $ toFixturePath "staking.skey")
+              (testResourcesDir <> "wallet.skey") 
+              (pure $ testResourcesDir <> "staking.skey")
   cfg <- configWithLogLevel TestnetId wallet Trace
   runContract_ cfg $ do
     helloUnitTest
