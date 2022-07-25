@@ -118,30 +118,40 @@
           testModule = hello-world-api.ps.modules."Test.Main".output { };
           scriptName = "hello-world-api-tests";
         in
-        pkgs.writeScript scriptName
-          ''
-            export NODE_PATH=${ctlNodeModules}/node_modules
-            ${pkgs.nodejs}/bin/node \
-              --preserve-symlinks \
-              --input-type=module \
-              -e 'import { main } from "${testModule}/Test.Main/index.js"; main()' \
-              -- "${scriptName}" "''$@"
-          '';
+        pkgs.writeShellApplication
+          {
+            name = scriptName;
+            runtimeInputs = [ pkgs.nodejs ];
+            text = ''
+              export TEST_RESOURCES=${./hello-world-api/fixtures}
+              export NODE_PATH=${ctlNodeModules}/node_modules
+              node \
+                --preserve-symlinks \
+                --input-type=module \
+                -e 'import { main } from "${testModule}/Test.Main/index.js"; main()' \
+                -- "${scriptName}" "''$@"
+            '';
+          };
       run-hello-world-cli-tests =
         let
-          pathBin =
-            pkgs.lib.makeBinPath
-              [ self'.packages.hello-world-cli pkgs.coreutils ];
           testExe =
             hello-world-cli.ps.modules."Test.Main".app
               { name = scriptName; };
-          scriptName = "hello-world-api-tests";
+          scriptName = "hello-world-cli-tests";
         in
-        pkgs.writeScript scriptName
-          ''
-            export PATH="$PATH:${pathBin}"
-            ${testExe}/bin/${scriptName}
-          '';
+        pkgs.writeShellApplication
+          {
+            name = scriptName;
+            runtimeInputs = [
+              testExe
+              self'.packages.hello-world-cli
+              pkgs.coreutils
+            ];
+            text = ''
+              export TEST_RESOURCES=${./hello-world-cli/fixtures}
+              ${scriptName}
+            '';
+          };
     in
     {
       packages = {
@@ -188,19 +198,13 @@
 
       checks = {
         hello-world-api-tests =
-          pkgs.runCommand "run-hello-world-api-tests"
-            { NO_RUNTIME = "TRUE"; buildInputs = [ pkgs.coreutils ]; }
-            ''
-              cp -r ${./hello-world-api/fixtures} fixtures
-              ${run-hello-world-api-tests} | tee $out
-            '';
+          let test = run-hello-world-api-tests; in
+          pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
+            "${test}/bin/${test.meta.mainProgram} | tee $out";
         hello-world-cli-tests =
-          pkgs.runCommand "run-hello-world-cli-tests"
-            { NO_RUNTIME = "TRUE"; buildInputs = [ pkgs.coreutils ]; }
-            ''
-              cp -r ${./hello-world-cli/fixtures} fixtures
-              ${run-hello-world-cli-tests} | tee $out
-            '';
+          let test = run-hello-world-cli-tests; in
+          pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
+            "${test}/bin/${test.meta.mainProgram} | tee $out";
       };
 
       apps =
@@ -224,21 +228,8 @@
           serve-hello-world-browser =
             makeServeApp self'.packages.hello-world-browser;
 
-          "offchain:hello-world-api:test" =
-            config.dusd-lib.mkScript
-              {
-                scriptName = run-hello-world-api-tests.name;
-                directory = "offchain/hello-world-api";
-                command = run-hello-world-api-tests;
-              };
-
-          "offchain:hello-world-cli:test" =
-            config.dusd-lib.mkScript
-              {
-                scriptName = run-hello-world-cli-tests.name;
-                directory = "offchain/hello-world-cli";
-                command = run-hello-world-cli-tests;
-              };
+          "offchain:hello-world-api:test" = mkApp run-hello-world-api-tests;
+          "offchain:hello-world-cli:test" = mkApp run-hello-world-cli-tests;
         };
 
       devShells =
