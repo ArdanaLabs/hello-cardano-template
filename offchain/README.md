@@ -44,9 +44,58 @@ the test output will be outputted to stdout, or
 ```
 nix build -L .#hello-world-browser-test:test:integration
 ```
+
 the test output will be there in `result` folder, it could be viewed in color with `less -r result/test-stdout`
+
+# cli
+
+The cli can be used either by running
+```
+nix run .#hello-world-cli -- <args>
+```
+, from the dev shell with
+```
+nix develop .#hello-world-cli
+# and then
+purs-nix run <args>
+```
+or building it and using the result with
+```
+nix build .#hello-world-cli
+# and then
+./result/bin/hello-world-cli <args>
+```
+
+## wallet configs
+
+The wallet config is a json file who's path must be provided in the `CONFIG_FILE` argument of each cli command.
+It must provide the fields:
+- `walletPath` which needs to be the path to a skey file for the wallet
+- `stakingPath` which needs to be the path to a skey file for the staking credential
+- network which needs to be `Testnet` or `Mainnet` and must indicate which network the wallet belongs to and the test will use.
+
+Here's an example config:
+```
+{ "walletPath" : "wallet.skey"
+, "stakingPath" : "staking.skey"
+, "network" : "Testnet"
+}
+```
+
+## cli tests
+
+TODO OUTDATED
 
 To run the CLI tests, run:
 ```
 nix run .#offchain:hello-world-cli:test
 ```
+or use `purs-nix test` in the `.#hello-world-cli` dev shell.
+
+# Test-wallet
+
+The test wallet addres is:
+`addr_test1qqevfdhu80jsmjhzkf8lkkv5rza9h6k0u6hmwwr0r7vyjt9j3f374a2all0hc6vzxa6v7sax7du2lk5fu5q592d5fhqswar4hc`.
+Here's a link to faucet: https://testnets.cardano.org/en/testnets/cardano/tools/faucet/ .
+If the wallet runs out tests can fail.
+
