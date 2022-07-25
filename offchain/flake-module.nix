@@ -146,7 +146,7 @@
             name = scriptName;
             runtimeInputs = [
               testExe
-              self'.packages.hello-world-cli
+              self'.packages."offchain:hello-world-cli"
               pkgs.coreutils
             ];
             text = ''
