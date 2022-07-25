@@ -17,14 +17,15 @@ in
 {
   type = "app";
   program =
-    (writeShellApplication {
-      name = scriptName;
-      runtimeInputs = [ jq coreutils ];
-      text = ''
-        PROJ_DIR="$(nix flake metadata --json | jq .locked.url -cr | cut --characters=8-)"
-        cd "$PROJ_DIR"/${directory}
-        ${commandScript}
-      '';
-    })
-    // { passthru = { inherit commandScript; }; };
+    writeShellApplication
+      {
+        name = scriptName;
+        runtimeInputs = [ jq coreutils ];
+        text = ''
+          PROJ_DIR="$(nix flake metadata --json | jq .locked.url -cr | cut --characters=8-)"
+          cd "$PROJ_DIR"/${directory}
+          ${commandScript}
+        '';
+      };
+  passthru = { inherit commandScript; };
 }

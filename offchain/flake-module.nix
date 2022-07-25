@@ -162,14 +162,14 @@
             ''
               mkdir $out && cd $out
               cp -r ${./hello-world-api/fixtures} fixtures
-              ${self'.apps."offchain:hello-world-api:test".program.passthru.commandScript} | tee test-report.txt
+              ${self'.apps."offchain:hello-world-api:test".passthru.commandScript} | tee test-report.txt
             '';
         hello-world-cli-tests =
           pkgs.runCommand "run-hello-world-cli-tests" { NO_RUNTIME = "TRUE"; buildInputs = [ pkgs.coreutils ]; }
             ''
               mkdir $out && cd $out
               cp -r ${./hello-world-cli/fixtures} fixtures
-              ${self'.apps."offchain:hello-world-cli:test".program.passthru.commandScript} | tee test-report.txt
+              ${self'.apps."offchain:hello-world-cli:test".passthru.commandScript} | tee test-report.txt
             '';
       };
 
