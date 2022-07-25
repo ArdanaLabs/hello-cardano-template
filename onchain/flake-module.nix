@@ -41,13 +41,18 @@
     {
       apps = {
         "onchain:test" =
-          dusd-lib.mkScript
-            {
-              scriptName = "run-onchain-test";
-              directory = "onchain";
-              devshellName = "onchain";
-              devshellCommand = "cabal test";
-            };
+          dusd-lib.mkApp
+            (
+              pkgs.writeShellApplication
+                {
+                  name = "run-onchain-tests";
+                  runtimeInputs = [ pkgs.nix ];
+                  text = ''
+                    nix build -L ${self}#checks.\"${system}\".\"dUSD-onchain:test:tests\"
+                    cat result/test-stdout
+                  '';
+                }
+            );
       };
       packages = haskellNixFlake.packages // {
         onchain-scripts =

@@ -9,6 +9,8 @@
 
       ctl-rev = self.inputs.cardano-transaction-lib.rev;
 
+      dusd-lib = config.dusd-lib;
+
       ps-pkgs-ctl =
         let
           f = self:
@@ -209,9 +211,8 @@
 
       apps =
         let
-          mkApp = program: { type = "app"; inherit program; };
           makeServeApp = pathToServe:
-            mkApp (
+            dusd-lib.mkApp (
               pkgs.writeShellApplication
                 {
                   name = projectName;
@@ -228,8 +229,10 @@
           serve-hello-world-browser =
             makeServeApp self'.packages.hello-world-browser;
 
-          "offchain:hello-world-api:test" = mkApp run-hello-world-api-tests;
-          "offchain:hello-world-cli:test" = mkApp run-hello-world-cli-tests;
+          "offchain:hello-world-api:test" =
+            dusd-lib.mkApp run-hello-world-api-tests;
+          "offchain:hello-world-cli:test" =
+            dusd-lib.mkApp run-hello-world-cli-tests;
         };
 
       devShells =
