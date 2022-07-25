@@ -6,7 +6,7 @@ with ps-pkgs;
       src.git =
         {
           repo = "https://github.com/mlabs-haskell/purescript-aeson.git";
-          rev = "69bd18c4a9cffdebc45c55d2448740721a91854c";
+          rev = "286862a975f4bafbef15540c365bbbb0480e0bf7";
           ref = "master";
         };
       info =
