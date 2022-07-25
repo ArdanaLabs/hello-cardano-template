@@ -103,7 +103,7 @@ with ps-pkgs;
       src.git =
         {
           repo = "https://github.com/Plutonomicon/cardano-transaction-lib.git";
-          ref = "develop";
+          ref = "brian/cardano-node-update";
           rev = ctl-rev;
         };
 
