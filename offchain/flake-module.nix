@@ -115,7 +115,7 @@
         };
       };
 
-      run-hello-world-api-tests =
+      hello-world-api-tests =
         let
           testModule = hello-world-api.ps.modules."Test.Main".output { };
           scriptName = "hello-world-api-tests";
@@ -134,7 +134,7 @@
                 -- "${scriptName}" "''$@"
             '';
           };
-      run-hello-world-cli-tests =
+      hello-world-cli-tests =
         let
           testExe =
             hello-world-cli.ps.modules."Test.Main".app
@@ -199,12 +199,12 @@
       };
 
       checks = {
-        hello-world-api-tests =
-          let test = run-hello-world-api-tests; in
+        run-hello-world-api-tests =
+          let test = hello-world-api-tests; in
           pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
             "${test}/bin/${test.meta.mainProgram} | tee $out";
-        hello-world-cli-tests =
-          let test = run-hello-world-cli-tests; in
+        run-hello-world-cli-tests =
+          let test = hello-world-cli-tests; in
           pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
             "${test}/bin/${test.meta.mainProgram} | tee $out";
       };
@@ -230,9 +230,9 @@
             makeServeApp self'.packages.hello-world-browser;
 
           "offchain:hello-world-api:test" =
-            dusd-lib.mkApp run-hello-world-api-tests;
+            dusd-lib.mkApp hello-world-api-tests;
           "offchain:hello-world-cli:test" =
-            dusd-lib.mkApp run-hello-world-cli-tests;
+            dusd-lib.mkApp hello-world-cli-tests;
         };
 
       devShells =
