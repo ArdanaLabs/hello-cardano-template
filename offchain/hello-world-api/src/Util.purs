@@ -2,6 +2,7 @@ module Util
   (waitForTx
   ,buildBalanceSignAndSubmitTx
   ,getUtxos
+  ,getTxScanUrl
   ) where
 
 import Contract.Prelude
@@ -10,13 +11,12 @@ import Contract.Address (scriptHashAddress)
 import Contract.Monad
   ( Contract
   , liftedE
-  , liftedM
   , logInfo'
   )
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (ValidatorHash)
 import Contract.Transaction
-  ( TransactionHash
+  ( TransactionHash(TransactionHash)
   , TransactionOutput
   , TransactionInput(TransactionInput)
   , balanceAndSignTxE
@@ -38,6 +38,8 @@ import Data.Time.Duration
   )
 import Effect.Aff (delay)
 import Types.PlutusData (PlutusData)
+import Serialization.Address (NetworkId(TestnetId,MainnetId))
+import Types.ByteArray (byteArrayToHex)
 
 waitForTx
   :: forall a.
@@ -80,3 +82,10 @@ getUtxos vhash = do
   let scriptAddress = scriptHashAddress vhash
   UtxoM utxos <- fromMaybe (UtxoM Map.empty) <$> utxosAt scriptAddress
   pure utxos
+
+getTxScanUrl :: NetworkId -> TransactionInput -> String
+getTxScanUrl TestnetId (TransactionInput {transactionId:TransactionHash hash}) = "https://testnet.cardanoscan.io/transaction/" <> byteArrayToHex hash
+getTxScanUrl MainnetId (TransactionInput {transactionId:TransactionHash hash}) = "https://cardanoscan.io/transaction/" <> byteArrayToHex hash
+-- The mainnet case isn't tested because it can't be without runing a mainnet transaction
+-- but I did find some mainnet transactions and that seems to be the url format
+

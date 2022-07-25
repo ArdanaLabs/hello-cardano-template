@@ -76,16 +76,18 @@
       devShells."offchain:hello-world-browser-test" = haskellNixFlake.devShell;
       checks = haskellNixFlake.checks // { };
       apps = {
-        "offchain:hello-world-browser:test" = {
-          type = "app";
-          program = pkgs.writeShellApplication {
-            name = "run-hello-world-browser-tests";
-            text = ''
-              nix build -L .#checks.\"${system}\".\"hello-world-browser-test:test:integration\" \
-                && cat result/test-stdout
-            '';
-          };
-        };
+        "offchain:hello-world-browser:test" =
+          dusd-lib.mkApp
+            (
+              pkgs.writeShellApplication
+                {
+                  name = "run-hello-world-browser-tests";
+                  text = ''
+                    nix build -L ${self}#checks.\"${system}\".\"hello-world-browser-test:test:integration\"
+                    cat result/test-stdout
+                  '';
+                }
+            );
       };
     };
   flake = { };
