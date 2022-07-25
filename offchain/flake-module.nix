@@ -49,7 +49,7 @@
           purs-nix.purs
             {
               inherit (hello-world-api) dependencies;
-              srcs = [ ./hello-world-api/src ];
+              srcs = [ ./hello-world-api ];
             };
         package =
           purs-nix.build
@@ -74,7 +74,7 @@
                   cardano-transaction-lib
                   hello-world-api.package
                 ];
-              srcs = [ ./hello-world-browser/src ];
+              srcs = [ ./hello-world-browser ];
             };
       };
 
@@ -158,25 +158,18 @@
 
       checks = {
         hello-world-api-tests =
-          pkgs.runCommand "api-tests"
-            {
-              NODE_PATH = "${ctlNodeModules}/node_modules";
-              NO_RUNTIME = "TRUE";
-            }
+          pkgs.runCommand "run-hello-world-api-tests" { NO_RUNTIME = "TRUE"; buildInputs = [ pkgs.coreutils ]; }
             ''
               mkdir $out && cd $out
-              ${hello-world-api.ps.command {srcs = [ ./hello-world-api ];}}/bin/purs-nix test
+              cp -r ${./hello-world-api/fixtures} fixtures
+              ${self'.apps.hello-world-api-tests.program} | tee test-report.txt
             '';
         hello-world-cli-tests =
-          pkgs.runCommand "cli-tests"
-            {
-              NODE_PATH = "${ctlNodeModules}/node_modules";
-              CLI_PATH = "${self.packages.x86_64-linux.hello-world-cli}/bin/hello-world-cli";
-              NO_RUNTIME = "TRUE";
-            }
+          pkgs.runCommand "run-hello-world-cli-tests" { NO_RUNTIME = "TRUE"; buildInputs = [ pkgs.coreutils ]; }
             ''
               mkdir $out && cd $out
-              ${hello-world-cli.ps.command {srcs = [ ./hello-world-cli ];}}/bin/purs-nix test
+              cp -r ${./hello-world-cli/fixtures} fixtures
+              ${self'.apps.hello-world-cli-tests.program} | tee test-report.txt
             '';
       };
 
@@ -201,20 +194,42 @@
           serve-hello-world-browser =
             makeServeApp self'.packages.hello-world-browser;
 
-          "offchain:hello-world-api:test" =
-            config.dusd-lib.mkRunCmdInShellApp
-              {
-                scriptName = "run-hello-world-api-tests";
-                devshellName = "hello-world-api";
-                command = "cd offchain/hello-world-api && purs-nix test";
-              };
-          "offchain:hello-world-cli:test" =
-            config.dusd-lib.mkRunCmdInShellApp
-              {
-                scriptName = "run-hello-world-cli-tests";
-                devshellName = "hello-world-cli";
-                command = "cd offchain/hello-world-cli && purs-nix test";
-              };
+          hello-world-api-tests =
+            let
+              meta.mainProgram = "hello-world-api-tests";
+            in
+            {
+              type = "app";
+              program =
+                let
+                  text = ''
+                    export NODE_PATH=${ctlNodeModules}/node_modules
+                    ${pkgs.nodejs}/bin/node \
+                      --preserve-symlinks \
+                      --input-type=module \
+                      -e 'import { main } from "${hello-world-api.ps.modules."Test.Main".output {}}/Test.Main/index.js"; main()' \
+                      -- "${ meta.mainProgram }" "''$@"
+                  '';
+                in
+                pkgs.writeTextFile { inherit meta text; name = meta.mainProgram; executable = true; destination = "/bin/${meta.mainProgram}"; };
+            };
+
+          hello-world-cli-tests =
+            let
+              meta.mainProgram = "hello-world-api-tests";
+            in
+            {
+              type = "app";
+              program =
+                let
+                  testExe = hello-world-cli.ps.modules."Test.Main".app { name = meta.mainProgram; version = "1.0.0"; };
+                in
+                pkgs.runCommand "wrap-${meta.mainProgram}" { inherit meta; buildInputs = [ pkgs.makeWrapper ]; } ''
+                  mkdir -p $out/bin
+                  makeWrapper ${testExe}/bin/${meta.mainProgram} $out/bin/${meta.mainProgram} \
+                    --set PATH ${ pkgs.lib.makeBinPath [ self'.packages.hello-world-cli pkgs.coreutils ]}
+                '';
+            };
         };
 
       devShells =

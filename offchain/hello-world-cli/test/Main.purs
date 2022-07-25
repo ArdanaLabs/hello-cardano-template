@@ -13,15 +13,10 @@ import Test.Spec.Reporter.Console (consoleReporter)
 main :: Effect Unit
 main = do
   runtime <- isNothing <$> lookupEnv "NO_RUNTIME"
-  maybePath <- lookupEnv "CLI_PATH"
   launchAff_ do
     -- TODO
     -- this seems like a hack to me
-    cli <- case maybePath of
-      Just somePath -> pure $ somePath <> " "
-      Nothing -> do
-        _ <- spawnAff "nix build .#hello-world-cli"
-        pure "./result/bin/hello-world-cli "
+    let cli = "hello-world-cli "
     let needsRuntime = when runtime
     let jsonsPath = " ./fixtures/jsons/"
     let conf = jsonsPath <> "testWalletCfg.json "
