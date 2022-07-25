@@ -188,18 +188,18 @@
 
       checks = {
         hello-world-api-tests =
-          pkgs.runCommand "run-hello-world-api-tests" { NO_RUNTIME = "TRUE"; buildInputs = [ pkgs.coreutils ]; }
+          pkgs.runCommand "run-hello-world-api-tests"
+            { NO_RUNTIME = "TRUE"; buildInputs = [ pkgs.coreutils ]; }
             ''
-              mkdir $out && cd $out
               cp -r ${./hello-world-api/fixtures} fixtures
-              ${run-hello-world-api-tests} | tee test-report.txt
+              ${run-hello-world-api-tests} | tee $out
             '';
         hello-world-cli-tests =
-          pkgs.runCommand "run-hello-world-cli-tests" { NO_RUNTIME = "TRUE"; buildInputs = [ pkgs.coreutils ]; }
+          pkgs.runCommand "run-hello-world-cli-tests"
+            { NO_RUNTIME = "TRUE"; buildInputs = [ pkgs.coreutils ]; }
             ''
-              mkdir $out && cd $out
               cp -r ${./hello-world-cli/fixtures} fixtures
-              ${run-hello-world-cli-tests} | tee test-report.txt
+              ${run-hello-world-cli-tests} | tee $out
             '';
       };
 
