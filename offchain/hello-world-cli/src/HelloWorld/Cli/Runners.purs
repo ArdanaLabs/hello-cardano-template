@@ -51,6 +51,7 @@ import Api
   ,sendDatumToScript
   ,setDatumAtScript
   ,redeemFromScript
+  ,datumLookup
   )
 import Util(getTxScanUrl)
 import HelloWorld.Cli.Types
@@ -118,7 +119,7 @@ runCmd (Options {conf,statePath,command}) = do
       newState <- runContract cfg $ do
         validator <- helloScript state.param
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-        oldDatum <- getDatumFromState $ State state
+        oldDatum <- datumLookup state.lastOutput
         let newDatum = oldDatum + state.param
         txid <- setDatumAtScript newDatum vhash validator state.lastOutput
         pure $ State $ state{lastOutput=txid}
@@ -133,7 +134,7 @@ runCmd (Options {conf,statePath,command}) = do
     Query -> do
       (State state) <- readState statePath
       (datum /\ bal) <- runContract cfg $ do
-        datum <- getDatumFromState $ State state
+        datum <- datumLookup state.lastOutput
         bal <- getWalletBalance
           >>= liftContractM "Get wallet balance failed"
         pure $ datum /\ bal
@@ -153,23 +154,6 @@ runCmd (Options {conf,statePath,command}) = do
   liftEffect $ exit 0
   -- this shouldn't be needed
   -- should be fixed once https://github.com/Plutonomicon/cardano-transaction-lib/pull/731 merges
-
-getDatumFromState :: CliState -> Contract () Int
-getDatumFromState (State state) = do
-  TransactionOutput utxo <- getUtxo state.lastOutput
-    >>= liftContractM "couldn't find utxo"
-  oldDatum <-
-    utxo.dataHash
-    # liftContractM "UTxO had no datum hash"
-    >>= getDatumByHash
-    >>= liftContractM "Couldn't find datum by hash"
-  asBigInt <- liftContractM "datum wasn't an integer" $ case oldDatum of
-    Datum (Integer n) -> Just n
-    _ -> Nothing
-  liftContractM
-    "Datum exceeds maximum size for conversion to 64 bit int"
-    -- There's not hard reason not to support this it just doesn't seem worth the refactor
-    $ Big.toInt asBigInt
 
 writeState :: String -> CliState -> Aff Unit
 writeState statePath s = do

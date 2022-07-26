@@ -11,7 +11,6 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Contract.Prelude
-import UnitTest (helloUnitTest)
 import Contract.Wallet (mkNamiWalletAff)
 import Contract.Monad
   ( ContractConfig(ContractConfig)
@@ -76,4 +75,4 @@ main =
     _ <- runUI component unit body
     wallet <- Just <$> mkNamiWalletAff
     cfg <- over ContractConfig _ { wallet = wallet } <$> traceTestnetContractConfig
-    runContract_ cfg helloUnitTest
+    runContract_ cfg (pure unit)

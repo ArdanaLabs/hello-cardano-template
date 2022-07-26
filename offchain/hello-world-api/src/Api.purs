@@ -4,6 +4,8 @@ module Api
   ,redeemFromScript
   ,helloScript
   ,enoughForFees
+  ,datumLookup
+  ,grabFreeAda
   ) where
 
 import Contract.Prelude
@@ -15,16 +17,22 @@ import Data.BigInt as BigInt
 import Data.Time.Duration(Minutes(..))
 
 import Contract.Aeson (decodeAeson, fromString)
-import Contract.Monad ( Contract , liftContractM , logInfo')
-import Contract.PlutusData (Datum(Datum),Redeemer(Redeemer))
+import Contract.Monad ( Contract , liftContractM,liftContractAffM , logInfo')
+import Contract.PlutusData (Datum(Datum),Redeemer(Redeemer),getDatumByHash)
 import Contract.ScriptLookups as Lookups
-import Contract.Scripts (Validator, ValidatorHash, applyArgsM)
+import Contract.Scripts (Validator, ValidatorHash, applyArgsM,validatorHash)
 import Contract.Transaction ( TransactionInput)
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
+import Contract.Utxos(getUtxo)
 import Contract.Value as Value
+import Plutus.Types.Transaction(TransactionOutput(TransactionOutput))
 import ToData(class ToData,toData)
 import Types.PlutusData (PlutusData(Constr,Integer))
+import Data.Map(keys)
+import Data.Set as Set
+import Data.Foldable(for_)
+import Data.List((..),List)
 
 waitTime :: Minutes
 waitTime = Minutes 2.0
@@ -101,6 +109,44 @@ helloScript n = do
   paramValidator <- liftContractM "decoding failed" maybeParamValidator
   liftContractM "apply args failed" =<< applyArgsM paramValidator [Integer $ BigInt.fromInt n]
          -- TODO It'd be cool if this could be an Integer not Data
+
+datumLookup :: TransactionInput -> Contract () Int
+datumLookup lastOutput = do
+  TransactionOutput utxo <- getUtxo lastOutput
+    >>= liftContractM "couldn't find utxo"
+  oldDatum <-
+    utxo.dataHash
+    # liftContractM "UTxO had no datum hash"
+    >>= getDatumByHash
+    >>= liftContractM "Couldn't find datum by hash"
+  asBigInt <- liftContractM "datum wasn't an integer" $ case oldDatum of
+    Datum (Integer n) -> Just n
+    _ -> Nothing
+  liftContractM
+    "Datum exceeds maximum size for conversion to 64 bit int"
+    -- There's not hard reason not to support this it just doesn't seem worth the refactor
+    $ BigInt.toInt asBigInt
+
+grabFreeAda :: Contract () Unit
+grabFreeAda = for_ (0 .. 10) grabFreeAdaSingleParam
+
+grabFreeAdaSingleParam :: Int -> Contract () Unit
+grabFreeAdaSingleParam n = do
+  validator <- helloScript n
+  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  utxos <- getUtxos vhash
+  let
+    lookups :: Lookups.ScriptLookups PlutusData
+    lookups = Lookups.validator validator
+      <> Lookups.unspentOutputs utxos
+    constraintsList :: List (TxConstraints Unit Unit)
+    constraintsList =
+      (\input -> Constraints.mustSpendScriptOutput input spendRedeemer)
+      <$>
+      (Set.toUnfoldable $ keys utxos)
+  logInfo' $ "starting balance" <> show n
+  traverse_ (buildBalanceSignAndSubmitTx lookups) constraintsList
+  logInfo' $ "finished: " <> show n
 
 data HelloRedemer = Inc | Spend
 
