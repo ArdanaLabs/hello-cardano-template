@@ -35,17 +35,17 @@ spec = do
     it "cleans up" $
       testContract $ cleanup `shouldReturn` unit
     it "locks value" $
-      testContract $ lockTest `shouldReturn` unit
+      testContract $ (lockTest 3 4) `shouldReturn` unit
     it "looks up datum" $
-      testContract $ lookupTest `shouldReturn` 3
+      testContract $ (lookupTest 3 4) `shouldReturn` 3
     it "increments" $
-      testContract $ incTest `shouldReturn` unit
+      testContract $ (incTest 3 4) `shouldReturn` unit
     it "looks up datum after inc" $
-      testContract $ postIncLookupTest `shouldReturn` 7
+      testContract $ (postIncLookupTest 3 4) `shouldReturn` 7
     it "unlocks funds" $
-      testContract $ unlockTest `shouldReturn` unit
+      testContract $ (unlockTest 3 4) `shouldReturn` unit
     it "full integration test" $
-      testContract $ integrationTest `shouldReturn` unit
+      testContract $ (integrationTest 3 4) `shouldReturn` unit
 
 testContract :: Contract () Unit -> Aff Unit
 testContract contract = do

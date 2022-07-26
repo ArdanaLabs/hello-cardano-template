@@ -21,57 +21,58 @@ import Contract.Monad (Contract, liftContractAffM, logInfo')
 import Contract.Scripts (validatorHash)
 import Test.Spec.Assertions(shouldEqual)
 
-integrationTest :: Contract () Unit
-integrationTest = do
+
+integrationTest :: Int -> Int -> Contract () Unit
+integrationTest init param = do
   logInfo' "Full integrationTest"
-  validator <- helloScript 4
+  validator <- helloScript init
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-  ti1 <- sendDatumToScript 3 vhash
+  ti1 <- sendDatumToScript param vhash
   datum1 <- datumLookup ti1
-  datum1 `shouldEqual` 3
-  ti2 <- setDatumAtScript 7 vhash validator ti1
+  datum1 `shouldEqual` init
+  ti2 <- setDatumAtScript (init + param) vhash validator ti1
   datum2 <- datumLookup ti2
-  datum2 `shouldEqual` 7
+  datum2 `shouldEqual` (init + param)
   redeemFromScript vhash validator ti2
 
-lockTest :: Contract () Unit
-lockTest = do
+lockTest :: Int -> Int -> Contract () Unit
+lockTest init param = do
   logInfo' "Lock test"
-  validator <- helloScript 4
+  validator <- helloScript param
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-  _ <- sendDatumToScript 3 vhash
+  _ <- sendDatumToScript init vhash
   pure unit
 
-lookupTest :: Contract () Int
-lookupTest = do
+lookupTest :: Int -> Int -> Contract () Int
+lookupTest init param = do
   logInfo' "Full integrationTest"
-  validator <- helloScript 4
+  validator <- helloScript param
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-  ti1 <- sendDatumToScript 3 vhash
+  ti1 <- sendDatumToScript init vhash
   datumLookup ti1
 
-incTest :: Contract () Unit
-incTest = do
+incTest :: Int -> Int -> Contract () Unit
+incTest init param = do
   logInfo' "Full integrationTest"
-  validator <- helloScript 4
+  validator <- helloScript param
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-  ti1 <- sendDatumToScript 3 vhash
-  _ti2 <- setDatumAtScript 7 vhash validator ti1
+  ti1 <- sendDatumToScript init vhash
+  _ti2 <- setDatumAtScript (init + param) vhash validator ti1
   pure unit
 
-postIncLookupTest :: Contract () Int
-postIncLookupTest = do
+postIncLookupTest :: Int -> Int -> Contract () Int
+postIncLookupTest init param = do
   logInfo' "Full integrationTest"
-  validator <- helloScript 4
+  validator <- helloScript param
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-  ti1 <- sendDatumToScript 3 vhash
-  ti2 <- setDatumAtScript 7 vhash validator ti1
+  ti1 <- sendDatumToScript init vhash
+  ti2 <- setDatumAtScript (init + param) vhash validator ti1
   datumLookup ti2
 
-unlockTest :: Contract () Unit
-unlockTest = do
+unlockTest :: Int -> Int -> Contract () Unit
+unlockTest init param = do
   logInfo' "Full integrationTest"
-  validator <- helloScript 4
+  validator <- helloScript param
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-  ti1 <- sendDatumToScript 3 vhash
+  ti1 <- sendDatumToScript init vhash
   redeemFromScript vhash validator ti1
