@@ -103,7 +103,7 @@ with ps-pkgs;
       src.git =
         {
           repo = "https://github.com/Plutonomicon/cardano-transaction-lib.git";
-          ref = "brian/cardano-node-update";
+          ref = "develop";
           rev = ctl-rev;
         };
 
@@ -111,68 +111,81 @@ with ps-pkgs;
         {
           dependencies =
             [
-              aeson
-              aeson-helpers
-              aff
-              aff-promise
-              affjax
-              arraybuffer-types
-              arrays
-              bifunctors
-              bigints
-              checked-exceptions
-              console
-              const
-              control
-              debug
-              effect
-              either
-              encoding
-              enums
-              exceptions
-              foldable-traversable
-              foreign-object
-              http-methods
-              identity
-              integers
-              js-date
-              lattice
-              lists
-              maybe
-              medea
-              media-types
-              monad-logger
-              mote
-              newtype
-              node-buffer
-              node-fs
-              node-fs-aff
-              node-path
-              nonempty
-              ordered-collections
-              partial
-              prelude
-              profunctor
-              profunctor-lenses
-              quickcheck
-              quickcheck-laws
-              rationals
-              record
-              refs
-              spec
-              strings
-              tailrec
-              text-encoding
-              these
-              transformers
-              tuples
-              typelevel
-              typelevel-prelude
-              uint
-              undefined
-              unfoldable
-              untagged-union
-              variant
+               aeson
+               aeson-helpers
+               aff
+               aff-promise
+               affjax
+               arraybuffer-types
+               arrays
+               bifunctors
+               bigints
+               checked-exceptions
+               console
+               const
+               contravariant
+               control
+               datetime
+               debug
+               effect
+               either
+               encoding
+               enums
+               exceptions
+               foldable-traversable
+               foreign
+               foreign-object
+               functions
+               http-methods
+               identity
+               integers
+               js-date
+               lattice
+               lists
+               maybe
+               medea
+               media-types
+               monad-logger
+               mote
+               newtype
+               node-buffer
+               node-fs
+               node-fs-aff
+               node-path
+               node-process
+               nonempty
+               optparse
+               now
+               numbers
+               ordered-collections
+               orders
+               parallel
+               partial
+               prelude
+               profunctor
+               profunctor-lenses
+               toppokki
+               quickcheck
+               quickcheck-combinators
+               quickcheck-laws
+               rationals
+               record
+               refs
+               spec
+               spec-quickcheck
+               strings
+               tailrec
+               text-encoding
+               these
+               transformers
+               tuples
+               typelevel
+               typelevel-prelude
+               uint
+               undefined
+               unfoldable
+               untagged-union
+               variant
             ];
         };
     };
@@ -310,4 +323,20 @@ with ps-pkgs;
             ];
         };
     };
+
+    toppokki =
+      { src.git =
+          { repo = "https://github.com/firefrorefiddle/purescript-toppokki";
+            rev = "6983e07bf0aa55ab779bcef12df3df339a2b5bd9";
+            ref = "mike/browserpages";
+          };
+
+        info =
+          { version = "";
+
+            dependencies =
+              [ aff-promise functions node-buffer node-http prelude record
+              ];
+          };
+      };
 }
