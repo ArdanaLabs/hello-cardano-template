@@ -85,8 +85,7 @@ component =
             ]
         ]
     Locking ->
-      HH.main_
-        [ HH.text "Initializing" ]
+      HH.main_ [ HH.text "Initializing" ]
     LockFailed err ->
       HH.main_
         [ HH.text $ message err
@@ -116,7 +115,7 @@ component =
         ]
     Incrementing from to ->
       HH.main_
-        [ HH.text $ "Incrementing " <> show from <> " to " <> show to <> "..." ]
+        [ HH.text $ "Incrementing from " <> show from <> " to " <> show to <> " ..." ]
     IncrementFailed datum fundsLocked err ->
       HH.main_
         [ HH.text $ message err
@@ -137,7 +136,7 @@ component =
         ]
     Redeeming funds ->
       HH.main_
-        [ HH.text $ "Redeeming " <> show funds <> " ADA..." ]
+        [ HH.text $ "Redeeming " <> show funds <> " ADA ..." ]
     RedeemFailed datum fundsLocked err ->
       HH.main_
         [ HH.text $ message err

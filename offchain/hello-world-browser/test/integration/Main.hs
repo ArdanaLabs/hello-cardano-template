@@ -15,6 +15,7 @@ import System.Environment (getEnv)
 import Test.Syd (
   MonadIO (liftIO),
   SetupFunc,
+  describe,
   expectationFailure,
   it,
   setupAround,
@@ -29,7 +30,7 @@ import Test.Syd.Webdriver (
   webdriverTestEnvSetupFunc,
  )
 import Test.WebDriver (
-  Selector (ById, ByTag),
+  Selector (ById, ByTag, ByXPath),
   click,
   findElem,
   getText,
@@ -53,44 +54,122 @@ setupWebdriverTestEnv uri = do
 
 main :: IO ()
 main = sydTest $
-  setupAround (startHelloWorldBrowser >>= setupWebdriverTestEnv) $
-    it "happy path" $ \wte ->
-      runWebdriverTestM wte $ do
-        openPath ""
-        waitUntil 10 $ findElem $ ByTag "main"
-        main <- findElem $ ByTag "main"
+  setupAround (startHelloWorldBrowser >>= setupWebdriverTestEnv) $ do
+    describe "When initialize button is clicked" $ do
+      it "locks ADA at contract address" $ \wte ->
+        runWebdriverTestM wte $ do
+          openPath ""
+          waitUntil 10 $ findElem $ ByTag "main"
+          main <- findElem $ ByTag "main"
 
-        waitUntil 10 $ findElem $ ById "lock"
-        lockBtn <- findElem $ ById "lock"
-        click lockBtn
+          waitUntil 10 $ findElem $ ById "lock"
+          lockBtn <- findElem $ ById "lock"
+          click lockBtn
 
-        waitUntil 10 $ findElem $ ById "current-value-header"
-        currentValueHeader <- findElem $ ById "current-value-header"
-        waitUntil 10 $ expect . (== "Current Value") =<< getText currentValueHeader
+          waitUntil 10 $ findElem $ ById "current-value-header"
+          currentValueHeader <- findElem $ ById "current-value-header"
+          waitUntil 10 $ expect . (== "Current Value") =<< getText currentValueHeader
 
-        waitUntil 10 $ findElem $ ById "funds-locked-header"
-        fundsLockedHeader <- findElem $ ById "funds-locked-header"
-        waitUntil 10 $ expect . (== "Funds Locked") =<< getText fundsLockedHeader
+          waitUntil 10 $ findElem $ ById "funds-locked-header"
+          fundsLockedHeader <- findElem $ ById "funds-locked-header"
+          waitUntil 10 $ expect . (== "Funds Locked") =<< getText fundsLockedHeader
 
-        waitUntil 10 $ findElem $ ById "current-value-body"
-        currentValueBody <- findElem $ ById "current-value-body"
-        waitUntil 10 $ expect . (== "3") =<< getText currentValueBody
+          waitUntil 10 $ findElem $ ById "current-value-body"
+          currentValueBody <- findElem $ ById "current-value-body"
+          waitUntil 10 $ expect . (== "3") =<< getText currentValueBody
 
-        waitUntil 10 $ findElem $ ById "funds-locked-body"
-        fundsLockedBody <- findElem $ ById "funds-locked-body"
-        waitUntil 10 $ expect . (== "6.0 ADA") =<< getText fundsLockedBody
+          waitUntil 10 $ findElem $ ById "funds-locked-body"
+          fundsLockedBody <- findElem $ ById "funds-locked-body"
+          waitUntil 10 $ expect . (== "6.0 ADA") =<< getText fundsLockedBody
 
-        waitUntil 10 $ findElem $ ById "increment"
-        incrementBtn <- findElem $ ById "increment"
-        click incrementBtn
+          pure ()
 
-        waitUntil 10 $ findElem $ ById "current-value-body"
-        currentValueBody <- findElem $ ById "current-value-body"
-        waitUntil 10 $ expect . (== "5") =<< getText currentValueBody
+      it "shows loading dialogue" $ \wte ->
+        runWebdriverTestM wte $ do
+          openPath ""
+          waitUntil 10 $ findElem $ ByTag "main"
+          main <- findElem $ ByTag "main"
 
-        waitUntil 10 $ findElem $ ById "redeem"
-        redeemBtn <- findElem $ ById "redeem"
-        click redeemBtn
+          waitUntil 10 $ findElem $ ById "lock"
+          lockBtn <- findElem $ ById "lock"
+          click lockBtn
 
-        waitUntil 10 $ findElem $ ById "lock"
-        pure ()
+          waitUntil 10 $ findElem $ ByXPath "//*[text()='Initializing']"
+
+          pure ()
+
+    describe "When increment button is clicked" $ do
+      it "increments the datum at script address by 2" $ \wte ->
+        runWebdriverTestM wte $ do
+          openPath ""
+          waitUntil 10 $ findElem $ ByTag "main"
+          main <- findElem $ ByTag "main"
+
+          waitUntil 10 $ findElem $ ById "lock"
+          lockBtn <- findElem $ ById "lock"
+          click lockBtn
+
+          waitUntil 10 $ findElem $ ById "increment"
+          incrementBtn <- findElem $ ById "increment"
+          click incrementBtn
+
+          waitUntil 10 $ findElem $ ById "current-value-body"
+          currentValueBody <- findElem $ ById "current-value-body"
+          waitUntil 10 $ expect . (== "5") =<< getText currentValueBody
+
+          pure ()
+
+      it "shows loading dialogue" $ \wte ->
+        runWebdriverTestM wte $ do
+          openPath ""
+          waitUntil 10 $ findElem $ ByTag "main"
+          main <- findElem $ ByTag "main"
+
+          waitUntil 10 $ findElem $ ById "lock"
+          lockBtn <- findElem $ ById "lock"
+          click lockBtn
+
+          waitUntil 10 $ findElem $ ById "increment"
+          incrementBtn <- findElem $ ById "increment"
+          click incrementBtn
+
+          waitUntil 10 $ findElem $ ByXPath "//*[text()='Incrementing from 3 to 5 ...']"
+
+          pure ()
+
+    describe "When redeem button is clicked" $ do
+      it "redeems the funds locked at script address by 2" $ \wte ->
+        runWebdriverTestM wte $ do
+          openPath ""
+          waitUntil 10 $ findElem $ ByTag "main"
+          main <- findElem $ ByTag "main"
+
+          waitUntil 10 $ findElem $ ById "lock"
+          lockBtn <- findElem $ ById "lock"
+          click lockBtn
+
+          waitUntil 10 $ findElem $ ById "redeem"
+          redeemBtn <- findElem $ ById "redeem"
+          click redeemBtn
+
+          waitUntil 10 $ findElem $ ById "lock"
+
+          pure ()
+
+      it "shows loading dialogue" $ \wte ->
+        runWebdriverTestM wte $ do
+          openPath ""
+          waitUntil 10 $ findElem $ ByTag "main"
+          main <- findElem $ ByTag "main"
+
+          waitUntil 10 $ findElem $ ById "lock"
+          lockBtn <- findElem $ ById "lock"
+          click lockBtn
+
+          waitUntil 10 $ findElem $ ById "redeem"
+          redeemBtn <- findElem $ ById "redeem"
+          click redeemBtn
+
+          waitUntil 10 $ findElem $ ByXPath "//*[text()='Redeeming 6.0 ADA ...']"
+
+          pure ()

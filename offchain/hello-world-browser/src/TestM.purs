@@ -3,7 +3,7 @@ module HelloWorld.TestM where
 import Contract.Prelude
 
 import Control.Monad.Reader (ReaderT, runReaderT)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, Milliseconds(..), delay)
 import Effect.Aff.Class (class MonadAff)
 import Effect.Class (class MonadEffect)
 import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked(..))
@@ -23,8 +23,14 @@ derive newtype instance monadEffectTestM :: MonadEffect TestM
 derive newtype instance monadAffTestM :: MonadAff TestM
 
 instance helloWorldApiTestM :: HelloWorldApi TestM where
-  lock _ _ = pure $ Right (FundsLocked 6.0)
+  lock _ _ = do
+    liftAff $ delay (Milliseconds 1000.0)
+    pure $ Right (FundsLocked 6.0)
 
-  increment _ _ = pure $ Right unit
+  increment _ _ = do
+    liftAff $ delay (Milliseconds 1000.0)
+    pure $ Right unit
 
-  redeem _ = pure $ Right unit
+  redeem _ = do
+    liftAff $ delay (Milliseconds 1000.0)
+    pure $ Right unit
