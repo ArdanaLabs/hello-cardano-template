@@ -324,19 +324,28 @@ with ps-pkgs;
         };
     };
 
-    toppokki =
-      { src.git =
-          { repo = "https://github.com/firefrorefiddle/purescript-toppokki";
-            rev = "6983e07bf0aa55ab779bcef12df3df339a2b5bd9";
-            ref = "mike/browserpages";
-          };
+  toppokki =
+    {
+      src.git =
+        {
+          repo = "https://github.com/firefrorefiddle/purescript-toppokki";
+          rev = "6983e07bf0aa55ab779bcef12df3df339a2b5bd9";
+          ref = "mike/browserpages";
+        };
 
-        info =
-          { version = "";
+      info =
+        {
+          version = "";
 
-            dependencies =
-              [ aff-promise functions node-buffer node-http prelude record
-              ];
-          };
-      };
+          dependencies =
+            [
+              aff-promise
+              functions
+              node-buffer
+              node-http
+              prelude
+              record
+            ];
+        };
+    };
 }
