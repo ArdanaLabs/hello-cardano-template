@@ -6,7 +6,7 @@ with ps-pkgs;
       src.git =
         {
           repo = "https://github.com/mlabs-haskell/purescript-aeson.git";
-          rev = "69bd18c4a9cffdebc45c55d2448740721a91854c";
+          rev = "286862a975f4bafbef15540c365bbbb0480e0bf7";
           ref = "master";
         };
       info =
@@ -123,7 +123,9 @@ with ps-pkgs;
               checked-exceptions
               console
               const
+              contravariant
               control
+              datetime
               debug
               effect
               either
@@ -131,7 +133,9 @@ with ps-pkgs;
               enums
               exceptions
               foldable-traversable
+              foreign
               foreign-object
+              functions
               http-methods
               identity
               integers
@@ -148,18 +152,27 @@ with ps-pkgs;
               node-fs
               node-fs-aff
               node-path
+              node-process
               nonempty
+              optparse
+              now
+              numbers
               ordered-collections
+              orders
+              parallel
               partial
               prelude
               profunctor
               profunctor-lenses
+              toppokki
               quickcheck
+              quickcheck-combinators
               quickcheck-laws
               rationals
               record
               refs
               spec
+              spec-quickcheck
               strings
               tailrec
               text-encoding
@@ -307,6 +320,31 @@ with ps-pkgs;
               tuples
               unfoldable
               unsafe-coerce
+            ];
+        };
+    };
+
+  toppokki =
+    {
+      src.git =
+        {
+          repo = "https://github.com/firefrorefiddle/purescript-toppokki";
+          rev = "6983e07bf0aa55ab779bcef12df3df339a2b5bd9";
+          ref = "mike/browserpages";
+        };
+
+      info =
+        {
+          version = "";
+
+          dependencies =
+            [
+              aff-promise
+              functions
+              node-buffer
+              node-http
+              prelude
+              record
             ];
         };
     };
