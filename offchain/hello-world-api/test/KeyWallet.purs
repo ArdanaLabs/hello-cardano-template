@@ -2,7 +2,7 @@ module KeyWallet
   ( spec
   ) where
 
-import Api(cleanup)
+import Api(grabFreeAda)
 import Contract.Prelude
 import Contract.Monad
   ( Contract
@@ -32,8 +32,8 @@ spec :: Spec Unit
 spec = do
   describe "Testnet" do
     -- I'm not sure why but this only works if it goes first
-    it "cleans up" $
-      testContract $ cleanup `shouldReturn` unit
+    it "grabs any free ada from previous tests" $
+      testContract $ grabFreeAda `shouldReturn` unit
     it "locks value" $
       testContract $ (lockTest 3 4) `shouldReturn` unit
     it "looks up datum" $

@@ -5,7 +5,7 @@ module Api
   ,helloScript
   ,enoughForFees
   ,datumLookup
-  ,cleanup
+  ,grabFreeAda
   ) where
 
 import Contract.Prelude
@@ -127,11 +127,11 @@ datumLookup lastOutput = do
     -- There's not hard reason not to support this it just doesn't seem worth the refactor
     $ BigInt.toInt asBigInt
 
-cleanup :: Contract () Unit
-cleanup = for_ (0 .. 10) cleanupOne
+grabFreeAda :: Contract () Unit
+grabFreeAda = for_ (0 .. 10) grabFreeAdaSingleParam
 
-cleanupOne :: Int -> Contract () Unit
-cleanupOne n = do
+grabFreeAdaSingleParam :: Int -> Contract () Unit
+grabFreeAdaSingleParam n = do
   validator <- helloScript n
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
   utxos <- getUtxos vhash
