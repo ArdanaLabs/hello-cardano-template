@@ -32,7 +32,7 @@ spec :: Spec Unit
 spec = do
   describe "Testnet" do
     -- I'm not sure why but this only works if it goes first
-    it"cleans up" $
+    it "cleans up" $
       testContract $ cleanup `shouldReturn` unit
     it "locks value" $
       testContract $ lockTest `shouldReturn` unit
@@ -42,9 +42,9 @@ spec = do
       testContract $ incTest `shouldReturn` unit
     it "looks up datum after inc" $
       testContract $ postIncLookupTest `shouldReturn` 7
-    it "unlocks" $
+    it "unlocks funds" $
       testContract $ unlockTest `shouldReturn` unit
-    it "full integrationTest" $
+    it "full integration test" $
       testContract $ integrationTest `shouldReturn` unit
 
 testContract :: Contract () Unit -> Aff Unit
