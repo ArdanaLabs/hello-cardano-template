@@ -148,7 +148,6 @@ cleanupOne n = do
   traverse_ (buildBalanceSignAndSubmitTx lookups) constraintsList
   logInfo' $ "finished: " <> show n
 
-
 data HelloRedemer = Inc | Spend
 
 -- TODO this should probably be generics, but

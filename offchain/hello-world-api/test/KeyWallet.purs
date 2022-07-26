@@ -2,8 +2,8 @@ module KeyWallet
   ( spec
   ) where
 
-import Contract.Prelude
 import Api(cleanup)
+import Contract.Prelude
 import Contract.Monad
   ( Contract
   , runContract_

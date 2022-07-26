@@ -21,13 +21,12 @@ import Contract.Monad (Contract, liftContractAffM, logInfo')
 import Contract.Scripts (validatorHash)
 import Test.Spec.Assertions(shouldEqual)
 
-
 integrationTest :: Int -> Int -> Contract () Unit
 integrationTest init param = do
   logInfo' "Full integrationTest"
-  validator <- helloScript init
+  validator <- helloScript param
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-  ti1 <- sendDatumToScript param vhash
+  ti1 <- sendDatumToScript init vhash
   datum1 <- datumLookup ti1
   datum1 `shouldEqual` init
   ti2 <- setDatumAtScript (init + param) vhash validator ti1
@@ -45,7 +44,7 @@ lockTest init param = do
 
 lookupTest :: Int -> Int -> Contract () Int
 lookupTest init param = do
-  logInfo' "Full integrationTest"
+  logInfo' "lookup test"
   validator <- helloScript param
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
   ti1 <- sendDatumToScript init vhash
@@ -53,7 +52,7 @@ lookupTest init param = do
 
 incTest :: Int -> Int -> Contract () Unit
 incTest init param = do
-  logInfo' "Full integrationTest"
+  logInfo' "inc test"
   validator <- helloScript param
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
   ti1 <- sendDatumToScript init vhash
@@ -62,7 +61,7 @@ incTest init param = do
 
 postIncLookupTest :: Int -> Int -> Contract () Int
 postIncLookupTest init param = do
-  logInfo' "Full integrationTest"
+  logInfo' "inc lookup test"
   validator <- helloScript param
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
   ti1 <- sendDatumToScript init vhash
@@ -71,7 +70,7 @@ postIncLookupTest init param = do
 
 unlockTest :: Int -> Int -> Contract () Unit
 unlockTest init param = do
-  logInfo' "Full integrationTest"
+  logInfo' "unlock test"
   validator <- helloScript param
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
   ti1 <- sendDatumToScript init vhash
