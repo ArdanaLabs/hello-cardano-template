@@ -10,15 +10,6 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.ogmios-datum-cache;
-    };
-
-    host = mkOption {
-      type = types.str;
-      default = "127.0.0.1";
-      description = ''
-        Address to listen on.
-      '';
     };
 
     port = mkOption {
