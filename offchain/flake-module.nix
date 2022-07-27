@@ -164,14 +164,14 @@
     {
       packages =
         let
-          make-hello-world-browser-package = { indexJs }:
+          make-hello-world-browser-package = { indexJs, output }:
             pkgs.runCommand "build-hello-world-browser" { }
               # see buildPursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
               # see bundlePursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L149
               ''
                 mkdir $out && cd $out
                 export BROWSER_RUNTIME=1
-                cp -r ${hello-world-browser.ps.modules.Main.output {}} output
+                cp -r ${output} output
                 cp ${indexJs} index.js
                 cp ${./hello-world-browser/index.html} index.html
                 cp ${./webpack.config.js} webpack.config.js
@@ -195,10 +195,10 @@
               '';
           hello-world-browser =
             make-hello-world-browser-package
-              { indexJs = ./hello-world-browser/index.js; };
+              { indexJs = ./hello-world-browser/index.js; output = hello-world-browser.ps.modules.Main.output { }; };
           hello-world-browser-for-testing =
             make-hello-world-browser-package
-              { indexJs = ./hello-world-browser/test.js; };
+              { indexJs = ./hello-world-browser/test.js; output = hello-world-browser.ps.modules."Test.Main".output { }; };
           hello-world-cli =
             let js = "${hello-world-cli.ps.modules.Main.output {}}/Main/index.js"; in
             pkgs.writeScriptBin "hello-world-cli"
@@ -246,6 +246,8 @@
               makeServeApp "${self'.packages."offchain:docs"}/generated-docs/html/";
             "hello-world-browser:serve" =
               makeServeApp self'.packages."offchain:hello-world-browser";
+            "hello-world-browser-for-testing:serve" =
+              makeServeApp self'.packages."offchain:hello-world-browser-for-testing";
 
             "hello-world-api:test" =
               dusd-lib.mkApp hello-world-api-tests;

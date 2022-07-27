@@ -9,7 +9,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked, ScriptAddress(..), increment, lock, redeem)
+import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked, HelloWorldIncrement(..), increment, lock, redeem)
 
 data Action
   = Lock
@@ -26,8 +26,8 @@ data State
   | Redeeming FundsLocked
   | RedeemFailed Int FundsLocked Error
 
-script :: ScriptAddress
-script = ScriptAddress 2
+helloWorldIncrement :: HelloWorldIncrement
+helloWorldIncrement = HelloWorldIncrement 2
 
 component
   :: forall q o m
@@ -50,7 +50,7 @@ component =
   handleAction = case _ of
     Lock -> do
       H.modify_ $ const Locking
-      result <- lock script 1
+      result <- lock helloWorldIncrement 1
       case result of
         Left err -> H.modify_ $ const (LockFailed err)
         Right fundsLocked -> H.modify_ $ const (Locked 3 fundsLocked)
@@ -58,7 +58,7 @@ component =
       H.get >>= case _ of
         Locked datum fundsLocked -> do
           H.modify_ $ const (Incrementing datum (datum + 2))
-          result <- increment script 2
+          result <- increment helloWorldIncrement
           case result of
             Left err -> H.modify_ $ const (IncrementFailed datum fundsLocked err)
             Right _ -> H.modify_ $ const (Locked (datum + 2) fundsLocked)
@@ -67,7 +67,7 @@ component =
       H.get >>= case _ of
         Locked datum fundsLocked -> do
           H.modify_ $ const (Redeeming fundsLocked)
-          result <- redeem script
+          result <- redeem helloWorldIncrement
           case result of
             Left err -> H.modify_ $ const (RedeemFailed datum fundsLocked err)
             Right _ -> H.modify_ $ const Unlocked

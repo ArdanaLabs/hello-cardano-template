@@ -1,7 +1,6 @@
 "use strict";
 
-import("./output/Main/index.js").then((m) => {
-  console.log("testing app starting");
-  m.testMain();
+import("./output/Test.Main/index.js").then((m) => {
+  console.log("app starting");
+  m.main();
 });
-
