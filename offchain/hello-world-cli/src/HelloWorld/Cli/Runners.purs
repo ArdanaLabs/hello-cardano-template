@@ -103,7 +103,7 @@ throwE (Right b) = pure b
 
 runCmd :: Options -> Aff Unit
 runCmd (Options {conf,statePath,command}) = do
-  cfg <- makeConf conf
+  let cfg = toConfigParams conf
   case command of
     Lock {contractParam:param,initialDatum:init} -> do
       stateExists <- liftEffect $ exists statePath
@@ -189,10 +189,10 @@ parseTxId {index,transactionId}
 clearState :: String -> Aff Unit
 clearState = unlink
 
-makeConf :: Conf -> Aff (ConfigParams ())
-makeConf
-  (Conf{walletPath,stakingPath,network}) = do
+toConfigParams :: Conf -> ConfigParams ()
+toConfigParams
+  (Conf{walletPath,stakingPath,network}) =
   let wallet = UseKeys
                 (PrivatePaymentKeyFile walletPath)
                 (Just $ PrivateStakeKeyFile stakingPath)
-  pure $ testnetConfig{walletSpec=Just wallet,networkId=network}
+  in testnetConfig{walletSpec=Just wallet,networkId=network}
