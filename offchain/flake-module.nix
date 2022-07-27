@@ -207,6 +207,10 @@
           let test = hello-world-cli-tests; in
           pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
             "${test}/bin/${test.meta.mainProgram} | tee $out";
+        ogmios-datum-cache-module-test = inputs'.nixpkgs.legacyPackages.callPackage ./nixos/tests/ogmios-datum-cache.nix {
+          inherit (self.inputs) cardano-node cardano-ogmios mlabs-ogmios;
+          inherit (self.nixosModules) ogmios-datum-cache;
+        };
       };
 
       apps =
@@ -260,5 +264,10 @@
           hello-world-api = makeProjectShell hello-world-api { };
         };
     };
-  flake = { };
+  flake = {
+    nixosModules.ogmios-datum-cache = { pkgs, lib, ... }: {
+      imports = [ ./nixos/modules/ogmios-datum-cache.nix ];
+      services.ogmios-datum-cache.package = lib.mkDefault self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system};
+    };
+  };
 }

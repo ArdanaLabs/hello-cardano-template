@@ -75,4 +75,4 @@ main =
     --wallet <- Just <$> mkNamiWalletAff
     --cfg <- over ContractConfig _ { wallet = wallet } <$> traceTestnetContractConfig
     let cfg = testnetConfig
-    void $ runContract cfg helloUnitTest
+    void $ runContract cfg (pure unit)
