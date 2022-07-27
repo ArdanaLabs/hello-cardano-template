@@ -4,17 +4,16 @@ module HelloWorld.Cli.Runners
 
 -- Contract
 import Contract.Prelude
+import Contract.Config(testnetConfig)
 import Contract.Monad
-  ( ContractEnv
-  , Contract
+  ( Contract
+  , ConfigParams
   , runContract
-  , configWithLogLevel
   , liftContractAffM
   , liftContractM
   )
 import Contract.Utxos(getUtxo,getWalletBalance)
 import Contract.PlutusData(getDatumByHash)
-import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
 import Contract.Scripts (validatorHash)
 
 -- Node
@@ -35,7 +34,6 @@ import Data.BigInt as Big
 import Data.String.CodeUnits(lastIndexOf,take)
 import Data.String.Pattern(Pattern(Pattern))
 import Data.Tuple.Nested((/\))
-import Data.Log.Level(LogLevel(Trace))
 import Types.ByteArray (byteArrayToHex,hexToByteArrayUnsafe)
 import Types.Datum(Datum(Datum))
 import Types.PlutusData(PlutusData(Integer))
@@ -43,6 +41,11 @@ import Types.Transaction (TransactionInput(TransactionInput), TransactionHash(Tr
 import Plutus.Types.Transaction(TransactionOutput(TransactionOutput))
 import Plutus.Types.Value(flattenValue)
 import Serialization.Address (NetworkId(TestnetId,MainnetId))
+import Wallet.Spec
+  (WalletSpec(UseKeys)
+  ,PrivatePaymentKeySource(PrivatePaymentKeyFile)
+  ,PrivateStakeKeySource(PrivateStakeKeyFile)
+  )
 
 -- Local
 import Api
@@ -99,7 +102,7 @@ throwE (Right b) = pure b
 
 runCmd :: Options -> Aff Unit
 runCmd (Options {conf,statePath,command}) = do
-  env <- makeEnv conf
+  cfg <- makeConf conf
   case command of
     Lock {contractParam:param,initialDatum:init} -> do
       stateExists <- liftEffect $ exists statePath
@@ -202,8 +205,10 @@ parseTxId {index,transactionId}
 clearState :: String -> Aff Unit
 clearState = unlink
 
-makeEnv :: Conf -> Aff DefaultContractEnv
-makeEnv
+makeConf :: Conf -> Aff (ConfigParams ())
+makeConf
   (Conf{walletPath,stakingPath,network}) = do
-  wallet <- mkKeyWalletFromFiles walletPath $ Just stakingPath
-  testnetConfig{ network wallet Trace
+  let wallet = UseKeys
+                (PrivatePaymentKeyFile walletPath)
+                (Just $ PrivateStakeKeyFile stakingPath)
+  pure $ testnetConfig{walletSpec=Just wallet,networkId=network}

@@ -9,7 +9,6 @@ import Contract.Monad
   )
 import Contract.Config(testnetConfig)
 import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
-import Data.Log.Level (LogLevel(Trace))
 import Node.Process(lookupEnv)
 import Serialization.Address (NetworkId(TestnetId))
 import Test.Spec(Spec,describe,it)
