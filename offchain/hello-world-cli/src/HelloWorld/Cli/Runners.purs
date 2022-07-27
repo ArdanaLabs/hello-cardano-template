@@ -4,18 +4,14 @@ module HelloWorld.Cli.Runners
 
 -- Contract
 import Contract.Prelude
+import Contract.Config(testnetConfig)
 import Contract.Monad
-  ( DefaultContractConfig
-  , Contract
+  ( ConfigParams
   , runContract
-  , runContract_
-  , configWithLogLevel
   , liftContractAffM
   , liftContractM
   )
-import Contract.Utxos(getUtxo,getWalletBalance)
-import Contract.PlutusData(getDatumByHash)
-import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
+import Contract.Utxos(getWalletBalance)
 import Contract.Scripts (validatorHash)
 
 -- Node
@@ -26,7 +22,6 @@ import Node.FS.Aff
   )
 import Node.FS.Sync(exists)
 import Node.Encoding (Encoding(UTF8))
-import Node.Process(exit)
 import Effect.Exception(throw)
 import Aeson(decodeAeson,parseJsonStringToAeson,encodeAeson)
 
@@ -36,14 +31,15 @@ import Data.BigInt as Big
 import Data.String.CodeUnits(lastIndexOf,take)
 import Data.String.Pattern(Pattern(Pattern))
 import Data.Tuple.Nested((/\))
-import Data.Log.Level(LogLevel(Trace))
 import Types.ByteArray (byteArrayToHex,hexToByteArrayUnsafe)
-import Types.Datum(Datum(Datum))
-import Types.PlutusData(PlutusData(Integer))
 import Types.Transaction (TransactionInput(TransactionInput), TransactionHash(TransactionHash))
-import Plutus.Types.Transaction(TransactionOutput(TransactionOutput))
 import Plutus.Types.Value(flattenValue)
 import Serialization.Address (NetworkId(TestnetId,MainnetId))
+import Wallet.Spec
+  (WalletSpec(UseKeys)
+  ,PrivatePaymentKeySource(PrivatePaymentKeyFile)
+  ,PrivateStakeKeySource(PrivateStakeKeyFile)
+  )
 
 -- Local
 import Api
@@ -51,6 +47,7 @@ import Api
   ,sendDatumToScript
   ,setDatumAtScript
   ,redeemFromScript
+  ,datumLookup
   )
 import Util(getTxScanUrl)
 import HelloWorld.Cli.Types
@@ -100,13 +97,12 @@ throwE (Right b) = pure b
 
 runCmd :: Options -> Aff Unit
 runCmd (Options {conf,statePath,command}) = do
-  cfg <- makeConfig conf
+  let cfg = toConfigParams conf
   case command of
     Lock {contractParam:param,initialDatum:init} -> do
       stateExists <- liftEffect $ exists statePath
       when stateExists $ do
-        log "Can't use lock when state file already exists"
-        liftEffect $ exit (0-1) -- afaict you have to do this?
+        liftEffect $ throw "Can't use lock when state file already exists"
       state <- runContract cfg $ do
         validator <- helloScript param
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
@@ -118,14 +114,14 @@ runCmd (Options {conf,statePath,command}) = do
       newState <- runContract cfg $ do
         validator <- helloScript state.param
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-        oldDatum <- getDatumFromState $ State state
+        oldDatum <- datumLookup state.lastOutput
         let newDatum = oldDatum + state.param
         txid <- setDatumAtScript newDatum vhash validator state.lastOutput
         pure $ State $ state{lastOutput=txid}
       writeState statePath newState
     Unlock -> do
       (State state) <- readState statePath
-      runContract_ cfg $ do
+      void <<< runContract cfg $ do
         validator <- helloScript state.param
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
         redeemFromScript vhash validator state.lastOutput
@@ -133,7 +129,7 @@ runCmd (Options {conf,statePath,command}) = do
     Query -> do
       (State state) <- readState statePath
       (datum /\ bal) <- runContract cfg $ do
-        datum <- getDatumFromState $ State state
+        datum <- datumLookup state.lastOutput
         bal <- getWalletBalance
           >>= liftContractM "Get wallet balance failed"
         pure $ datum /\ bal
@@ -150,26 +146,6 @@ runCmd (Options {conf,statePath,command}) = do
           log $ "  " <> (Big.toString amt) <> " of: "
           log $ "    " <> show cs <> "," <> show tn
   log "finished"
-  liftEffect $ exit 0
-  -- this shouldn't be needed
-  -- should be fixed once https://github.com/Plutonomicon/cardano-transaction-lib/pull/731 merges
-
-getDatumFromState :: CliState -> Contract () Int
-getDatumFromState (State state) = do
-  TransactionOutput utxo <- getUtxo state.lastOutput
-    >>= liftContractM "couldn't find utxo"
-  oldDatum <-
-    utxo.dataHash
-    # liftContractM "UTxO had no datum hash"
-    >>= getDatumByHash
-    >>= liftContractM "Couldn't find datum by hash"
-  asBigInt <- liftContractM "datum wasn't an integer" $ case oldDatum of
-    Datum (Integer n) -> Just n
-    _ -> Nothing
-  liftContractM
-    "Datum exceeds maximum size for conversion to 64 bit int"
-    -- There's not hard reason not to support this it just doesn't seem worth the refactor
-    $ Big.toInt asBigInt
 
 writeState :: String -> CliState -> Aff Unit
 writeState statePath s = do
@@ -179,8 +155,7 @@ readState :: String -> Aff CliState
 readState statePath = do
   stateExists <- liftEffect $ exists statePath
   unless stateExists $ do
-    log "State file could not be read because it doesn't exist"
-    liftEffect $ exit (0-1) -- afaict you have to do this?
+    liftEffect $ throw "State file could not be read because it doesn't exist"
   stateTxt <- readTextFile UTF8 statePath
   (partial :: FileState) <- throwE =<< decodeAeson <$> throwE (parseJsonStringToAeson stateTxt)
   pure $ State $
@@ -203,9 +178,10 @@ parseTxId {index,transactionId}
 clearState :: String -> Aff Unit
 clearState = unlink
 
-makeConfig :: Conf -> Aff DefaultContractConfig
-makeConfig
-  (Conf{walletPath,stakingPath,network}) = do
-  wallet <- mkKeyWalletFromFiles walletPath $ Just stakingPath
-  configWithLogLevel network wallet Trace
-
+toConfigParams :: Conf -> ConfigParams ()
+toConfigParams
+  (Conf{walletPath,stakingPath,network}) =
+  let wallet = UseKeys
+                (PrivatePaymentKeyFile walletPath)
+                (Just $ PrivateStakeKeyFile stakingPath)
+  in testnetConfig{walletSpec=Just wallet,networkId=network}

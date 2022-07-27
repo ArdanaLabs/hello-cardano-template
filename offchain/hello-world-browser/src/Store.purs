@@ -1,11 +1,11 @@
 module HelloWorld.Store where
 
-import Contract.Monad (DefaultContractConfig)
+import Contract.Monad (ConfigParams)
 import Data.Maybe (Maybe(..))
 import Types.Transaction (TransactionInput)
 
 type Store =
-  { contractConfig :: DefaultContractConfig
+  { contractConfig :: ConfigParams ()
   , lastOutput :: Maybe TransactionInput
   }
 

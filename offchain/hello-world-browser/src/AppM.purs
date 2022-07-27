@@ -3,7 +3,7 @@ module HelloWorld.AppM where
 import Contract.Prelude
 
 import Api (helloScript, redeemFromScript, sendDatumToScript, setDatumAtScript)
-import Contract.Monad (Contract, liftContractAffM, liftContractM, runContract, runContract_)
+import Contract.Monad (Contract, liftContractAffM, liftContractM, runContract)
 import Contract.PlutusData (Datum(..), PlutusData(..), getDatumByHash)
 import Contract.Transaction (TransactionInput, TransactionOutput(..))
 import Contract.Utxos (getUtxo)
@@ -67,7 +67,7 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
     case lastOutput of
       Nothing -> pure $ Right unit
       Just lastOutput' -> do
-        result <- liftAff $ try $ runContract_ contractConfig $ do
+        result <- liftAff $ try $ ((void <<< _) <<< runContract) contractConfig $ do
           validator <- helloScript p
           vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
           redeemFromScript vhash validator lastOutput'
