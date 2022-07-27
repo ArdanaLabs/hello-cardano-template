@@ -6,7 +6,8 @@ import Contract.Prelude
 
 import Api(helloScript, sendDatumToScript, setDatumAtScript, redeemFromScript)
 
-import Contract.Monad (Contract, liftContractAffM, logInfo')
+import Contract.Monad (Contract, liftContractAffM)
+import Contract.Log(logInfo')
 import Contract.Scripts (validatorHash)
 
 helloUnitTest :: Contract () Unit

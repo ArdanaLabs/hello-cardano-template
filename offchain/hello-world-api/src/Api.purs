@@ -15,7 +15,8 @@ import Data.BigInt as BigInt
 import Data.Time.Duration(Minutes(..))
 
 import Contract.Aeson (decodeAeson, fromString)
-import Contract.Monad ( Contract , liftContractM , logInfo')
+import Contract.Monad ( Contract , liftContractM)
+import Contract.Log(logInfo')
 import Contract.PlutusData (Datum(Datum),Redeemer(Redeemer))
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (Validator, ValidatorHash, applyArgsM)

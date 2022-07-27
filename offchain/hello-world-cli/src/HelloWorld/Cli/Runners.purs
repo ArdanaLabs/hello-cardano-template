@@ -5,10 +5,9 @@ module HelloWorld.Cli.Runners
 -- Contract
 import Contract.Prelude
 import Contract.Monad
-  ( DefaultContractConfig
+  ( ContractEnv
   , Contract
   , runContract
-  , runContract_
   , configWithLogLevel
   , liftContractAffM
   , liftContractM
@@ -100,7 +99,7 @@ throwE (Right b) = pure b
 
 runCmd :: Options -> Aff Unit
 runCmd (Options {conf,statePath,command}) = do
-  cfg <- makeConfig conf
+  env <- makeEnv conf
   case command of
     Lock {contractParam:param,initialDatum:init} -> do
       stateExists <- liftEffect $ exists statePath
@@ -125,7 +124,7 @@ runCmd (Options {conf,statePath,command}) = do
       writeState statePath newState
     Unlock -> do
       (State state) <- readState statePath
-      runContract_ cfg $ do
+      void <<< runContract cfg $ do
         validator <- helloScript state.param
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
         redeemFromScript vhash validator state.lastOutput
@@ -203,9 +202,8 @@ parseTxId {index,transactionId}
 clearState :: String -> Aff Unit
 clearState = unlink
 
-makeConfig :: Conf -> Aff DefaultContractConfig
-makeConfig
+makeEnv :: Conf -> Aff DefaultContractEnv
+makeEnv
   (Conf{walletPath,stakingPath,network}) = do
   wallet <- mkKeyWalletFromFiles walletPath $ Just stakingPath
-  configWithLogLevel network wallet Trace
-
+  testnetConfig{ network wallet Trace
