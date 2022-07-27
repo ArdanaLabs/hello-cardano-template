@@ -335,8 +335,6 @@ with ps-pkgs;
 
       info =
         {
-          version = "";
-
           dependencies =
             [
               aff-promise

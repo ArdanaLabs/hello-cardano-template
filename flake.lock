@@ -1179,17 +1179,17 @@
         "servant-purescript": "servant-purescript"
       },
       "locked": {
-        "lastModified": 1658833949,
-        "narHash": "sha256-2jYyh9Nsuuecvu0dO/BIbRcJ4qlKwoVTpQN9T/tMBSU=",
+        "lastModified": 1658863131,
+        "narHash": "sha256-c4lX8Ft4Su7swFrbrnjIidYp5plIW+uu71CbhLzylUw=",
         "owner": "Plutonomicon",
         "repo": "cardano-transaction-lib",
-        "rev": "049438798242fa30938583c0cc929447fac12a07",
+        "rev": "27b38d402a9a9b2ef90129c195c9730c0091da35",
         "type": "github"
       },
       "original": {
         "owner": "Plutonomicon",
         "repo": "cardano-transaction-lib",
-        "rev": "049438798242fa30938583c0cc929447fac12a07",
+        "rev": "27b38d402a9a9b2ef90129c195c9730c0091da35",
         "type": "github"
       }
     },
@@ -4368,15 +4368,18 @@
     },
     "nixpkgs_9": {
       "locked": {
-        "lastModified": 1647122627,
-        "narHash": "sha256-w4hGsXYyMgJAQRSBxh7O6AAsawJSbudCxfQXhDRhwPQ=",
-        "path": "/nix/store/s6wigis38dnikj5y92jrrj7ywc38b78g-source",
-        "rev": "0f85665118d850aae5164d385d24783d0b16cf1b",
-        "type": "path"
+        "lastModified": 1634172192,
+        "narHash": "sha256-FBF4U/T+bMg4sEyT/zkgasvVquGzgdAf4y8uCosKMmo=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "2cf9db0e3d45b9d00f16f2836cb1297bcadc475e",
+        "type": "github"
       },
       "original": {
-        "id": "nixpkgs",
-        "type": "indirect"
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "2cf9db0e3d45b9d00f16f2836cb1297bcadc475e",
+        "type": "github"
       }
     },
     "node2nix": {
@@ -4451,17 +4454,17 @@
         "unstable_nixpkgs": "unstable_nixpkgs"
       },
       "locked": {
-        "lastModified": 1658143527,
-        "narHash": "sha256-odoAINZlYoygNti9Lo6x8sqNa6oCyAJxM9hCurF0bPs=",
+        "lastModified": 1658378474,
+        "narHash": "sha256-BGZNLo7ABgg6iFY84nYua6jgl8EqhM8bI2bLnLB+z8Q=",
         "owner": "mlabs-haskell",
         "repo": "ogmios-datum-cache",
-        "rev": "bf76a74fa9e94d97310087dcda7b3aca259f96dd",
+        "rev": "1e618a1949667ea3eb972fbaccf34414e8d17e89",
         "type": "github"
       },
       "original": {
         "owner": "mlabs-haskell",
         "repo": "ogmios-datum-cache",
-        "rev": "bf76a74fa9e94d97310087dcda7b3aca259f96dd",
+        "rev": "1e618a1949667ea3eb972fbaccf34414e8d17e89",
         "type": "github"
       }
     },

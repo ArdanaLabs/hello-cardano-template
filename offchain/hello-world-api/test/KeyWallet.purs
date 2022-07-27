@@ -6,15 +6,21 @@ import Api(grabFreeAda)
 import Contract.Prelude
 import Contract.Monad
   ( Contract
-  , runContract_
-  , configWithLogLevel
+  , runContract
   )
+import Contract.Config(testnetConfig)
 import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
 import Node.Process(lookupEnv)
 import Data.Log.Level (LogLevel(Error))
 import Serialization.Address (NetworkId(TestnetId))
 import Test.Spec(Spec,describe,it,itOnly)
 import Test.Spec.Assertions(shouldReturn)
+import Wallet.Spec
+  (WalletSpec(UseKeys)
+  ,PrivatePaymentKeySource(PrivatePaymentKeyFile)
+  ,PrivateStakeKeySource(PrivateStakeKeyFile)
+  )
+import Wallet.KeyFile(privatePaymentKeyFromFile,privateStakeKeyFromFile)
 import IntegrationTest
   (integrationTest
   ,lockTest
@@ -50,8 +56,6 @@ spec = do
 testContract :: Contract () Unit -> Aff Unit
 testContract contract = do
   testResourcesDir <- liftEffect $ fromMaybe "." <$> lookupEnv "TEST_RESOURCES"
-  wallet <- mkKeyWalletFromFiles
-              (testResourcesDir <> "/wallet.skey")
-              (pure $ testResourcesDir <> "/staking.skey")
-  cfg <- configWithLogLevel TestnetId wallet Error
-  runContract_ cfg contract
+  let walletSpec = UseKeys (PrivatePaymentKeyFile $ testResourcesDir <> "/wallet.skey") (Just $ PrivateStakeKeyFile $ testResourcesDir <> "/staking.skey")
+  let config = testnetConfig{walletSpec=Just walletSpec,logLevel=Error}
+  void <<< runContract config $ contract

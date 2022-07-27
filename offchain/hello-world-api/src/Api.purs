@@ -17,7 +17,8 @@ import Data.BigInt as BigInt
 import Data.Time.Duration(Minutes(..))
 
 import Contract.Aeson (decodeAeson, fromString)
-import Contract.Monad ( Contract , liftContractM,liftContractAffM , logInfo')
+import Contract.Log(logInfo')
+import Contract.Monad ( Contract , liftContractM,liftContractAffM)
 import Contract.PlutusData (Datum(Datum),Redeemer(Redeemer),getDatumByHash)
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (Validator, ValidatorHash, applyArgsM,validatorHash)
@@ -163,4 +164,4 @@ spendRedeemer :: Redeemer
 spendRedeemer = Redeemer (toData Spend)
 
 enoughForFees :: Value.Value
-enoughForFees = Value.lovelaceValueOf $ BigInt.fromInt 6_000_000
+enoughForFees = Value.lovelaceValueOf $ BigInt.fromInt 10_000_000

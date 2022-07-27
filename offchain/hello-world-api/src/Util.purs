@@ -11,8 +11,8 @@ import Contract.Address (scriptHashAddress)
 import Contract.Monad
   ( Contract
   , liftedE
-  , logInfo'
   )
+import Contract.Log(logInfo')
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (ValidatorHash)
 import Contract.Transaction
