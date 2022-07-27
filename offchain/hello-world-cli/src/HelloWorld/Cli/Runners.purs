@@ -6,14 +6,12 @@ module HelloWorld.Cli.Runners
 import Contract.Prelude
 import Contract.Config(testnetConfig)
 import Contract.Monad
-  ( Contract
-  , ConfigParams
+  ( ConfigParams
   , runContract
   , liftContractAffM
   , liftContractM
   )
-import Contract.Utxos(getUtxo,getWalletBalance)
-import Contract.PlutusData(getDatumByHash)
+import Contract.Utxos(getWalletBalance)
 import Contract.Scripts (validatorHash)
 
 -- Node
@@ -34,10 +32,7 @@ import Data.String.CodeUnits(lastIndexOf,take)
 import Data.String.Pattern(Pattern(Pattern))
 import Data.Tuple.Nested((/\))
 import Types.ByteArray (byteArrayToHex,hexToByteArrayUnsafe)
-import Types.Datum(Datum(Datum))
-import Types.PlutusData(PlutusData(Integer))
 import Types.Transaction (TransactionInput(TransactionInput), TransactionHash(TransactionHash))
-import Plutus.Types.Transaction(TransactionOutput(TransactionOutput))
 import Plutus.Types.Value(flattenValue)
 import Serialization.Address (NetworkId(TestnetId,MainnetId))
 import Wallet.Spec
