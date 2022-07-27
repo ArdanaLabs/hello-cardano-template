@@ -60,47 +60,47 @@ main = do
         it "happy path" $ \wte ->
           runWebdriverTestM wte $ do
             openPath ""
-            waitUntil 120 $ findElem $ ByTag "main"
+            waitUntil 240 $ findElem $ ByTag "main"
             main <- findElem $ ByTag "main"
 
-            waitUntil 120 $ findElem $ ById "lock"
+            waitUntil 240 $ findElem $ ById "lock"
             lockBtn <- findElem $ ById "lock"
             click lockBtn
 
-            waitUntil 120 $ findElem $ ByXPath "//*[text()='Initializing']"
+            waitUntil 240 $ findElem $ ByXPath "//*[text()='Initializing']"
 
-            waitUntil 120 $ findElem $ ById "current-value-header"
+            waitUntil 240 $ findElem $ ById "current-value-header"
             currentValueHeader <- findElem $ ById "current-value-header"
-            waitUntil 120 $ expect . (== "Current Value") =<< getText currentValueHeader
+            waitUntil 240 $ expect . (== "Current Value") =<< getText currentValueHeader
 
-            waitUntil 120 $ findElem $ ById "funds-locked-header"
+            waitUntil 240 $ findElem $ ById "funds-locked-header"
             fundsLockedHeader <- findElem $ ById "funds-locked-header"
-            waitUntil 120 $ expect . (== "Funds Locked") =<< getText fundsLockedHeader
+            waitUntil 240 $ expect . (== "Funds Locked") =<< getText fundsLockedHeader
 
-            waitUntil 120 $ findElem $ ById "current-value-body"
+            waitUntil 240 $ findElem $ ById "current-value-body"
             currentValueBody <- findElem $ ById "current-value-body"
-            waitUntil 120 $ expect . (== "3") =<< getText currentValueBody
+            waitUntil 240 $ expect . (== "3") =<< getText currentValueBody
 
-            waitUntil 120 $ findElem $ ById "funds-locked-body"
+            waitUntil 240 $ findElem $ ById "funds-locked-body"
             fundsLockedBody <- findElem $ ById "funds-locked-body"
-            waitUntil 120 $ expect . (== "6.0 ADA") =<< getText fundsLockedBody
+            waitUntil 240 $ expect . (== "10.0 ADA") =<< getText fundsLockedBody
 
-            waitUntil 120 $ findElem $ ById "increment"
+            waitUntil 240 $ findElem $ ById "increment"
             incrementBtn <- findElem $ ById "increment"
             click incrementBtn
 
-            waitUntil 120 $ findElem $ ByXPath "//*[text()='Incrementing from 3 to 5 ...']"
+            waitUntil 240 $ findElem $ ByXPath "//*[text()='Incrementing from 3 to 5 ...']"
 
-            waitUntil 120 $ findElem $ ById "current-value-body"
+            waitUntil 240 $ findElem $ ById "current-value-body"
             currentValueBody <- findElem $ ById "current-value-body"
-            waitUntil 120 $ expect . (== "5") =<< getText currentValueBody
+            waitUntil 240 $ expect . (== "5") =<< getText currentValueBody
 
-            waitUntil 120 $ findElem $ ById "redeem"
+            waitUntil 240 $ findElem $ ById "redeem"
             redeemBtn <- findElem $ ById "redeem"
             click redeemBtn
 
-            waitUntil 120 $ findElem $ ByXPath "//*[text()='Redeeming 6.0 ADA ...']"
+            waitUntil 240 $ findElem $ ByXPath "//*[text()='Redeeming 10.0 ADA ...']"
 
-            waitUntil 120 $ findElem $ ById "lock"
+            waitUntil 240 $ findElem $ ById "lock"
 
             pure ()
