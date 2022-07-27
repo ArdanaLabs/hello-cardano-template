@@ -57,5 +57,5 @@ testContract :: Contract () Unit -> Aff Unit
 testContract contract = do
   testResourcesDir <- liftEffect $ fromMaybe "." <$> lookupEnv "TEST_RESOURCES"
   let walletSpec = UseKeys (PrivatePaymentKeyFile $ testResourcesDir <> "/wallet.skey") (Just $ PrivateStakeKeyFile $ testResourcesDir <> "/staking.skey")
-  let config = testnetConfig{walletSpec=Just walletSpec}
+  let config = testnetConfig{walletSpec=Just walletSpec,logLevel=Error}
   void <<< runContract config $ contract

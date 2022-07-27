@@ -71,7 +71,5 @@ main =
   HA.runHalogenAff do
     body <- HA.awaitBody
     _ <- runUI component unit body
-    --wallet <- Just <$> mkNamiWalletAff
-    --cfg <- over ContractConfig _ { wallet = wallet } <$> traceTestnetContractConfig
     let cfg = testnetConfig
     void $ runContract cfg (pure unit)
