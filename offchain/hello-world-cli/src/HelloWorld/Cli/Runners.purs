@@ -24,7 +24,6 @@ import Node.FS.Aff
   )
 import Node.FS.Sync(exists)
 import Node.Encoding (Encoding(UTF8))
-import Node.Process(exit)
 import Effect.Exception(throw)
 import Aeson(decodeAeson,parseJsonStringToAeson,encodeAeson)
 
@@ -108,8 +107,7 @@ runCmd (Options {conf,statePath,command}) = do
     Lock {contractParam:param,initialDatum:init} -> do
       stateExists <- liftEffect $ exists statePath
       when stateExists $ do
-        log "Can't use lock when state file already exists"
-        liftEffect $ exit (0-1) -- afaict you have to do this?
+        liftEffect $ throw "Can't use lock when state file already exists"
       state <- runContract cfg $ do
         validator <- helloScript param
         vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
@@ -153,9 +151,6 @@ runCmd (Options {conf,statePath,command}) = do
           log $ "  " <> (Big.toString amt) <> " of: "
           log $ "    " <> show cs <> "," <> show tn
   log "finished"
-  liftEffect $ exit 0
-  -- this shouldn't be needed
-  -- should be fixed once https://github.com/Plutonomicon/cardano-transaction-lib/pull/731 merges
 
 writeState :: String -> CliState -> Aff Unit
 writeState statePath s = do
@@ -165,8 +160,7 @@ readState :: String -> Aff CliState
 readState statePath = do
   stateExists <- liftEffect $ exists statePath
   unless stateExists $ do
-    log "State file could not be read because it doesn't exist"
-    liftEffect $ exit (0-1) -- afaict you have to do this?
+    liftEffect $ throw "State file could not be read because it doesn't exist"
   stateTxt <- readTextFile UTF8 statePath
   (partial :: FileState) <- throwE =<< decodeAeson <$> throwE (parseJsonStringToAeson stateTxt)
   pure $ State $
