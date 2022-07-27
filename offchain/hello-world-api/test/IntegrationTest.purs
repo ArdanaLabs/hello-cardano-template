@@ -17,7 +17,8 @@ import Api
   ,datumLookup
   )
 
-import Contract.Monad (Contract, liftContractAffM, logInfo')
+import Contract.Monad (Contract, liftContractAffM)
+import Contract.Log(logInfo')
 import Contract.Scripts (validatorHash)
 import Test.Spec.Assertions(shouldEqual)
 
