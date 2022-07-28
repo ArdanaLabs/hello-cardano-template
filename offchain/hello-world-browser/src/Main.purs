@@ -15,7 +15,7 @@ main :: Effect Unit
 main =
   HA.runHalogenAff do
     body <- HA.awaitBody
-    let contractConfig = testnetNamiConfig
+    let contractConfig = testnetNamiConfig { logLevel = Warn }
     let
       store =
         { contractConfig
