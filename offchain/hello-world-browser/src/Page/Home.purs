@@ -29,6 +29,34 @@ data State
 helloWorldIncrement :: HelloWorldIncrement
 helloWorldIncrement = HelloWorldIncrement 2
 
+_doIncrement
+  :: forall slots o m
+   . MonadAff m
+  => HelloWorldApi m
+  => Int
+  -> FundsLocked
+  -> H.HalogenM State Action slots o m Unit
+_doIncrement datum fundsLocked = do
+  H.modify_ $ const (Incrementing datum (datum + 2))
+  result <- increment helloWorldIncrement
+  case result of
+    Left err -> H.modify_ $ const (IncrementFailed datum fundsLocked err)
+    Right _ -> H.modify_ $ const (Locked (datum + 2) fundsLocked)
+
+_doRedeem
+  :: forall slots o m
+   . MonadAff m
+  => HelloWorldApi m
+  => Int
+  -> FundsLocked
+  -> H.HalogenM State Action slots o m Unit
+_doRedeem datum fundsLocked = do
+  H.modify_ $ const (Redeeming fundsLocked)
+  result <- redeem helloWorldIncrement
+  case result of
+    Left err -> H.modify_ $ const (RedeemFailed datum fundsLocked err)
+    Right _ -> H.modify_ $ const Unlocked
+
 component
   :: forall q o m
    . MonadAff m
@@ -56,21 +84,15 @@ component =
         Right fundsLocked -> H.modify_ $ const (Locked 3 fundsLocked)
     Increment ->
       H.get >>= case _ of
-        Locked datum fundsLocked -> do
-          H.modify_ $ const (Incrementing datum (datum + 2))
-          result <- increment helloWorldIncrement
-          case result of
-            Left err -> H.modify_ $ const (IncrementFailed datum fundsLocked err)
-            Right _ -> H.modify_ $ const (Locked (datum + 2) fundsLocked)
+        Locked datum fundsLocked -> _doIncrement datum fundsLocked
+        IncrementFailed datum fundsLocked _ -> _doIncrement datum fundsLocked
+        RedeemFailed datum fundsLocked _ -> _doIncrement datum fundsLocked
         _ -> pure unit
     Redeem ->
       H.get >>= case _ of
-        Locked datum fundsLocked -> do
-          H.modify_ $ const (Redeeming fundsLocked)
-          result <- redeem helloWorldIncrement
-          case result of
-            Left err -> H.modify_ $ const (RedeemFailed datum fundsLocked err)
-            Right _ -> H.modify_ $ const Unlocked
+        Locked datum fundsLocked -> _doRedeem datum fundsLocked
+        IncrementFailed datum fundsLocked _ -> _doRedeem datum fundsLocked
+        RedeemFailed datum fundsLocked _ -> _doRedeem datum fundsLocked
         _ -> pure unit
 
   render :: forall slots. State -> H.ComponentHTML Action slots m
@@ -85,7 +107,7 @@ component =
             ]
         ]
     Locking ->
-      HH.main_ [ HH.text "Initializing" ]
+      HH.main_ [ HH.text "Initializing ..." ]
     LockFailed err ->
       HH.main_
         [ HH.text $ message err

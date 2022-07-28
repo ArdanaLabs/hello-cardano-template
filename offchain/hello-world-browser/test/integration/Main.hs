@@ -67,7 +67,7 @@ main = do
             lockBtn <- findElem $ ById "lock"
             click lockBtn
 
-            waitUntil 240 $ findElem $ ByXPath "//*[text()='Initializing']"
+            waitUntil 240 $ findElem $ ByXPath "//*[text()='Initializing ...']"
 
             waitUntil 240 $ findElem $ ById "current-value-header"
             currentValueHeader <- findElem $ ById "current-value-header"
