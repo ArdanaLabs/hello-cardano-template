@@ -271,7 +271,7 @@
     };
     nixosModules.ctl-server = { pkgs, lib, ... }: {
       imports = [ ./nixos/modules/ctl-server.nix ];
-      services.ctl-server.package = lib.mkDefault self.inputs.cardano-transaction-lib.apps.${pkgs.system}."ctl-server:exe:ctl-server";
+      services.ctl-server.package = lib.mkDefault self.inputs.cardano-transaction-lib.packages.${pkgs.system}."ctl-server:exe:ctl-server";
     };
   };
 }
