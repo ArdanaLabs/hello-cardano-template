@@ -207,7 +207,7 @@
           let test = hello-world-cli-tests; in
           pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
             "${test}/bin/${test.meta.mainProgram} | tee $out";
-        ogmios-datum-cache-module-test = inputs'.nixpkgs.legacyPackages.callPackage ./nixos/tests/ogmios-datum-cache.nix {
+        ctl-runtime-modules-test = inputs'.nixpkgs.legacyPackages.callPackage ./nixos/tests/ctl-runtime-modules.nix {
           inherit (self.inputs) cardano-node cardano-ogmios mlabs-ogmios;
           inherit (self.nixosModules) ctl-server ogmios-datum-cache;
         };
