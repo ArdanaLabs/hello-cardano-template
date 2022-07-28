@@ -3,6 +3,7 @@
 , mlabs-ogmios
 , ogmios-datum-cache
 , cardano-node
+, ctl-server
 }:
 let
   name = "ogmios-datum-cache";
@@ -17,6 +18,7 @@ nixosTest {
         cardano-node.nixosModules.cardano-node
         cardano-ogmios.nixosModules.ogmios
         ogmios-datum-cache
+        ctl-server
       ];
 
       services.postgresql = {
@@ -53,6 +55,8 @@ nixosTest {
         };
       };
 
+      services.ctl-server.enable = true;
+
     };
   };
   testScript = ''
@@ -60,5 +64,6 @@ nixosTest {
     server.wait_for_unit("cardano-node.service")
     server.wait_for_unit("cardano-ogmios.service")
     server.wait_for_unit("ogmios-datum-cache.service")
+    server.wait_for_unit("ctl-server.service")
   '';
 }

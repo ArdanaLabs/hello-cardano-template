@@ -209,7 +209,7 @@
             "${test}/bin/${test.meta.mainProgram} | tee $out";
         ogmios-datum-cache-module-test = inputs'.nixpkgs.legacyPackages.callPackage ./nixos/tests/ogmios-datum-cache.nix {
           inherit (self.inputs) cardano-node cardano-ogmios mlabs-ogmios;
-          inherit (self.nixosModules) ogmios-datum-cache;
+          inherit (self.nixosModules) ctl-server ogmios-datum-cache;
         };
       };
 
@@ -268,6 +268,10 @@
     nixosModules.ogmios-datum-cache = { pkgs, lib, ... }: {
       imports = [ ./nixos/modules/ogmios-datum-cache.nix ];
       services.ogmios-datum-cache.package = lib.mkDefault self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system};
+    };
+    nixosModules.ctl-server = { pkgs, lib, ... }: {
+      imports = [ ./nixos/modules/ctl-server.nix ];
+      services.ctl-server.package = lib.mkDefault self.inputs.cardano-transaction-lib.apps.${system}."ctl-server:exe:ctl-server";
     };
   };
 }
