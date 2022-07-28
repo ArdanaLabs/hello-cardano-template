@@ -12,7 +12,7 @@ import Contract.Monad
   ( Contract
   , liftedE
   )
-import Contract.Log(logInfo')
+import Contract.Log(logInfo',logWarn',logError')
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (ValidatorHash)
 import Contract.Transaction
@@ -40,6 +40,11 @@ import Effect.Aff (delay)
 import Types.PlutusData (PlutusData)
 import Serialization.Address (NetworkId(TestnetId,MainnetId))
 import Types.ByteArray (byteArrayToHex)
+import Control.Monad.Error.Class(try,throwError)
+import Contract.Transaction(BalancedSignedTransaction(BalancedSignedTransaction))
+import Contract.Utxos(getUtxo)
+import Data.Set as Set
+import Data.List(List)
 
 waitForTx
   :: forall a.
@@ -70,12 +75,35 @@ buildBalanceSignAndSubmitTx
   :: Lookups.ScriptLookups PlutusData
   -> TxConstraints Unit Unit
   -> Contract () TransactionHash
-buildBalanceSignAndSubmitTx lookups constraints = do
+buildBalanceSignAndSubmitTx = buildBalanceSignAndSubmitTx' 5
+
+buildBalanceSignAndSubmitTx'
+  :: Int
+  -> Lookups.ScriptLookups PlutusData
+  -> TxConstraints Unit Unit
+  -> Contract () TransactionHash
+buildBalanceSignAndSubmitTx' attempts lookups constraints = do
   ubTx <- liftedE $ Lookups.mkUnbalancedTx lookups constraints
   bsTx <- liftedE $ balanceAndSignTxE ubTx
-  txId <- submit bsTx
-  logInfo' $ "Tx ID: " <> show txId
-  pure txId
+  etxid <- try $ submit bsTx
+  case etxid of
+    Right txId -> do
+      logInfo' $ "Tx ID: " <> show txId
+      pure txId
+    Left e -> do
+      logWarn' $ "Possible race condition, attempts remaining: " <> show attempts
+      logWarn' $ "submit failed with:" <> show e
+      let BalancedSignedTransaction bsTxRaw = bsTx
+      let inputs = bsTxRaw # unwrap # _ .body # unwrap # _.inputs
+      utxos <- traverse getUtxo (Set.toUnfoldable inputs :: List TransactionInput)
+      -- TODO figure out a check for rather issue was a race condition
+      -- any isNothing utxos
+      -- this seems to not work ^
+      if attempts > 0
+        then buildBalanceSignAndSubmitTx' (attempts-1) lookups constraints
+        else do
+          logError' "exhausted retries on race conditions"
+          throwError e
 
 getUtxos :: ValidatorHash -> Contract () (Map TransactionInput TransactionOutput)
 getUtxos vhash = do

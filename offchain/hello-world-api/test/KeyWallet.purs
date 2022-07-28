@@ -11,7 +11,7 @@ import Contract.Monad
 import Contract.Config(testnetConfig)
 import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
 import Node.Process(lookupEnv)
-import Data.Log.Level (LogLevel(Error))
+import Data.Log.Level (LogLevel(..))
 import Serialization.Address (NetworkId(TestnetId))
 import Test.Spec(Spec,describe,it,itOnly)
 import Test.Spec.Assertions(shouldReturn)
@@ -57,5 +57,5 @@ testContract :: Contract () Unit -> Aff Unit
 testContract contract = do
   testResourcesDir <- liftEffect $ fromMaybe "." <$> lookupEnv "TEST_RESOURCES"
   let walletSpec = UseKeys (PrivatePaymentKeyFile $ testResourcesDir <> "/wallet.skey") (Just $ PrivateStakeKeyFile $ testResourcesDir <> "/staking.skey")
-  let config = testnetConfig{walletSpec=Just walletSpec,logLevel=Error}
+  let config = testnetConfig{walletSpec=Just walletSpec,logLevel=Warn}
   void <<< runContract config $ contract
