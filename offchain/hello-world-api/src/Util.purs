@@ -7,12 +7,15 @@ module Util
 
 import Contract.Prelude
 
-import Contract.Address (scriptHashAddress)
-import Contract.Monad
-  ( Contract
-  , liftedE
+import Aeson
+  (Aeson
+  ,getField
+  ,toArray
+  ,toObject
   )
+import Contract.Address (scriptHashAddress)
 import Contract.Log(logInfo',logWarn',logError')
+import Contract.Monad (Contract,liftedE)
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (ValidatorHash)
 import Contract.Transaction
@@ -20,12 +23,12 @@ import Contract.Transaction
   , TransactionOutput
   , TransactionInput(TransactionInput)
   , balanceAndSignTxE
-  , submit
+  , submitE
   )
 import Contract.TxConstraints (TxConstraints)
 import Contract.Utxos (UtxoM(UtxoM), utxosAt)
-
-
+import Control.Monad.Error.Class(throwError)
+import Data.Array(catMaybes)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Time.Duration
@@ -37,14 +40,11 @@ import Data.Time.Duration
   ,negateDuration
   )
 import Effect.Aff (delay)
-import Types.PlutusData (PlutusData)
+import Effect.Exception(throw)
 import Serialization.Address (NetworkId(TestnetId,MainnetId))
-import Types.ByteArray (byteArrayToHex)
-import Control.Monad.Error.Class(try,throwError)
-import Contract.Transaction(BalancedSignedTransaction(BalancedSignedTransaction))
-import Contract.Utxos(getUtxo)
-import Data.Set as Set
-import Data.List(List)
+import Types.ByteArray (byteArrayToHex,hexToByteArray)
+import Types.PlutusData (PlutusData)
+import Types.Transaction(TransactionInput,TransactionHash)
 
 waitForTx
   :: forall a.
@@ -75,7 +75,10 @@ buildBalanceSignAndSubmitTx
   :: Lookups.ScriptLookups PlutusData
   -> TxConstraints Unit Unit
   -> Contract () TransactionHash
-buildBalanceSignAndSubmitTx = buildBalanceSignAndSubmitTx' 5
+buildBalanceSignAndSubmitTx = buildBalanceSignAndSubmitTx' maxAttempts
+
+maxAttempts :: Int
+maxAttempts = 5
 
 buildBalanceSignAndSubmitTx'
   :: Int
@@ -84,26 +87,46 @@ buildBalanceSignAndSubmitTx'
   -> Contract () TransactionHash
 buildBalanceSignAndSubmitTx' attempts lookups constraints = do
   ubTx <- liftedE $ Lookups.mkUnbalancedTx lookups constraints
-  bsTx <- liftedE $ balanceAndSignTxE ubTx
-  etxid <- try $ submit bsTx
+  bsTxE <- balanceAndSignTxE ubTx
+  bsTx <- case bsTxE of
+    Right bsTx -> pure bsTx
+    Left err
+      | attempts < maxAttempts -> do
+        logError' "Balance failed on retry, this is probably because a critical utxo was spent elsewhere"
+        throwError err
+      | otherwise -> throwError err
+  etxid <- submitE bsTx
   case etxid of
     Right txId -> do
+      when (attempts < maxAttempts) $ logWarn' "Retry worked"
       logInfo' $ "Tx ID: " <> show txId
       pure txId
-    Left e -> do
+    Left (errs :: Array Aeson) -> do
       logWarn' $ "Possible race condition, attempts remaining: " <> show attempts
-      logWarn' $ "submit failed with:" <> show e
-      let BalancedSignedTransaction bsTxRaw = bsTx
-      let inputs = bsTxRaw # unwrap # _ .body # unwrap # _.inputs
-      utxos <- traverse getUtxo (Set.toUnfoldable inputs :: List TransactionInput)
-      -- TODO figure out a check for rather issue was a race condition
-      -- any isNothing utxos
-      -- this seems to not work ^
-      if attempts > 0
-        then buildBalanceSignAndSubmitTx' (attempts-1) lookups constraints
+      logWarn' $ "submit failed with:" <> show errs
+      let (badInputAeson :: Array Aeson) =
+            join $ catMaybes $ errs <#> \err -> do
+            obj <- toObject err
+            badInputs <- hush $ getField obj "badInputs"
+            toArray badInputs
+      let badInputs =
+            catMaybes $ badInputAeson <#> \inputAeson -> do
+            obj <- toObject inputAeson
+            txIdStr <- hush $getField obj "txId"
+            txId <- wrap <$> hexToByteArray txIdStr
+            index <- hush $ getField obj "index"
+            pure $ TransactionInput {index,transactionId:txId}
+      if (length badInputs > 0)
+        then do
+          logWarn' $ "some inputs were bad:" <> show badInputs
+          if attempts > 0
+            then buildBalanceSignAndSubmitTx' (attempts-1) lookups constraints
+            else do
+              logError' "exhausted retries on race conditions"
+              liftEffect $ throw $ show errs
         else do
-          logError' "exhausted retries on race conditions"
-          throwError e
+          logError' "No inputs were bad this probably wasn't a race condition"
+          liftEffect $ throw $ show errs
 
 getUtxos :: ValidatorHash -> Contract () (Map TransactionInput TransactionOutput)
 getUtxos vhash = do

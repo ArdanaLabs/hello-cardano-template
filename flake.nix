@@ -5,13 +5,13 @@
     };
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     cardano-node.url = "github:input-output-hk/cardano-node?rev=73f9a746362695dc2cb63ba757fbcabb81733d23";
-    cardano-transaction-lib.url = "github:Plutonomicon/cardano-transaction-lib?rev=14f6d66c4031e34803a8534095e79cc1b25e708f";
+    cardano-transaction-lib.url = "github:Plutonomicon/cardano-transaction-lib?rev=bade703bf5855aa8165653f3b1b22bf7a881ba00";
     cardano-ogmios.url = "github:input-output-hk/cardano-ogmios";
     mlabs-ogmios.follows = "cardano-transaction-lib/ogmios";
     ogmios-datum-cache.follows = "cardano-transaction-lib/ogmios-datum-cache";
     #   used for libsodium-vrf
     plutus.url = "github:input-output-hk/plutus";
-    plutus-apps.url = "github:input-output-hk/plutus-apps?rev=e4062bca213f233cdf9822833b07aa69dff6d22a";
+    plutus-apps.url = "github:input-output-hk/plutus-apps?rev=30eaa18579299cdad6262e5eeb92202ee823c895";
     lint-utils = {
       type = "git";
       url = "https://gitlab.homotopic.tech/nix/lint-utils.git";
