@@ -6,10 +6,14 @@ import Api (datumLookup, helloScript, redeemFromScript, sendDatumToScript, setDa
 import Contract.Monad (liftContractAffM, liftContractM, runContract)
 import Contract.Transaction (TransactionOutput(..))
 import Contract.Utxos (getUtxo)
+import Control.Alt ((<|>))
+import Control.Parallel (parallel, sequential)
 import Data.BigInt (fromInt, toNumber)
-import Effect.Aff (Aff, try)
+import Data.Time.Duration (Milliseconds(..))
+import Effect.Aff (Aff, attempt, delay, throwError, try)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect)
+import Effect.Exception (error)
 import Halogen as H
 import Halogen.Store.Monad (class MonadStore, StoreT, getStore, runStoreT, updateStore)
 import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked(..), HelloWorldIncrement(..))
@@ -32,10 +36,22 @@ derive newtype instance monadEffectAppM :: MonadEffect AppM
 derive newtype instance monadAffAppM :: MonadAff AppM
 derive newtype instance monadStoreAppM :: MonadStore S.Action S.Store AppM
 
+timeoutMilliSeconds :: Milliseconds
+timeoutMilliSeconds = Milliseconds 240_000_000.0
+
+timeout :: forall (a :: Type). Milliseconds -> Aff a -> Aff a
+timeout ms ma = do
+  r <- sequential (parallel (attempt mkTimeout) <|> parallel (attempt ma))
+  either throwError pure r
+  where
+  mkTimeout = do
+    delay ms
+    throwError $ error $ "timed out after " <> show ms <> "ms"
+
 instance helloWorldApiAppM :: HelloWorldApi AppM where
   lock (HelloWorldIncrement param) initialValue = do
     { contractConfig } <- getStore
-    result <- liftAff $ try $ runContract contractConfig $ do
+    result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
       validator <- helloScript param
       vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
       lastOutput <- sendDatumToScript initialValue vhash
@@ -51,7 +67,7 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
     case lastOutput of
       Nothing -> pure $ Right unit
       Just lastOutput' -> do
-        result <- liftAff $ try $ runContract contractConfig $ do
+        result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
           validator <- helloScript param
           vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
           oldDatum <- datumLookup lastOutput'
@@ -66,7 +82,7 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
     case lastOutput of
       Nothing -> pure $ Right unit
       Just lastOutput' -> do
-        result <- liftAff $ try $ ((void <<< _) <<< runContract) contractConfig $ do
+        result <- liftAff $ try $ timeout timeoutMilliSeconds $ ((void <<< _) <<< runContract) contractConfig $ do
           validator <- helloScript param
           vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
           redeemFromScript vhash validator lastOutput'
