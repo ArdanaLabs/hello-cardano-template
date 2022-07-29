@@ -110,7 +110,8 @@ with ps-pkgs;
       info =
         {
           dependencies =
-            [ aeson
+            [
+              aeson
               aeson-helpers
               aff
               aff-promise
