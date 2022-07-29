@@ -10,13 +10,14 @@ import Control.Alt ((<|>))
 import Control.Parallel (parallel, sequential)
 import Data.BigInt (fromInt, toNumber)
 import Data.Time.Duration (Milliseconds(..))
-import Effect.Aff (Aff, attempt, delay, throwError, try)
+import Effect.Aff (Aff, attempt, delay, message, throwError, try)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect)
 import Effect.Exception (error)
 import Halogen as H
 import Halogen.Store.Monad (class MonadStore, StoreT, getStore, runStoreT, updateStore)
 import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked(..), HelloWorldIncrement(..))
+import HelloWorld.Error (HelloWorldBrowserError(..), timeoutErrorMessage)
 import HelloWorld.Store as S
 import Plutus.Types.Value (getLovelace, valueToCoin)
 import Safe.Coerce (coerce)
@@ -46,7 +47,7 @@ timeout ms ma = do
   where
   mkTimeout = do
     delay ms
-    throwError $ error "Network timeout occurred. Please refresh the browser."
+    throwError $ error timeoutErrorMessage
 
 instance helloWorldApiAppM :: HelloWorldApi AppM where
   lock (HelloWorldIncrement param) initialValue = do
@@ -58,7 +59,11 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
       TransactionOutput utxo <- getUtxo lastOutput >>= liftContractM "couldn't find utxo"
       pure $ (lastOutput /\ (FundsLocked (toNumber ((getLovelace $ valueToCoin utxo.amount) / fromInt 1_000_000))))
     case result of
-      Left err -> pure $ Left err
+      Left err ->
+        if message err == timeoutErrorMessage then
+          pure $ Left TimeoutError
+        else
+          pure $ Left (OtherError err)
       Right (lastOutput /\ fundsLocked) -> do
         updateStore $ S.SetLastOutput lastOutput
         pure $ Right fundsLocked
@@ -73,7 +78,11 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
           oldDatum <- datumLookup lastOutput'
           setDatumAtScript (oldDatum + param) vhash validator lastOutput'
         case result of
-          Left err -> pure $ Left err
+          Left err ->
+            if message err == timeoutErrorMessage then
+              pure $ Left TimeoutError
+            else
+              pure $ Left (OtherError err)
           Right lastOutput'' -> do
             updateStore $ S.SetLastOutput lastOutput''
             pure $ Right unit
@@ -87,7 +96,11 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
           vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
           redeemFromScript vhash validator lastOutput'
         case result of
-          Left err -> pure $ Left err
+          Left err ->
+            if message err == timeoutErrorMessage then
+              pure $ Left TimeoutError
+            else
+              pure $ Left (OtherError err)
           Right _ -> do
             updateStore S.ResetLastOutput
             pure $ Right unit

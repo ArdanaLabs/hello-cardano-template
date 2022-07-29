@@ -4,13 +4,14 @@ import Prelude
 
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Effect.Aff (Error, message)
 import Effect.Aff.Class (class MonadAff)
+import Effect.Exception (Error)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked, HelloWorldIncrement(..), increment, lock, redeem)
+import HelloWorld.Error (HelloWorldBrowserError(..), timeoutErrorMessage)
 
 data Action
   = Lock
@@ -26,6 +27,7 @@ data State
   | IncrementFailed Int FundsLocked Error
   | Redeeming FundsLocked
   | RedeemFailed Int FundsLocked Error
+  | TransactionTimeout
 
 helloWorldIncrement :: HelloWorldIncrement
 helloWorldIncrement = HelloWorldIncrement 2
@@ -41,7 +43,9 @@ _doIncrement datum fundsLocked = do
   H.modify_ $ const (Incrementing datum (datum + 2))
   result <- increment helloWorldIncrement
   case result of
-    Left err -> H.modify_ $ const (IncrementFailed datum fundsLocked err)
+    Left err -> case err of
+      TimeoutError -> H.modify_ $ const TransactionTimeout
+      OtherError err' -> H.modify_ $ const (IncrementFailed datum fundsLocked err')
     Right _ -> H.modify_ $ const (Locked (datum + 2) fundsLocked)
 
 _doRedeem
@@ -55,7 +59,9 @@ _doRedeem datum fundsLocked = do
   H.modify_ $ const (Redeeming fundsLocked)
   result <- redeem helloWorldIncrement
   case result of
-    Left err -> H.modify_ $ const (RedeemFailed datum fundsLocked err)
+    Left err -> case err of
+      TimeoutError -> H.modify_ $ const TransactionTimeout
+      OtherError err' -> H.modify_ $ const (RedeemFailed datum fundsLocked err')
     Right _ -> H.modify_ $ const Unlocked
 
 component
@@ -81,7 +87,9 @@ component =
       H.modify_ $ const Locking
       result <- lock helloWorldIncrement 1
       case result of
-        Left err -> H.modify_ $ const (LockFailed err)
+        Left err -> case err of
+          TimeoutError -> H.modify_ $ const TransactionTimeout
+          OtherError err' -> H.modify_ $ const (LockFailed err')
         Right fundsLocked -> H.modify_ $ const (Locked 3 fundsLocked)
     Increment ->
       H.get >>= case _ of
@@ -98,6 +106,9 @@ component =
 
   render :: forall slots. State -> H.ComponentHTML Action slots m
   render = case _ of
+    TransactionTimeout ->
+      HH.main_
+        [ HH.text timeoutErrorMessage ]
     Unlocked ->
       HH.main_
         [ HH.button
