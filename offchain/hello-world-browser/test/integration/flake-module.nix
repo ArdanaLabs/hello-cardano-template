@@ -102,7 +102,7 @@
               };
             });
       };
-      devShells."offchain:hello-world-browser-test" = haskellNixFlake.devShell;
+      devShells."offchain:hello-world-browser:test" = haskellNixFlake.devShell;
       packages =
         # we don't need to have the test also in packages, we have it in checks
         builtins.removeAttrs haskellNixFlake.packages [ integrationTestName ];
