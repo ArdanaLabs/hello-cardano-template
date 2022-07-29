@@ -3,6 +3,7 @@ module HelloWorld.Page.Home where
 import Prelude
 
 import Data.Either (Either(..))
+import Data.Maybe (Maybe(..))
 import Effect.Aff (Error, message)
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
@@ -119,61 +120,41 @@ component =
             ]
         ]
     Locked datum fundsLocked ->
-      HH.main_
-        [ HH.table_
-            [ HH.tr_
-                [ HH.td [ HP.id "current-value-header" ] [ HH.text "Current Value" ]
-                , HH.td [ HP.id "funds-locked-header" ] [ HH.text "Funds Locked" ]
-                ]
-            , HH.tr_
-                [ HH.td [ HP.id "current-value-body" ] [ HH.text $ show datum ]
-                , HH.td [ HP.id "funds-locked-body" ] [ HH.text $ show fundsLocked <> " ADA" ]
-                ]
-            , HH.tr_
-                [ HH.td_ [ HH.button [ HP.id "increment", HE.onClick \_ -> Increment ] [ HH.text "Increment" ] ]
-                , HH.td_ [ HH.button [ HP.id "redeem", HE.onClick \_ -> Redeem ] [ HH.text "Redeem" ] ]
-                ]
-            ]
-        ]
+      lockedView datum fundsLocked Nothing
     Incrementing from to ->
       HH.main_
         [ HH.text $ "Incrementing from " <> show from <> " to " <> show to <> " ..." ]
     IncrementFailed datum fundsLocked err ->
-      HH.main_
-        [ HH.text $ message err
-        , HH.table_
-            [ HH.tr_
-                [ HH.td [ HP.id "current-value-header" ] [ HH.text "Current Value" ]
-                , HH.td [ HP.id "funds-locked-header" ] [ HH.text "Funds Locked" ]
-                ]
-            , HH.tr_
-                [ HH.td [ HP.id "current-value-body" ] [ HH.text $ show datum ]
-                , HH.td [ HP.id "funds-locked-body" ] [ HH.text $ show fundsLocked <> " ADA" ]
-                ]
-            , HH.tr_
-                [ HH.td_ [ HH.button [ HP.id "increment", HE.onClick \_ -> Increment ] [ HH.text "Increment" ] ]
-                , HH.td_ [ HH.button [ HP.id "redeem", HE.onClick \_ -> Redeem ] [ HH.text "Redeem" ] ]
-                ]
-            ]
-        ]
+      lockedView datum fundsLocked (Just err)
     Redeeming funds ->
       HH.main_
         [ HH.text $ "Redeeming " <> show funds <> " ADA ..." ]
     RedeemFailed datum fundsLocked err ->
+      lockedView datum fundsLocked (Just err)
+    where
+    lockedView datum fundsLocked mErr =
       HH.main_
-        [ HH.text $ message err
+        [ case mErr of
+            Just err -> HH.text $ message err
+            Nothing -> HH.text ""
         , HH.table_
-            [ HH.tr_
-                [ HH.td [ HP.id "current-value-header" ] [ HH.text "Current Value" ]
-                , HH.td [ HP.id "funds-locked-header" ] [ HH.text "Funds Locked" ]
+            [ HH.thead_
+                [ HH.tr_
+                    [ HH.td [ HP.id "current-value-header" ] [ HH.text "Current Value" ]
+                    , HH.td [ HP.id "funds-locked-header" ] [ HH.text "Funds Locked" ]
+                    ]
                 ]
-            , HH.tr_
-                [ HH.td [ HP.id "current-value-body" ] [ HH.text $ show datum ]
-                , HH.td [ HP.id "funds-locked-body" ] [ HH.text $ show fundsLocked <> " ADA" ]
+            , HH.tbody_
+                [ HH.tr_
+                    [ HH.td [ HP.id "current-value-body" ] [ HH.text $ show datum ]
+                    , HH.td [ HP.id "funds-locked-body" ] [ HH.text $ show fundsLocked <> " ADA" ]
+                    ]
                 ]
-            , HH.tr_
-                [ HH.td_ [ HH.button [ HP.id "increment", HE.onClick \_ -> Increment ] [ HH.text "Increment" ] ]
-                , HH.td_ [ HH.button [ HP.id "redeem", HE.onClick \_ -> Redeem ] [ HH.text "Redeem" ] ]
+            , HH.tfoot_
+                [ HH.tr_
+                    [ HH.td_ [ HH.button [ HP.id "increment", HE.onClick \_ -> Increment ] [ HH.text "+" ] ]
+                    , HH.td_ [ HH.button [ HP.id "redeem", HE.onClick \_ -> Redeem ] [ HH.text "Redeem" ] ]
+                    ]
                 ]
             ]
         ]
