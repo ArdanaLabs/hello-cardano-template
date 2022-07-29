@@ -36,7 +36,7 @@ import Data.Foldable(for_)
 import Data.List((..),List)
 
 waitTime :: Minutes
-waitTime = Minutes 2.0
+waitTime = Minutes 5.0
 
 sendDatumToScript :: Int -> ValidatorHash -> Contract () TransactionInput
 sendDatumToScript n vhash = do
