@@ -196,7 +196,7 @@
           hello-world-browser =
             make-hello-world-browser-package
               { indexJs = ./hello-world-browser/index.js; output = hello-world-browser.ps.modules.Main.output { }; };
-          "hello-world-browser:keyWallet" =
+          "hello-world-browser:key-wallet" =
             make-hello-world-browser-package
               { indexJs = ./hello-world-browser/test.js; output = hello-world-browser.ps.modules."Test.Main".output { }; };
           hello-world-cli =

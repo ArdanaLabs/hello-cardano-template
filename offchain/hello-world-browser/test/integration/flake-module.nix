@@ -48,7 +48,7 @@
                 postInstall = with realNixpkgs; ''
                   wrapProgram $out/bin/integration \
                     --set FONTCONFIG_FILE ${fontconfigFile} \
-                    --set HELLO_WORLD_BROWSER_INDEX ${self'.packages."offchain:hello-world-browser:keyWallet"} \
+                    --set HELLO_WORLD_BROWSER_INDEX ${self'.packages."offchain:hello-world-browser:key-wallet"} \
                     --prefix PATH : "${pathEnv}"
                 '';
               };
