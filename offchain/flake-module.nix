@@ -196,7 +196,7 @@
           hello-world-browser =
             make-hello-world-browser-package
               { indexJs = ./hello-world-browser/index.js; output = hello-world-browser.ps.modules.Main.output { }; };
-          hello-world-browser-for-testing =
+          "hello-world-browser:keyWallet" =
             make-hello-world-browser-package
               { indexJs = ./hello-world-browser/test.js; output = hello-world-browser.ps.modules."Test.Main".output { }; };
           hello-world-cli =
@@ -246,8 +246,6 @@
               makeServeApp "${self'.packages."offchain:docs"}/generated-docs/html/";
             "hello-world-browser:serve" =
               makeServeApp self'.packages."offchain:hello-world-browser";
-            "hello-world-browser-for-testing:serve" =
-              makeServeApp self'.packages."offchain:hello-world-browser-for-testing";
 
             "hello-world-api:test" =
               dusd-lib.mkApp hello-world-api-tests;
