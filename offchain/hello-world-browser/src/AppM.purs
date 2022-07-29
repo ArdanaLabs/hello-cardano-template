@@ -46,7 +46,7 @@ timeout ms ma = do
   where
   mkTimeout = do
     delay ms
-    throwError $ error $ "timed out after " <> show ms <> "ms"
+    throwError $ error "Network timeout occurred. Please refresh the browser."
 
 instance helloWorldApiAppM :: HelloWorldApi AppM where
   lock (HelloWorldIncrement param) initialValue = do
