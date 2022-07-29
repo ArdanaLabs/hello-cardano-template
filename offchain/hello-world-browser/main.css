@@ -1,4 +1,4 @@
-body > noscript:only-child {
+body>noscript:only-child {
 	display: flex;
 	flex-flow: column nowrap;
 	gap: 1rem;
@@ -6,4 +6,45 @@ body > noscript:only-child {
 	padding: 2rem 1rem;
 	max-width: 54ex;
 	line-height: 1.5;
+}
+
+main {
+	font-weight: bold;
+	text-align: center;
+	font-size: 20px;
+	padding: 5px;
+	width: 100%;
+}
+
+button {
+	font-weight: bold;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	margin-top: 10px;
+	font-size: 20px;
+	padding: 5px;
+	width: 200px;
+}
+
+table {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+thead tr td {
+	font-size: 15px;
+	font-weight: bold;
+	text-align: left;
+}
+
+tbody tr td {
+	font-size: 20px;
+	font-weight: bold;
+	text-align: left;
+}
+
+tfoot tr td button {
+	font-size: 20px;
+	font-weight: bold;
 }

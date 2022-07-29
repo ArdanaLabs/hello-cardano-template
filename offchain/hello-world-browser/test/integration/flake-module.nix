@@ -48,7 +48,7 @@
                 postInstall = with realNixpkgs; ''
                   wrapProgram $out/bin/integration \
                     --set FONTCONFIG_FILE ${fontconfigFile} \
-                    --set HELLO_WORLD_BROWSER_INDEX ${self'.packages."offchain:hello-world-browser"} \
+                    --set HELLO_WORLD_BROWSER_INDEX ${self'.packages."offchain:hello-world-browser:key-wallet"} \
                     --prefix PATH : "${pathEnv}"
                 '';
               };
@@ -70,11 +70,9 @@
       haskellNixFlake =
         fixHaskellDotNix (project.flake { })
           [ ./hello-world-browser-test.cabal ];
+      integrationTestName = "hello-world-browser-test:test:integration";
     in
     {
-      packages = haskellNixFlake.packages;
-      devShells."offchain:hello-world-browser-test" = haskellNixFlake.devShell;
-      checks = haskellNixFlake.checks // { };
       apps = {
         "offchain:hello-world-browser:test" =
           dusd-lib.mkApp
@@ -82,13 +80,32 @@
               pkgs.writeShellApplication
                 {
                   name = "run-hello-world-browser-tests";
+                  runtimeInputs = [ pkgs.nix ];
                   text = ''
-                    nix build -L ${self}#checks.\"${system}\".\"hello-world-browser-test:test:integration\"
+                    nix \
+                      --extra-experimental-features 'nix-command flakes' \
+                      --option sandbox false build --keep-failed -L \
+                      ${self}#checks.\"${system}\".\"${integrationTestName}\".passthru.originalDerivation
                     cat result/test-stdout
                   '';
                 }
             );
       };
+      checks = haskellNixFlake.checks // {
+        # skip tests that require ctl-runtime
+        ${integrationTestName} =
+          haskellNixFlake.checks.${integrationTestName}.overrideAttrs
+            (old: {
+              NO_RUNTIME = "TRUE";
+              passthru = (old.passthru or { }) // {
+                originalDerivation = haskellNixFlake.checks.${integrationTestName};
+              };
+            });
+      };
+      devShells."offchain:hello-world-browser:test" = haskellNixFlake.devShell;
+      packages =
+        # we don't need to have the test also in packages, we have it in checks
+        builtins.removeAttrs haskellNixFlake.packages [ integrationTestName ];
     };
   flake = { };
 }
