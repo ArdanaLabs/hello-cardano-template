@@ -110,11 +110,11 @@ with ps-pkgs;
       info =
         {
           dependencies =
-            [
-              aeson
+            [ aeson
               aeson-helpers
               aff
               aff-promise
+              aff-retry
               affjax
               arraybuffer-types
               arrays
@@ -135,7 +135,6 @@ with ps-pkgs;
               foldable-traversable
               foreign
               foreign-object
-              functions
               http-methods
               identity
               integers
@@ -149,10 +148,12 @@ with ps-pkgs;
               mote
               newtype
               node-buffer
+              node-child-process
               node-fs
               node-fs-aff
               node-path
               node-process
+              node-streams
               nonempty
               optparse
               now
@@ -161,6 +162,7 @@ with ps-pkgs;
               orders
               parallel
               partial
+              posix-types
               prelude
               profunctor
               profunctor-lenses
