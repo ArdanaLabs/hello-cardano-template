@@ -109,10 +109,9 @@ component =
         ]
     Locking ->
       HH.main_ [ HH.text "Initializing ..." ]
-    LockFailed err ->
+    LockFailed _ ->
       HH.main_
-        [ HH.text $ message err
-        , HH.button
+        [ HH.button
             [ HP.id "lock"
             , HE.onClick \_ -> Lock
             ]
@@ -132,12 +131,9 @@ component =
     RedeemFailed datum fundsLocked err ->
       lockedView datum fundsLocked (Just err)
     where
-    lockedView datum fundsLocked mErr =
+    lockedView datum fundsLocked _ =
       HH.main_
-        [ case mErr of
-            Just err -> HH.text $ message err
-            Nothing -> HH.text ""
-        , HH.table_
+        [ HH.table_
             [ HH.thead_
                 [ HH.tr_
                     [ HH.td [ HP.id "current-value-header" ] [ HH.text "Current Value" ]
