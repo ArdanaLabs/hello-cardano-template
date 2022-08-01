@@ -7,6 +7,7 @@ common hello-world-browser-test
   ghc-options:      -threaded -rtsopts -with-rtsopts=-N
   build-depends:
     , base                 ^>=4.14
+    , bytestring
     , genvalidity-sydtest
     , http-client
     , network-uri

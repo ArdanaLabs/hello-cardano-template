@@ -1,89 +1,109 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
 module Main where
 
-import Control.Monad
-import Data.String
-import Data.Text (unpack)
-import GHC.Generics (Generic)
-import Network.HTTP.Client as HTTP
-import Network.URI
+import Data.Maybe (isJust)
+import Network.HTTP.Client as HTTP (
+  defaultManagerSettings,
+  newManager,
+ )
+import Network.URI (URI, parseURI)
 import Network.Wai.Application.Static (defaultFileServerSettings, staticApp)
-import Path
-import Path.IO
-import System.Environment (getEnv)
-import System.Exit
-import Test.QuickCheck (mapSize, withMaxSuccess)
-import Test.Syd
-import Test.Syd.Validity
-import Test.Syd.Wai
-import Test.Syd.Webdriver
-import Test.WebDriver
-import Test.WebDriver.Capabilities
-import Test.WebDriver.Chrome.Extension (loadExtension)
-import UnliftIO.Path.Directory
+import System.Environment (getEnv, lookupEnv)
+import System.Exit (die)
+import Test.Syd (
+  MonadIO (liftIO),
+  SetupFunc,
+  Spec,
+  describe,
+  it,
+  setupAround,
+  sydTest,
+ )
+import Test.Syd.Path (tempDirSetupFunc)
+import Test.Syd.Wai (applicationSetupFunc, waiSpec)
+import Test.Syd.Webdriver (
+  WebdriverTestEnv (webdriverTestEnvConfig),
+  openPath,
+  runWebdriverTestM,
+  seleniumServerSetupFunc,
+  webdriverTestEnvSetupFunc,
+ )
+import Test.WebDriver (
+  Selector (ById, ByTag, ByXPath),
+  click,
+  findElem,
+  getText,
+ )
+import Test.WebDriver.Commands.Wait (expect, waitUntil)
 
-data Command = Init | Incr
-  deriving (Show, Eq, Generic)
-
-instance Validity Command -- Implementation is derived via Generic
-
-instance GenValid Command
-
-evalCommands :: [Command] -> Int
-evalCommands = foldl f 0
-  where
-    f _ Init = 0
-    f c Incr = c + 1
-
-startHelloWorldBrowser :: SetupFunc URI
-startHelloWorldBrowser = do
+setupWebdriverTestEnv :: SetupFunc (WebdriverTestEnv ())
+setupWebdriverTestEnv = do
   helloWorldBrowserIndex <- liftIO $ getEnv "HELLO_WORLD_BROWSER_INDEX"
-  port <- applicationSetupFunc $ staticApp (defaultFileServerSettings $ fromString helloWorldBrowserIndex)
+  port <- applicationSetupFunc $ staticApp (defaultFileServerSettings helloWorldBrowserIndex)
   let uriStr = "http://127.0.0.1:" <> show port
-  case parseURI uriStr of
-    Nothing -> liftIO $ expectationFailure $ "Failed to parse uri as string: " <> show uriStr
+  uri <- case parseURI uriStr of
+    Nothing -> liftIO $ die ("Failed to parse uri as string: " <> show uriStr)
     Just uri -> pure uri
-
-setupWebdriverTestEnv :: URI -> SetupFunc (WebdriverTestEnv ())
-setupWebdriverTestEnv uri = do
   ssh <- seleniumServerSetupFunc
   manager <- liftIO $ HTTP.newManager HTTP.defaultManagerSettings
-  webdriverTestEnv <- webdriverTestEnvSetupFunc ssh manager uri ()
-  let wdConfig = webdriverTestEnvConfig webdriverTestEnv
-  let wdBrowser = browser $ wdCapabilities wdConfig
-  case wdBrowser of
-    Chrome {} -> do
-      currentDir <- liftIO getCurrentDirectory
-      path <- resolveFile currentDir "Nami.crx"
-      mbNamiWallet <- liftIO $ forgivingAbsence $ loadExtension (fromAbsFile path)
-      case mbNamiWallet of
-        Nothing -> liftIO $ die "Nami wallet not loaded"
-        Just namiWallet -> do
-          let newBrowser = wdBrowser {chromeExtensions = [namiWallet]}
-          let newWdConfig = useBrowser newBrowser wdConfig
-          pure $ webdriverTestEnv {webdriverTestEnvConfig = newWdConfig}
-    _ -> liftIO $ die "not chrome"
+  webdriverTestEnvSetupFunc ssh manager uri ()
+
+timeoutSeconds :: Double
+timeoutSeconds = 240
 
 main :: IO ()
-main = sydTest $
-  setupAround (startHelloWorldBrowser >>= setupWebdriverTestEnv) $
-    it "test 1" $ \wte -> mapSize (* 10) $
-      withMaxSuccess 5 $
-        forAllValid $ \commands ->
+main = do
+  noRuntime <- isJust <$> lookupEnv "NO_RUNTIME"
+  if noRuntime
+    then print "skip the test since there's no ctl-runtime"
+    else sydTest $
+      setupAround setupWebdriverTestEnv $ do
+        it "happy path" $ \wte ->
           runWebdriverTestM wte $ do
             openPath ""
-            initialize <- findElem $ ById "initialize"
-            increment <- findElem $ ById "increment"
-            counter <- findElem $ ById "counter"
+            waitUntil timeoutSeconds $ findElem $ ByTag "main"
+            main <- findElem $ ByTag "main"
 
-            let interpret c = click $ case c of
-                  Init -> initialize
-                  Incr -> increment
+            waitUntil timeoutSeconds $ findElem $ ById "lock"
+            lockBtn <- findElem $ ById "lock"
+            click lockBtn
 
-            mapM_ interpret commands
-            n <- unpack <$> getText counter
+            waitUntil timeoutSeconds $ findElem $ ByXPath "//*[text()='Initializing ...']"
 
-            when (n /= show (evalCommands commands)) $ error "fail"
+            waitUntil timeoutSeconds $ findElem $ ById "current-value-header"
+            currentValueHeader <- findElem $ ById "current-value-header"
+            waitUntil timeoutSeconds $ expect . (== "Current Value") =<< getText currentValueHeader
+
+            waitUntil timeoutSeconds $ findElem $ ById "funds-locked-header"
+            fundsLockedHeader <- findElem $ ById "funds-locked-header"
+            waitUntil timeoutSeconds $ expect . (== "Funds Locked") =<< getText fundsLockedHeader
+
+            waitUntil timeoutSeconds $ findElem $ ById "current-value-body"
+            currentValueBody <- findElem $ ById "current-value-body"
+            waitUntil timeoutSeconds $ expect . (== "3") =<< getText currentValueBody
+
+            waitUntil timeoutSeconds $ findElem $ ById "funds-locked-body"
+            fundsLockedBody <- findElem $ ById "funds-locked-body"
+            waitUntil timeoutSeconds $ expect . (== "10.0 ADA") =<< getText fundsLockedBody
+
+            waitUntil timeoutSeconds $ findElem $ ById "increment"
+            incrementBtn <- findElem $ ById "increment"
+            click incrementBtn
+
+            waitUntil timeoutSeconds $ findElem $ ByXPath "//*[text()='Incrementing from 3 to 5 ...']"
+
+            waitUntil timeoutSeconds $ findElem $ ById "current-value-body"
+            currentValueBody <- findElem $ ById "current-value-body"
+            waitUntil timeoutSeconds $ expect . (== "5") =<< getText currentValueBody
+
+            waitUntil timeoutSeconds $ findElem $ ById "redeem"
+            redeemBtn <- findElem $ ById "redeem"
+            click redeemBtn
+
+            waitUntil timeoutSeconds $ findElem $ ByXPath "//*[text()='Redeeming 10.0 ADA ...']"
+
+            waitUntil timeoutSeconds $ findElem $ ById "lock"
+
+            pure ()

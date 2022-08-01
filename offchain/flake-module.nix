@@ -46,6 +46,7 @@
             ordered-collections
             spec
             node-process
+            node-child-process
           ];
         ps =
           purs-nix.purs
@@ -72,7 +73,12 @@
               dependencies =
                 with all-ps-pkgs;
                 [
+                  aff
+                  bigints
                   halogen
+                  halogen-store
+                  safe-coerce
+                  transformers
                   cardano-transaction-lib
                   hello-world-api.package
                 ];
@@ -93,7 +99,6 @@
                   node-fs-aff
                   node-fs
                   dotenv
-                  node-child-process
                   stringutils
                 ];
               srcs = [ ./hello-world-cli ];
@@ -157,46 +162,55 @@
       prefixOutputs = dusd-lib.prefixAttrNames "offchain";
     in
     {
-      packages = prefixOutputs {
-        inherit hello-world-cbor;
-        hello-world-api = hello-world-api.package;
-        docs =
-          pkgs.runCommand "offchain-docs" { }
-            ''
-              mkdir $out && cd $out
-              # it may make sense to eventually add cli and browser to the srcs, but we need to not define Main twice
-              ${hello-world-api.ps.command { srcs = [ ./hello-world-api/src ];} }/bin/purs-nix docs
-            '';
-        hello-world-browser =
-          pkgs.runCommand "build-hello-world-browser" { }
-            # see buildPursProjcet: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
-            # see bundlePursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L149
-            ''
-              mkdir $out && cd $out
-              export BROWSER_RUNTIME=1
-              cp -r ${hello-world-browser.ps.modules.Main.output {}} output
-              cp ${./hello-world-browser/index.js} index.js
-              cp ${./hello-world-browser/index.html} index.html
-              cp ${./webpack.config.js} webpack.config.js
-              cp -r ${ctlNodeModules}/* .
-              export NODE_PATH="node_modules"
-              export PATH="bin:$PATH"
-              mkdir dist
-              cp ${./hello-world-browser/main.css} dist/main.css
-              webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
-            '';
-        hello-world-cli =
-          let js = "${hello-world-cli.ps.modules.Main.output {}}/Main/index.js"; in
-          pkgs.writeScriptBin "hello-world-cli"
-            ''
-              export NODE_PATH=${ctlNodeModules}/node_modules
-              ${pkgs.nodejs}/bin/node \
-                --preserve-symlinks \
-                --input-type=module \
-                -e 'import { main } from "${js}"; main()' \
-                -- "hello-world-cli" "''$@"
-            '';
-      };
+      packages =
+        let
+          make-hello-world-browser-package = { indexJs, output }:
+            pkgs.runCommand "build-hello-world-browser" { }
+              # see buildPursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
+              # see bundlePursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L149
+              ''
+                mkdir $out && cd $out
+                export BROWSER_RUNTIME=1
+                cp -r ${output} output
+                cp ${indexJs} index.js
+                cp ${./hello-world-browser/index.html} index.html
+                cp ${./webpack.config.js} webpack.config.js
+                cp -r ${ctlNodeModules}/* .
+                export NODE_PATH="node_modules"
+                export PATH="bin:$PATH"
+                mkdir dist
+                cp ${./hello-world-browser/main.css} dist/main.css
+                webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
+              '';
+        in
+        prefixOutputs {
+          inherit hello-world-cbor;
+          hello-world-api = hello-world-api.package;
+          docs =
+            pkgs.runCommand "offchain-docs" { }
+              ''
+                mkdir $out && cd $out
+                # it may make sense to eventually add cli and browser to the srcs, but we need to not define Main twice
+                ${hello-world-api.ps.command { srcs = [ ./hello-world-api/src ];} }/bin/purs-nix docs
+              '';
+          hello-world-browser =
+            make-hello-world-browser-package
+              { indexJs = ./hello-world-browser/index.js; output = hello-world-browser.ps.modules.Main.output { }; };
+          "hello-world-browser:key-wallet" =
+            make-hello-world-browser-package
+              { indexJs = ./hello-world-browser/test.js; output = hello-world-browser.ps.modules."Test.Main".output { }; };
+          hello-world-cli =
+            let js = "${hello-world-cli.ps.modules.Main.output {}}/Main/index.js"; in
+            pkgs.writeScriptBin "hello-world-cli"
+              ''
+                export NODE_PATH=${ctlNodeModules}/node_modules
+                ${pkgs.nodejs}/bin/node \
+                  --preserve-symlinks \
+                  --input-type=module \
+                  -e 'import { main } from "${js}"; main()' \
+                  -- "hello-world-cli" "''$@"
+              '';
+        };
 
       checks = {
         run-hello-world-api-tests =
@@ -207,9 +221,9 @@
           let test = hello-world-cli-tests; in
           pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
             "${test}/bin/${test.meta.mainProgram} | tee $out";
-        ogmios-datum-cache-module-test = inputs'.nixpkgs.legacyPackages.callPackage ./nixos/tests/ogmios-datum-cache.nix {
+        ctl-runtime-modules-test = inputs'.nixpkgs.legacyPackages.callPackage ./nixos/tests/ctl-runtime-modules.nix {
           inherit (self.inputs) cardano-node cardano-ogmios mlabs-ogmios;
-          inherit (self.nixosModules) ogmios-datum-cache;
+          inherit (self.nixosModules) ctl-server ogmios-datum-cache;
         };
       };
 
@@ -268,6 +282,10 @@
     nixosModules.ogmios-datum-cache = { pkgs, lib, ... }: {
       imports = [ ./nixos/modules/ogmios-datum-cache.nix ];
       services.ogmios-datum-cache.package = lib.mkDefault self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system};
+    };
+    nixosModules.ctl-server = { pkgs, lib, ... }: {
+      imports = [ ./nixos/modules/ctl-server.nix ];
+      services.ctl-server.package = lib.mkDefault self.inputs.cardano-transaction-lib.packages.${pkgs.system}."ctl-server:exe:ctl-server";
     };
   };
 }
