@@ -73,7 +73,12 @@
               dependencies =
                 with all-ps-pkgs;
                 [
+                  aff
+                  bigints
                   halogen
+                  halogen-store
+                  safe-coerce
+                  transformers
                   cardano-transaction-lib
                   hello-world-api.package
                 ];
@@ -157,46 +162,55 @@
       prefixOutputs = dusd-lib.prefixAttrNames "offchain";
     in
     {
-      packages = prefixOutputs {
-        inherit hello-world-cbor;
-        hello-world-api = hello-world-api.package;
-        docs =
-          pkgs.runCommand "offchain-docs" { }
-            ''
-              mkdir $out && cd $out
-              # it may make sense to eventually add cli and browser to the srcs, but we need to not define Main twice
-              ${hello-world-api.ps.command { srcs = [ ./hello-world-api/src ];} }/bin/purs-nix docs
-            '';
-        hello-world-browser =
-          pkgs.runCommand "build-hello-world-browser" { }
-            # see buildPursProjcet: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
-            # see bundlePursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L149
-            ''
-              mkdir $out && cd $out
-              export BROWSER_RUNTIME=1
-              cp -r ${hello-world-browser.ps.modules.Main.output {}} output
-              cp ${./hello-world-browser/index.js} index.js
-              cp ${./hello-world-browser/index.html} index.html
-              cp ${./webpack.config.js} webpack.config.js
-              cp -r ${ctlNodeModules}/* .
-              export NODE_PATH="node_modules"
-              export PATH="bin:$PATH"
-              mkdir dist
-              cp ${./hello-world-browser/main.css} dist/main.css
-              webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
-            '';
-        hello-world-cli =
-          let js = "${hello-world-cli.ps.modules.Main.output {}}/Main/index.js"; in
-          pkgs.writeScriptBin "hello-world-cli"
-            ''
-              export NODE_PATH=${ctlNodeModules}/node_modules
-              ${pkgs.nodejs}/bin/node \
-                --preserve-symlinks \
-                --input-type=module \
-                -e 'import { main } from "${js}"; main()' \
-                -- "hello-world-cli" "''$@"
-            '';
-      };
+      packages =
+        let
+          make-hello-world-browser-package = { indexJs, output }:
+            pkgs.runCommand "build-hello-world-browser" { }
+              # see buildPursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
+              # see bundlePursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L149
+              ''
+                mkdir $out && cd $out
+                export BROWSER_RUNTIME=1
+                cp -r ${output} output
+                cp ${indexJs} index.js
+                cp ${./hello-world-browser/index.html} index.html
+                cp ${./webpack.config.js} webpack.config.js
+                cp -r ${ctlNodeModules}/* .
+                export NODE_PATH="node_modules"
+                export PATH="bin:$PATH"
+                mkdir dist
+                cp ${./hello-world-browser/main.css} dist/main.css
+                webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
+              '';
+        in
+        prefixOutputs {
+          inherit hello-world-cbor;
+          hello-world-api = hello-world-api.package;
+          docs =
+            pkgs.runCommand "offchain-docs" { }
+              ''
+                mkdir $out && cd $out
+                # it may make sense to eventually add cli and browser to the srcs, but we need to not define Main twice
+                ${hello-world-api.ps.command { srcs = [ ./hello-world-api/src ];} }/bin/purs-nix docs
+              '';
+          hello-world-browser =
+            make-hello-world-browser-package
+              { indexJs = ./hello-world-browser/index.js; output = hello-world-browser.ps.modules.Main.output { }; };
+          "hello-world-browser:key-wallet" =
+            make-hello-world-browser-package
+              { indexJs = ./hello-world-browser/test.js; output = hello-world-browser.ps.modules."Test.Main".output { }; };
+          hello-world-cli =
+            let js = "${hello-world-cli.ps.modules.Main.output {}}/Main/index.js"; in
+            pkgs.writeScriptBin "hello-world-cli"
+              ''
+                export NODE_PATH=${ctlNodeModules}/node_modules
+                ${pkgs.nodejs}/bin/node \
+                  --preserve-symlinks \
+                  --input-type=module \
+                  -e 'import { main } from "${js}"; main()' \
+                  -- "hello-world-cli" "''$@"
+              '';
+        };
 
       checks = {
         run-hello-world-api-tests =
