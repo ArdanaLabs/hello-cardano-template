@@ -192,6 +192,11 @@
               export CHROME_EXE="${pkgs.chromium.outPath}/bin/chromium"
               export HELLO_WORLD_BROWSER_INDEX=${self'.packages."offchain:hello-world-browser"}
 
+              TEST_DATA="$(mktemp --directory)"
+              cp --no-preserve=mode,ownership -r ${./hello-world-browser/test/e2e/test-data}/* "$TEST_DATA"
+              tar zxf ${./hello-world-browser/test/e2e/nami_settings.tar.gz} --directory "$TEST_DATA"
+              export TEST_DATA
+
               node \
                 --preserve-symlinks \
                 --input-type=module \

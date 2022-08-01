@@ -60,6 +60,8 @@ testPlan testOptions = group "e2e tests" do
 
       namiConfirmAccess example
 
+      delaySec 3.0
+
       namiSign' example
 
       void $ T.pageWaitForSelector (T.Selector "#current-value-header") { timeout: timeoutMs } page
@@ -86,6 +88,8 @@ testPlan testOptions = group "e2e tests" do
 
       namiConfirmAccess example
 
+      delaySec 3.0
+
       namiSign' example
 
       void $ T.pageWaitForSelector (T.Selector "#increment") { timeout: timeoutMs } page
@@ -100,6 +104,8 @@ testPlan testOptions = group "e2e tests" do
       clickButton "Initialize" page
 
       namiConfirmAccess example
+
+      delaySec 3.0
 
       namiSign' example
 
@@ -120,6 +126,8 @@ testPlan testOptions = group "e2e tests" do
 
       namiConfirmAccess example
 
+      delaySec 3.0
+
       namiSign' example
 
       void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: timeoutMs } page
@@ -134,6 +142,8 @@ testPlan testOptions = group "e2e tests" do
       clickButton "Initialize" page
 
       namiConfirmAccess example
+
+      delaySec 3.0
 
       namiSign' example
 

@@ -3,9 +3,10 @@ module HelloWorld.Test.E2E.Helpers where
 import Prelude
 
 import Contract.Test.E2E (RunningExample, TestOptions(..), WalletExt, namiSign, withBrowser, withExample)
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, error, throwError)
 import Effect.Class (liftEffect)
 import Foreign (Foreign, unsafeFromForeign)
 import Mote (test)
@@ -88,11 +89,19 @@ closeStaticServer server = liftEffect $ close server (pure unit)
 
 mkTestOptions :: Effect TestOptions
 mkTestOptions = do
+  testData <- lookupEnv "TEST_DATA"
   chromeExe <- lookupEnv "CHROME_EXE"
-  pure $ TestOptions
-    { chromeExe
-    , namiDir: "./test-data/nami"
-    , geroDir: "./test-data/gero"
-    , chromeUserDataDir: "./test-data/chrome-user-data"
-    , noHeadless: true
-    }
+
+  case mkTestOptions' <$> testData <*> chromeExe of
+    Nothing -> throwError $ error "failed to setup test options"
+    Just testOptions -> pure testOptions
+  where
+  mkTestOptions' :: String -> String -> TestOptions
+  mkTestOptions' testData chromeExe =
+    TestOptions
+      { chromeExe: Just chromeExe
+      , namiDir: testData <> "/nami"
+      , geroDir: testData <> "/gero"
+      , chromeUserDataDir: testData <> "/chrome-user-data"
+      , noHeadless: true
+      }
