@@ -5,6 +5,7 @@ module IntegrationTest
   ,incTest
   ,postIncLookupTest
   ,unlockTest
+  ,isSpentTest
   ) where
 
 import Contract.Prelude
@@ -18,9 +19,11 @@ import Api
   )
 
 import Contract.Monad (Contract, liftContractAffM)
+import Contract.Transaction ( TransactionInput)
+import Contract.Utxos(getUtxo)
 import Contract.Log (logInfo')
 import Contract.Scripts (validatorHash)
-import Test.Spec.Assertions (shouldEqual)
+import Test.Spec.Assertions (shouldEqual,shouldReturn)
 
 integrationTest :: Int -> Int -> Contract () Unit
 integrationTest init param = do
@@ -76,3 +79,17 @@ unlockTest init param = do
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
   ti1 <- sendDatumToScript init vhash
   redeemFromScript vhash validator ti1
+
+isSpentTest :: Int -> Int -> Contract () Unit
+isSpentTest init param = do
+  logInfo' "is spent test spent"
+  validator <- helloScript param
+  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  ti1 <- sendDatumToScript init vhash
+  isSpent ti1 `shouldReturn` false
+  ti2 <- setDatumAtScript (init + param) vhash validator ti1
+  isSpent ti1 `shouldReturn` true
+
+isSpent :: TransactionInput -> Contract () Boolean
+isSpent input = isNothing <$> getUtxo input
+

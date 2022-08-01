@@ -28,11 +28,8 @@ import IntegrationTest
   ,incTest
   ,postIncLookupTest
   ,unlockTest
+  ,isSpentTest
   )
-
-
-toFixturePath :: String -> String
-toFixturePath = (<>) "./fixtures/"
 
 spec :: Spec Unit
 spec = do
@@ -52,10 +49,12 @@ spec = do
       testContract $ (unlockTest 3 4) `shouldReturn` unit
     it "full integration test" $
       testContract $ (integrationTest 3 4) `shouldReturn` unit
+    it "is spent works" $
+      testContract $ isSpentTest 3 4
 
 testContract :: Contract () Unit -> Aff Unit
 testContract contract = do
-  testResourcesDir <- liftEffect $ fromMaybe "." <$> lookupEnv "TEST_RESOURCES"
+  testResourcesDir <- liftEffect $ fromMaybe "./fixtures/" <$> lookupEnv "TEST_RESOURCES"
   let walletSpec = UseKeys (PrivatePaymentKeyFile $ testResourcesDir <> "/wallet.skey") (Just $ PrivateStakeKeyFile $ testResourcesDir <> "/staking.skey")
   let config = testnetConfig{walletSpec=Just walletSpec,logLevel=Warn}
   void <<< runContract config $ contract
