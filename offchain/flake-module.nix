@@ -85,6 +85,25 @@
             };
       };
 
+      hello-world-browser-e2e = {
+        ps =
+          purs-nix.purs
+            {
+              dependencies =
+                with all-ps-pkgs;
+                [
+                  aff
+                  cardano-transaction-lib
+                  express
+                  mote
+                  node-process
+                  test-unit
+                  toppokki
+                ];
+              srcs = [ ./hello-world-browser-e2e ];
+            };
+      };
+
       hello-world-cli = {
         ps =
           purs-nix.purs
@@ -275,6 +294,7 @@
         prefixOutputs {
           hello-world-cli = makeProjectShell hello-world-cli { };
           hello-world-browser = makeProjectShell hello-world-browser { };
+          "hello-world-browser:e2e" = makeProjectShell hello-world-browser-e2e { };
           hello-world-api = makeProjectShell hello-world-api { };
         };
     };
