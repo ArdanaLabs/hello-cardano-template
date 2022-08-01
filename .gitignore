@@ -60,3 +60,5 @@ Thumbs.db
 # a file extension for tracking the state of cli transaction sequences
 *.clistate
 
+# ignore logs
+*.log

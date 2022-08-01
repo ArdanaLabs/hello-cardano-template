@@ -3,6 +3,7 @@ module Util
   ,buildBalanceSignAndSubmitTx
   ,getUtxos
   ,getTxScanUrl
+  ,ourLogger
   ) where
 
 import Contract.Prelude
@@ -49,6 +50,10 @@ import Types.PlutusData (PlutusData)
 import Types.Transaction(TransactionInput,TransactionHash)
 import Data.List(filterM,List)
 import Data.Array(toUnfoldable,fromFoldable)
+import Node.FS.Aff(appendTextFile)
+import Node.Encoding(Encoding(UTF8))
+import Data.Log.Message(Message)
+import Data.Log.Formatter.Pretty(prettyFormatter)
 
 waitForTx
   :: forall a.
@@ -173,3 +178,10 @@ getTxScanUrl MainnetId (TransactionInput {transactionId:TransactionHash hash}) =
 
 isSpent :: TransactionInput -> Contract () Boolean
 isSpent input = isNothing <$> getUtxo input
+
+ourLogger :: String -> Message -> Aff Unit
+ourLogger path msg = do
+  pretty <- prettyFormatter msg
+  when (msg.level >= Warn) $ log pretty
+  appendTextFile UTF8 path ("\n" <> pretty)
+
