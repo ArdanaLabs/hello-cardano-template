@@ -16,6 +16,31 @@ To avoid compiling any output of the flake.nix of this project from source, you 
 
 You can ensure that the Cachix is being used by trying to build one of the outputs and observing that everything is downloaded, and that nothing needs to be compiled from source.
 
+If you want to add Cachix in a declarative way (aka you are using NixOS):
+
+1. In your `configuration.nix`, add this code to add the cache:
+  ```nix
+  {
+    nix.settings = {
+      substituters = ["https://private-ardanalabs.cachix.org"];
+      trusted-public-keys = ["private-ardanalabs.cachix.org-1:BukERsr5ezLsqNT1T7zlS7i1+5YHsuxNTdvcgaI7I6Q="];
+    };
+  }
+  ```
+2. To enable authenticating with the Cachix, you need to point Nix to a netrc file:
+  ```nix
+  {
+    nix.extraConfig = ''
+      netrc-file = <path to netrc file>
+    '';
+  }
+  ```
+  this netrc file can be encrypted with [age] and be used with [agenix], so you can store it securely in wherever.
+3. The netrc file should contain this:
+  ```
+  machine private-ardanalabs.cachix.org password <your cachix auth token>
+  ```
+  you can get your Cachix auth token by creating one at https://app.cachix.org/personal-auth-tokens.
 
 ## test-plan & hello world documentation
 `./docs/test-plan/test-plan.pdf` documents design decisions, testing, and acceptance criteria for the project.
@@ -111,3 +136,5 @@ Another example of equivalence is as follows:
 -  `self'.packages.hello`
 -  `self.packages.x86_64-linux.hello`
 
+[age]: https://github.com/FiloSottile/age "age"
+[agenix]: https://github.com/ryantm/agenix "agenix"
