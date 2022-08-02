@@ -14,6 +14,16 @@ Once you have docker you can start the ctl-runtime by running:
 nix run .#ctl-runtime
 ```
 
+## The API
+
+The api also has a dev shell which can be entered with `nix develop .#offchain:hello-world-api`.
+From the dev shell you can run tests with `purs-nix test` obtain a repl with `purs-nix repl` or compile the api with `purs-nix compile`.
+
+To run the api tests without the devshell run:
+```
+nix run .#offchain:hello-world-api:test
+```
+
 ## The Browser-app
 
 To enter the browser app's dev shell run `nix develop .#offchain:hello-world-browser`.
@@ -25,26 +35,10 @@ To run the browser app you can use:
 nix run .#offchain:hello-world-browser:serve
 ```
 
-To run the browser integration tests use:
+To run the browser tests use:
 ```
 nix run .#offchain:hello-world-browser:test
 ```
-the test output will be outputted to stdout, or
-```
-nix build -L .#hello-world-browser-test:test:integration
-```
-the test output will be there in `result` folder, it could be viewed in color with `less -r result/test-stdout`
-
-## The API
-
-The api also has a dev shell which can be entered with `nix develop .#offchain:hello-world-api`.
-From the dev shell you can run tests with `purs-nix test` obtain a repl with `purs-nix repl` or compile the api with `purs-nix compile`.
-
-To run the api tests without the devshell run:
-```
-nix run .#offchain:hello-world-api:test
-```
-
 
 # The CLI
 
