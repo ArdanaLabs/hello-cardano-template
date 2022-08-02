@@ -17,7 +17,7 @@ import Aeson
 import Contract.Address (scriptHashAddress)
 import Contract.Log(logInfo',logWarn',logError')
 import Contract.Monad (Contract,liftedE)
-import Contract.Utxos(getUtxo)
+import Contract.Utxos (UtxoM(UtxoM), utxosAt,getUtxo)
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (ValidatorHash)
 import Contract.Transaction
@@ -28,9 +28,8 @@ import Contract.Transaction
   , submitE
   )
 import Contract.TxConstraints (TxConstraints)
-import Contract.Utxos (UtxoM(UtxoM), utxosAt)
 import Control.Monad.Error.Class(throwError)
-import Data.Array(catMaybes)
+import Data.Array(toUnfoldable,fromFoldable,catMaybes)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Time.Duration
@@ -42,18 +41,17 @@ import Data.Time.Duration
   ,convertDuration
   ,negateDuration
   )
+import Data.List(filterM,List)
+import Data.Log.Formatter.Pretty(prettyFormatter)
+import Data.Log.Message(Message)
 import Effect.Aff (delay)
 import Effect.Exception(throw)
+import Node.Encoding(Encoding(UTF8))
+import Node.FS.Aff(appendTextFile)
 import Serialization.Address (NetworkId(TestnetId,MainnetId))
 import Types.ByteArray (byteArrayToHex,hexToByteArray)
 import Types.PlutusData (PlutusData)
 import Types.Transaction(TransactionInput,TransactionHash)
-import Data.List(filterM,List)
-import Data.Array(toUnfoldable,fromFoldable)
-import Node.FS.Aff(appendTextFile)
-import Node.Encoding(Encoding(UTF8))
-import Data.Log.Message(Message)
-import Data.Log.Formatter.Pretty(prettyFormatter)
 
 waitForTx
   :: forall a.
@@ -74,8 +72,8 @@ waitForTx d vhash txid = do
             pure Nothing
           else do
               logInfo' $ "No tx yet, waiting for: " <> show (convertDuration d :: Seconds)
-              (liftAff <<< delay <<< wrap) 1000.0
-              waitForTx (fromDuration d <> fromDuration (negateDuration (Seconds 1.0))) vhash txid
+              (liftAff <<< delay <<< wrap) (waitTime # fromDuration # unwrap)
+              waitForTx (fromDuration d <> fromDuration (negateDuration waitTime)) vhash txid
       Just txin -> do
         logInfo' $ "found tx:" <> show txid
         pure $ Just txin
@@ -158,9 +156,9 @@ waitForSpent' d inputs = do
     spent <- filterM isSpent inputs
     if null spent && fromDuration d >= (Milliseconds 0.0)
       then do
-        (liftAff <<< delay <<< wrap) 1000.0
+        (liftAff <<< delay <<< wrap) (waitTime # fromDuration # unwrap)
         logInfo' $ "No spent tx found yet" <> show (convertDuration d :: Seconds)
-        waitForSpent' (fromDuration d <> fromDuration (negateDuration (Seconds 1.0))) inputs
+        waitForSpent' (fromDuration d <> fromDuration (negateDuration waitTime)) inputs
       else
         pure spent
 
@@ -184,4 +182,8 @@ ourLogger path msg = do
   pretty <- prettyFormatter msg
   when (msg.level >= Warn) $ log pretty
   appendTextFile UTF8 path ("\n" <> pretty)
+
+-- The time to wait between ogmios querries when retrying
+waitTime :: Seconds
+waitTime = Seconds 1.0
 
