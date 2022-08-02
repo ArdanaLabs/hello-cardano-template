@@ -182,19 +182,22 @@
         let
           testModule = hello-world-browser-e2e.ps.modules."HelloWorld.Test.E2E.Main".output { };
           scriptName = "hello-world-browser-tests";
+
+          namiSettings = "${self.inputs.cardano-transaction-lib}/test-data/nami_settings.tar.gz";
+          namiExtension = "${self.inputs.cardano-transaction-lib}/test-data/chrome-extensions/nami_3.2.5_1.crx";
         in
         pkgs.writeShellApplication
           {
             name = scriptName;
-            runtimeInputs = [ self'.packages."offchain:hello-world-browser" pkgs.nodejs pkgs.chromium ];
+            runtimeInputs = [ self'.packages."offchain:hello-world-browser" pkgs.nodejs pkgs.chromium pkgs.unzip ];
             text = ''
               export NODE_PATH=${ctlNodeModules}/node_modules
               export CHROME_EXE="${pkgs.chromium.outPath}/bin/chromium"
               export HELLO_WORLD_BROWSER_INDEX=${self'.packages."offchain:hello-world-browser"}
 
               TEST_DATA="$(mktemp --directory)"
-              cp --no-preserve=mode,ownership -r ${./hello-world-browser/test/e2e/test-data}/* "$TEST_DATA"
-              tar zxf ${./hello-world-browser/test/e2e/nami_settings.tar.gz} --directory "$TEST_DATA"
+              unzip ${namiExtension} -d "$TEST_DATA/nami" > /dev/zero || echo "ignore warnings" 
+              tar zxf ${namiSettings} --directory "$TEST_DATA"
               export TEST_DATA
 
               node \

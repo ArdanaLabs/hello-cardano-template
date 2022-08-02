@@ -102,6 +102,6 @@ mkTestOptions = do
       { chromeExe: Just chromeExe
       , namiDir: testData <> "/nami"
       , geroDir: testData <> "/gero"
-      , chromeUserDataDir: testData <> "/chrome-user-data"
+      , chromeUserDataDir: testData <> "/test-data/chrome-user-data"
       , noHeadless: true
       }
