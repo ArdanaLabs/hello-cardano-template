@@ -61,5 +61,3 @@ Thumbs.db
 *.clistate
 
 *node_modules
-
-*chrome-user-data
