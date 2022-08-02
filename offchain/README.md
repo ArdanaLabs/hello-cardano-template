@@ -11,7 +11,7 @@ You probably also want to run `sudo systemctl enable docker` so that docker will
 Once you have docker you can start the ctl-runtime by running:
 
 ```
-NIXPKGS_ALLOW_INSECURE=1 nix run --impure .#apps.x86_64-linux.ctl-runtime
+nix run .#ctl-runtime
 ```
 
 ## The Browser-app
