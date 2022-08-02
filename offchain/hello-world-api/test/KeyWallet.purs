@@ -50,9 +50,14 @@ spec = do
     it "is spent works" $
       testContract $ isSpentTest 3 4
 
+-- | This is the directory that gets used when running the tests from the devshell
+-- | Setting it to "./fixtures/" makes it work from the hello-world-api directory
+defaultResourcesDir :: String
+defaultResourcesDir = "./fixtures/"
+
 testContract :: Contract () Unit -> Aff Unit
 testContract contract = do
-  testResourcesDir <- liftEffect $ fromMaybe "./fixtures/" <$> lookupEnv "TEST_RESOURCES"
+  testResourcesDir <- liftEffect $ fromMaybe defaultResourcesDir <$> lookupEnv "TEST_RESOURCES"
   let walletSpec = UseKeys (PrivatePaymentKeyFile $ testResourcesDir <> "/wallet.skey") (Just $ PrivateStakeKeyFile $ testResourcesDir <> "/staking.skey")
   let config = testnetConfig
         {walletSpec=Just walletSpec
