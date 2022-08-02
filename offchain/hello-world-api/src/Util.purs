@@ -99,7 +99,7 @@ buildBalanceSignAndSubmitTx' attempts lookups constraints = do
     Right bsTx -> pure bsTx
     Left err
       | attempts < maxAttempts -> do
-        logError' "Balance failed on retry, this is probably because one of the utxos which were spent elsewhere was critical"
+        logError' "Balance failed on retry. This was caused by a UTxO being spent elsewhere. Retries won't work, probably because the UTxO was requested by txid."
         throwError err
       | otherwise -> throwError err
   etxid <- submitE bsTx
