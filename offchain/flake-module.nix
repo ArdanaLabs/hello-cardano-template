@@ -46,6 +46,7 @@
             ordered-collections
             spec
             node-process
+            node-child-process
           ];
         ps =
           purs-nix.purs
@@ -117,7 +118,6 @@
                   node-fs-aff
                   node-fs
                   dotenv
-                  node-child-process
                   stringutils
                 ];
               srcs = [ ./hello-world-cli ];
