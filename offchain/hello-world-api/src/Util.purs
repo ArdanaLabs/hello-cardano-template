@@ -137,7 +137,7 @@ buildBalanceSignAndSubmitTx' attempts lookups constraints = do
           if attempts > 0
             then buildBalanceSignAndSubmitTx' (attempts-1) lookups constraints
             else do
-              logError' "exhausted retries on race conditions"
+              logError' "Exhausted retries on race conditions"
               liftEffect $ throw $ show errs
         else do
             logError' "No inputs were bad this probably wasn't a race condition"
