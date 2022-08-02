@@ -21,6 +21,12 @@ If you want to add Cachix in a declarative way (aka you are using NixOS):
 1. In your `configuration.nix`, add this code to add the cache:
   ```nix
   {
+    # if you are on nixpkgs stable channel / branch, this will probably work for you
+    nix = {
+      binaryCaches = ["https://private-ardanalabs.cachix.org"];
+      binaryCachePublicKeys = ["private-ardanalabs.cachix.org-1:BukERsr5ezLsqNT1T7zlS7i1+5YHsuxNTdvcgaI7I6Q="];
+    };
+    # if you get a deprecated warning, or you are on nixpkgs unstable channel / branch, this should work
     nix.settings = {
       substituters = ["https://private-ardanalabs.cachix.org"];
       trusted-public-keys = ["private-ardanalabs.cachix.org-1:BukERsr5ezLsqNT1T7zlS7i1+5YHsuxNTdvcgaI7I6Q="];
