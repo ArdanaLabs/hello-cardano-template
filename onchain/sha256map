@@ -3,11 +3,11 @@
   "https://github.com/mlabs-haskell/apropos-tx"."572c53a97e67278bd29b19e355bd3e61e9597016" = "sha256-p14qbxRJ0QkqZj0VjbnKnO/FU0CcfWwwspbgjTG0+6o=";
   "https://github.com/mlabs-haskell/digraph"."d4dfec22f6a6eb646dcfa9591eaca0a9be88d260" = "sha256-ytQkJ18tYs13rt66s4jdbaGa5mLNEIerF8u24PvyPLA=";
   "https://github.com/Plutonomicon/plutarch-plutus"."3140f47adefae4523a0ca777fc09e724703d9269" = "sha256-W0EWY0DV2idbIeqtJnShVHQ83exME8TK2GYQGbVpz8A=";
-  "https://github.com/input-output-hk/plutus.git"."983e6af2154c4bdf86ed645062bcb62f304d0a4f" = "sha256-Ga+hIhrgq2kR5Vnso/Edo2wgQpFn167eWGl35oM093U=";
+  "https://github.com/input-output-hk/plutus.git"."b39a526e983cb931d0cc49b7d073d6d43abd22b5" = "sha256-3EBhSroECMOSP02qZGT0Zb3QHWibI/tYjdcaT5/YotY=";
   "https://github.com/Quid2/flat.git"."ee59880f47ab835dbd73bea0847dab7869fc20d8" = "lRFND+ZnZvAph6ZYkr9wl9VAx41pb3uSFP8Wc7idP9M=";
   "https://github.com/input-output-hk/cardano-crypto.git"."07397f0e50da97eaa0575d93bee7ac4b2b2576ec" = "oxIOVlgm07FAEmgGRF1C2me9TXqVxQulEOcJ22zpTRs=";
-  "https://github.com/input-output-hk/cardano-base"."78b3928391b558fb1750228f63301ec371f13528" = "pBUTTcenaSLMovHKGsaddJ7Jh3okRTrtu5W7Rdu6RM4=";
-  "https://github.com/input-output-hk/cardano-prelude"."fd773f7a58412131512b9f694ab95653ac430852" = "BtbT5UxOAADvQD4qTPNrGfnjQNgbYNO4EAJwH2ZsTQo=";
+  "https://github.com/input-output-hk/cardano-base"."631cb6cf1fa01ab346233b610a38b3b4cba6e6ab" = "sha256-l0KgomRi6YhEoOlFnBYEXhnZO2+PW68rhfUrbMXjhCQ=";
+  "https://github.com/input-output-hk/cardano-prelude"."713c7ae79a4d538fcd653c976a652913df1567b9" = "sha256-E+YSfUsvxdoOr7n7fz4xd7zb4z8XBRGNYOKipc2A1pw=";
   "https://github.com/input-output-hk/Win32-network"."3825d3abf75f83f406c1f7161883c438dac7277d" = "Hesb5GXSx0IwKSIi42ofisVELcQNX6lwHcoZcbaDiqc=";
   "https://github.com/Srid/sydtest"."9c6c7678f7aabe22e075aab810a6a2e304591d24" = "sha256-P6ZwwfFeN8fpi3fziz9yERTn7BfxdE/j/OofUu+4GdA=";
   "https://github.com/Srid/autodocodec"."42b42a7407f33c6c74fa4e8c84906aebfed28daf" = "sha256-X1TNZlmO2qDFk3OL4Z1v/gzvd3ouoACAiMweutsYek4=";
