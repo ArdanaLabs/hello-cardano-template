@@ -52,8 +52,9 @@ timeout ms ma = do
 instance helloWorldApiAppM :: HelloWorldApi AppM where
   lock (HelloWorldIncrement param) initialValue = do
     { contractConfig } <- getStore
-    lastOutput <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ initialize param initialValue
-    runContract contractConfig $ do
+    result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
+      lastOutput <- initialize param initialValue
+      -- TODO we should probably add an api function thing to get the lovelace at the output
       TransactionOutput utxo <- getUtxo lastOutput >>= liftContractM "couldn't find utxo"
       pure $ (lastOutput /\ (FundsLocked (toNumber ((getLovelace $ valueToCoin utxo.amount) / fromInt 1_000_000))))
     case result of
@@ -71,10 +72,7 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
       Nothing -> pure $ Right unit
       Just lastOutput' -> do
         result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
-          validator <- helloScript param
-          vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-          oldDatum <- datumLookup lastOutput'
-          setDatumAtScript (oldDatum + param) vhash validator lastOutput'
+          increment param lastOutput'
         case result of
           Left err ->
             if message err == timeoutErrorMessage then
@@ -90,9 +88,7 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
       Nothing -> pure $ Right unit
       Just lastOutput' -> do
         result <- liftAff $ try $ timeout timeoutMilliSeconds $ ((void <<< _) <<< runContract) contractConfig $ do
-          validator <- helloScript param
-          vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-          redeemFromScript vhash validator lastOutput'
+          redeem param lastOutput'
         case result of
           Left err ->
             if message err == timeoutErrorMessage then
