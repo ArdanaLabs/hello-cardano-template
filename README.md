@@ -5,8 +5,9 @@ The Ardana Dollar Stablecoin
 ## Using the Nix Binary Cache via Cachix
 
 You will need to have Nix installed, with Flakes enabled.
+This will allow you to avoid compiling any output of the flake.nix of this project from source.
 
-To avoid compiling any output of the flake.nix of this project from source, you can use our Cachix:
+If you have Nix installed on a Linux system in a multi-user fashion (the default):
 
 1. Add the Cachix to your `/etc/nix/nix.conf`:
   ```
@@ -22,6 +23,14 @@ To avoid compiling any output of the flake.nix of this project from source, you 
   machine private-ardanalabs.cachix.org password <your cachix auth token>
   ```
   you can get your Cachix auth token by creating one at https://app.cachix.org/personal-auth-tokens.
+
+If you have Nix installed in a single-user fashion:
+
+1. Get Cachix: `nix shell nixpkgs#cachix`
+2. Sign into app.cachix.org with GitHub
+3. Generate a personal auth token at https://app.cachix.org/personal-auth-tokens
+4. Put that token into this command and run it: `cachix authtoken <TheTokenYouJustCopied>`
+5. Run `cachix use private-ardanalabs`.
 
 If you want to add Cachix in a declarative way (aka you are using NixOS):
 
