@@ -2,7 +2,7 @@ module HelloWorld.AppM where
 
 import Contract.Prelude
 
-import Api (datumLookup, helloScript, redeemFromScript, sendDatumToScript, setDatumAtScript)
+import HelloWorld.Api (initialize, increment, redeem, datumLookup, helloScript, redeemFromScript, sendDatumToScript, setDatumAtScript)
 import Contract.Monad (liftContractAffM, liftContractM, runContract)
 import Contract.Transaction (TransactionOutput(..))
 import Contract.Utxos (getUtxo)
@@ -52,10 +52,8 @@ timeout ms ma = do
 instance helloWorldApiAppM :: HelloWorldApi AppM where
   lock (HelloWorldIncrement param) initialValue = do
     { contractConfig } <- getStore
-    result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
-      validator <- helloScript param
-      vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-      lastOutput <- sendDatumToScript initialValue vhash
+    lastOutput <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ initialize param initialValue
+    runContract contractConfig $ do
       TransactionOutput utxo <- getUtxo lastOutput >>= liftContractM "couldn't find utxo"
       pure $ (lastOutput /\ (FundsLocked (toNumber ((getLovelace $ valueToCoin utxo.amount) / fromInt 1_000_000))))
     case result of

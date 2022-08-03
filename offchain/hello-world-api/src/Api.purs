@@ -1,5 +1,8 @@
-module Api
-  (sendDatumToScript
+module HelloWorld.Api
+  (initialize
+  ,increment
+  ,redeem
+  ,sendDatumToScript
   ,setDatumAtScript
   ,redeemFromScript
   ,helloScript
@@ -34,6 +37,26 @@ import Data.Map(keys)
 import Data.Set as Set
 import Data.Foldable(for_)
 import Data.List((..),List)
+
+initialize :: Int -> Int -> Contract () TransactionInput
+initialize param initialValue = do
+  validator <- helloScript param
+  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  sendDatumToScript initialValue vhash
+
+increment :: Int -> TransactionInput -> Contract () TransactionInput
+increment param lastOutput = do
+  validator <- helloScript param
+  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  oldDatum <- datumLookup lastOutput
+  let newDatum = oldDatum + param
+  setDatumAtScript newDatum vhash validator lastOutput
+
+redeem :: Int -> TransactionInput -> Contract () Unit
+redeem param lastOutput = do
+  validator <- helloScript param
+  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  redeemFromScript vhash validator lastOutput
 
 waitTime :: Minutes
 waitTime = Minutes 5.0
