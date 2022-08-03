@@ -108,9 +108,15 @@
 
       ctlNodeModules = "${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}";
 
+      # ideally we would just append the CTL overlay to the haskell-nix pkgs
+      # we already have at `config.haskell-nix.pkgs`, but out haskell-nix
+      # instances seem to be incompatible. So we just use CTLs haskell-nix here.
       ctl-pkgs = import self.inputs.nixpkgs {
         inherit system;
-        overlays = [ self.inputs.cardano-transaction-lib.overlays.runtime ];
+        overlays = [
+          self.inputs.cardano-transaction-lib.inputs.haskell-nix.overlay
+          self.inputs.cardano-transaction-lib.overlays.runtime
+        ];
       };
 
       # use more recent slot to avoid long sync time
