@@ -2,7 +2,7 @@ module HelloWorld.Test.E2E.Helpers where
 
 import Prelude
 
-import Contract.Test.E2E (RunningExample, TestOptions(..), WalletExt, namiSign, withBrowser, withExample)
+import Contract.Test.E2E (RunningExample, TestOptions(..), WalletExt, WalletPassword, namiSign, withBrowser, withExample)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Effect (Effect)
@@ -77,8 +77,11 @@ injectJQuery jQuery page = do
   unless alreadyInjected $ void $ T.unsafeEvaluateStringFunction jQuery
     page
 
+namiWalletPassword :: WalletPassword
+namiWalletPassword = wrap "ctlctlctl"
+
 namiSign' :: RunningExample -> Aff Unit
-namiSign' = namiSign (wrap "ctlctlctl")
+namiSign' = namiSign namiWalletPassword
 
 startStaticServer :: String -> Aff Server
 startStaticServer directory =
@@ -103,5 +106,5 @@ mkTestOptions = do
       , namiDir: testData <> "/nami"
       , geroDir: testData <> "/gero"
       , chromeUserDataDir: testData <> "/test-data/chrome-user-data"
-      , noHeadless: true
+      , noHeadless: false
       }

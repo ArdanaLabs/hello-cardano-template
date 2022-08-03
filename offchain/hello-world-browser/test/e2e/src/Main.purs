@@ -25,6 +25,12 @@ import Utils as Utils
 timeoutMs :: Int
 timeoutMs = 240_000_000
 
+threeSeconds :: Number
+threeSeconds = 3.0
+
+specRunnerTimeoutMs :: Number
+specRunnerTimeoutMs = 500_000.0
+
 main ∷ Effect Unit
 main = do
   noRuntime <- isJust <$> lookupEnv "NO_RUNTIME"
@@ -40,27 +46,27 @@ main = do
           bracket (startStaticServer index) closeStaticServer $ \_ -> do
             testOptions <- liftEffect mkTestOptions
             Utils.interpret'
-              (SpecRunner.defaultConfig { timeout = pure $ wrap 500_000.0 })
+              (SpecRunner.defaultConfig { timeout = pure $ wrap specRunnerTimeoutMs })
               (testPlan testOptions)
 
 testPlan :: TestOptions -> TestPlanM Unit
-testPlan testOptions = group "e2e tests" do
+testPlan testOptions = group "Nami wallet" do
   group "When initialize button is clicked" do
-    runE2ETest "it shows loading dialog" testOptions NamiExt $ \(RunningExample { jQuery, main: page }) -> do
+    runE2ETest "It shows loading dialog" testOptions NamiExt $ \(RunningExample { jQuery, main: page }) -> do
       injectJQuery jQuery page
 
       clickButton "Initialize" page
       content <- T.content page
       Assert.assert "Initializing" (contains (Pattern "Initializing ...") content)
 
-    runE2ETest "it locks ADA at contract address" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
+    runE2ETest "It locks ADA at contract address" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
       injectJQuery jQuery page
 
       clickButton "Initialize" page
 
       namiConfirmAccess example
 
-      delaySec 3.0
+      delaySec threeSeconds
 
       namiSign' example
 
@@ -81,14 +87,14 @@ testPlan testOptions = group "e2e tests" do
       Assert.assert "Funds locked body" (contains (Pattern "10.0 ADA") fundsLockedBodyContent)
 
   group "When increment button is clicked" do
-    runE2ETest "it shows loading dialog" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
+    runE2ETest "It shows loading dialog" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
       injectJQuery jQuery page
 
       clickButton "Initialize" page
 
       namiConfirmAccess example
 
-      delaySec 3.0
+      delaySec threeSeconds
 
       namiSign' example
 
@@ -98,14 +104,14 @@ testPlan testOptions = group "e2e tests" do
       content <- T.content page
       Assert.assert "Incrementing" (contains (Pattern "Incrementing from 3 to 5 ...") content)
 
-    runE2ETest "it increments the datum at script address by 2" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
+    runE2ETest "It increments the datum at script address by 2" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
       injectJQuery jQuery page
 
       clickButton "Initialize" page
 
       namiConfirmAccess example
 
-      delaySec 3.0
+      delaySec threeSeconds
 
       namiSign' example
 
@@ -119,14 +125,14 @@ testPlan testOptions = group "e2e tests" do
       Assert.assert "Current value body" (contains (Pattern "5") currentValueBodyContent)
 
   group "When redeem button is clicked" do
-    runE2ETest "it shows loading dialogue" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
+    runE2ETest "It shows loading dialogue" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
       injectJQuery jQuery page
 
       clickButton "Initialize" page
 
       namiConfirmAccess example
 
-      delaySec 3.0
+      delaySec threeSeconds
 
       namiSign' example
 
@@ -136,14 +142,14 @@ testPlan testOptions = group "e2e tests" do
       content <- T.content page
       Assert.assert "Redeeming" (contains (Pattern "Redeeming 10.0 ADA ...") content)
 
-    runE2ETest "it increments the datum at script address by 2" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
+    runE2ETest "It goes to initial page" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
       injectJQuery jQuery page
 
       clickButton "Initialize" page
 
       namiConfirmAccess example
 
-      delaySec 3.0
+      delaySec threeSeconds
 
       namiSign' example
 
