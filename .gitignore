@@ -61,3 +61,6 @@ Thumbs.db
 *.clistate
 
 *node_modules
+
+# ignore logs
+*.log

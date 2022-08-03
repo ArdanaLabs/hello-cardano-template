@@ -3,24 +3,22 @@ module KeyWallet
   ) where
 
 import Api(grabFreeAda)
+import Util(ourLogger)
 import Contract.Prelude
 import Contract.Monad
   ( Contract
   , runContract
   )
 import Contract.Config(testnetConfig)
-import Contract.Wallet.KeyFile(mkKeyWalletFromFiles)
 import Node.Process(lookupEnv)
-import Data.Log.Level (LogLevel(Error))
-import Serialization.Address (NetworkId(TestnetId))
-import Test.Spec(Spec,describe,it,itOnly)
+import Data.Log.Level (LogLevel(..))
+import Test.Spec(Spec,describe,it)
 import Test.Spec.Assertions(shouldReturn)
 import Wallet.Spec
   (WalletSpec(UseKeys)
   ,PrivatePaymentKeySource(PrivatePaymentKeyFile)
   ,PrivateStakeKeySource(PrivateStakeKeyFile)
   )
-import Wallet.KeyFile(privatePaymentKeyFromFile,privateStakeKeyFromFile)
 import IntegrationTest
   (integrationTest
   ,lockTest
@@ -28,11 +26,8 @@ import IntegrationTest
   ,incTest
   ,postIncLookupTest
   ,unlockTest
+  ,isSpentTest
   )
-
-
-toFixturePath :: String -> String
-toFixturePath = (<>) "./fixtures/"
 
 spec :: Spec Unit
 spec = do
@@ -52,10 +47,21 @@ spec = do
       testContract $ (unlockTest 3 4) `shouldReturn` unit
     it "full integration test" $
       testContract $ (integrationTest 3 4) `shouldReturn` unit
+    it "is spent works" $
+      testContract $ isSpentTest 3 4
+
+-- | This is the directory that gets used when running the tests from the devshell
+-- | Setting it to "./fixtures/" makes it work from the hello-world-api directory
+defaultResourcesDir :: String
+defaultResourcesDir = "./fixtures/"
 
 testContract :: Contract () Unit -> Aff Unit
 testContract contract = do
-  testResourcesDir <- liftEffect $ fromMaybe "." <$> lookupEnv "TEST_RESOURCES"
+  testResourcesDir <- liftEffect $ fromMaybe defaultResourcesDir <$> lookupEnv "TEST_RESOURCES"
   let walletSpec = UseKeys (PrivatePaymentKeyFile $ testResourcesDir <> "/wallet.skey") (Just $ PrivateStakeKeyFile $ testResourcesDir <> "/staking.skey")
-  let config = testnetConfig{walletSpec=Just walletSpec,logLevel=Error}
+  let config = testnetConfig
+        {walletSpec=Just walletSpec
+        ,logLevel=Warn
+        ,customLogger=Just $ ourLogger "./apiTest.log"
+        }
   void <<< runContract config $ contract

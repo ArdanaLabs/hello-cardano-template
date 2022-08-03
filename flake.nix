@@ -11,7 +11,6 @@
     ogmios-datum-cache.follows = "cardano-transaction-lib/ogmios-datum-cache";
     #   used for libsodium-vrf
     plutus.url = "github:input-output-hk/plutus";
-    plutus-apps.url = "github:input-output-hk/plutus-apps?rev=e4062bca213f233cdf9822833b07aa69dff6d22a";
     lint-utils = {
       type = "git";
       url = "https://gitlab.homotopic.tech/nix/lint-utils.git";
