@@ -8,13 +8,20 @@ You will need to have Nix installed, with Flakes enabled.
 
 To avoid compiling any output of the flake.nix of this project from source, you can use our Cachix:
 
-1. Get Cachix: `nix shell nixpkgs#cachix`
-2. Sign into app.cachix.org with GitHub
-3. Generate a personal auth token at https://app.cachix.org/personal-auth-tokens
-4. Put that token into this command and run it: `cachix authtoken <TheTokenYouJustCopied>`
-5. Run `cachix use private-ardanalabs`.
-
-You can ensure that the Cachix is being used by trying to build one of the outputs and observing that everything is downloaded, and that nothing needs to be compiled from source.
+1. Add the Cachix to your `/etc/nix/nix.conf`:
+  ```
+  substituters = https://private-ardanalabs.cachix.org
+  trusted-public-keys = private-ardanalabs.cachix.org-1:BukERsr5ezLsqNT1T7zlS7i1+5YHsuxNTdvcgaI7I6Q=
+  ```
+2. Add the path to your netrc file in `/etc/nix/nix.conf`:
+  ```
+  netrc-file = /etc/nix/netrc
+  ```
+3. Add your Cachix auth token to the netrc file:
+  ```
+  machine private-ardanalabs.cachix.org password <your cachix auth token>
+  ```
+  you can get your Cachix auth token by creating one at https://app.cachix.org/personal-auth-tokens.
 
 If you want to add Cachix in a declarative way (aka you are using NixOS):
 
@@ -47,6 +54,8 @@ If you want to add Cachix in a declarative way (aka you are using NixOS):
   machine private-ardanalabs.cachix.org password <your cachix auth token>
   ```
   you can get your Cachix auth token by creating one at https://app.cachix.org/personal-auth-tokens.
+
+You can ensure that the Cachix is being used by trying to build one of the outputs and observing that everything is downloaded, and that nothing needs to be compiled from source.
 
 ## test-plan & hello world documentation
 `./docs/test-plan/test-plan.pdf` documents design decisions, testing, and acceptance criteria for the project.
