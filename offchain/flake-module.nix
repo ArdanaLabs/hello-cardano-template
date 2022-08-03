@@ -110,7 +110,7 @@
 
       ctl-pkgs = import self.inputs.nixpkgs {
         inherit system;
-        overlays = [ self.inputs.cardano-transaction-lib.overlay ];
+        overlays = [ self.inputs.cardano-transaction-lib.overlays.runtime ];
       };
 
       # use more recent slot to avoid long sync time
