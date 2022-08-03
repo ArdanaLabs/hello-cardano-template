@@ -9,7 +9,7 @@ module IntegrationTest
 
 import Contract.Prelude
 
-import Api
+import HelloWorld.Api
   (helloScript
   ,sendDatumToScript
   ,setDatumAtScript

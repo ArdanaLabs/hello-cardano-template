@@ -2,7 +2,7 @@ module KeyWallet
   ( spec
   ) where
 
-import Api(grabFreeAda)
+import HelloWorld.Api(grabFreeAda)
 import Contract.Prelude
 import Contract.Monad
   ( Contract
