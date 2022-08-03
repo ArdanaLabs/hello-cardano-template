@@ -42,11 +42,11 @@ import Wallet.Spec
   )
 
 -- Local
-import Api
+import HelloWorld.Api
   (helloScript
-  ,sendDatumToScript
-  ,setDatumAtScript
-  ,redeemFromScript
+  ,initialize
+  ,increment
+  ,redeem
   ,datumLookup
   )
 import Util(getTxScanUrl)
@@ -103,28 +103,15 @@ runCmd (Options {conf,statePath,command}) = do
       stateExists <- liftEffect $ exists statePath
       when stateExists $ do
         liftEffect $ throw "Can't use lock when state file already exists"
-      state <- runContract cfg $ do
-        validator <- helloScript param
-        vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-        txid <- sendDatumToScript init vhash
-        pure $ State {param,lastOutput:txid}
-      writeState statePath state
+      lastOutput <- runContract cfg $ initialize param init
+      writeState statePath $ State {param, lastOutput}
     Increment -> do
       (State state) <- readState statePath
-      newState <- runContract cfg $ do
-        validator <- helloScript state.param
-        vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-        oldDatum <- datumLookup state.lastOutput
-        let newDatum = oldDatum + state.param
-        txid <- setDatumAtScript newDatum vhash validator state.lastOutput
-        pure $ State $ state{lastOutput=txid}
-      writeState statePath newState
+      lastOutput <- runContract cfg $ increment state.param state.lastOutput
+      writeState statePath $ State {param:state.param, lastOutput}
     Unlock -> do
       (State state) <- readState statePath
-      void <<< runContract cfg $ do
-        validator <- helloScript state.param
-        vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-        redeemFromScript vhash validator state.lastOutput
+      void <<< runContract cfg $ redeem state.param state.lastOutput
       clearState statePath
     Query -> do
       (State state) <- readState statePath
