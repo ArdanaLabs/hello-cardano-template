@@ -113,9 +113,10 @@
       # instances seem to be incompatible. So we just use CTLs haskell-nix here.
       ctl-pkgs = import self.inputs.nixpkgs {
         inherit system;
-        overlays = [
-          self.inputs.cardano-transaction-lib.inputs.haskell-nix.overlay
-          self.inputs.cardano-transaction-lib.overlays.runtime
+        overlays = with self.inputs.cardano-transaction-lib; [
+          inputs.haskell-nix.overlay
+          inputs.iohk-nix.overlays.crypto
+          overlays.runtime
         ];
       };
 
