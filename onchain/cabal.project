@@ -8,3 +8,6 @@ benchmarks: true
 
 -- The only sensible test display option
 test-show-details: direct
+
+constraints:
+    algebraic-graphs == 0.6
