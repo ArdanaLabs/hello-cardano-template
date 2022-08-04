@@ -2,7 +2,7 @@ module HelloWorld.AppM where
 
 import Contract.Prelude
 
-import HelloWorld.Api (initialize, increment, redeem, datumLookup, helloScript, redeemFromScript, sendDatumToScript, setDatumAtScript)
+import HelloWorld.Api (initialize, increment, redeem)
 import Contract.Monad (liftContractAffM, liftContractM, runContract)
 import Contract.Transaction (TransactionOutput(..))
 import Contract.Utxos (getUtxo)
