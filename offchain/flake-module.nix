@@ -137,7 +137,6 @@
               self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system}
             ];
             text = ''
-              export TEST_RESOURCES=${./hello-world-api/fixtures}
               export NODE_PATH=${ctlNodeModules}/node_modules
               node \
                 --preserve-symlinks \
@@ -222,7 +221,7 @@
       checks = {
         run-hello-world-api-tests =
           let test = hello-world-api-tests; in
-          pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
+          pkgs.runCommand test.name { }
             "${test}/bin/${test.meta.mainProgram} | tee $out";
         run-hello-world-cli-tests =
           let test = hello-world-cli-tests; in
