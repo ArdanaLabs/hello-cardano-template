@@ -1,0 +1,10 @@
+{
+  "name": "hello-world-browser-e2e",
+  "version": "1.0.0",
+  "author": "Hao Liu",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.1",
+    "puppeteer": "^15.5.0"
+  }
+}
