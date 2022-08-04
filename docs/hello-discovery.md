@@ -1,6 +1,9 @@
 # Hello world + Discovery
 
-## Components
+This protocol works as a proof of concept of our soulutions to vault discovery and authentication.
+The core idea of the protocol is to use a family of NFTs to authenticate and search for vaults.
+
+## Onchain components
 
 ### Config NFT minting policy
 
@@ -84,4 +87,11 @@ A vault incrementing Tx must:
 ### Close a vault
 
 When closing a vault the NFT must be burned.
+
+### Querrying Vaults
+
+The api should provide enpoints to querry all vaults or all vaults owned by a pubkey.
+
+To querry all vaults just querry all utxos at the vault address and filter out vaults that don't have an authentication token.
+To querry vaults owned by a particular user further filter by parsing the vault datum and checking the owner.
 
