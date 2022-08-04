@@ -9,6 +9,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, error, throwError)
 import Effect.Class (liftEffect)
 import Foreign (Foreign, unsafeFromForeign)
+import HelloWorld.Test.E2E.Env as Env
 import Mote (test)
 import Node.Express.App (listenHttp, use)
 import Node.Express.Middleware.Static (static)
@@ -30,8 +31,11 @@ derive instance Newtype Action _
 port :: Port
 port = 8080
 
+localhost :: String
+localhost = "http://127.0.0.1"
+
 helloWorldBrowserURL :: T.URL
-helloWorldBrowserURL = T.URL $ "http://127.0.0.1:" <> show port
+helloWorldBrowserURL = T.URL $ localhost <> ":" <> show port
 
 -- | Run an E2E test. Parameters are:
 -- |   String: Just a name for the logs
@@ -92,8 +96,8 @@ closeStaticServer server = liftEffect $ close server (pure unit)
 
 mkTestOptions :: Effect TestOptions
 mkTestOptions = do
-  testData <- lookupEnv "TEST_DATA"
-  chromeExe <- lookupEnv "CHROME_EXE"
+  testData <- lookupEnv Env.testData
+  chromeExe <- lookupEnv Env.chromeExe
 
   case mkTestOptions' <$> testData <*> chromeExe of
     Nothing -> throwError $ error "failed to setup test options"

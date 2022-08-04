@@ -13,6 +13,7 @@ import Effect.Console (log)
 import Effect.Exception (throw)
 import Foreign (Foreign)
 import Foreign as Foreign
+import HelloWorld.Test.E2E.Env as Env
 import HelloWorld.Test.E2E.Helpers (clickButton, closeStaticServer, injectJQuery, mkTestOptions, namiSign', runE2ETest, startStaticServer)
 import Mote (group)
 import Node.Process (lookupEnv)
@@ -33,11 +34,11 @@ specRunnerTimeoutMs = 500_000.0
 
 main ∷ Effect Unit
 main = do
-  noRuntime <- isJust <$> lookupEnv "NO_RUNTIME"
+  noRuntime <- isJust <$> lookupEnv Env.noRuntime
   if noRuntime then
     log "skip the test since there's no ctl-runtime"
   else do
-    helloWorldBrowserIndex <- lookupEnv "HELLO_WORLD_BROWSER_INDEX"
+    helloWorldBrowserIndex <- lookupEnv Env.helloWorldBrowserIndex
 
     case helloWorldBrowserIndex of
       Nothing -> throw "HELLO_WORLD_BROWSER_INDEX not set"
