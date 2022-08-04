@@ -9,7 +9,7 @@ Parameterized by a txid.
 
 ### Config Address Script Validator
 
-A validator which enforces that the datum is not changed.
+A validator which enforces that the datum is not changed, and the NFT is not taken.
 Ideally this should use read only inputs.
 
 ### Vault Authentication NFT Minting Policy
@@ -21,7 +21,7 @@ The policy enforces the following constraints:
 When minting:
 
 - The token is being minted to the vault Address
-- The vault it's being minted to parses
+- The datum of the vault it's being minted to parses
 - The vault's owner signed the transaction
 - The vault's count is 0
 - Exactly one token is minted
@@ -45,7 +45,7 @@ When the increment redeemer is called:
 - The owner must not be changed
 - The NFT stays with the vault
 
-When the redeem redeemer is called:
+When the redeem redeemer is called:Closing a vault only needs to enforce that the NFT is burned.
 
 - The NFT must be burned
 
@@ -55,7 +55,10 @@ When the redeem redeemer is called:
 2) Parameterize config NFT with that txid and mint the config NFT.
 3) Compute the vault address with the config NFT and Address
 4) Compute the vault Authentication currency symbol with the vault address
-5) Create the config utxo. The value includes the config NFT the address is the config address and the datum is the vault Authentication currency symbol.
+5) Create the config utxo:
+	- The address is the config address
+	- The value includes the config NFT
+	- The datum is the vault Authentication currency symbol.
 
 ## Protocol actions
 
@@ -66,7 +69,7 @@ Once the protocol is initialized several actions should be possible.
 A vault opening Tx must
 - Have an output at the vault address which must
 	- have a datum where:
-		- the owner signed the Tx
+		- the owner is a signatory of the Tx
 		- the counter is 0
 	- Include an authentication NFT in its value.
 - The authentication NFT must be minted in the same TX.
@@ -80,5 +83,5 @@ A vault incrementing Tx must:
 
 ### Close a vault
 
-Closing a vault only needs to enforce that the NFT is burned.
+When closing a vault the NFT must be burned.
 
