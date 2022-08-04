@@ -2,6 +2,7 @@ module HelloWorld.Api
   (initialize
   ,increment
   ,redeem
+  ,query
   ,sendDatumToScript
   ,setDatumAtScript
   ,redeemFromScript
@@ -28,9 +29,10 @@ import Contract.Scripts (Validator, ValidatorHash, applyArgsM,validatorHash)
 import Contract.Transaction ( TransactionInput)
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
-import Contract.Utxos(getUtxo)
+import Contract.Utxos(getUtxo, getWalletBalance)
 import Contract.Value as Value
 import Plutus.Types.Transaction(TransactionOutput(TransactionOutput))
+import Plutus.Types.Value (Value)
 import ToData(class ToData,toData)
 import Types.PlutusData (PlutusData(Constr,Integer))
 import Data.Map(keys)
@@ -57,6 +59,13 @@ redeem param lastOutput = do
   validator <- helloScript param
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
   redeemFromScript vhash validator lastOutput
+
+query :: TransactionInput -> Contract () (Int /\ Value)
+query lastOutput = do
+  datum <- datumLookup lastOutput
+  balance <- getWalletBalance
+    >>= liftContractM "Get wallet balance failed"
+  pure $ datum /\ balance
 
 waitTime :: Minutes
 waitTime = Minutes 5.0

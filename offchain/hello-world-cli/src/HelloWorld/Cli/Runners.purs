@@ -11,7 +11,6 @@ import Contract.Monad
   , liftContractAffM
   , liftContractM
   )
-import Contract.Utxos(getWalletBalance)
 import Contract.Scripts (validatorHash)
 
 -- Node
@@ -47,7 +46,7 @@ import HelloWorld.Api
   ,initialize
   ,increment
   ,redeem
-  ,datumLookup
+  ,query
   )
 import Util(getTxScanUrl)
 import HelloWorld.Cli.Types
@@ -115,11 +114,7 @@ runCmd (Options {conf,statePath,command}) = do
       clearState statePath
     Query -> do
       (State state) <- readState statePath
-      (datum /\ bal) <- runContract cfg $ do
-        datum <- datumLookup state.lastOutput
-        bal <- getWalletBalance
-          >>= liftContractM "Get wallet balance failed"
-        pure $ datum /\ bal
+      (datum /\ bal) <- runContract cfg $ query state.lastOutput
       log $ "Contract param:" <> show state.param
       log $ "Current datum:" <> show datum
       let TransactionInput out = state.lastOutput
