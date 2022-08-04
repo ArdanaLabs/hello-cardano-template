@@ -108,8 +108,8 @@
 
       ctlNodeModules = "${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}";
 
-      # ideally we would just append the CTL overlay to the haskell-nix pkgs
-      # we already have at `config.haskell-nix.pkgs`, but out haskell-nix
+      # Ideally we would just append the CTL overlay to the haskell-nix pkgs
+      # we already have at `config.haskell-nix.pkgs`, but our haskell-nix
       # instances seem to be incompatible. So we just use CTLs haskell-nix here.
       ctl-pkgs = import self.inputs.nixpkgs {
         inherit system;
