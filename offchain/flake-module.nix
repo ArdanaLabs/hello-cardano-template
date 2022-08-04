@@ -43,10 +43,11 @@
             bigints
             cardano-transaction-lib
             hello-world-cbor
+            node-child-process
+            node-fs-aff
+            node-process
             ordered-collections
             spec
-            node-process
-            node-child-process
           ];
         ps =
           purs-nix.purs
