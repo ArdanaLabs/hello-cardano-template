@@ -18,7 +18,7 @@ dist-newstyle
 # they work every single time and do not depend on the environment where they
 # are ran, or require the user to install any additional dependencies.
 bin
-ci
+/ci
 
 # Editor Settings and more should not be added as files to root of the repo,
 # outside of Nix. Using Nix, you can provide a custom vscodium/vscode or other
