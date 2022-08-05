@@ -5,12 +5,16 @@ import Prelude
 import Contract.Test.E2E (RunningExample, TestOptions(..), WalletExt, WalletPassword, namiSign, withBrowser, withExample)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap, wrap)
+import Data.String (trim)
 import Effect (Effect)
 import Effect.Aff (Aff, error, throwError)
 import Effect.Class (liftEffect)
 import Foreign (Foreign, unsafeFromForeign)
 import HelloWorld.Test.E2E.Env as Env
 import Mote (test)
+import Node.Buffer as Buffer
+import Node.ChildProcess (defaultExecSyncOptions, execSync)
+import Node.Encoding (Encoding(UTF8))
 import Node.Express.App (listenHttp, use)
 import Node.Express.Middleware.Static (static)
 import Node.Express.Types (Port)
@@ -94,14 +98,51 @@ startStaticServer directory =
 closeStaticServer :: Server -> Aff Unit
 closeStaticServer server = liftEffect $ close server (pure unit)
 
+mkTempDir :: Effect String
+mkTempDir = do
+  buf <- execSync "mktemp --directory" defaultExecSyncOptions
+  trim <$> Buffer.toString UTF8 buf
+
+apiKey :: String
+apiKey = "r8m9YXmqCkFWDDZ2540IJaJwr1JBxqXB"
+
+paymentAddress :: String
+paymentAddress = "addr_test1qzc62f70pn5l9aytwdwpnzfn0tyc9jxlar07nr4332vla7ms347sjjelw3e22se5lrnw968mnyvz5ma5hshl8lywv45qnmkvkl"
+
+topup :: Effect Unit
+topup = do
+  let url = "https://faucet.cardano-testnet.iohkdev.io/send-money/" <> paymentAddress <> "?apiKey=" <> apiKey
+  void $ execSync ("curl -XPOST " <> url) defaultExecSyncOptions
+
+unzipNamiSettings :: String -> Effect Unit
+unzipNamiSettings dir = do
+  namiSettings <- lookupEnv "NAMI_SETTINGS"
+  case namiSettings of
+    Nothing -> throwError $ error "NAMI_SETTINGS not set"
+    Just settings ->
+      void $ execSync ("tar zxf " <> settings <> " --directory " <> dir) defaultExecSyncOptions
+
+unzipNamiExtension :: String -> Effect Unit
+unzipNamiExtension dir = do
+  namiExtension <- lookupEnv "NAMI_EXTENSION"
+  case namiExtension of
+    Nothing -> throwError $ error "NAMI_EXTENSION not set"
+    Just extension ->
+      void $ execSync ("unzip " <> extension <> " -d " <> dir <> "/nami > /dev/zero || echo \"ignore warnings\"") defaultExecSyncOptions
+
 mkTestOptions :: Effect TestOptions
 mkTestOptions = do
-  testData <- lookupEnv Env.testData
   chromeExe <- lookupEnv Env.chromeExe
 
-  case mkTestOptions' <$> testData <*> chromeExe of
+  testData <- mkTempDir
+  unzipNamiSettings testData
+  unzipNamiExtension testData
+
+  case mkTestOptions' <$> Just testData <*> chromeExe of
     Nothing -> throwError $ error "failed to setup test options"
-    Just testOptions -> pure testOptions
+    Just testOptions -> do
+      topup
+      pure testOptions
   where
   mkTestOptions' :: String -> String -> TestOptions
   mkTestOptions' testData chromeExe =
@@ -110,5 +151,5 @@ mkTestOptions = do
       , namiDir: testData <> "/nami"
       , geroDir: testData <> "/gero"
       , chromeUserDataDir: testData <> "/test-data/chrome-user-data"
-      , noHeadless: false
+      , noHeadless: true
       }

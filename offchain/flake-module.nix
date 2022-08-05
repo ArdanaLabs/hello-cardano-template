@@ -97,8 +97,11 @@
                   aff
                   cardano-transaction-lib
                   express
+                  lists
                   mote
+                  node-child-process
                   node-process
+                  parallel
                   test-unit
                   toppokki
                 ];
@@ -197,16 +200,13 @@
         pkgs.writeShellApplication
           {
             name = scriptName;
-            runtimeInputs = [ self'.packages."offchain:hello-world-browser" pkgs.nodejs pkgs.chromium pkgs.unzip ];
+            runtimeInputs = [ self'.packages."offchain:hello-world-browser" pkgs.nodejs pkgs.chromium pkgs.unzip pkgs.mktemp ];
             text = ''
               export NODE_PATH=${ctlNodeModules}/node_modules
               export CHROME_EXE="${pkgs.chromium.outPath}/bin/chromium"
               export HELLO_WORLD_BROWSER_INDEX=${self'.packages."offchain:hello-world-browser"}
-
-              TEST_DATA="$(mktemp --directory)"
-              unzip ${namiExtension} -d "$TEST_DATA/nami" > /dev/zero || echo "ignore warnings" 
-              tar zxf ${namiSettings} --directory "$TEST_DATA"
-              export TEST_DATA
+              export NAMI_SETTINGS=${namiSettings}
+              export NAMI_EXTENSION=${namiExtension}
 
               node \
                 --preserve-symlinks \

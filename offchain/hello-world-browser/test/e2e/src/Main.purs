@@ -3,6 +3,7 @@ module HelloWorld.Test.E2E.Main where
 import Prelude
 
 import Contract.Test.E2E (RunningExample(..), TestOptions, WalletExt(..), delaySec, namiConfirmAccess)
+import Control.Parallel (parTraverse_)
 import Data.Maybe (Maybe(..), isJust)
 import Data.Newtype (wrap)
 import Data.String (Pattern(..), contains)
@@ -44,128 +45,139 @@ main = do
       Nothing -> throw "HELLO_WORLD_BROWSER_INDEX not set"
       Just index ->
         launchAff_ do
-          bracket (startStaticServer index) closeStaticServer $ \_ -> do
-            testOptions <- liftEffect mkTestOptions
-            Utils.interpret'
-              (SpecRunner.defaultConfig { timeout = pure $ wrap specRunnerTimeoutMs })
-              (testPlan testOptions)
+          bracket (startStaticServer index) closeStaticServer $ \_ ->
+            parTraverse_
+              ( \testPlan -> do
+                  testOptions <- liftEffect mkTestOptions
+                  Utils.interpret'
+                    (SpecRunner.defaultConfig { timeout = pure $ wrap specRunnerTimeoutMs })
+                    (testPlan testOptions)
+              )
+              [ testPlan_Initialize, testPlan_Increment, testPlan_Redeem ]
 
-testPlan :: TestOptions -> TestPlanM Unit
-testPlan testOptions = group "Nami wallet" do
-  group "When initialize button is clicked" do
-    runE2ETest "It shows loading dialog" testOptions NamiExt $ \(RunningExample { jQuery, main: page }) -> do
-      injectJQuery jQuery page
+testPlan_Initialize :: TestOptions -> TestPlanM Unit
+testPlan_Initialize testOptions = group "When initialize button is clicked" do
+  runE2ETest "It shows loading dialog" testOptions NamiExt $ \(RunningExample { jQuery, main: page }) -> do
+    injectJQuery jQuery page
 
-      clickButton "Initialize" page
-      content <- T.content page
-      Assert.assert "Initializing" (contains (Pattern "Initializing ...") content)
+    clickButton "Initialize" page
+    content <- T.content page
+    Assert.assert "Initializing" (contains (Pattern "Initializing ...") content)
 
-    runE2ETest "It locks ADA at contract address" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
-      injectJQuery jQuery page
+  runE2ETest "It locks ADA at contract address" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
+    injectJQuery jQuery page
 
-      clickButton "Initialize" page
+    clickButton "Initialize" page
 
-      namiConfirmAccess example
+    namiConfirmAccess example
 
-      delaySec threeSeconds
+    delaySec threeSeconds
 
-      namiSign' example
+    namiSign' example
 
-      void $ T.pageWaitForSelector (T.Selector "#current-value-header") { timeout: timeoutMs } page
-      currentValueHeaderContent <- readString <$> T.unsafeEvaluateStringFunction getCurrentValueHeader page
-      Assert.assert "Current value header" (contains (Pattern "Current Value") currentValueHeaderContent)
+    void $ T.pageWaitForSelector (T.Selector "#current-value-header") { timeout: timeoutMs } page
+    currentValueHeaderContent <- readString <$> T.unsafeEvaluateStringFunction getCurrentValueHeader page
+    Assert.assert "Current value header" (contains (Pattern "Current Value") currentValueHeaderContent)
 
-      void $ T.pageWaitForSelector (T.Selector "#current-value-body") { timeout: timeoutMs } page
-      currentValueBodyContent <- readString <$> T.unsafeEvaluateStringFunction getCurrentValueBody page
-      Assert.assert "Current value body" (contains (Pattern "3") currentValueBodyContent)
+    void $ T.pageWaitForSelector (T.Selector "#current-value-body") { timeout: timeoutMs } page
+    currentValueBodyContent <- readString <$> T.unsafeEvaluateStringFunction getCurrentValueBody page
+    Assert.assert "Current value body" (contains (Pattern "3") currentValueBodyContent)
 
-      void $ T.pageWaitForSelector (T.Selector "#funds-locked-header") { timeout: timeoutMs } page
-      fundsLockedHeaderContent <- readString <$> T.unsafeEvaluateStringFunction getFundsLockedHeader page
-      Assert.assert "Funds locked header" (contains (Pattern "Funds Locked") fundsLockedHeaderContent)
+    void $ T.pageWaitForSelector (T.Selector "#funds-locked-header") { timeout: timeoutMs } page
+    fundsLockedHeaderContent <- readString <$> T.unsafeEvaluateStringFunction getFundsLockedHeader page
+    Assert.assert "Funds locked header" (contains (Pattern "Funds Locked") fundsLockedHeaderContent)
 
-      void $ T.pageWaitForSelector (T.Selector "#funds-locked-body") { timeout: timeoutMs } page
-      fundsLockedBodyContent <- readString <$> T.unsafeEvaluateStringFunction getFundsLockedBody page
-      Assert.assert "Funds locked body" (contains (Pattern "10.0 ADA") fundsLockedBodyContent)
+    void $ T.pageWaitForSelector (T.Selector "#funds-locked-body") { timeout: timeoutMs } page
+    fundsLockedBodyContent <- readString <$> T.unsafeEvaluateStringFunction getFundsLockedBody page
+    Assert.assert "Funds locked body" (contains (Pattern "10.0 ADA") fundsLockedBodyContent)
 
-  group "When increment button is clicked" do
-    runE2ETest "It shows loading dialog" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
-      injectJQuery jQuery page
+testPlan_Increment :: TestOptions -> TestPlanM Unit
+testPlan_Increment testOptions = group "When increment button is clicked" do
+  runE2ETest "It shows loading dialog" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
+    injectJQuery jQuery page
 
-      clickButton "Initialize" page
+    clickButton "Initialize" page
 
-      namiConfirmAccess example
+    namiConfirmAccess example
 
-      delaySec threeSeconds
+    delaySec threeSeconds
 
-      namiSign' example
+    namiSign' example
 
-      void $ T.pageWaitForSelector (T.Selector "#increment") { timeout: timeoutMs } page
-      clickButton "+" page
+    void $ T.pageWaitForSelector (T.Selector "#increment") { timeout: timeoutMs } page
+    clickButton "+" page
 
-      content <- T.content page
-      Assert.assert "Incrementing" (contains (Pattern "Incrementing from 3 to 5 ...") content)
+    content <- T.content page
+    Assert.assert "Incrementing" (contains (Pattern "Incrementing from 3 to 5 ...") content)
 
-    runE2ETest "It increments the datum at script address by 2" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
-      injectJQuery jQuery page
+  runE2ETest "It increments the datum at script address by 2" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
+    injectJQuery jQuery page
 
-      clickButton "Initialize" page
+    clickButton "Initialize" page
 
-      namiConfirmAccess example
+    namiConfirmAccess example
 
-      delaySec threeSeconds
+    delaySec threeSeconds
 
-      namiSign' example
+    namiSign' example
 
-      void $ T.pageWaitForSelector (T.Selector "#increment") { timeout: timeoutMs } page
-      clickButton "+" page
+    void $ T.pageWaitForSelector (T.Selector "#increment") { timeout: timeoutMs } page
+    clickButton "+" page
 
-      namiSign' example
+    namiSign' example
 
-      void $ T.pageWaitForSelector (T.Selector "#current-value-body") { timeout: timeoutMs } page
-      currentValueBodyContent <- readString <$> T.unsafeEvaluateStringFunction getCurrentValueBody page
-      Assert.assert "Current value body" (contains (Pattern "5") currentValueBodyContent)
+    void $ T.pageWaitForSelector (T.Selector "#current-value-body") { timeout: timeoutMs } page
+    currentValueBodyContent <- readString <$> T.unsafeEvaluateStringFunction getCurrentValueBody page
+    Assert.assert "Current value body" (contains (Pattern "5") currentValueBodyContent)
 
-  group "When redeem button is clicked" do
-    runE2ETest "It shows loading dialogue" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
-      injectJQuery jQuery page
+testPlan_Redeem :: TestOptions -> TestPlanM Unit
+testPlan_Redeem testOptions = group "When redeem button is clicked" do
+  runE2ETest "It shows loading dialogue" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
+    injectJQuery jQuery page
 
-      clickButton "Initialize" page
+    clickButton "Initialize" page
 
-      namiConfirmAccess example
+    namiConfirmAccess example
 
-      delaySec threeSeconds
+    delaySec threeSeconds
 
-      namiSign' example
+    namiSign' example
 
-      void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: timeoutMs } page
-      clickButton "Redeem" page
+    void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: timeoutMs } page
+    clickButton "Redeem" page
 
-      content <- T.content page
-      Assert.assert "Redeeming" (contains (Pattern "Redeeming 10.0 ADA ...") content)
+    content <- T.content page
+    Assert.assert "Redeeming" (contains (Pattern "Redeeming 10.0 ADA ...") content)
 
-    runE2ETest "It goes to initial page" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
-      injectJQuery jQuery page
+  runE2ETest "It goes to initial page" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
+    injectJQuery jQuery page
 
-      clickButton "Initialize" page
+    clickButton "Initialize" page
 
-      namiConfirmAccess example
+    namiConfirmAccess example
 
-      delaySec threeSeconds
+    delaySec threeSeconds
 
-      namiSign' example
+    namiSign' example
 
-      void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: timeoutMs } page
-      clickButton "Redeem" page
+    void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: timeoutMs } page
+    clickButton "Redeem" page
 
-      namiSign' example
+    namiSign' example
 
-      void $ T.pageWaitForSelector (T.Selector "#lock") { timeout: timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#lock") { timeout: timeoutMs } page
 
-  where
-  getCurrentValueHeader = "[].map.call(document.querySelectorAll('#current-value-header'), el => el.textContent)"
-  getCurrentValueBody = "[].map.call(document.querySelectorAll('#current-value-body'), el => el.textContent)"
-  getFundsLockedHeader = "[].map.call(document.querySelectorAll('#funds-locked-header'), el => el.textContent)"
-  getFundsLockedBody = "[].map.call(document.querySelectorAll('#funds-locked-body'), el => el.textContent)"
+getCurrentValueHeader :: String
+getCurrentValueHeader = "[].map.call(document.querySelectorAll('#current-value-header'), el => el.textContent)"
 
-  readString :: Foreign -> String
-  readString = Foreign.unsafeFromForeign
+getCurrentValueBody :: String
+getCurrentValueBody = "[].map.call(document.querySelectorAll('#current-value-body'), el => el.textContent)"
+
+getFundsLockedHeader :: String
+getFundsLockedHeader = "[].map.call(document.querySelectorAll('#funds-locked-header'), el => el.textContent)"
+
+getFundsLockedBody :: String
+getFundsLockedBody = "[].map.call(document.querySelectorAll('#funds-locked-body'), el => el.textContent)"
+
+readString :: Foreign -> String
+readString = Foreign.unsafeFromForeign
