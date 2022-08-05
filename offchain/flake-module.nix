@@ -3,14 +3,10 @@
   perSystem = { config, self', inputs', system, ... }:
     let
       pkgs = inputs'.nixpkgs.legacyPackages;
+      npmlock2nix = pkgs.callPackages self.inputs.npmlock2nix { };
       purs-nix = config.ps.purs-nix;
       all-ps-pkgs = config.ps.pkgs;
       inherit (config) dusd-lib offchain-lib;
-
-      npmlock2nix = pkgs.callPackages self.inputs.npmlock2nix { };
-      ctlNodeModules =
-        toString
-        (npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; });
 
       # Ideally we would just append the CTL overlay to the haskell-nix pkgs
       # we already have at `config.haskell-nix.pkgs`, but our haskell-nix
@@ -66,9 +62,12 @@
         ctl = {
           nodeModules = mkOption {
             type = types.package;
-            default = ctlNodeModules;
+            default =
+              npmlock2nix.node_modules
+              { src = self.inputs.cardano-transaction-lib; };
           };
         };
+        # These are some utilities we will use often in offchain nix code.
         offchain-lib = {
           prefixOutputs = mkOption {
             type = types.functionTo (types.attrsOf types.unspecified);
@@ -91,7 +90,7 @@
                   purs-nix.purescript-language-server
                   nodePackages.purs-tidy
                 ]);
-                shellHook = "export NODE_PATH=${ctlNodeModules}/node_modules/";
+                shellHook = "export NODE_PATH=${config.ctl.nodeModules}/node_modules/";
               };
           };
         };
