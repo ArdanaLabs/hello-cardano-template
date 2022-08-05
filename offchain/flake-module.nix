@@ -193,9 +193,6 @@
         let
           testModule = hello-world-browser-e2e.ps.modules."HelloWorld.Test.E2E.Main".output { };
           scriptName = "hello-world-browser-tests";
-
-          namiSettings = "${self.inputs.cardano-transaction-lib}/test-data/nami_settings.tar.gz";
-          namiExtension = "${self.inputs.cardano-transaction-lib}/test-data/chrome-extensions/nami_3.2.5_1.crx";
         in
         pkgs.writeShellApplication
           {
@@ -205,8 +202,12 @@
               export NODE_PATH=${ctlNodeModules}/node_modules
               export CHROME_EXE="${pkgs.chromium.outPath}/bin/chromium"
               export HELLO_WORLD_BROWSER_INDEX=${self'.packages."offchain:hello-world-browser"}
-              export NAMI_SETTINGS=${namiSettings}
-              export NAMI_EXTENSION=${namiExtension}
+
+              export NAMI_EXTENSION="${self.inputs.cardano-transaction-lib}/test-data/chrome-extensions/nami_3.2.5_1.crx"
+
+              export NAMI_TEST_WALLET_1=${./hello-world-browser/test/e2e/testWallets/nami-test-wallet-1.tar.gz}
+              export NAMI_TEST_WALLET_2=${./hello-world-browser/test/e2e/testWallets/nami-test-wallet-2.tar.gz}
+              export NAMI_TEST_WALLET_3=${./hello-world-browser/test/e2e/testWallets/nami-test-wallet-3.tar.gz}
 
               node \
                 --preserve-symlinks \

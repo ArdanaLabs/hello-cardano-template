@@ -2,24 +2,17 @@ module HelloWorld.Test.E2E.Helpers where
 
 import Prelude
 
-import Contract.Test.E2E (RunningExample, TestOptions(..), WalletExt, WalletPassword, namiSign, withBrowser, withExample)
-import Data.Maybe (Maybe(..))
+import Contract.Test.E2E (RunningExample, TestOptions, WalletExt, WalletPassword, namiSign, withBrowser, withExample)
 import Data.Newtype (class Newtype, unwrap, wrap)
-import Data.String (trim)
-import Effect (Effect)
-import Effect.Aff (Aff, error, throwError)
+import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign (Foreign, unsafeFromForeign)
-import HelloWorld.Test.E2E.Env as Env
+import Foreign as Foreign
 import Mote (test)
-import Node.Buffer as Buffer
-import Node.ChildProcess (defaultExecSyncOptions, execSync)
-import Node.Encoding (Encoding(UTF8))
 import Node.Express.App (listenHttp, use)
 import Node.Express.Middleware.Static (static)
 import Node.Express.Types (Port)
 import Node.HTTP (close, Server)
-import Node.Process (lookupEnv)
 import TestM (TestPlanM)
 import Toppokki as T
 
@@ -98,58 +91,17 @@ startStaticServer directory =
 closeStaticServer :: Server -> Aff Unit
 closeStaticServer server = liftEffect $ close server (pure unit)
 
-mkTempDir :: Effect String
-mkTempDir = do
-  buf <- execSync "mktemp --directory" defaultExecSyncOptions
-  trim <$> Buffer.toString UTF8 buf
+getCurrentValueHeader :: String
+getCurrentValueHeader = "[].map.call(document.querySelectorAll('#current-value-header'), el => el.textContent)"
 
-apiKey :: String
-apiKey = "r8m9YXmqCkFWDDZ2540IJaJwr1JBxqXB"
+getCurrentValueBody :: String
+getCurrentValueBody = "[].map.call(document.querySelectorAll('#current-value-body'), el => el.textContent)"
 
-paymentAddress :: String
-paymentAddress = "addr_test1qzc62f70pn5l9aytwdwpnzfn0tyc9jxlar07nr4332vla7ms347sjjelw3e22se5lrnw968mnyvz5ma5hshl8lywv45qnmkvkl"
+getFundsLockedHeader :: String
+getFundsLockedHeader = "[].map.call(document.querySelectorAll('#funds-locked-header'), el => el.textContent)"
 
-topup :: Effect Unit
-topup = do
-  let url = "https://faucet.cardano-testnet.iohkdev.io/send-money/" <> paymentAddress <> "?apiKey=" <> apiKey
-  void $ execSync ("curl -XPOST " <> url) defaultExecSyncOptions
+getFundsLockedBody :: String
+getFundsLockedBody = "[].map.call(document.querySelectorAll('#funds-locked-body'), el => el.textContent)"
 
-unzipNamiSettings :: String -> Effect Unit
-unzipNamiSettings dir = do
-  namiSettings <- lookupEnv "NAMI_SETTINGS"
-  case namiSettings of
-    Nothing -> throwError $ error "NAMI_SETTINGS not set"
-    Just settings ->
-      void $ execSync ("tar zxf " <> settings <> " --directory " <> dir) defaultExecSyncOptions
-
-unzipNamiExtension :: String -> Effect Unit
-unzipNamiExtension dir = do
-  namiExtension <- lookupEnv "NAMI_EXTENSION"
-  case namiExtension of
-    Nothing -> throwError $ error "NAMI_EXTENSION not set"
-    Just extension ->
-      void $ execSync ("unzip " <> extension <> " -d " <> dir <> "/nami > /dev/zero || echo \"ignore warnings\"") defaultExecSyncOptions
-
-mkTestOptions :: Effect TestOptions
-mkTestOptions = do
-  chromeExe <- lookupEnv Env.chromeExe
-
-  testData <- mkTempDir
-  unzipNamiSettings testData
-  unzipNamiExtension testData
-
-  case mkTestOptions' <$> Just testData <*> chromeExe of
-    Nothing -> throwError $ error "failed to setup test options"
-    Just testOptions -> do
-      topup
-      pure testOptions
-  where
-  mkTestOptions' :: String -> String -> TestOptions
-  mkTestOptions' testData chromeExe =
-    TestOptions
-      { chromeExe: Just chromeExe
-      , namiDir: testData <> "/nami"
-      , geroDir: testData <> "/gero"
-      , chromeUserDataDir: testData <> "/test-data/chrome-user-data"
-      , noHeadless: true
-      }
+readString :: Foreign -> String
+readString = Foreign.unsafeFromForeign

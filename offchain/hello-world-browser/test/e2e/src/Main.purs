@@ -12,10 +12,9 @@ import Effect.Aff (bracket, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Effect.Exception (throw)
-import Foreign (Foreign)
-import Foreign as Foreign
 import HelloWorld.Test.E2E.Env as Env
-import HelloWorld.Test.E2E.Helpers (clickButton, closeStaticServer, injectJQuery, mkTestOptions, namiSign', runE2ETest, startStaticServer)
+import HelloWorld.Test.E2E.Helpers (clickButton, closeStaticServer, getCurrentValueBody, getCurrentValueHeader, getFundsLockedBody, getFundsLockedHeader, injectJQuery, namiSign', readString, runE2ETest, startStaticServer)
+import HelloWorld.Test.E2E.TestWallet (mkTestOptions, testWallet1, testWallet2, testWallet3)
 import Mote (group)
 import Node.Process (lookupEnv)
 import Test.Spec.Runner as SpecRunner
@@ -45,15 +44,18 @@ main = do
       Nothing -> throw "HELLO_WORLD_BROWSER_INDEX not set"
       Just index ->
         launchAff_ do
-          bracket (startStaticServer index) closeStaticServer $ \_ ->
+          bracket (startStaticServer index) closeStaticServer $ \_ -> do
+            testOptions1 <- liftEffect $ testWallet1 >>= mkTestOptions
+            testOptions2 <- liftEffect $ testWallet2 >>= mkTestOptions
+            testOptions3 <- liftEffect $ testWallet3 >>= mkTestOptions
+
             parTraverse_
-              ( \testPlan -> do
-                  testOptions <- liftEffect mkTestOptions
+              ( \testPlanM -> do
                   Utils.interpret'
                     (SpecRunner.defaultConfig { timeout = pure $ wrap specRunnerTimeoutMs })
-                    (testPlan testOptions)
+                    testPlanM
               )
-              [ testPlan_Initialize, testPlan_Increment, testPlan_Redeem ]
+              [ testPlan_Initialize testOptions1, testPlan_Increment testOptions2, testPlan_Redeem testOptions3 ]
 
 testPlan_Initialize :: TestOptions -> TestPlanM Unit
 testPlan_Initialize testOptions = group "When initialize button is clicked" do
@@ -167,17 +169,3 @@ testPlan_Redeem testOptions = group "When redeem button is clicked" do
 
     void $ T.pageWaitForSelector (T.Selector "#lock") { timeout: timeoutMs } page
 
-getCurrentValueHeader :: String
-getCurrentValueHeader = "[].map.call(document.querySelectorAll('#current-value-header'), el => el.textContent)"
-
-getCurrentValueBody :: String
-getCurrentValueBody = "[].map.call(document.querySelectorAll('#current-value-body'), el => el.textContent)"
-
-getFundsLockedHeader :: String
-getFundsLockedHeader = "[].map.call(document.querySelectorAll('#funds-locked-header'), el => el.textContent)"
-
-getFundsLockedBody :: String
-getFundsLockedBody = "[].map.call(document.querySelectorAll('#funds-locked-body'), el => el.textContent)"
-
-readString :: Foreign -> String
-readString = Foreign.unsafeFromForeign
