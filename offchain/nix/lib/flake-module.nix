@@ -3,6 +3,7 @@
     let
       pkgs = inputs'.nixpkgs.legacyPackages;
       dusd-lib = config.dusd-lib;
+      purs-nix = config.ps.purs-nix;
       npmlock2nix = pkgs.callPackages self.inputs.npmlock2nix { };
     in
     {
