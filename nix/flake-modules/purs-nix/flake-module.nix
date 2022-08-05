@@ -16,17 +16,17 @@ in
         pkgs = mkOption {
           type = types.uniq (types.attrsOf types.unspecified);
           default = let
-            f = self:
+            f = self'':
               import ./ps-pkgs-ctl.nix {
-                ps-pkgs = config.ps.purs-nix.ps-pkgs // self;
+                ps-pkgs = config.ps.purs-nix.ps-pkgs // self'';
                 ctl-rev = self.inputs.cardano-transaction-lib.rev;
               };
             ps-pkgs-ctl =
               lib.fix
-                (self:
+                (self'':
                   builtins.mapAttrs
                   (n: v: config.ps.purs-nix.build (v // { name = n; }))
-                  (f self)
+                  (f self'')
                 );
             all-ps-pkgs = config.ps.purs-nix.ps-pkgs // ps-pkgs-ctl;
           in

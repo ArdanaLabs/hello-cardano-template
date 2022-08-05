@@ -29,7 +29,7 @@
               srcs = [ ./. ];
             };
         package =
-          purs-nix.build
+          (purs-nix.build
             {
               name = "hello-world-api";
               src.path = ./.;
@@ -37,10 +37,9 @@
                 inherit (hello-world-api) dependencies;
                 version = "0.0.1";
               };
-              passthru = {
-                inherit (hello-world-api) ps;
-              };
-            };
+            }
+          )
+          // { passthru = { inherit (hello-world-api) ps; }; };
       };
 
       hello-world-api-tests =
