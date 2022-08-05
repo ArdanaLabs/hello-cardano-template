@@ -47,7 +47,8 @@
           { ctl-runtime = ctl-pkgs.launchCtlRuntime config; }
           // offchain-lib.prefixOutputs {
             "docs:serve" =
-              dusd-lib.makeServeApp "${self'.packages."offchain:docs"}/generated-docs/html/";
+              dusd-lib.makeServeApp
+              "${self'.packages."offchain:docs"}/generated-docs/html/";
           };
         packages =
           offchain-lib.prefixOutputs {
@@ -60,12 +61,6 @@
                   ${self'.packages."offchain:hello-world-api".passthru.ps.command { srcs = [ ./hello-world-api/src ];} }/bin/purs-nix docs
                 '';
           };
-        checks = {
-          ctl-runtime-modules-test = inputs'.nixpkgs.legacyPackages.callPackage ./nixos/tests/ctl-runtime-modules.nix {
-            inherit (self.inputs) cardano-node cardano-ogmios mlabs-ogmios;
-            inherit (self.nixosModules) ctl-server ogmios-datum-cache;
-          };
-        };
       };
       options = with lib; {
         ctl = {
