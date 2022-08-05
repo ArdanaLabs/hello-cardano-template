@@ -44,7 +44,7 @@
           // offchain-lib.prefixOutputs {
             "docs:serve" =
               dusd-lib.makeServeApp
-              "${self'.packages."offchain:docs"}/generated-docs/html/";
+                "${self'.packages."offchain:docs"}/generated-docs/html/";
           };
         packages =
           offchain-lib.prefixOutputs {
@@ -64,7 +64,7 @@
             type = types.package;
             default =
               npmlock2nix.node_modules
-              { src = self.inputs.cardano-transaction-lib; };
+                { src = self.inputs.cardano-transaction-lib; };
           };
         };
         # These are some utilities we will use often in offchain nix code.

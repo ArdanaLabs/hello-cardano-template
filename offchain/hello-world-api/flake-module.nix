@@ -78,7 +78,7 @@
         offchain-lib.prefixOutputs
           {
             hello-world-api =
-              offchain-lib.makeProjectShell hello-world-api {};
+              offchain-lib.makeProjectShell hello-world-api { };
           };
       checks.run-hello-world-api-tests =
         let test = hello-world-api-tests; in

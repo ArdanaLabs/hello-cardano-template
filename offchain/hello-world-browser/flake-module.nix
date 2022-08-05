@@ -114,9 +114,9 @@
         offchain-lib.prefixOutputs
           {
             hello-world-browser =
-              offchain-lib.makeProjectShell hello-world-browser {};
+              offchain-lib.makeProjectShell hello-world-browser { };
             "hello-world-browser:e2e" =
-              offchain-lib.makeProjectShell hello-world-browser {};
+              offchain-lib.makeProjectShell hello-world-browser { };
           };
       checks.run-hello-world-browser-tests =
         let test = hello-world-browser-tests; in
