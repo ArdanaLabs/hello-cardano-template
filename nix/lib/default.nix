@@ -13,13 +13,6 @@
   };
   # function to make a flake app
   mkApp = program: { type = "app"; inherit program; };
-  # function  to prefix the names of an attrset with a string
-  # it will prefix like `${prefix}:${attrName}`.
-  prefixAttrNames = prefix: attrs:
-    with realPkgs.lib;
-    mapAttrs'
-      (n: v: nameValuePair "${prefix}:${n}" v)
-      attrs;
   # creates a flake application that when ran will serve
   # the passed path over HTTP
   makeServeApp = pathToServe:

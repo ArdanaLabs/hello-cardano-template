@@ -3,7 +3,6 @@
   perSystem = { config, self', inputs', system, ... }:
     let
       pkgs = inputs'.nixpkgs.legacyPackages;
-      npmlock2nix = pkgs.callPackages self.inputs.npmlock2nix { };
       purs-nix = config.ps.purs-nix;
       all-ps-pkgs = config.ps.pkgs;
       inherit (config) dusd-lib offchain-lib;
@@ -38,62 +37,21 @@
           };
     in
     {
-      config = {
-        apps =
-          { ctl-runtime = ctl-pkgs.launchCtlRuntime config; }
-          // offchain-lib.prefixOutputs {
-            "docs:serve" =
-              dusd-lib.makeServeApp
-                "${self'.packages."offchain:docs"}/generated-docs/html/";
-          };
-        packages =
-          offchain-lib.prefixOutputs {
-            inherit hello-world-cbor;
-            docs =
-              pkgs.runCommand "offchain-docs" { }
-                ''
-                  mkdir $out && cd $out
-                  # it may make sense to eventually add cli and browser to the srcs, but we need to not define Main twice
-                  ${self'.packages."offchain:hello-world-api".passthru.ps.command { srcs = [ ./hello-world-api/src ];} }/bin/purs-nix docs
-                '';
-          };
+      apps = {
+        ctl-runtime = ctl-pkgs.launchCtlRuntime ctlRuntimeConfig;
+        "offchain:docs:serve" =
+          dusd-lib.makeServeApp
+            "${self'.packages."offchain:docs"}/generated-docs/html/";
       };
-      options = with lib; {
-        ctl = {
-          nodeModules = mkOption {
-            type = types.package;
-            default =
-              npmlock2nix.node_modules
-                { src = self.inputs.cardano-transaction-lib; };
-          };
-        };
-        # These are some utilities we will use often in offchain nix code.
-        offchain-lib = {
-          prefixOutputs = mkOption {
-            type = types.functionTo (types.attrsOf types.unspecified);
-            default = dusd-lib.prefixAttrNames "offchain";
-          };
-          makeProjectShell = mkOption {
-            type = types.functionTo (types.functionTo types.package);
-            description = ''
-              Helper function to create a devshell without declaring common dependencies.
-              If you want to add more dependencies, use `.overrideAttrs (old: { ... })`.
+      packages = {
+        "offchain:hello-world-cbor" = hello-world-cbor;
+        "offchain:docs" =
+          pkgs.runCommand "offchain-docs" { }
+            ''
+              mkdir $out && cd $out
+              # it may make sense to eventually add cli and browser to the srcs, but we need to not define Main twice
+              ${self'.packages."offchain:hello-world-api".passthru.ps.command { srcs = [ ./hello-world-api/src ];} }/bin/purs-nix docs
             '';
-            default = project: cmdArgs:
-              pkgs.mkShell {
-                name = "hello-world";
-                buildInputs = (with pkgs; [
-                  nodejs-16_x
-                  (project.ps.command cmdArgs)
-                  purs-nix.ps-pkgs.psci-support
-                  purs-nix.purescript
-                  purs-nix.purescript-language-server
-                  nodePackages.purs-tidy
-                ]);
-                shellHook = "export NODE_PATH=${config.ctl.nodeModules}/node_modules/";
-              };
-          };
-        };
       };
     };
 }

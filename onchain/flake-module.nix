@@ -37,8 +37,6 @@
 
       haskellNixFlake =
         fixHaskellDotNix (project.flake { }) [ ./dUSD-onchain.cabal ];
-
-      prefixOutputs = dusd-lib.prefixAttrNames "onchain";
     in
     {
       apps = {
@@ -58,13 +56,12 @@
       };
       packages =
         haskellNixFlake.packages
-        // prefixOutputs {
-          onchain-scripts =
+        // {
+          "onchain:scripts" =
             pkgs.runCommand "onchain-scripts"
               { buildInputs = [ haskellNixFlake.packages."dUSD-onchain:exe:scripts" ]; }
               ''mkdir -p $out && scripts $out'';
-
-          hello-world-cbor-purs =
+          "onchain:hello-world-cbor-purs" =
             pkgs.runCommand "hello-world-cbor-purs" { } ''
               mkdir -p $out/src
               ${haskellNixFlake.packages."dUSD-onchain:exe:hello-world"}/bin/hello-world $out/src

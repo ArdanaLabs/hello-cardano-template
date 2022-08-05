@@ -63,27 +63,14 @@
           };
     in
     {
-      apps =
-        offchain-lib.prefixOutputs
-          {
-            "hello-world-api:test" =
-              dusd-lib.mkApp hello-world-api-tests;
-          };
-      packages =
-        offchain-lib.prefixOutputs
-          {
-            hello-world-api = hello-world-api.package;
-          };
-      devShells =
-        offchain-lib.prefixOutputs
-          {
-            hello-world-api =
-              offchain-lib.makeProjectShell hello-world-api { };
-          };
+      apps."offchain:hello-world-api:test" = dusd-lib.mkApp hello-world-api-tests;
       checks.run-hello-world-api-tests =
         let test = hello-world-api-tests; in
         pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
           "${test}/bin/${test.meta.mainProgram} | tee $out";
+      devShells."offchain:hello-world-api" =
+        offchain-lib.makeProjectShell hello-world-api { };
+      packages."offchain:hello-world-api" = hello-world-api.package;
     };
   flake = { };
 }

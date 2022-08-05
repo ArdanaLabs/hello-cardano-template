@@ -97,31 +97,23 @@
           };
     in
     {
-      apps =
-        offchain-lib.prefixOutputs
-          {
-            "hello-world-browser:serve" =
-              dusd-lib.makeServeApp self'.packages."offchain:hello-world-browser";
-            "hello-world-browser:test" =
-              dusd-lib.mkApp hello-world-browser-tests;
-          };
-      packages =
-        offchain-lib.prefixOutputs
-          {
-            hello-world-browser = hello-world-browser.package;
-          };
-      devShells =
-        offchain-lib.prefixOutputs
-          {
-            hello-world-browser =
-              offchain-lib.makeProjectShell hello-world-browser { };
-            "hello-world-browser:e2e" =
-              offchain-lib.makeProjectShell hello-world-browser { };
-          };
+      apps = {
+        "offchain:hello-world-browser:serve" =
+          dusd-lib.makeServeApp self'.packages."offchain:hello-world-browser";
+        "offchain:hello-world-browser:test" =
+          dusd-lib.mkApp hello-world-browser-tests;
+      };
       checks.run-hello-world-browser-tests =
         let test = hello-world-browser-tests; in
         pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
           "${test}/bin/${test.meta.mainProgram} | tee $out";
+      devShells = {
+        "offchain:hello-world-browser" =
+          offchain-lib.makeProjectShell hello-world-browser { };
+        "offchain:hello-world-browser:e2e" =
+          offchain-lib.makeProjectShell hello-world-browser-e2e { };
+      };
+      packages."offchain:hello-world-browser" = hello-world-browser.package;
     };
   flake = { };
 }
