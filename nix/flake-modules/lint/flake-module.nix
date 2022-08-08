@@ -12,14 +12,14 @@
           program = pkgs.writeShellApplication {
             name = "lint";
             runtimeInputs = [ pkgs.haskellPackages.hlint ];
-            text = "hlint";
+            text = "hlint ${self}";
           };
         };
       };
       checks = {
         # Checks that there are no linter errors
         lint =
-          pkgs.runCommandLocal "lint-check" { buildInputs = [ pkgs.haskellPackages.hlint ]; }
+          pkgs.runCommand "lint-check" { buildInputs = [ pkgs.haskellPackages.hlint ]; }
             ''
               set -euo pipefail
               hlint --report=$out ${self} 

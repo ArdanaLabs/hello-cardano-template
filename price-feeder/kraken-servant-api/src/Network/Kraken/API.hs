@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
@@ -17,6 +17,7 @@ import Data.Text qualified as T
 import Data.Time.Clock.POSIX (POSIXTime)
 import GHC.Generics
 import Servant.API
+import UnliftIO.Exception (impureThrow, stringException)
 
 findLast :: Foldable t => (a -> Bool) -> t a -> Maybe a
 findLast p =
@@ -103,10 +104,10 @@ instance FromJSON OHLCResponse where
   parseJSON = withObject "OHCLResponse" $ \objectMap -> do
     _last <- objectMap .: "last"
     let objectWithoutLast = Object $ delete "last" objectMap
-    maybe (parseFail "No pairs found") (return . (OHLCResponse _last)) $ parseMaybe parseJSON objectWithoutLast
+    maybe (parseFail "No pairs found") (pure . OHLCResponse _last) $ parseMaybe parseJSON objectWithoutLast
 
 instance ToJSON OHLCResponse where
   toJSON (OHLCResponse lastResult pairsResult) = object ["last" .= toJSON lastResult] `unionObjects` toJSON pairsResult
     where
       unionObjects (Object x) (Object y) = Object $ x `union` y
-      unionObjects _ _ = undefined
+      unionObjects _ _ = impureThrow . stringException $ "Not able to union non-objects"

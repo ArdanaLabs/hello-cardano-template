@@ -2,14 +2,17 @@ module Main where
 
 import System.Process (proc, readCreateProcess)
 import Test.Syd
+import Text.Read (readMaybe)
+import UnliftIO.Exception (throwString)
 
 main :: IO ()
 main = sydTest $ do
   spec
 
 execAdaPriceFetcher :: Int -> IO Double
-execAdaPriceFetcher minNumAdaPrices =
-  read <$> readCreateProcess (proc "ada-price-fetcher" ["-N", show minNumAdaPrices]) ""
+execAdaPriceFetcher minNumAdaPrices = do
+  maybeDouble <- readMaybe <$> readCreateProcess (proc "ada-price-fetcher" ["-N", show minNumAdaPrices]) ""
+  maybe (throwString "ada-price-fetcher didn't return a Double") pure maybeDouble
 
 spec :: Spec
 spec = do

@@ -120,9 +120,6 @@
   # See https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
   - {name: 'return', within: []}
 
-- modules:
-  - { name: Control.Lens, within: [] }
-
 - extensions:
   - { name: DeriveAnyClass, within: [] } # Dangerous
 
