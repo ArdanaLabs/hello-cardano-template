@@ -47,6 +47,7 @@
             node-fs-aff
             node-process
             ordered-collections
+            aff-retry
             spec
           ];
         ps =
@@ -204,7 +205,7 @@
               export HELLO_WORLD_BROWSER_INDEX=${self'.packages."offchain:hello-world-browser"}
 
               TEST_DATA="$(mktemp --directory)"
-              unzip ${namiExtension} -d "$TEST_DATA/nami" > /dev/zero || echo "ignore warnings" 
+              unzip ${namiExtension} -d "$TEST_DATA/nami" > /dev/zero || echo "ignore warnings"
               tar zxf ${namiSettings} --directory "$TEST_DATA"
               export TEST_DATA
 
