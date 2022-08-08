@@ -97,7 +97,6 @@
                   aff
                   cardano-transaction-lib
                   express
-                  lists
                   mote
                   node-child-process
                   node-process
@@ -205,9 +204,9 @@
 
               export NAMI_EXTENSION="${self.inputs.cardano-transaction-lib}/test-data/chrome-extensions/nami_3.2.5_1.crx"
 
-              export NAMI_TEST_WALLET_1=${./hello-world-browser/test/e2e/testWallets/nami-test-wallet-1.tar.gz}
-              export NAMI_TEST_WALLET_2=${./hello-world-browser/test/e2e/testWallets/nami-test-wallet-2.tar.gz}
-              export NAMI_TEST_WALLET_3=${./hello-world-browser/test/e2e/testWallets/nami-test-wallet-3.tar.gz}
+              export NAMI_TEST_WALLET_1=${./hello-world-browser/test/e2e/TestWallets/nami-test-wallet-1.tar.gz}
+              export NAMI_TEST_WALLET_2=${./hello-world-browser/test/e2e/TestWallets/nami-test-wallet-2.tar.gz}
+              export NAMI_TEST_WALLET_3=${./hello-world-browser/test/e2e/TestWallets/nami-test-wallet-3.tar.gz}
 
               node \
                 --preserve-symlinks \
