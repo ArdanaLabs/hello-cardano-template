@@ -59,6 +59,8 @@
                   node-process
                   test-unit
                   toppokki
+                  node-child-process
+                  parallel
                 ];
               srcs = [ ./test/e2e ];
             };
