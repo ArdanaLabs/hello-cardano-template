@@ -20,6 +20,7 @@
             node-process
             ordered-collections
             spec
+            aff-retry
             self'.packages."offchain:hello-world-cbor"
           ];
         ps =
