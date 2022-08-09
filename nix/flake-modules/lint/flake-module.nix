@@ -22,7 +22,8 @@
           pkgs.runCommand "lint-check" { buildInputs = [ pkgs.haskellPackages.hlint ]; }
             ''
               set -euo pipefail
-              hlint --report=$out ${self} 
+              cd ${self}  # need to do this, otherwise hlint wont pickup the correct yaml
+              hlint --report=$out .
             '';
       };
     };
