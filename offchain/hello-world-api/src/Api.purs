@@ -1,5 +1,9 @@
-module Api
-  (sendDatumToScript
+module HelloWorld.Api
+  (initialize
+  ,increment
+  ,redeem
+  ,query
+  ,sendDatumToScript
   ,setDatumAtScript
   ,redeemFromScript
   ,helloScript
@@ -25,15 +29,43 @@ import Contract.Scripts (Validator, ValidatorHash, applyArgsM,validatorHash)
 import Contract.Transaction ( TransactionInput)
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
-import Contract.Utxos(getUtxo)
+import Contract.Utxos(getUtxo, getWalletBalance)
 import Contract.Value as Value
 import Plutus.Types.Transaction(TransactionOutput(TransactionOutput))
+import Plutus.Types.Value (Value)
 import ToData(class ToData,toData)
 import Types.PlutusData (PlutusData(Constr,Integer))
 import Data.Map(keys)
 import Data.Set as Set
 import Data.Foldable(for_)
 import Data.List((..),List)
+
+initialize :: Int -> Int -> Contract () TransactionInput
+initialize param initialValue = do
+  validator <- helloScript param
+  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  sendDatumToScript initialValue vhash
+
+increment :: Int -> TransactionInput -> Contract () TransactionInput
+increment param lastOutput = do
+  validator <- helloScript param
+  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  oldDatum <- datumLookup lastOutput
+  let newDatum = oldDatum + param
+  setDatumAtScript newDatum vhash validator lastOutput
+
+redeem :: Int -> TransactionInput -> Contract () Unit
+redeem param lastOutput = do
+  validator <- helloScript param
+  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  redeemFromScript vhash validator lastOutput
+
+query :: TransactionInput -> Contract () (Int /\ Value)
+query lastOutput = do
+  datum <- datumLookup lastOutput
+  balance <- getWalletBalance
+    >>= liftContractM "Get wallet balance failed"
+  pure $ datum /\ balance
 
 waitTime :: Minutes
 waitTime = Minutes 5.0

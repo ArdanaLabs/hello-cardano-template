@@ -2,20 +2,20 @@ module HelloWorld.Test.E2E.Helpers where
 
 import Prelude
 
-import Contract.Test.E2E (RunningExample, TestOptions(..), WalletExt, WalletPassword, namiSign, withBrowser, withExample)
-import Data.Maybe (Maybe(..))
+import Contract.Test.E2E (Mode(..), RunningExample, TestOptions(..), WalletExt(..), delaySec, namiSign, withExample)
+import Data.Either (Either(..))
+import Data.Maybe (fromMaybe)
 import Data.Newtype (class Newtype, unwrap, wrap)
-import Effect (Effect)
-import Effect.Aff (Aff, error, throwError)
+import Effect.Aff (Aff, bracket, try)
 import Effect.Class (liftEffect)
 import Foreign (Foreign, unsafeFromForeign)
-import HelloWorld.Test.E2E.Env as Env
+import Foreign as Foreign
+import HelloWorld.Test.E2E.Constants as Constants
 import Mote (test)
 import Node.Express.App (listenHttp, use)
 import Node.Express.Middleware.Static (static)
-import Node.Express.Types (Port)
 import Node.HTTP (close, Server)
-import Node.Process (lookupEnv)
+import Node.Path (FilePath)
 import TestM (TestPlanM)
 import Toppokki as T
 
@@ -28,14 +28,8 @@ newtype Action = Action String
 
 derive instance Newtype Action _
 
-port :: Port
-port = 8080
-
-localhost :: String
-localhost = "http://127.0.0.1"
-
 helloWorldBrowserURL :: T.URL
-helloWorldBrowserURL = T.URL $ localhost <> ":" <> show port
+helloWorldBrowserURL = T.URL $ Constants.localhost <> ":" <> show Constants.port
 
 -- | Run an E2E test. Parameters are:
 -- |   String: Just a name for the logs
@@ -52,6 +46,41 @@ runE2ETest
   -> TestPlanM Unit
 runE2ETest example opts ext f = test example $ withBrowser opts ext $
   \browser -> withExample helloWorldBrowserURL browser $ void <<< f
+
+launchWithExtension :: WalletExt -> TestOptions -> Aff T.Browser
+launchWithExtension walletExt testOptions@(TestOptions { chromeExe, chromeUserDataDir, namiDir, geroDir, noHeadless }) = do
+  result <- try $ T.launch
+    { args:
+        [ "--disable-extensions-except=" <> extDir
+        , "--load-extension=" <> extDir
+        ] <> if mode == Headless then [ "--headless=chrome" ] else []
+    , headless: mode == Headless
+    , userDataDir: chromeUserDataDir
+    , executablePath: fromMaybe "" chromeExe
+    }
+  case result of
+    Left _ -> do
+      delaySec Constants.tenSeconds
+      launchWithExtension walletExt testOptions
+    Right browser -> pure browser
+  where
+  mode :: Mode
+  mode
+    | noHeadless = Visible
+    | otherwise = Headless
+
+  extDir :: FilePath
+  extDir = case walletExt of
+    GeroExt -> geroDir
+    NamiExt -> namiDir
+
+withBrowser
+  :: forall (a :: Type)
+   . TestOptions
+  -> WalletExt
+  -> (T.Browser -> Aff a)
+  -> Aff a
+withBrowser opts ext = bracket (launchWithExtension ext opts) T.close
 
 -- | Build a primitive jQuery expression like '$("button").click()' and
 -- | out of a selector and action and evaluate it in Toppokki
@@ -81,34 +110,27 @@ injectJQuery jQuery page = do
   unless alreadyInjected $ void $ T.unsafeEvaluateStringFunction jQuery
     page
 
-namiWalletPassword :: WalletPassword
-namiWalletPassword = wrap "ctlctlctl"
-
 namiSign' :: RunningExample -> Aff Unit
-namiSign' = namiSign namiWalletPassword
+namiSign' = namiSign Constants.namiWalletPassword
 
 startStaticServer :: String -> Aff Server
 startStaticServer directory =
-  liftEffect $ listenHttp (use $ static directory) port $ \_ -> pure unit
+  liftEffect $ listenHttp (use $ static directory) Constants.port $ \_ -> pure unit
 
 closeStaticServer :: Server -> Aff Unit
 closeStaticServer server = liftEffect $ close server (pure unit)
 
-mkTestOptions :: Effect TestOptions
-mkTestOptions = do
-  testData <- lookupEnv Env.testData
-  chromeExe <- lookupEnv Env.chromeExe
+getCurrentValueHeader :: String
+getCurrentValueHeader = "[].map.call(document.querySelectorAll('#current-value-header'), el => el.textContent)"
 
-  case mkTestOptions' <$> testData <*> chromeExe of
-    Nothing -> throwError $ error "failed to setup test options"
-    Just testOptions -> pure testOptions
-  where
-  mkTestOptions' :: String -> String -> TestOptions
-  mkTestOptions' testData chromeExe =
-    TestOptions
-      { chromeExe: Just chromeExe
-      , namiDir: testData <> "/nami"
-      , geroDir: testData <> "/gero"
-      , chromeUserDataDir: testData <> "/test-data/chrome-user-data"
-      , noHeadless: false
-      }
+getCurrentValueBody :: String
+getCurrentValueBody = "[].map.call(document.querySelectorAll('#current-value-body'), el => el.textContent)"
+
+getFundsLockedHeader :: String
+getFundsLockedHeader = "[].map.call(document.querySelectorAll('#funds-locked-header'), el => el.textContent)"
+
+getFundsLockedBody :: String
+getFundsLockedBody = "[].map.call(document.querySelectorAll('#funds-locked-body'), el => el.textContent)"
+
+readString :: Foreign -> String
+readString = Foreign.unsafeFromForeign
