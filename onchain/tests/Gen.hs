@@ -30,8 +30,8 @@ import Plutus.V1.Ledger.Api (
 import PlutusTx.IsData.Class (ToData (toBuiltinData))
 
 import Control.Monad (replicateM)
-import GHC.Real (Ratio((:%)))
 import Data.String (IsString (..))
+import GHC.Real (Ratio ((:%)))
 import Plutus.V1.Ledger.Value (AssetClass)
 import Plutus.V1.Ledger.Value qualified as Value
 
