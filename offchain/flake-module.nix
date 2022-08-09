@@ -98,7 +98,9 @@
                   cardano-transaction-lib
                   express
                   mote
+                  node-child-process
                   node-process
+                  parallel
                   test-unit
                   toppokki
                 ];
@@ -196,23 +198,21 @@
         let
           testModule = hello-world-browser-e2e.ps.modules."HelloWorld.Test.E2E.Main".output { };
           scriptName = "hello-world-browser-tests";
-
-          namiSettings = "${self.inputs.cardano-transaction-lib}/test-data/nami_settings.tar.gz";
-          namiExtension = "${self.inputs.cardano-transaction-lib}/test-data/chrome-extensions/nami_3.2.5_1.crx";
         in
         pkgs.writeShellApplication
           {
             name = scriptName;
-            runtimeInputs = [ self'.packages."offchain:hello-world-browser" pkgs.nodejs pkgs.chromium pkgs.unzip ];
+            runtimeInputs = [ self'.packages."offchain:hello-world-browser" pkgs.nodejs pkgs.chromium pkgs.unzip pkgs.mktemp ];
             text = ''
               export NODE_PATH=${ctlNodeModules}/node_modules
               export CHROME_EXE="${pkgs.chromium.outPath}/bin/chromium"
               export HELLO_WORLD_BROWSER_INDEX=${self'.packages."offchain:hello-world-browser"}
 
-              TEST_DATA="$(mktemp --directory)"
-              unzip ${namiExtension} -d "$TEST_DATA/nami" > /dev/zero || echo "ignore warnings" 
-              tar zxf ${namiSettings} --directory "$TEST_DATA"
-              export TEST_DATA
+              export NAMI_EXTENSION="${self.inputs.cardano-transaction-lib}/test-data/chrome-extensions/nami_3.2.5_1.crx"
+
+              export NAMI_TEST_WALLET_1=${./hello-world-browser/test/e2e/TestWallets/nami-test-wallet-1.tar.gz}
+              export NAMI_TEST_WALLET_2=${./hello-world-browser/test/e2e/TestWallets/nami-test-wallet-2.tar.gz}
+              export NAMI_TEST_WALLET_3=${./hello-world-browser/test/e2e/TestWallets/nami-test-wallet-3.tar.gz}
 
               node \
                 --preserve-symlinks \
