@@ -48,9 +48,15 @@
         pkgs.writeShellApplication
           {
             name = scriptName;
-            runtimeInputs = [ pkgs.nodejs ];
+            runtimeInputs = [
+              pkgs.nodejs
+              self.inputs.cardano-transaction-lib.packages.${pkgs.system}."ctl-server:exe:ctl-server"
+              self.inputs.cardano-transaction-lib.inputs.plutip.packages.${pkgs.system}."plutip:exe:plutip-server"
+              pkgs.postgresql
+              self.inputs.mlabs-ogmios.defaultPackage.${pkgs.system}
+              self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system}
+            ];
             text = ''
-              export TEST_RESOURCES=${./fixtures}
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
               node \
                 --preserve-symlinks \
