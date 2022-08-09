@@ -4,7 +4,7 @@
     let
       pkgs = inputs'.nixpkgs.legacyPackages;
       purs-nix = config.ps.purs-nix;
-      all-ps-pkgs = config.ps.pkgs;
+      inherit (purs-nix) ps-pkgs;
       inherit (config) dusd-lib offchain-lib;
 
       hello-world-cli = {
@@ -12,7 +12,7 @@
           purs-nix.purs
             {
               dependencies =
-                with all-ps-pkgs;
+                with ps-pkgs;
                 [
                   prelude
                   optparse

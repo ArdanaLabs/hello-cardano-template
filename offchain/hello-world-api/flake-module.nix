@@ -3,18 +3,19 @@
   perSystem = { config, self', inputs', system, ... }:
     let
       pkgs = inputs'.nixpkgs.legacyPackages;
-      all-ps-pkgs = config.ps.pkgs;
       purs-nix = config.ps.purs-nix;
+      inherit (purs-nix) ps-pkgs;
+      inherit (config.ps) ctl-pkgs;
       inherit (config) dusd-lib offchain-lib;
 
       hello-world-api = {
         dependencies =
-          with all-ps-pkgs;
+          with ps-pkgs;
           [
-            aeson
+            ctl-pkgs.aeson
             aff
             bigints
-            cardano-transaction-lib
+            ctl-pkgs.cardano-transaction-lib
             node-child-process
             node-fs-aff
             node-process

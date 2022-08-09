@@ -4,7 +4,8 @@
     let
       pkgs = inputs'.nixpkgs.legacyPackages;
       purs-nix = config.ps.purs-nix;
-      all-ps-pkgs = config.ps.pkgs;
+      inherit (purs-nix) ps-pkgs;
+      inherit (config.ps) ctl-pkgs;
       inherit (config) dusd-lib offchain-lib;
 
       hello-world-browser = {
@@ -12,7 +13,7 @@
           purs-nix.purs
             {
               dependencies =
-                with all-ps-pkgs;
+                with ps-pkgs;
                 [
                   aff
                   bigints
@@ -20,7 +21,7 @@
                   halogen-store
                   safe-coerce
                   transformers
-                  cardano-transaction-lib
+                  ctl-pkgs.cardano-transaction-lib
                   self'.packages."offchain:hello-world-api"
                 ];
               dir = ./.;
@@ -50,15 +51,15 @@
           purs-nix.purs
             {
               dependencies =
-                with all-ps-pkgs;
+                with ps-pkgs;
                 [
                   aff
-                  cardano-transaction-lib
+                  ctl-pkgs.cardano-transaction-lib
                   express
                   mote
                   node-process
                   test-unit
-                  toppokki
+                  ctl-pkgs.toppokki
                   node-child-process
                   parallel
                 ];
