@@ -60,5 +60,7 @@ Thumbs.db
 # a file extension for tracking the state of cli transaction sequences
 *.clistate
 
+*node_modules
+
 # ignore logs
 *.log

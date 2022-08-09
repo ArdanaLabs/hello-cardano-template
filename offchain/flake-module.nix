@@ -83,7 +83,28 @@
                   cardano-transaction-lib
                   hello-world-api.package
                 ];
-              srcs = [ ./hello-world-browser ];
+              srcs = [ ./hello-world-browser/src ];
+            };
+      };
+
+      hello-world-browser-e2e = {
+        ps =
+          purs-nix.purs
+            {
+              dependencies =
+                with all-ps-pkgs;
+                [
+                  aff
+                  cardano-transaction-lib
+                  express
+                  mote
+                  node-child-process
+                  node-process
+                  parallel
+                  test-unit
+                  toppokki
+                ];
+              srcs = [ ./hello-world-browser/test/e2e ];
             };
       };
 
@@ -108,9 +129,16 @@
 
       ctlNodeModules = "${npmlock2nix.node_modules { src = self.inputs.cardano-transaction-lib; }}";
 
+      # Ideally we would just append the CTL overlay to the haskell-nix pkgs
+      # we already have at `config.haskell-nix.pkgs`, but our haskell-nix
+      # instances seem to be incompatible. So we just use CTLs haskell-nix here.
       ctl-pkgs = import self.inputs.nixpkgs {
         inherit system;
-        overlays = [ self.inputs.cardano-transaction-lib.overlay ];
+        overlays = with self.inputs.cardano-transaction-lib; [
+          inputs.haskell-nix.overlay
+          inputs.iohk-nix.overlays.crypto
+          overlays.runtime
+        ];
       };
 
       # use more recent slot to avoid long sync time
@@ -160,30 +188,37 @@
               ${scriptName}
             '';
           };
+      hello-world-browser-tests =
+        let
+          testModule = hello-world-browser-e2e.ps.modules."HelloWorld.Test.E2E.Main".output { };
+          scriptName = "hello-world-browser-tests";
+        in
+        pkgs.writeShellApplication
+          {
+            name = scriptName;
+            runtimeInputs = [ self'.packages."offchain:hello-world-browser" pkgs.nodejs pkgs.chromium pkgs.unzip pkgs.mktemp ];
+            text = ''
+              export NODE_PATH=${ctlNodeModules}/node_modules
+              export CHROME_EXE="${pkgs.chromium.outPath}/bin/chromium"
+              export HELLO_WORLD_BROWSER_INDEX=${self'.packages."offchain:hello-world-browser"}
+
+              export NAMI_EXTENSION="${self.inputs.cardano-transaction-lib}/test-data/chrome-extensions/nami_3.2.5_1.crx"
+
+              export NAMI_TEST_WALLET_1=${./hello-world-browser/test/e2e/TestWallets/nami-test-wallet-1.tar.gz}
+              export NAMI_TEST_WALLET_2=${./hello-world-browser/test/e2e/TestWallets/nami-test-wallet-2.tar.gz}
+              export NAMI_TEST_WALLET_3=${./hello-world-browser/test/e2e/TestWallets/nami-test-wallet-3.tar.gz}
+
+              node \
+                --preserve-symlinks \
+                --input-type=module \
+                -e 'import { main } from "${testModule}/HelloWorld.Test.E2E.Main/index.js"; main()' \
+                -- "${scriptName}" "''$@"
+            '';
+          };
       prefixOutputs = dusd-lib.prefixAttrNames "offchain";
     in
     {
       packages =
-        let
-          make-hello-world-browser-package = { indexJs, output }:
-            pkgs.runCommand "build-hello-world-browser" { }
-              # see buildPursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
-              # see bundlePursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L149
-              ''
-                mkdir $out && cd $out
-                export BROWSER_RUNTIME=1
-                cp -r ${output} output
-                cp ${indexJs} index.js
-                cp ${./hello-world-browser/index.html} index.html
-                cp ${./webpack.config.js} webpack.config.js
-                cp -r ${ctlNodeModules}/* .
-                export NODE_PATH="node_modules"
-                export PATH="bin:$PATH"
-                mkdir dist
-                cp ${./hello-world-browser/main.css} dist/main.css
-                webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
-              '';
-        in
         prefixOutputs {
           inherit hello-world-cbor;
           hello-world-api = hello-world-api.package;
@@ -195,11 +230,23 @@
                 ${hello-world-api.ps.command { srcs = [ ./hello-world-api/src ];} }/bin/purs-nix docs
               '';
           hello-world-browser =
-            make-hello-world-browser-package
-              { indexJs = ./hello-world-browser/index.js; output = hello-world-browser.ps.modules.Main.output { }; };
-          "hello-world-browser:key-wallet" =
-            make-hello-world-browser-package
-              { indexJs = ./hello-world-browser/test.js; output = hello-world-browser.ps.modules."Test.Main".output { }; };
+            pkgs.runCommand "build-hello-world-browser" { }
+              # see buildPursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
+              # see bundlePursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L149
+              ''
+                mkdir $out && cd $out
+                export BROWSER_RUNTIME=1
+                cp -r ${hello-world-browser.ps.modules.Main.output { }} output
+                cp ${./hello-world-browser/index.js} index.js
+                cp ${./hello-world-browser/index.html} index.html
+                cp ${./webpack.config.js} webpack.config.js
+                cp -r ${ctlNodeModules}/* .
+                export NODE_PATH="node_modules"
+                export PATH="bin:$PATH"
+                mkdir dist
+                cp ${./hello-world-browser/main.css} dist/main.css
+                webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
+              '';
           hello-world-cli =
             let js = "${hello-world-cli.ps.modules.Main.output {}}/Main/index.js"; in
             pkgs.writeScriptBin "hello-world-cli"
@@ -220,6 +267,10 @@
             "${test}/bin/${test.meta.mainProgram} | tee $out";
         run-hello-world-cli-tests =
           let test = hello-world-cli-tests; in
+          pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
+            "${test}/bin/${test.meta.mainProgram} | tee $out";
+        run-hello-world-browser-tests =
+          let test = hello-world-browser-tests; in
           pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
             "${test}/bin/${test.meta.mainProgram} | tee $out";
         ctl-runtime-modules-test = inputs'.nixpkgs.legacyPackages.callPackage ./nixos/tests/ctl-runtime-modules.nix {
@@ -252,6 +303,8 @@
               dusd-lib.mkApp hello-world-api-tests;
             "hello-world-cli:test" =
               dusd-lib.mkApp hello-world-cli-tests;
+            "hello-world-browser:test" =
+              dusd-lib.mkApp hello-world-browser-tests;
           }
         );
 
@@ -277,6 +330,7 @@
           hello-world-cli = makeProjectShell hello-world-cli { };
           hello-world-browser = makeProjectShell hello-world-browser { };
           hello-world-api = makeProjectShell hello-world-api { };
+          "hello-world-browser:e2e" = makeProjectShell hello-world-browser-e2e { };
         };
     };
   flake = {
