@@ -19,7 +19,7 @@
         '';
 
         cabalProjectFileName = "cabal.project";
-        compiler-nix-name = "ghc8107";
+        compiler-nix-name = "ghc923";
         sha256map = import ./sha256map;
 
         modules = commonPlutusModules ++ [{ }];
