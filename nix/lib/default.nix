@@ -20,8 +20,8 @@
       pkgs.writeShellApplication
         {
           name = "serve";
-          runtimeInputs = [ pkgs.nodePackages.http-server ];
-          text = "http-server -c-1 ${pathToServe}";
+          runtimeInputs = [ pkgs.simple-http-server ];
+          text = "simple-http-server --nocache -i -- ${pathToServe}";
         }
     );
 }
