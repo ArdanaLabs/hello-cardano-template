@@ -7,6 +7,7 @@ module Apropos.Plutus.SingletonValue (
 import Apropos
 import Apropos.Plutus.AssetClass (AssetClassProp)
 import Apropos.Plutus.Integer (IntegerProp)
+{- HLINT ignore Avoid restricted module -}
 import Control.Lens
 import Plutus.V1.Ledger.Value (AssetClass)
 
