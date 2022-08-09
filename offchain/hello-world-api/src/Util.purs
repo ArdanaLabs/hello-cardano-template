@@ -28,6 +28,7 @@ import Contract.Transaction
   , submitE
   )
 import Contract.TxConstraints (TxConstraints)
+import Control.Monad.Error.Class(throwError)
 import Data.Array(toUnfoldable,fromFoldable,catMaybes)
 import Data.Map (Map)
 import Data.Map as Map
@@ -45,7 +46,7 @@ import Data.Log.Formatter.Pretty(prettyFormatter)
 import Data.Log.Message(Message)
 import Effect.Aff (delay)
 import Effect.Aff.Retry(retrying,limitRetries,RetryStatus(RetryStatus))
-import Effect.Exception(Error,error)
+import Effect.Exception(error)
 import Node.Encoding(Encoding(UTF8))
 import Node.FS.Aff(appendTextFile)
 import Serialization.Address (NetworkId(TestnetId,MainnetId))
@@ -98,24 +99,23 @@ tryBuildBalanceSignAndSubmitTx
   :: Lookups.ScriptLookups PlutusData
   -> TxConstraints Unit Unit
   -> RetryStatus
-  -> Contract () (Either (Either Error (Array Aeson)) TransactionHash)
+  -> Contract () (Either (Array Aeson) TransactionHash)
 tryBuildBalanceSignAndSubmitTx lookups constraints (RetryStatus{iterNumber}) = do
   ubTx <- liftedE $ Lookups.mkUnbalancedTx lookups constraints
   balanceAndSignTxE ubTx >>= case _ of
     Right bsTx ->
       submitE bsTx >>= case _ of
-        Left err -> pure $ Left $ Right err
+        Left err -> pure $ Left err
         Right txid -> do
           when (iterNumber > 0) $ logWarn' "Successfull retry"
           pure $ Right txid
     Left err -> do
       when (iterNumber > 0) $ logError' "Balance failed on retry. This was caused by a UTxO being spent elsewhere. Retries won't work, probably because the UTxO was requested by txid."
-      pure $ Left $ Left err
+      throwError $ err
 
-check :: RetryStatus -> (Either (Either Error (Array Aeson)) TransactionHash) -> Contract () Boolean
+check :: RetryStatus -> (Either (Array Aeson) TransactionHash) -> Contract () Boolean
 check _ (Right _) = pure false
-check _ (Left (Left _)) = pure false
-check (RetryStatus{iterNumber}) (Left (Right errs)) = do
+check (RetryStatus{iterNumber}) (Left errs) = do
   logWarn' $ "Possible race condition. Retry number: " <> show iterNumber
   logWarn' $ "submit failed with:" <> show errs
   let badInputs  =
