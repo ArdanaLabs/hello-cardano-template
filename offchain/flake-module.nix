@@ -46,11 +46,11 @@
       packages = {
         "offchain:hello-world-cbor" = hello-world-cbor;
         "offchain:docs" =
-          pkgs.runCommand "offchain-docs" { }
+          pkgs.runCommand "offchain-all-docs" { }
             ''
-              mkdir $out && cd $out
-              # it may make sense to eventually add cli and browser to the srcs, but we need to not define Main twice
-              ${self'.packages."offchain:hello-world-api".passthru.ps.command { srcs = [ ./hello-world-api/src ];} }/bin/purs-nix docs
+              mkdir -p $out
+              # link hello-world-api docs
+              ln -sf ${self'.packages."offchain:hello-world-api:docs"} $out/hello-world-api
             '';
       };
     };

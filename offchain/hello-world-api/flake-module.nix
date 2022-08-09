@@ -29,7 +29,7 @@
               srcs = [ ./. ];
             };
         package =
-          (purs-nix.build
+          purs-nix.build
             {
               name = "hello-world-api";
               src.path = ./.;
@@ -37,9 +37,7 @@
                 inherit (hello-world-api) dependencies;
                 version = "0.0.1";
               };
-            }
-          )
-          // { passthru = { inherit (hello-world-api) ps; }; };
+            };
       };
 
       hello-world-api-tests =
@@ -70,7 +68,16 @@
           "${test}/bin/${test.meta.mainProgram} | tee $out";
       devShells."offchain:hello-world-api" =
         offchain-lib.makeProjectShell hello-world-api { };
-      packages."offchain:hello-world-api" = hello-world-api.package;
+      packages = {
+        "offchain:hello-world-api" = hello-world-api.package;
+        "offchain:hello-world-api:docs" =
+          pkgs.runCommand "hello-world-api-docs" { }
+            ''
+              mkdir $out && cd $out
+              # it may make sense to eventually add cli and browser to the srcs, but we need to not define Main twice
+              ${hello-world-api.ps.command { srcs = [ ./src ];} }/bin/purs-nix docs
+            '';
+      };
     };
   flake = { };
 }
