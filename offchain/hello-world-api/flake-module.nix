@@ -27,7 +27,7 @@
           purs-nix.purs
             {
               inherit (hello-world-api) dependencies;
-              srcs = [ ./. ];
+              dir = ./.;
             };
         package =
           purs-nix.build
@@ -42,13 +42,10 @@
       };
 
       hello-world-api-tests =
-        let
-          testModule = hello-world-api.ps.modules."Test.Main".output { };
-          scriptName = "hello-world-api-tests";
-        in
+        let testExe = hello-world-api.ps.test.run { }; in
         pkgs.writeShellApplication
           {
-            name = scriptName;
+            name = "hello-world-api-tests";
             runtimeInputs = [
               pkgs.nodejs
               self.inputs.cardano-transaction-lib.packages.${pkgs.system}."ctl-server:exe:ctl-server"
@@ -59,11 +56,7 @@
             ];
             text = ''
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
-              node \
-                --preserve-symlinks \
-                --input-type=module \
-                -e 'import { main } from "${testModule}/Test.Main/index.js"; main()' \
-                -- "${scriptName}" "''$@"
+              ${testExe}
             '';
           };
     in
@@ -82,7 +75,7 @@
             ''
               mkdir $out && cd $out
               # it may make sense to eventually add cli and browser to the srcs, but we need to not define Main twice
-              ${hello-world-api.ps.command { srcs = [ ./src ];} }/bin/purs-nix docs
+              ${hello-world-api.ps.command { }}/bin/purs-nix docs
             '';
       };
     };

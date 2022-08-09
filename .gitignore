@@ -56,6 +56,7 @@ Thumbs.db
 .psc-ide-port
 .purs-nix-run.js
 .purs-repl
+generated-docs
 
 # a file extension for tracking the state of cli transaction sequences
 *.clistate

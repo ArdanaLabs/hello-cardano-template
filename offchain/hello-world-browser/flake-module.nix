@@ -23,7 +23,7 @@
                   cardano-transaction-lib
                   self'.packages."offchain:hello-world-api"
                 ];
-              srcs = [ ./src ];
+              dir = ./.;
             };
         package =
           pkgs.runCommand "build-hello-world-browser" { }
@@ -62,7 +62,8 @@
                   node-child-process
                   parallel
                 ];
-              srcs = [ ./test/e2e ];
+              dir = ./.;
+              srcs = [ "test/e2e/src" ];
             };
       };
 
