@@ -87,9 +87,12 @@ buildBalanceSignAndSubmitTx lookups constraints
     mapLeft (map $ show >>> error)
     <$>
     retrying
-    (limitRetries 5)
+    (limitRetries maxAttempts)
     check
     (tryBuildBalanceSignAndSubmitTx lookups constraints)
+
+maxAttempts :: Int
+maxAttempts = 5
 
 tryBuildBalanceSignAndSubmitTx
   :: Lookups.ScriptLookups PlutusData
@@ -103,7 +106,7 @@ tryBuildBalanceSignAndSubmitTx lookups constraints (RetryStatus{iterNumber}) = d
       submitE bsTx >>= case _ of
         Left err -> pure $ Left $ Right err
         Right txid -> do
-          when (iterNumber > 0) $ logWarn' "Retry worked"
+          when (iterNumber > 0) $ logWarn' "Successfull retry"
           pure $ Right txid
     Left err -> do
       when (iterNumber > 0) $ logError' "Balance failed on retry. This was caused by a UTxO being spent elsewhere. Retries won't work, probably because the UTxO was requested by txid."
@@ -149,7 +152,10 @@ mapLeft :: forall a b c. (a -> b) -> Either a c -> Either b c
 mapLeft f = either (Left <<< f) Right
 
 waitForSpent :: Array TransactionInput -> Contract () (Array TransactionInput)
-waitForSpent inputs = fromFoldable <$> waitForSpent' (Minutes 5.0) (toUnfoldable inputs)
+waitForSpent inputs = fromFoldable <$> waitForSpent' maxWait (toUnfoldable inputs)
+
+maxWait :: Minutes
+maxWait = Minutes 5.0
 
 waitForSpent'
   :: forall a.
