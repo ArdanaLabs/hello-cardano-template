@@ -70,7 +70,7 @@
         let
           testModule =
             hello-world-browser-e2e.ps.modules."HelloWorld.Test.E2E.Main".output
-            { };
+              { };
           scriptName = "hello-world-browser-tests";
         in
         pkgs.writeShellApplication
