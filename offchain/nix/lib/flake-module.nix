@@ -4,18 +4,9 @@
       pkgs = inputs'.nixpkgs.legacyPackages;
       dusd-lib = config.dusd-lib;
       purs-nix = config.ps.purs-nix;
-      npmlock2nix = pkgs.callPackages self.inputs.npmlock2nix { };
     in
     {
       options = with lib; {
-        ctl = {
-          nodeModules = mkOption {
-            type = types.package;
-            default =
-              npmlock2nix.node_modules
-                { src = self.inputs.cardano-transaction-lib; };
-          };
-        };
         # These are some utilities we will use often in offchain nix code.
         offchain-lib = {
           makeProjectShell = mkOption {
