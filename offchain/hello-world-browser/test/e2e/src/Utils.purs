@@ -7,7 +7,7 @@ import Data.Foldable (sequence_)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (liftAff)
 import Mote (Plan, foldPlan, planT)
-import Test.Spec (Spec, describe, it, pending)
+import Test.Spec (Spec, describe, it, parallel, pending)
 import Test.Spec.Reporter (consoleReporter)
 import Test.Spec.Runner (runSpec')
 import Test.Spec.Runner as SpecRunner
@@ -19,7 +19,7 @@ import TestM (TestPlanM)
 interpret' :: SpecRunner.Config -> TestPlanM Unit -> Aff Unit
 interpret' config spif = do
   plan <- planT spif
-  runSpec' config [ consoleReporter ] $ go plan
+  runSpec' config [ consoleReporter ] $ parallel $ go plan
   where
   go :: Plan (Const Void) (Aff Unit) -> Spec Unit
   go =
