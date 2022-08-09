@@ -55,6 +55,7 @@ config =
 getAmount :: Value -> BigInt.BigInt
 getAmount = getLovelace <<< valueToCoin
 
+spec :: Spec Unit
 spec = do
   describe "HelloWorld.Api" $ do
     testInitialize
