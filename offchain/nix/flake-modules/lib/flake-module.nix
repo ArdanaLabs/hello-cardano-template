@@ -1,4 +1,11 @@
-{ self, lib, ... }: {
+{ self, lib, ... }:
+let
+  inherit (lib)
+    types
+    mkOption
+    ;
+in
+{
   perSystem = { config, self', inputs', ... }:
     let
       pkgs = inputs'.nixpkgs.legacyPackages;
@@ -6,7 +13,7 @@
       purs-nix = config.ps.purs-nix;
     in
     {
-      options = with lib; {
+      options = {
         # These are some utilities we will use often in offchain nix code.
         offchain-lib = {
           makeProjectShell = mkOption {

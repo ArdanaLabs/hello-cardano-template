@@ -1,11 +1,18 @@
-{ self, lib, ... }: {
+{ self, lib, ... }:
+let
+  inherit (lib)
+    types
+    mkOption
+    ;
+in
+{
   perSystem = { inputs', ... }:
   let
     pkgs = inputs'.nixpkgs.legacyPackages;
     npmlock2nix = pkgs.callPackages self.inputs.npmlock2nix { };
   in
   {
-    options = with lib; {
+    options = {
       ctl = {
         nodeModules = mkOption {
           type = types.package;
