@@ -2,7 +2,7 @@ module Main (main) where
 
 import Hello
 
-import Control.Monad (when)
+import Control.Monad (unless)
 import System.Directory (doesDirectoryExist)
 import System.Environment (getArgs)
 import System.Exit (die)
