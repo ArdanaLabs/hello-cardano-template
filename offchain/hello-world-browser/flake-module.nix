@@ -6,15 +6,7 @@
       purs-nix = config.ps.purs-nix;
       inherit (purs-nix) ps-pkgs;
       inherit (config.ps) ctl-pkgs;
-      inherit (config) dusd-lib offchain-lib;
-
-      dream2nix = self.inputs.dream2nix.lib2.init {
-        systems = [ system ];
-        config = {
-          overridesDirs = [ "${self.inputs.dream2nix}/overrides" ../../nix/dream2nix-overrides ];
-          projectRoot = ./.;
-        };
-      };
+      inherit (config) dusd-lib offchain-lib dream2nix;
 
       hello-world-browser = {
         ps =
@@ -115,15 +107,24 @@
         "offchain:hello-world-browser:test" =
           dusd-lib.mkApp hello-world-browser-tests;
       };
-      checks.run-hello-world-browser-tests =
-        let test = hello-world-browser-tests; in
-        pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
-          "${test}/bin/${test.meta.mainProgram} | tee $out";
-      checks.hello-world-browser-lighthouse-test = pkgs.callPackage ../../nixos/tests/hello-world-browser-lighthouse.nix {
-        lighthouse = (dream2nix.makeFlakeOutputs { source = self.inputs.lighthouse-src; }).packages.${system}.lighthouse;
-        hello-world-browser = self'.packages."offchain:hello-world-browser";
-        # TODO these values need to be increased once the improvements were done
-        categories = { performance = 0.1; accessibility = 0.1; seo = 0.1; best-practices = 0.1; };
+      checks = {
+        run-hello-world-browser-tests =
+          let test = hello-world-browser-tests; in
+          pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
+            "${test}/bin/${test.meta.mainProgram} | tee $out";
+        hello-world-browser-lighthouse-test =
+          pkgs.callPackage ../../nixos/tests/hello-world-browser-lighthouse.nix {
+            lighthouse =
+              (dream2nix.lib.makeOutputs { source = self.inputs.lighthouse-src; }).packages.lighthouse;
+            hello-world-browser = self'.packages."offchain:hello-world-browser";
+            # TODO these values need to be increased once the improvements were done
+            categories = {
+              performance = 0.1;
+              accessibility = 0.1;
+              seo = 0.1;
+              best-practices = 0.1;
+            };
+          };
       };
       devShells = {
         "offchain:hello-world-browser" =
