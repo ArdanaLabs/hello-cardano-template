@@ -118,7 +118,7 @@
         pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
           "${test}/bin/${test.meta.mainProgram} | tee $out";
       checks.hello-world-browser-lighthouse-test = pkgs.callPackage ../../nixos/tests/hello-world-browser-lighthouse.nix {
-        lighthouse = self'.packages."offchain:lighthouse";
+        lighthouse = (dream2nix.makeFlakeOutputs { source = self.inputs.lighthouse-src; }).packages.${system}.lighthouse;
         hello-world-browser = self'.packages."offchain:hello-world-browser";
         # TODO these values need to be increased once the improvements were done
         categories = { performance = 0.1; accessibility = 0.1; seo = 0.1; best-practices = 0.1; };
@@ -130,9 +130,6 @@
           offchain-lib.makeProjectShell hello-world-browser-e2e { };
       };
       packages."offchain:hello-world-browser" = hello-world-browser.package;
-      packages."offchain:lighthouse" = (dream2nix.makeFlakeOutputs {
-        source = self.inputs.lighthouse-src;
-      }).packages.${system}.lighthouse;
     };
   flake = { };
 }
