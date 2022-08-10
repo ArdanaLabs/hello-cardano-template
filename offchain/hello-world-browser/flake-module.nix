@@ -120,6 +120,7 @@
       checks.hello-world-browser-lighthouse-test = pkgs.callPackage ../../nixos/tests/hello-world-browser-lighthouse.nix {
         lighthouse = self'.packages."offchain:lighthouse";
         hello-world-browser = self'.packages."offchain:hello-world-browser";
+        # TODO these values need to be increased once the improvements were done
         categories = { performance = 0.1; accessibility = 0.1; seo = 0.1; best-practices = 0.1; };
       };
       devShells = {
