@@ -13,6 +13,7 @@ import Contract.Transaction ( TransactionInput)
 import Serialization.Address(NetworkId)
 import Data.Generic.Rep (class Generic)
 import Data.Show.Generic(genericShow)
+import Data.Maybe(Maybe)
 
 data Options = Options
   { command :: Command
@@ -46,14 +47,14 @@ data CliState
 data Conf
   = Conf
   { walletPath :: String
-  , stakingPath :: String
+  , stakingPath :: Maybe String
   , network :: NetworkId
   }
 
 type ParsedConf
   =
   { walletPath :: String
-  , stakingPath :: String
+  , stakingPath :: Maybe String
   , network :: String
   }
 

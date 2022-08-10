@@ -8,10 +8,7 @@ import Contract.Config(testnetConfig)
 import Contract.Monad
   ( ConfigParams
   , runContract
-  , liftContractAffM
-  , liftContractM
   )
-import Contract.Scripts (validatorHash)
 
 -- Node
 import Node.FS.Aff
@@ -42,8 +39,7 @@ import Wallet.Spec
 
 -- Local
 import HelloWorld.Api
-  (helloScript
-  ,initialize
+  (initialize
   ,increment
   ,redeem
   ,query
@@ -76,7 +72,7 @@ readConfig (ParsedOptions o)= do
     ,statePath: o.statePath
     ,conf:Conf conf
       {walletPath=dir<>conf.walletPath
-      ,stakingPath=dir<>conf.stakingPath
+      ,stakingPath=(dir<>_) <$> conf.stakingPath
       }
     }
 
@@ -165,5 +161,5 @@ toConfigParams
   (Conf{walletPath,stakingPath,network}) =
   let wallet = UseKeys
                 (PrivatePaymentKeyFile walletPath)
-                (Just $ PrivateStakeKeyFile stakingPath)
+                (PrivateStakeKeyFile <$> stakingPath)
   in testnetConfig{walletSpec=Just wallet,networkId=network}

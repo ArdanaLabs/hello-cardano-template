@@ -23,7 +23,6 @@ makeWallet dir name wallet = do
     { walletPath : walletName
     , stakingPath : stakeName
       -- TODO this needs to handle nothing case
-      -- CLI also nees to handle nothing case
     , network : "Testnet" -- TODO this is wrong
     }
   privatePaymentKeyToFile walletName $ keyWalletPrivatePaymentKey wallet
