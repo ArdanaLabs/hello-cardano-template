@@ -10,6 +10,7 @@ in
     let
       pkgs = inputs'.nixpkgs.legacyPackages;
       dusd-lib = config.dusd-lib;
+      ps-tools = inputs'.ps-tools.legacyPackages;
       purs-nix = config.ps.purs-nix;
     in
     {
@@ -28,10 +29,9 @@ in
                 buildInputs = (with pkgs; [
                   nodejs-16_x
                   (project.ps.command cmdArgs)
-                  purs-nix.ps-pkgs.psci-support
+                  ps-tools.for-0_14.purescript-language-server
+                  ps-tools.for-0_14.purs-tidy
                   purs-nix.purescript
-                  purs-nix.purescript-language-server
-                  nodePackages.purs-tidy
                 ]);
                 shellHook = "export NODE_PATH=${config.ctl.nodeModules}/node_modules/";
               };
