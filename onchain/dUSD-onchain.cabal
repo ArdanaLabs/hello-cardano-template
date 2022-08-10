@@ -135,8 +135,8 @@ test-suite tests
     Tests
 
   build-depends:
-    , apropos
-    , apropos-tx
+    --, apropos
+    --, apropos-tx
     , base
     , bytestring
     , containers

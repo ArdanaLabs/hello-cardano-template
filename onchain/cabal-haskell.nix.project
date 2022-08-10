@@ -1,14 +1,14 @@
 -- This is appended to `cabal.project` before calling haskell.nix
 
-source-repository-package
-  type: git
-  location: https://github.com/mlabs-haskell/apropos
-  tag: 0ab6bf806475b26b8b6e4743e843b3568711794f
-
-source-repository-package
-  type: git
-  location: https://github.com/mlabs-haskell/apropos-tx
-  tag: 7bdfeb36b9b0fe66045f93331a80511cc6e3632f
+--source-repository-package
+--  type: git
+--  location: https://github.com/mlabs-haskell/apropos
+--  tag: 0ab6bf806475b26b8b6e4743e843b3568711794f
+--
+--source-repository-package
+--  type: git
+--  location: https://github.com/mlabs-haskell/apropos-tx
+--  tag: 7bdfeb36b9b0fe66045f93331a80511cc6e3632f
 
 source-repository-package
   type: git
@@ -44,54 +44,6 @@ source-repository-package
 
 ---------- *replace here* ----------------------------------------------------------------------
 
--- You never, ever, want this.
-write-ghc-environment-files: never
-
--- Always build tests and benchmarks.
-tests: true
-benchmarks: true
-
--- The only sensible test display option
-test-show-details: direct
-
-allow-newer:
-           -- Pins to an old version of Template Haskell, unclear if/when it will be updated
-           size-based:template-haskell
-           , ouroboros-consensus-byron:formatting
-           , beam-core:aeson
-           , beam-sqlite:aeson
-           , beam-sqlite:dlist
-           , beam-migrate:aeson
-           , *:base
-
-constraints:
-  -- big breaking change here, inline-r doens't have an upper bound
-  singletons < 3.0
-  -- bizarre issue: in earlier versions they define their own 'GEq', in newer
-  -- ones they reuse the one from 'some', but there isn't e.g. a proper version
-  -- constraint from dependent-sum-template (which is the library we actually use).
-  , dependent-sum > 0.6.2.0
-  -- Newer Hashable have instances for Set, which breaks beam-migrate
-  -- which declares its own instances of Hashable Set
-  -- , hashable < 1.3.4.0
-  , template-haskell == 2.9.0.0
-
--- See the note on nix/pkgs/default.nix:agdaPackages for why this is here.
--- (NOTE this will change to ieee754 in newer versions of nixpkgs).
-extra-packages: ieee, filemanip
-
--- These packages appear in our dependency tree and are very slow to build.
--- Empirically, turning off optimization shaves off ~50% build time.
--- It also mildly improves recompilation avoidance.
--- For deve work we don't care about performance so much, so this is okay.
-package cardano-ledger-alonzo
-  optimization: False
-package ouroboros-consensus-shelley
-  optimization: False
-package ouroboros-consensus-cardano
-  optimization: False
-package cardano-api
-  optimization: False
 
 -- Copied from plutus-core
 source-repository-package
@@ -137,28 +89,28 @@ source-repository-package
   tag: 3825d3abf75f83f406c1f7161883c438dac7277d
 
 
-source-repository-package
-  type: git
-  location: https://github.com/Srid/autodocodec
-  tag: 42b42a7407f33c6c74fa4e8c84906aebfed28daf
-  subdir:
-    autodocodec
-    autodocodec-yaml
-    autodocodec-schema
-
-source-repository-package
-  type: git
-  location: https://github.com/Srid/validity
-  tag: f7982549b95d0ab727950dc876ca06b1862135ba
-  subdir:
-    validity
-    validity-aeson
-
-source-repository-package
-  type: git
-  location: https://github.com/Srid/sydtest
-  subdir:
-    sydtest
-    sydtest-discover
-    sydtest-hedgehog
-  tag: 9c6c7678f7aabe22e075aab810a6a2e304591d24
+-- source-repository-package
+--   type: git
+--   location: https://github.com/Srid/autodocodec
+--   tag: 42b42a7407f33c6c74fa4e8c84906aebfed28daf
+--   subdir:
+--     autodocodec
+--     autodocodec-yaml
+--     autodocodec-schema
+--
+-- source-repository-package
+--   type: git
+--   location: https://github.com/Srid/validity
+--   tag: f7982549b95d0ab727950dc876ca06b1862135ba
+--   subdir:
+--     validity
+--     validity-aeson
+--
+-- source-repository-package
+--   type: git
+--   location: https://github.com/Srid/sydtest
+--   subdir:
+--     sydtest
+--     sydtest-discover
+--     sydtest-hedgehog
+--   tag: 9c6c7678f7aabe22e075aab810a6a2e304591d24

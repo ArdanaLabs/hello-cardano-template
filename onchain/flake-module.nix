@@ -25,12 +25,12 @@
         modules = commonPlutusModules ++ [{ }];
         shell = commonPlutusShell // {
           additional = ps: with ps; [
-            apropos
-            apropos-tx
+            # apropos
+            # apropos-tx
             plutarch
             plutarch-extra
-            sydtest
-            sydtest-hedgehog
+            # sydtest
+            # sydtest-hedgehog
           ];
         };
       };
