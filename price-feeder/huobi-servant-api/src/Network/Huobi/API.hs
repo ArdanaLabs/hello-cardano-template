@@ -1,6 +1,5 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
@@ -38,7 +37,7 @@ instance FromJSON TickResponse where
         { fieldLabelModifier =
             let f "_channel" = "ch"
                 f "_timestamp" = "ts"
-                f other = (drop 1) other
+                f other = drop 1 other
              in f
         }
 instance ToJSON TickResponse where
@@ -48,7 +47,7 @@ instance ToJSON TickResponse where
         { fieldLabelModifier =
             let f "_channel" = "ch"
                 f "_timestamp" = "ts"
-                f other = (drop 1) other
+                f other = drop 1 other
              in f
         }
 

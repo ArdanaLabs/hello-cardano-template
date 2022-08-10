@@ -71,7 +71,7 @@ instance HasPermutationGenerator MultiValueProp MultiValue where
           { name = "Remove " ++ show p
           , match = Var p
           , contract = remove p
-          , morphism = return . sort . filter (not . satisfiesExpression props)
+          , morphism = pure . sort . filter (not . satisfiesExpression props)
           }
          | p <- enumerated
          , AnyElem props <- pure $ propsFor p

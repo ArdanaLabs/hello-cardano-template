@@ -40,12 +40,12 @@ instance HasPermutationGenerator IntegerProp Integer where
     , Source
         { sourceName = "Large"
         , covers = Var IsPositive :&&: Var IsLarge
-        , gen = fromIntegral <$> int (linear 11 maxBound)
+        , gen = toInteger <$> int (linear 11 maxBound)
         }
     , Source
         { sourceName = "Small"
         , covers = Var IsPositive :&&: Var IsSmall
-        , gen = fromIntegral <$> int (linear 1 10)
+        , gen = toInteger <$> int (linear 1 10)
         }
     ]
   generators =

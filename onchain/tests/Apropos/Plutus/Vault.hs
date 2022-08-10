@@ -9,6 +9,8 @@ import Apropos
 import Apropos.Plutus.AssetClass (AssetClassProp (..))
 import Apropos.Plutus.Integer (IntegerProp (..))
 import Apropos.Plutus.SingletonValue (SingletonValue, SingletonValueProp (..))
+
+{- HLINT ignore Avoid restricted module -}
 import Control.Lens (lens)
 import Plutus.V1.Ledger.Api (
   Datum (..),
