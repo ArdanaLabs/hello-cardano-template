@@ -10,9 +10,9 @@ in
     options = {
       dream2nix = {
         lib = mkOption {
-          # we don't use types.attrsOf here because it will throw
-          # an error related to `riseAndShine`, which is in dream2nix
-          # for compat purposes
+          # we don't use types.attrsOf here because that will evaluate the attrs
+          # which will evaluate `riseAndShine` in dream2nix, it is defined as a 
+          # `throw "some-message"` which makes Nix throws an error immediately.
           type = types.unspecified;
           description = "dream2nix instance";
           default =
