@@ -32,6 +32,10 @@
     # ps-0.14 is the branch for Purescript 0.14
     # which we use because ctl uses it
     purs-nix.url = "github:ursi/purs-nix/ps-0.14";
+    lighthouse-src = {
+      url = "github:GoogleChrome/lighthouse/v9.5.0";
+      flake = false;
+    };
   };
 
   outputs = { self, flake-parts, ... }:

@@ -7,6 +7,14 @@
       all-ps-pkgs = config.ps.pkgs;
       inherit (config) dusd-lib offchain-lib;
 
+      dream2nix = self.inputs.dream2nix.lib2.init {
+        systems = [ system ];
+        config = {
+          overridesDirs = [ "${self.inputs.dream2nix}/overrides" ../../nix/dream2nix-overrides ];
+          projectRoot = ./.;
+        };
+      };
+
       hello-world-browser = {
         ps =
           purs-nix.purs
@@ -109,6 +117,11 @@
         let test = hello-world-browser-tests; in
         pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
           "${test}/bin/${test.meta.mainProgram} | tee $out";
+      checks.hello-world-browser-lighthouse-test = pkgs.callPackage ../../nixos/tests/hello-world-browser-lighthouse.nix {
+        lighthouse = self'.packages."offchain:lighthouse";
+        hello-world-browser = self'.packages."offchain:hello-world-browser";
+        categories = { performance = 0.1; accessibility = 0.1; seo = 0.1; best-practices = 0.1; };
+      };
       devShells = {
         "offchain:hello-world-browser" =
           offchain-lib.makeProjectShell hello-world-browser { };
@@ -116,6 +129,9 @@
           offchain-lib.makeProjectShell hello-world-browser-e2e { };
       };
       packages."offchain:hello-world-browser" = hello-world-browser.package;
+      packages."offchain:lighthouse" = (dream2nix.makeFlakeOutputs {
+        source = self.inputs.lighthouse-src;
+      }).packages.${system}.lighthouse;
     };
   flake = { };
 }

@@ -1471,7 +1471,6 @@
       "inputs": {
         "alejandra": "alejandra",
         "crane": "crane",
-        "devshell": "devshell",
         "flake-utils-pre-commit": "flake-utils-pre-commit",
         "gomod2nix": "gomod2nix",
         "mach-nix": "mach-nix",
@@ -1483,11 +1482,11 @@
         "pre-commit-hooks": "pre-commit-hooks"
       },
       "locked": {
-        "lastModified": 1655148425,
-        "narHash": "sha256-usGkcYfDxQXBL6AMx1jSJuODDtc+RcDFZdoDLoQzu9w=",
+        "lastModified": 1647227719,
+        "narHash": "sha256-xJYwR2CrVTqv64ti3j7BtIjFh6PlRU7fwD/FLMknzMw=",
         "owner": "davhau",
         "repo": "dream2nix",
-        "rev": "7005441ceb1be4d850de453a49dde5ca9c575c6e",
+        "rev": "0ef1821bdc99afbbd3df6caf5d8bb3eadb47fc1d",
         "type": "github"
       },
       "original": {
@@ -3151,6 +3150,23 @@
       "original": {
         "owner": "input-output-hk",
         "repo": "iohk-nix",
+        "type": "github"
+      }
+    },
+    "lighthouse-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1646875274,
+        "narHash": "sha256-M2YepfUlxytNGfbQHdzxj7q1frwjRSyQAGZ1SGRRyR0=",
+        "owner": "GoogleChrome",
+        "repo": "lighthouse",
+        "rev": "ff52c9d56107695b30419ce453d3ba6da1cff632",
+        "type": "github"
+      },
+      "original": {
+        "owner": "GoogleChrome",
+        "ref": "v9.5.0",
+        "repo": "lighthouse",
         "type": "github"
       }
     },
@@ -4987,6 +5003,7 @@
         "dream2nix": "dream2nix",
         "flake-parts": "flake-parts",
         "haskell-nix": "haskell-nix_2",
+        "lighthouse-src": "lighthouse-src",
         "lint-utils": "lint-utils",
         "mlabs-ogmios": [
           "cardano-transaction-lib",
