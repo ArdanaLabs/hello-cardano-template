@@ -11,6 +11,30 @@
       dusd-lib = config.dusd-lib;
       inherit (dusd-lib.haskell) commonPlutusModules commonPlutusShell fixHaskellDotNix;
 
+
+      plutarch = inputs'.plutarch;
+      inputs.haskell-nix-extra-hackage.url = "github:mlabs-haskell/haskell-nix-extra-hackage";
+      inputs.haskell-nix-extra-hackage.inputs.haskell-nix.follows = "haskell-nix";
+      inputs.haskell-nix-extra-hackage.inputs.nixpkgs.follows = "nixpkgs";
+
+      myhackage = system: compiler-nix-name: plutarch.inputs.haskell-nix-extra-hackage.mkHackageFor system compiler-nix-name (
+        [
+          "${inputs.flat}"
+          "${inputs.protolude}"
+          "${inputs.cardano-prelude}/cardano-prelude"
+          "${inputs.cardano-crypto}"
+          "${inputs.cardano-base}/binary"
+          "${inputs.cardano-base}/cardano-crypto-class"
+          "${inputs.plutus}/plutus-core"
+          "${inputs.plutus}/plutus-ledger-api"
+          "${inputs.plutus}/plutus-tx"
+          "${inputs.plutus}/prettyprinter-configurable"
+          "${inputs.plutus}/word-array"
+          "${inputs.secp256k1-haskell}"
+          "${inputs.plutus}/plutus-tx-plugin" # necessary for FFI tests
+        ]
+      );
+
       project = pkgs.haskell-nix.cabalProject' {
         src = pkgs.runCommand "fakesrc-onchain" { } ''
           cp -rT ${./.} $out
@@ -20,18 +44,19 @@
 
         cabalProjectFileName = "cabal.project";
         compiler-nix-name = "ghc923";
-        sha256map = import ./sha256map;
+        #sha256map = {} ; # import ./sha256map;
 
-        modules = commonPlutusModules ++ [{ }];
+        modules = myhackage.modules ++ [{ }];
         shell = commonPlutusShell // {
-          additional = ps: with ps; [
-            # apropos
-            # apropos-tx
-            plutarch
-            plutarch-extra
-            # sydtest
-            # sydtest-hedgehog
-          ];
+          #additional = myhackage;
+          #ps: with ps; [
+          #  # apropos
+          #  # apropos-tx
+          #  plutarch
+          #  plutarch-extra
+          #  # sydtest
+          #  # sydtest-hedgehog
+          #];
         };
       };
 
