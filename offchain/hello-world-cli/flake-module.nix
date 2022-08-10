@@ -4,7 +4,7 @@
     let
       pkgs = inputs'.nixpkgs.legacyPackages;
       purs-nix = config.ps.purs-nix;
-      all-ps-pkgs = config.ps.pkgs;
+      inherit (purs-nix) ps-pkgs;
       inherit (config) dusd-lib offchain-lib;
 
       hello-world-cli = {
@@ -12,7 +12,7 @@
           purs-nix.purs
             {
               dependencies =
-                with all-ps-pkgs;
+                with ps-pkgs;
                 [
                   prelude
                   optparse
@@ -22,7 +22,7 @@
                   stringutils
                   self'.packages."offchain:hello-world-api"
                 ];
-              srcs = [ ./. ];
+              dir = ./.;
             };
         package =
           let js = "${hello-world-cli.ps.modules.Main.output {}}/Main/index.js"; in
@@ -38,15 +38,10 @@
       };
 
       hello-world-cli-tests =
-        let
-          testExe =
-            hello-world-cli.ps.modules."Test.Main".app
-              { name = scriptName; };
-          scriptName = "hello-world-cli-tests";
-        in
+        let testExe = hello-world-cli.ps.test.run { }; in
         pkgs.writeShellApplication
           {
-            name = scriptName;
+            name = "hello-world-cli-tests";
             runtimeInputs = [
               testExe
               self'.packages."offchain:hello-world-cli"
@@ -54,7 +49,7 @@
             ];
             text = ''
               export TEST_RESOURCES=${./fixtures}
-              ${scriptName}
+              ${testExe}
             '';
           };
     in

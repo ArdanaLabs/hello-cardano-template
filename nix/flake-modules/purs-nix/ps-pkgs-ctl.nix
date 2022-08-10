@@ -1,5 +1,7 @@
+with builtins;
 { ps-pkgs, ctl-rev, ... }:
-with ps-pkgs;
+self:
+with (removeAttrs ps-pkgs (attrNames self));
 {
   aeson =
     {
@@ -43,7 +45,7 @@ with ps-pkgs;
               prelude
               quickcheck
               record
-              sequences
+              self.sequences
               spec
               strings
               transformers
@@ -111,8 +113,8 @@ with ps-pkgs;
         {
           dependencies =
             [
-              aeson
-              aeson-helpers
+              self.aeson
+              self.aeson-helpers
               aff
               aff-promise
               aff-retry
@@ -140,13 +142,13 @@ with ps-pkgs;
               identity
               integers
               js-date
-              lattice
+              self.lattice
               lists
               maybe
-              medea
+              self.medea
               media-types
               monad-logger
-              mote
+              self.mote
               newtype
               node-buffer
               node-child-process
@@ -167,7 +169,7 @@ with ps-pkgs;
               prelude
               profunctor
               profunctor-lenses
-              toppokki
+              self.toppokki
               quickcheck
               quickcheck-combinators
               quickcheck-laws
@@ -204,7 +206,7 @@ with ps-pkgs;
       info =
         {
           version = "0.3.0";
-          dependencies = [ prelude console properties ];
+          dependencies = [ prelude console self.properties ];
         };
     };
 
@@ -235,7 +237,7 @@ with ps-pkgs;
               integers
               lists
               maybe
-              mote
+              self.mote
               naturals
               newtype
               node-buffer
