@@ -29,6 +29,7 @@
       flake = false;
       url = "github:nix-community/npmlock2nix";
     };
+    ps-tools.follows = "purs-nix/ps-tools";
     # ps-0.14 is the branch for Purescript 0.14
     # which we use because ctl uses it
     purs-nix.url = "github:ursi/purs-nix/ps-0.14";

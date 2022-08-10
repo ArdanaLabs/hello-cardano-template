@@ -79,3 +79,4 @@ executable ada-price-fetcher-test
     , base
     , process
     , sydtest
+    , unliftio
