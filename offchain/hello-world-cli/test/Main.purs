@@ -24,7 +24,7 @@ main = do
   walletDir <- fromMaybe "./fixtures/plutip/jsons" <$> lookupEnv "PLUTIP_WALLETS"
   launchAff_ $ withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
     let cli = "hello-world-cli "
-    conf <- (_ <> " ") <$> makeWallet walletDir "plutip" alice
+    conf <- (\w -> " " <> w <> " ") <$> makeWallet walletDir "plutip" alice
     let badConf = testResourcesDir <> "badWalletCfg.json "
     let state = " script.clistate "
     let badState = testResourcesDir <> "badState.json "
