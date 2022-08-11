@@ -135,8 +135,6 @@ test-suite tests
     Tests
 
   build-depends:
-    --, apropos
-    --, apropos-tx
     , base
     , bytestring
     , containers
@@ -155,3 +153,6 @@ test-suite tests
     , tasty-hedgehog
     , transformers
     , with-utf8
+
+--, apropos
+--, apropos-tx

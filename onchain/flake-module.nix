@@ -4,36 +4,40 @@
     let
       # A flake-module in nix/flake-modules/haskell.nix defines haskell-nix
       # packages once, so we can reuse it here, it's more performant.
-      pkgs = config.haskell-nix.pkgs;
+      inherit (config.haskell-nix) pkgs;
       # dusd-lib contains helper functions for dealing with haskell.nix. From it,
       # we inherit fixHaskellDotNix and some common attributes to give to
       # cabalProject'
-      dusd-lib = config.dusd-lib;
-      inherit (dusd-lib.haskell) commonPlutusModules commonPlutusShell fixHaskellDotNix;
+      inherit (config) dusd-lib;
+      inherit (dusd-lib.haskell)
+        commonPlutusModules
+        commonPlutusShell
+        fixHaskellDotNix
+        ;
 
+      compiler-nix-name = "ghc923";
 
-      plutarch = inputs'.plutarch;
-      inputs.haskell-nix-extra-hackage.url = "github:mlabs-haskell/haskell-nix-extra-hackage";
-      inputs.haskell-nix-extra-hackage.inputs.haskell-nix.follows = "haskell-nix";
-      inputs.haskell-nix-extra-hackage.inputs.nixpkgs.follows = "nixpkgs";
-
-      myhackage = system: compiler-nix-name: plutarch.inputs.haskell-nix-extra-hackage.mkHackageFor system compiler-nix-name (
-        [
-          "${inputs.flat}"
-          "${inputs.protolude}"
-          "${inputs.cardano-prelude}/cardano-prelude"
-          "${inputs.cardano-crypto}"
-          "${inputs.cardano-base}/binary"
-          "${inputs.cardano-base}/cardano-crypto-class"
-          "${inputs.plutus}/plutus-core"
-          "${inputs.plutus}/plutus-ledger-api"
-          "${inputs.plutus}/plutus-tx"
-          "${inputs.plutus}/prettyprinter-configurable"
-          "${inputs.plutus}/word-array"
-          "${inputs.secp256k1-haskell}"
-          "${inputs.plutus}/plutus-tx-plugin" # necessary for FFI tests
-        ]
-      );
+      myhackage =
+        inputs'.plutarch.inputs.haskell-nix-extra-hackage.mkHackageFor
+          system
+          compiler-nix-name
+          (with self.inputs; [
+            # TODO: where do we get these from?
+            # "${flat}"
+            # "${protolude}"
+            # "${secp256k1-haskell}"
+            "${cardano-transaction-lib.inputs.cardano-prelude}/cardano-prelude"
+            "${cardano-transaction-lib.inputs.cardano-crypto}"
+            "${cardano-transaction-lib.inputs.cardano-base}/binary"
+            "${cardano-transaction-lib.inputs.cardano-base}/cardano-crypto-class"
+            "${plutus}/plutus-core"
+            "${plutus}/plutus-ledger-api"
+            "${plutus}/plutus-tx"
+            "${plutus}/prettyprinter-configurable"
+            "${plutus}/word-array"
+            "${plutus}/plutus-tx-plugin" # necessary for FFI tests
+          ])
+      ;
 
       project = pkgs.haskell-nix.cabalProject' {
         src = pkgs.runCommand "fakesrc-onchain" { } ''
@@ -43,8 +47,7 @@
         '';
 
         cabalProjectFileName = "cabal.project";
-        compiler-nix-name = "ghc923";
-        #sha256map = {} ; # import ./sha256map;
+        inherit compiler-nix-name;
 
         modules = myhackage.modules ++ [{ }];
         shell = commonPlutusShell // {
