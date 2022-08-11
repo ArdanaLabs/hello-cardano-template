@@ -44,11 +44,18 @@
           {
             name = "hello-world-cli-tests";
             runtimeInputs = [
-              testExe
-              self'.packages."offchain:hello-world-cli"
               pkgs.coreutils
+              pkgs.nodejs
+              pkgs.postgresql
+              self'.packages."offchain:hello-world-cli"
+              self.inputs.cardano-transaction-lib.inputs.plutip.packages.${pkgs.system}."plutip:exe:plutip-server"
+              self.inputs.cardano-transaction-lib.packages.${pkgs.system}."ctl-server:exe:ctl-server"
+              self.inputs.mlabs-ogmios.defaultPackage.${pkgs.system}
+              self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system}
+              testExe
             ];
             text = ''
+              export NODE_PATH=${config.ctl.nodeModules}/node_modules
               export TEST_RESOURCES=${./fixtures}
               ${testExe}
             '';
