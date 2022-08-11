@@ -17,17 +17,18 @@ import Data.UInt as UInt
 
 main :: Effect Unit
 main = do
-  testResourcesDir <- fromMaybe "./fixtures/jsons" <$> lookupEnv "TEST_RESOURCES"
+  fixturesDir <- fromMaybe "./fixtures" <$> lookupEnv "TEST_RESOURCES"
   let initialAdaAmount = BigInt.fromInt 20_000_000
       initialValue = 20
       incParam = 200
-  walletDir <- fromMaybe "./fixtures/plutip/jsons" <$> lookupEnv "PLUTIP_WALLETS"
+  let jsonDir = fixturesDir <> "/jsons/"
+  let plutipWalletDir = "./" -- TODO get a writeable dir from nix
   launchAff_ $ withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
     let cli = "hello-world-cli "
-    conf <- (\w -> " " <> w <> " ") <$> makeWallet walletDir "plutip" alice
-    let badConf = testResourcesDir <> "badWalletCfg.json "
+    conf <- (\w -> " " <> w <> " ") <$> makeWallet plutipWalletDir "plutip" alice
+    let badConf = jsonDir <> "badWalletCfg.json "
     let state = " script.clistate "
-    let badState = testResourcesDir <> "badState.json "
+    let badState = jsonDir <> "badState.json "
     runSpec' defaultConfig{timeout=Nothing} [ consoleReporter ] $ do
       describe "shell sanity checks" do
         it "ls err"

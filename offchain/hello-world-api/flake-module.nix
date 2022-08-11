@@ -56,6 +56,9 @@
               self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system}
             ];
             text = ''
+              export LC_ALL=C.utf-8
+              # this fixes a postgresql issue for me (Brian)
+              # I think this is related https://github.com/NixOS/nixpkgs/issues/60414
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
               ${testExe}
             '';

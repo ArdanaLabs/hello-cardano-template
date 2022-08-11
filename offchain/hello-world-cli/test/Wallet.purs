@@ -17,8 +17,8 @@ import Wallet.Key(KeyWallet)
 makeWallet :: String -> String -> KeyWallet -> Aff String
 makeWallet dir name wallet = do
   let cfgName = dir <> name <>  "-cfg.json"
-  let walletName = dir <> name <> "-wallet.skey"
-  let stakeName = dir <> name <> "-staking.skey"
+  let walletName = name <> "-wallet.skey"
+  let stakeName = name <> "-staking.skey"
   writeTextFile UTF8 cfgName $ encodeAeson >>>show $
     { walletPath : walletName
     , stakingPath : stakeName <$ keyWalletPrivateStakeKey wallet
