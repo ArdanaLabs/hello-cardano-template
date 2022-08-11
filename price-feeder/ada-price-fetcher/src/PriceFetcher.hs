@@ -31,6 +31,6 @@ getMedianPriceFromSources minNumberOfPrices = do
   (errors, prices) <- partitionEithers <$> mapConcurrently tryAny (fetchers clientEnv)
   traverse_ (hPrint stderr) errors
   if length prices >= minNumberOfPrices
-    then return $ median medianUnbiased $ V.fromList prices
+    then pure $ median medianUnbiased $ V.fromList prices
     else do
       throwString "Unable to fetch the minimal required number of prices"

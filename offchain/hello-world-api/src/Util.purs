@@ -45,7 +45,8 @@ import Data.List(filterM,List)
 import Data.Log.Formatter.Pretty(prettyFormatter)
 import Data.Log.Message(Message)
 import Effect.Aff (delay)
-import Effect.Exception(throw)
+import Effect.Aff.Retry(retrying,limitRetries,RetryStatus(RetryStatus))
+import Effect.Exception(error)
 import Node.Encoding(Encoding(UTF8))
 import Node.FS.Aff(appendTextFile)
 import Serialization.Address (NetworkId(TestnetId,MainnetId))
@@ -82,69 +83,79 @@ buildBalanceSignAndSubmitTx
   :: Lookups.ScriptLookups PlutusData
   -> TxConstraints Unit Unit
   -> Contract () TransactionHash
-buildBalanceSignAndSubmitTx = buildBalanceSignAndSubmitTx' maxAttempts
+buildBalanceSignAndSubmitTx lookups constraints
+  = liftedE $
+    mapLeft (map $ show >>> error)
+    <$>
+    retrying
+    (limitRetries maxAttempts)
+    check
+    (tryBuildBalanceSignAndSubmitTx lookups constraints)
 
 maxAttempts :: Int
 maxAttempts = 5
 
-buildBalanceSignAndSubmitTx'
-  :: Int
-  -> Lookups.ScriptLookups PlutusData
+tryBuildBalanceSignAndSubmitTx
+  :: Lookups.ScriptLookups PlutusData
   -> TxConstraints Unit Unit
-  -> Contract () TransactionHash
-buildBalanceSignAndSubmitTx' attempts lookups constraints = do
+  -> RetryStatus
+  -> Contract () (Either (Array Aeson) TransactionHash)
+tryBuildBalanceSignAndSubmitTx lookups constraints (RetryStatus{iterNumber}) = do
   ubTx <- liftedE $ Lookups.mkUnbalancedTx lookups constraints
-  bsTxE <- balanceAndSignTxE ubTx
-  bsTx <- case bsTxE of
-    Right bsTx -> pure bsTx
-    Left err
-      | attempts < maxAttempts -> do
-        logError' "Balance failed on retry. This was caused by a UTxO being spent elsewhere. Retries won't work, probably because the UTxO was requested by txid."
-        throwError err
-      | otherwise -> throwError err
-  etxid <- submitE bsTx
-  case etxid of
-    Right txId -> do
-      when (attempts < maxAttempts) $ logWarn' "Retry worked"
-      logInfo' $ "Tx ID: " <> show txId
-      pure txId
-    Left (errs :: Array Aeson) -> do
-      logWarn' $ "Possible race condition, attempts remaining: " <> show attempts
-      logWarn' $ "submit failed with:" <> show errs
-      let (badInputAeson :: Array Aeson) =
-            join $ catMaybes $ errs <#> \err -> do
-            obj <- toObject err
-            badInputs <- hush $ getField obj "badInputs"
-            toArray badInputs
-      let badInputs =
-            catMaybes $ badInputAeson <#> \inputAeson -> do
-            obj <- toObject inputAeson
-            txIdStr <- hush $getField obj "txId"
-            txId <- wrap <$> hexToByteArray txIdStr
-            index <- hush $ getField obj "index"
-            pure $ TransactionInput {index,transactionId:txId}
-      if (length badInputs > 0)
+  balanceAndSignTxE ubTx >>= case _ of
+    Right bsTx ->
+      submitE bsTx >>= case _ of
+        Left err -> pure $ Left err
+        Right txid -> do
+          when (iterNumber > 0) $ logWarn' "Successfull retry"
+          pure $ Right txid
+    Left err -> do
+      when (iterNumber > 0) $ logError' "Balance failed on retry. This was caused by a UTxO being spent elsewhere. Retries won't work, probably because the UTxO was requested by txid."
+      throwError $ err
+
+check :: RetryStatus -> (Either (Array Aeson) TransactionHash) -> Contract () Boolean
+check _ (Right _) = pure false
+check (RetryStatus{iterNumber}) (Left errs) = do
+  logWarn' $ "Possible race condition. Retry number: " <> show iterNumber
+  logWarn' $ "submit failed with:" <> show errs
+  let badInputs  =
+        (((errs <#> \err -> do
+              obj <- toObject err
+              badInputField <- hush $ getField obj "badInputs"
+              toArray badInputField
+        ) # catMaybes # join )
+        <#> \inputAeson -> do
+          obj <- toObject inputAeson
+          txIdStr <- hush $getField obj "txId"
+          txId <- wrap <$> hexToByteArray txIdStr
+          index <- hush $ getField obj "index"
+          pure $ TransactionInput {index,transactionId:txId}
+        ) # catMaybes
+  if null badInputs
+    then do
+      logError' "No inputs were bad this probably wasn't a race condition"
+      pure false
+    else do
+      logWarn' $ "some inputs were bad:" <> show badInputs
+      spent <- waitForSpent badInputs
+      if null spent
         then do
-          logWarn' $ "some inputs were bad:" <> show badInputs
-          spent <- waitForSpent badInputs
-          if null spent
-            then do
-              logError' $ "Some inputs were bad but none of the bad inputs were spent."
-                <> "\nThis probably wasn't a race condition"
-              liftEffect $ throw $ show errs
-            else do
-              logWarn' $ "Found spent inputs: " <> show spent
-          if attempts > 0
-            then buildBalanceSignAndSubmitTx' (attempts-1) lookups constraints
-            else do
-              logError' "Exhausted retries on race conditions"
-              liftEffect $ throw $ show errs
+          logError' $ "Some inputs were bad but none of the bad inputs were spent."
+            <> "\nThis probably wasn't a race condition"
+          pure false
         else do
-            logError' "No inputs were bad this probably wasn't a race condition"
-            liftEffect $ throw $ show errs
+          logWarn' $ "Found spent inputs: " <> show spent
+          pure true
+
+-- I'm sure this is implemented somewhere but I couldn't find it
+mapLeft :: forall a b c. (a -> b) -> Either a c -> Either b c
+mapLeft f = either (Left <<< f) Right
 
 waitForSpent :: Array TransactionInput -> Contract () (Array TransactionInput)
-waitForSpent inputs = fromFoldable <$> waitForSpent' (Minutes 2.0) (toUnfoldable inputs)
+waitForSpent inputs = fromFoldable <$> waitForSpent' maxWait (toUnfoldable inputs)
+
+maxWait :: Minutes
+maxWait = Minutes 5.0
 
 waitForSpent'
   :: forall a.

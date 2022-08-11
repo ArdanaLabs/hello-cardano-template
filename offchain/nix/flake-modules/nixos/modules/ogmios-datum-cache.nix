@@ -1,6 +1,12 @@
 { lib, pkgs, config, ... }:
-with lib;
 let
+  inherit (lib)
+    types
+    mkOption
+    mkIf
+    mkMerge
+    mkEnableOption
+    ;
   cfg = config.services.ogmios-datum-cache;
 in
 {
@@ -8,8 +14,8 @@ in
 
     enable = mkEnableOption "enable the ogmios-datum-cache service";
 
-    package = lib.mkOption {
-      type = lib.types.package;
+    package = mkOption {
+      type = types.package;
     };
 
     port = mkOption {
@@ -98,7 +104,7 @@ in
 
     systemd.services.ogmios-datum-cache =
       let
-        args = escapeShellArgs [
+        args = lib.escapeShellArgs [
           "--log-level"
           "warn"
           "--use-latest"
