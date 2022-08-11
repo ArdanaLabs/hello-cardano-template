@@ -2,29 +2,35 @@ module Test.Main
   ( main
   ) where
 
-import Contract.Prelude
-import Effect.Aff(launchAff_)
 import CmdUtils(fails,failsSaying,passesSaying,spawnAff)
+import Contract.Prelude
+import Contract.Test.Plutip (PlutipConfig, InitialUTxO, runPlutipContract, withPlutipContractEnv, runContractInEnv)
+import Effect.Aff(launchAff_)
 import Node.Process(lookupEnv)
-import Test.Spec(it,describe)
-import Test.Spec.Runner (runSpec',defaultConfig)
+import Test.Spec(it,describe,Spec)
 import Test.Spec.Reporter.Console (consoleReporter)
+import Test.Spec.Runner (runSpec',defaultConfig)
+import Test.Wallet(makeWallet)
+
+import Data.BigInt as BigInt
+import Data.UInt as UInt
 
 main :: Effect Unit
 main = do
   testResourcesDir <- fromMaybe "." <$> lookupEnv "TEST_RESOURCES"
   runtime <- isNothing <$> lookupEnv "NO_RUNTIME"
-  launchAff_ do
-    -- TODO
-    -- this seems like a hack to me
+  let initialAdaAmount = BigInt.fromInt 20_000_000
+      initialValue = 20
+      incParam = 200
+  launchAff_ $ withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
     let cli = "hello-world-cli "
     let needsRuntime = when runtime
-    let jsonsPath = testResourcesDir <> "/jsons/"
-    let conf = jsonsPath <> "testWalletCfg.json "
+    let jsonsPath = testResourcesDir <> "/plutip/jsons/"
+    conf <- makeWallet jsonsPath "plutip" alice
     let badConf = jsonsPath <> "badWalletCfg.json "
     let state = " script.clistate "
     let badState = jsonsPath <> "badState.json "
-    runSpec' defaultConfig{timeout=Nothing} [ consoleReporter ] do
+    runSpec' defaultConfig{timeout=Nothing} [ consoleReporter ] $ do
       describe "shell sanity checks" do
         it "ls err"
           $ failsSaying "ls bad_path"
@@ -124,3 +130,35 @@ main = do
             ("ls" <> state)
             "No such file"
 
+config :: PlutipConfig
+config =
+  { host: "127.0.0.1"
+  , port: UInt.fromInt 8082
+  , logLevel: Error
+  -- Server configs are used to deploy the corresponding services.
+  , ogmiosConfig:
+      { port: UInt.fromInt 1338
+      , host: "127.0.0.1"
+      , secure: false
+      , path: Nothing
+      }
+  , ogmiosDatumCacheConfig:
+      { port: UInt.fromInt 10000
+      , host: "127.0.0.1"
+      , secure: false
+      , path: Nothing
+      }
+  , ctlServerConfig:
+      { port: UInt.fromInt 8083
+      , host: "127.0.0.1"
+      , secure: false
+      , path: Nothing
+      }
+  , postgresConfig:
+      { host: "127.0.0.1"
+      , port: UInt.fromInt 5433
+      , user: "ctxlib"
+      , password: "ctxlib"
+      , dbname: "ctxlib"
+      }
+  }

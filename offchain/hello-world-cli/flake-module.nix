@@ -20,6 +20,7 @@
                   node-fs
                   dotenv
                   stringutils
+                  bigints
                   self'.packages."offchain:hello-world-api"
                 ];
               dir = ./.;
