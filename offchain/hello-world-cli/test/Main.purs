@@ -17,19 +17,17 @@ import Data.UInt as UInt
 
 main :: Effect Unit
 main = do
-  testResourcesDir <- fromMaybe "." <$> lookupEnv "TEST_RESOURCES"
-  runtime <- isNothing <$> lookupEnv "NO_RUNTIME"
+  testResourcesDir <- fromMaybe "./fixtures/jsons" <$> lookupEnv "TEST_RESOURCES"
   let initialAdaAmount = BigInt.fromInt 20_000_000
       initialValue = 20
       incParam = 200
+  walletDir <- fromMaybe "./fixtures/plutip/jsons" <$> lookupEnv "PLUTIP_WALLETS"
   launchAff_ $ withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
     let cli = "hello-world-cli "
-    let needsRuntime = when runtime
-    let jsonsPath = testResourcesDir <> "/plutip/jsons/"
-    conf <- makeWallet jsonsPath "plutip" alice
-    let badConf = jsonsPath <> "badWalletCfg.json "
+    conf <- makeWallet walletDir "plutip" alice
+    let badConf = testResourcesDir <> "badWalletCfg.json "
     let state = " script.clistate "
-    let badState = jsonsPath <> "badState.json "
+    let badState = testResourcesDir <> "badState.json "
     runSpec' defaultConfig{timeout=Nothing} [ consoleReporter ] $ do
       describe "shell sanity checks" do
         it "ls err"
@@ -60,7 +58,7 @@ main = do
           $ fails $ cli <> "-c" <> badConf <> "-s" <> state <> "lock -i 0 -p 1"
         -- There's no hard reason this couldn't be made to work without the runtime
         -- but it happens to look up the datum before noticing the state shouldn't exist
-        needsRuntime $ it "fails when state exists"
+        it "fails when state exists"
           $ failsSaying
             (cli <> "-c" <> conf <> "-s" <> badState <> "lock -i 0 -p 1")
             "Can't use lock when state file already exists"
@@ -103,7 +101,7 @@ main = do
           $ failsSaying
             (cli <> "-c bad_path -s" <> state <> "query")
             "[Error: ENOENT: no such file or directory, open 'bad_path']"
-      needsRuntime $ describe "integration test" do
+      describe "integration test" do
         -- TODO I'm not sure why they aren't saying finished
         it "locks the value"
           $ passesSaying

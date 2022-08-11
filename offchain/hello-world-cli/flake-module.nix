@@ -56,7 +56,8 @@
             ];
             text = ''
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
-              export TEST_RESOURCES=${./fixtures}
+              export TEST_RESOURCES=${./fixtures/jsons}
+              export PLUTIP_WALLETS=${./fixtures/plutip/jsons}
               ${testExe}
             '';
           };
