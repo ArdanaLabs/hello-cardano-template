@@ -1,9 +1,55 @@
-# Hello world + Discovery
+# Hello world + Discovery + Authentication
 
-This protocol works as a proof of concept of our solutions to vault discovery and authentication.
-The core idea of the protocol is to use a family of NFTs to authenticate and search for vaults.
+The goal of this protocol is to implement the solutions for vault discovery and vault authentication into the hello world protocol.
+To do this we will add some of the features of dUSD vaults to the hello world counter utxos here after referred to as vaults.
 
-## Onchain components
+## The Discovery problem
+
+Users should be able to:
+- Get a list of all open vaults in the protocol
+- Get a list of all their open vaults
+- Inspect the history of a vault
+
+## The Authentication problem
+
+It should be possible to enforce rules about how and when vaults can be opened.
+
+# Core solution
+
+For vault discovery the natural solution is one NFT per vault which can be used to track that vault.
+
+For authentication the solution is similar.
+Part of the design of Cardano is that scripts themselves can't enforce rules about utxos sent to them.
+The standard work around is to consider utxos at an address invalid unless they have a token signifying their validity.
+The minting policy of the token can then enforce any desired constraints.
+
+In our case it's possible for these two tokens to be the same.
+Each token has an asset class which consists of a currency symbol and a token name.
+The currency symbol is the hash of the minting policy and the token name is just an arbitrary string.
+Because of this a single minting policy can define a family of NFTs where each NFT has a different token name.
+In our case the minting policy also enforces that these NFTs can only be minted when opening a valid vault, and must be sent to the vault.
+The vault address script validator can further enforce that these NFTs can never leave their vaults.
+This is important because otherwise an NFT could be sent instead of minted circumventing the authentication.
+
+The need for coordination between the discovery/authentication minting policy and the vault address script validator creates an additional issue.
+The vault address validator needs to know the currency symbol of the discovery/authentication NFTs
+but the minting policy which needs to know the vault	address.
+Since the currency symbol is the hash of the minting policy and the address is the hash of the vault script validator this seems to require finding a hash fix-point.
+
+```
+Minting policy -hash-> Currency symbol -parameter-> vault script -hash-> vault address -parameter-> Minting policy
+```
+
+To solve this problem the vault address script validator can,
+instead of taking the currency symbol as a parameter directly,
+take an NFT and address which it can then use to locate a config utxo
+who's datum will provide the currency symbol.
+The NFT is required to prevent the use of a malicious utxo with a different currency symbol.
+The config address script also needs to prevent tampering with the utxo.
+
+# Implementation details
+
+## On-chain components
 
 ### Config NFT minting policy
 
