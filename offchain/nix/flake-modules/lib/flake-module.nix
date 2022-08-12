@@ -32,6 +32,7 @@ in
                   ps-tools.for-0_14.purescript-language-server
                   ps-tools.for-0_14.purs-tidy
                   purs-nix.purescript
+                  self.inputs.cardano-transaction-lib.inputs.plutip.packages.${pkgs.system}."plutip:exe:plutip-server"
                 ]);
                 shellHook = "export NODE_PATH=${config.ctl.nodeModules}/node_modules/";
               };
