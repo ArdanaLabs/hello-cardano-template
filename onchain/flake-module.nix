@@ -2,15 +2,15 @@
 {
   perSystem = { config, self', inputs', system, ... }:
     let
-      # A flake-module in nix/flake-modules/haskell.nix defines haskell-nix
-      # packages once, so we can reuse it here, it's more performant.
+      inherit (self.inputs) plutarch;
+      # We use plutarch's nixpkgs / haskell.nix etc. to make sure that we don't
+      # bother with mixing and matching nixpkgs / haskell.nix versions.
       pkgs =
-        with self.inputs.plutarch-plutus;
-        import inputs.nixpkgs {
+        import plutarch.inputs.nixpkgs {
           inherit system;
           overlays = [
-            inputs.haskell-nix.overlay
-            (import "${inputs.iohk-nix}/overlays/crypto")
+            plutarch.inputs.haskell-nix.overlay
+            (import "${plutarch.inputs.iohk-nix}/overlays/crypto")
           ];
         };
       # dusd-lib contains helper functions for dealing with haskell.nix. From it,
@@ -26,45 +26,44 @@
       compiler-nix-name = "ghc923";
 
       plutarch-hackage =
-        with self.inputs;
-        plutarch-plutus.inputs.haskell-nix-extra-hackage.mkHackagesFor
+        plutarch.inputs.haskell-nix-extra-hackage.mkHackagesFor
           system
           compiler-nix-name
           [
-            "${plutarch-plutus}"
-            "${plutarch-plutus}/plutarch-extra"
+            "${plutarch}"
+            "${plutarch}/plutarch-extra"
           ];
-
       myhackage =
-        self.inputs.plutarch-plutus.applyPlutarchDep pkgs {
+        plutarch.applyPlutarchDep pkgs {
           inherit compiler-nix-name;
-          extra-hackages = plutarch-hackage.extra-hackages;
-          extra-hackage-tarballs = plutarch-hackage.extra-hackage-tarballs;
-          modules = plutarch-hackage.modules;
+          inherit (plutarch-hackage)
+            extra-hackages
+            extra-hackage-tarballs
+            modules
+            ;
         };
 
       project = pkgs.haskell-nix.cabalProject' {
         src = ./.;
 
-        cabalProjectFileName = "cabal.project";
         inherit compiler-nix-name;
 
         inherit (myhackage)
           extra-hackages
           extra-hackage-tarballs
           modules
-          cabalProjectLocal;
+          cabalProjectLocal
+          ;
 
         shell = commonPlutusShell // {
-          # additional = myhackage;
-          #ps: with ps; [
-          #  # apropos
-          #  # apropos-tx
-          #  plutarch
-          #  plutarch-extra
-          #  # sydtest
-          #  # sydtest-hedgehog
-          #];
+           additional = ps: with ps; [
+            # apropos
+            # apropos-tx
+            plutarch
+            plutarch-extra
+            # sydtest
+            # sydtest-hedgehog
+          ];
         };
       };
 

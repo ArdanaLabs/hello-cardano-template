@@ -14,7 +14,7 @@
     plutus = {
       url = "github:input-output-hk/plutus";
     };
-    plutarch-plutus = {
+    plutarch = {
       url = "github:Plutonomicon/plutarch-plutus";
     };
     lint-utils = {
