@@ -95,11 +95,17 @@ throwE (Right b) = pure b
 
 runCmd :: Options -> Aff Unit
 runCmd (Options {conf,statePath,command}) = do
-  let cfg = toConfigParams conf
+  let cfg' = toConfigParams conf
   log "logging ports:"
-  log $ show cfg.ctlServerConfig.port
-  log $ show cfg.ogmiosConfig.port
-  log $ show cfg.datumCacheConfig.port
+  log $ show cfg'.ctlServerConfig.port
+  log $ show cfg'.ogmiosConfig.port
+  log $ show cfg'.datumCacheConfig.port
+  -- plutip mode
+  let cfg=cfg'
+            {ctlServerConfig{port = U.fromInt 8083}
+            ,ogmiosConfig{port = U.fromInt 1338}
+            ,datumCacheConfig{port = U.fromInt 10000}
+            }
   case command of
     Lock {contractParam:param,initialDatum:init} -> do
       stateExists <- liftEffect $ exists statePath

@@ -143,19 +143,19 @@ config =
   , logLevel: Error
   -- Server configs are used to deploy the corresponding services.
   , ogmiosConfig:
-      { port: UInt.fromInt 1337
+      { port: UInt.fromInt 1338
       , host: "127.0.0.1"
       , secure: false
       , path: Nothing
       }
   , ogmiosDatumCacheConfig:
-      { port: UInt.fromInt 9999
+      { port: UInt.fromInt 10000
       , host: "127.0.0.1"
       , secure: false
       , path: Nothing
       }
   , ctlServerConfig:
-      { port: UInt.fromInt 8081
+      { port: UInt.fromInt 8083
       , host: "127.0.0.1"
       , secure: false
       , path: Nothing
