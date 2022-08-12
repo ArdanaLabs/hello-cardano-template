@@ -33,6 +33,9 @@ in
                   ps-tools.for-0_14.purs-tidy
                   purs-nix.purescript
                   self.inputs.cardano-transaction-lib.inputs.plutip.packages.${pkgs.system}."plutip:exe:plutip-server"
+                  self.inputs.cardano-transaction-lib.packages.${pkgs.system}."ctl-server:exe:ctl-server"
+                  self.inputs.mlabs-ogmios.defaultPackage.${pkgs.system}
+                  self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system}
                 ]);
                 shellHook = "export NODE_PATH=${config.ctl.nodeModules}/node_modules/";
               };
