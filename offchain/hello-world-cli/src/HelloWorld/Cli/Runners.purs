@@ -6,9 +6,12 @@ module HelloWorld.Cli.Runners
 import Contract.Prelude
 import Contract.Config(testnetConfig)
 import Contract.Monad
-  ( ConfigParams
+  ( Contract
+  , ConfigParams
   , runContract
+  , askConfig
   )
+import Contract.Log(logInfo')
 
 -- Node
 import Node.FS.Aff
@@ -93,6 +96,10 @@ throwE (Right b) = pure b
 runCmd :: Options -> Aff Unit
 runCmd (Options {conf,statePath,command}) = do
   let cfg = toConfigParams conf
+  log "logging ports:"
+  log $ show cfg.ctlServerConfig.port
+  log $ show cfg.ogmiosConfig.port
+  log $ show cfg.datumCacheConfig.port
   case command of
     Lock {contractParam:param,initialDatum:init} -> do
       stateExists <- liftEffect $ exists statePath
@@ -163,3 +170,4 @@ toConfigParams
                 (PrivatePaymentKeyFile walletPath)
                 (PrivateStakeKeyFile <$> stakingPath)
   in testnetConfig{walletSpec=Just wallet,networkId=network}
+

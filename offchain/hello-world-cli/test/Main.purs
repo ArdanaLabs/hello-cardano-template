@@ -30,6 +30,9 @@ main = do
     let badConf = jsonDir <> "badWalletCfg.json "
     let state = " script.clistate "
     let badState = jsonDir <> "badState.json "
+    log $ show (unwrap env).config.ctlServerConfig
+    log $ show (unwrap env).config.ogmiosConfig
+    log $ show (unwrap env).config.datumCacheConfig
     runSpec' defaultConfig{timeout=Nothing} [ consoleReporter ] $ do
       describe "shell sanity checks" do
         it "ls err"
@@ -140,19 +143,19 @@ config =
   , logLevel: Error
   -- Server configs are used to deploy the corresponding services.
   , ogmiosConfig:
-      { port: UInt.fromInt 1338
+      { port: UInt.fromInt 1337
       , host: "127.0.0.1"
       , secure: false
       , path: Nothing
       }
   , ogmiosDatumCacheConfig:
-      { port: UInt.fromInt 10000
+      { port: UInt.fromInt 9999
       , host: "127.0.0.1"
       , secure: false
       , path: Nothing
       }
   , ctlServerConfig:
-      { port: UInt.fromInt 8083
+      { port: UInt.fromInt 8081
       , host: "127.0.0.1"
       , secure: false
       , path: Nothing

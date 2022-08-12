@@ -27,7 +27,7 @@ makeWallet dir name wallet = do
   writeTextFile UTF8 cfgName $ encodeAeson >>>show $
     { walletPath : walletName
     , stakingPath : stakeName <$ keyWalletPrivateStakeKey wallet
-    , network : "Testnet" -- TODO this is wrong
+    , network : "Mainnet" -- Plutip just uses the Mainnet id
     }
   privatePaymentKeyToFile walletName $ keyWalletPrivatePaymentKey wallet
   void $ traverse (privateStakeKeyToFile stakeName) $ keyWalletPrivateStakeKey wallet
