@@ -68,7 +68,7 @@
       apps."offchain:hello-world-cli:test" = dusd-lib.mkApp hello-world-cli-tests;
       checks.run-hello-world-cli-tests =
         let test = hello-world-cli-tests; in
-        pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
+        pkgs.runCommand test.name { }
           "${test}/bin/${test.meta.mainProgram} | tee $out";
       devShells."offchain:hello-world-cli" =
         offchain-lib.makeProjectShell hello-world-cli { };

@@ -2,13 +2,13 @@ module Test.Main
   ( main
   ) where
 
-import CmdUtils(fails,failsSaying,passesSaying,spawnAff)
+import CmdUtils(fails,failsSaying,passesSaying)
 import Contract.Prelude
-import Contract.Test.Plutip (PlutipConfig, InitialUTxO, runPlutipContract, withPlutipContractEnv, runContractInEnv)
+import Contract.Test.Plutip (PlutipConfig, withPlutipContractEnv)
 import Data.String(trim)
 import Effect.Aff(launchAff_)
 import Node.Process(lookupEnv)
-import Test.Spec(it,describe,Spec)
+import Test.Spec(it,describe)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec',defaultConfig)
 import Test.Wallet(makeWallet,rmWallet)
@@ -20,12 +20,17 @@ main :: Effect Unit
 main = do
   fixturesDir <- fromMaybe "./fixtures" <$> lookupEnv "TEST_RESOURCES"
   let initialAdaAmount = BigInt.fromInt 20_000_000
-      initialValue = 20
-      incParam = 200
   let jsonDir = fixturesDir <> "/jsons/"
   let plutipWalletDir = "./" -- TODO get a writeable dir from nix
   launchAff_ $ withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
-    let plutipPorts = "--ctl-port 8083 --ogmios-port 1338 --odc-port 10000 "
+    let plutipPorts =
+          " --ctl-port "
+            <> show (UInt.toInt (unwrap env).config.ctlServerConfig.port)
+          <> " --ogmios-port "
+            <> show (UInt.toInt (unwrap env).config.ogmiosConfig.port)
+          <> " --odc-port "
+            <> show (UInt.toInt (unwrap env).config.datumCacheConfig.port)
+          <> " "
     let cli = "hello-world-cli " <> plutipPorts
     conf <- (\w -> " " <> w <> " ") <$> makeWallet plutipWalletDir "plutip" alice
     let badConf = jsonDir <> "badWalletCfg.json "
