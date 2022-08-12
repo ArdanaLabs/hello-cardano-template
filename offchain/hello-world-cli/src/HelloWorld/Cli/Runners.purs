@@ -77,6 +77,9 @@ readConfig (ParsedOptions o)= do
       {walletPath=dir<>conf.walletPath
       ,stakingPath=(dir<>_) <$> conf.stakingPath
       }
+    ,ctlPort: o.ctlPort
+    ,ogmiosPort: o.ogmiosPort
+    ,odcPort: o.odcPort
     }
 
 lookupNetwork :: ParsedConf -> Either String Conf
@@ -94,17 +97,13 @@ throwE (Left a) = liftEffect $ throw $ show a
 throwE (Right b) = pure b
 
 runCmd :: Options -> Aff Unit
-runCmd (Options {conf,statePath,command}) = do
+runCmd (Options {conf,statePath,command,ctlPort,ogmiosPort,odcPort}) = do
   let cfg' = toConfigParams conf
-  log "logging ports:"
-  log $ show cfg'.ctlServerConfig.port
-  log $ show cfg'.ogmiosConfig.port
-  log $ show cfg'.datumCacheConfig.port
-  -- plutip mode
+  -- update ports from config
   let cfg=cfg'
-            {ctlServerConfig{port = U.fromInt 8083}
-            ,ogmiosConfig{port = U.fromInt 1338}
-            ,datumCacheConfig{port = U.fromInt 10000}
+            {ctlServerConfig{port = fromMaybe cfg'.ctlServerConfig.port ctlPort}
+            ,ogmiosConfig{port = fromMaybe cfg'.ogmiosConfig.port ogmiosPort}
+            ,datumCacheConfig{port = fromMaybe cfg'.datumCacheConfig.port odcPort }
             }
   case command of
     Lock {contractParam:param,initialDatum:init} -> do

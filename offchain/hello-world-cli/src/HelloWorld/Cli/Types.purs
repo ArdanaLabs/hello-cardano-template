@@ -14,11 +14,15 @@ import Serialization.Address(NetworkId)
 import Data.Generic.Rep (class Generic)
 import Data.Show.Generic(genericShow)
 import Data.Maybe(Maybe)
+import Data.UInt(UInt)
 
 data Options = Options
   { command :: Command
   , statePath :: String
   , conf :: Conf
+  , ctlPort :: Maybe UInt
+  , ogmiosPort :: Maybe UInt
+  , odcPort :: Maybe UInt
   }
 
 data Command
@@ -63,6 +67,9 @@ data ParsedOptions = ParsedOptions
   { command :: Command
   , statePath :: String
   , configFile :: String
+  , ctlPort :: Maybe UInt
+  , ogmiosPort :: Maybe UInt
+  , odcPort :: Maybe UInt
   }
 
 derive instance Generic Command _

@@ -25,14 +25,12 @@ main = do
   let jsonDir = fixturesDir <> "/jsons/"
   let plutipWalletDir = "./" -- TODO get a writeable dir from nix
   launchAff_ $ withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
-    let cli = "hello-world-cli "
+    let plutipPorts = "--ctl-port 8083 --ogmios-port 1338 --odc-port 10000 "
+    let cli = "hello-world-cli " <> plutipPorts
     conf <- (\w -> " " <> w <> " ") <$> makeWallet plutipWalletDir "plutip" alice
     let badConf = jsonDir <> "badWalletCfg.json "
     let state = " script.clistate "
     let badState = jsonDir <> "badState.json "
-    log $ show (unwrap env).config.ctlServerConfig
-    log $ show (unwrap env).config.ogmiosConfig
-    log $ show (unwrap env).config.datumCacheConfig
     runSpec' defaultConfig{timeout=Nothing} [ consoleReporter ] $ do
       describe "shell sanity checks" do
         it "ls err"
