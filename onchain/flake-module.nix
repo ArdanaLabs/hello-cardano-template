@@ -28,6 +28,8 @@
             "${cardano-transaction-lib.inputs.cardano-crypto}"
             "${cardano-transaction-lib.inputs.cardano-base}/binary"
             "${cardano-transaction-lib.inputs.cardano-base}/cardano-crypto-class"
+            "${plutarch-plutus}"
+            "${plutarch-plutus}/plutarch-extra"
             "${plutus}/plutus-core"
             "${plutus}/plutus-ledger-api"
             "${plutus}/plutus-tx"

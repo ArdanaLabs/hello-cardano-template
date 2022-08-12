@@ -12,6 +12,10 @@
     ogmios-datum-cache.follows = "cardano-transaction-lib/ogmios-datum-cache";
     #   used for libsodium-vrf
     plutus.url = "github:input-output-hk/plutus";
+    plutarch-plutus = {
+      url = "github:Plutonomicon/plutarch-plutus";
+      flake = false;
+    };
     haskell-nix-extra-hackage = {
       url = "github:mlabs-haskell/haskell-nix-extra-hackage";
       inputs.nixpkgs.follows = "nixpkgs";

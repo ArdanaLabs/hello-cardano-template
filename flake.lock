@@ -4896,6 +4896,22 @@
         "type": "github"
       }
     },
+    "plutarch-plutus": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1660245357,
+        "narHash": "sha256-Q93Lq6leerCQedmN+3lJQWotyuGAhW6Sn14EKZd2SsA=",
+        "owner": "Plutonomicon",
+        "repo": "plutarch-plutus",
+        "rev": "3fe25c2376bca1a563ceecc273ae31771264e089",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Plutonomicon",
+        "repo": "plutarch-plutus",
+        "type": "github"
+      }
+    },
     "plutip": {
       "inputs": {
         "bot-plutus-interface": "bot-plutus-interface",
@@ -5236,6 +5252,7 @@
           "cardano-transaction-lib",
           "ogmios-datum-cache"
         ],
+        "plutarch-plutus": "plutarch-plutus",
         "plutus": "plutus_4",
         "purs-nix": "purs-nix"
       }
