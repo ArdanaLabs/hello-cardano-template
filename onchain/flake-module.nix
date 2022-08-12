@@ -21,9 +21,9 @@
         self.inputs.haskell-nix-extra-hackage.mkHackagesFor system compiler-nix-name
           (with self.inputs; [
             # TODO: where do we get these from?
-            # "${flat}"
-            # "${protolude}"
-            # "${secp256k1-haskell}"
+            "${plutarch-plutus.inputs.protolude}"
+            "${plutarch-plutus.inputs.secp256k1-haskell}"
+            "${plutarch-plutus.inputs.flat}"
             "${cardano-transaction-lib.inputs.cardano-prelude}/cardano-prelude"
             "${cardano-transaction-lib.inputs.cardano-crypto}"
             "${cardano-transaction-lib.inputs.cardano-base}/binary"

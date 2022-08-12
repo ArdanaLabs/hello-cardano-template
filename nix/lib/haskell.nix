@@ -8,7 +8,7 @@ in
     packages = ps:
       (
         builtins.attrValues
-        (pkgs.haskell-nix.haskellLib.selectLocalPackages ps)
+          (pkgs.haskell-nix.haskellLib.selectLocalPackages ps)
       )
       ++ (with pkgs; [ cabal-install hlint ]);
     tools = {

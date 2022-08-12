@@ -14,7 +14,8 @@
     plutus.url = "github:input-output-hk/plutus";
     plutarch-plutus = {
       url = "github:Plutonomicon/plutarch-plutus";
-      flake = false;
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.haskell-nix.follows = "haskell-nix";
     };
     haskell-nix-extra-hackage = {
       url = "github:mlabs-haskell/haskell-nix-extra-hackage";
