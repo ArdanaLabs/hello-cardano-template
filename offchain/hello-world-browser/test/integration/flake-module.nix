@@ -63,7 +63,9 @@
             hlint = { };
             haskell-language-server = { };
           };
-          buildInputs = integrationTestRuntimeDeps;
+          packages = ps:
+            (builtins.attrValues (pkgs.haskell-nix.haskellLib.selectLocalPackages ps))
+            ++ integrationTestRuntimeDeps;
         };
       };
 
