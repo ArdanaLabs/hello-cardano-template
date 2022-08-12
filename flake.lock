@@ -2435,6 +2435,29 @@
         "type": "github"
       }
     },
+    "haskell-nix-extra-hackage": {
+      "inputs": {
+        "haskell-nix": [
+          "haskell-nix"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1658790167,
+        "narHash": "sha256-QRZCAz/k5hEvXiHc2aVDDc2jgPTeiRXUtARg0GA9rDU=",
+        "owner": "mlabs-haskell",
+        "repo": "haskell-nix-extra-hackage",
+        "rev": "ee50d7eb739819efdb27bda9f444e007c12e9833",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mlabs-haskell",
+        "repo": "haskell-nix-extra-hackage",
+        "type": "github"
+      }
+    },
     "haskell-nix_2": {
       "inputs": {
         "HTTP": "HTTP_7",
@@ -5201,6 +5224,7 @@
         "dream2nix": "dream2nix",
         "flake-parts": "flake-parts",
         "haskell-nix": "haskell-nix_2",
+        "haskell-nix-extra-hackage": "haskell-nix-extra-hackage",
         "lint-utils": "lint-utils",
         "mlabs-ogmios": [
           "cardano-transaction-lib",

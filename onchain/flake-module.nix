@@ -18,9 +18,7 @@
       compiler-nix-name = "ghc923";
 
       myhackage =
-        inputs'.plutarch.inputs.haskell-nix-extra-hackage.mkHackageFor
-          system
-          compiler-nix-name
+        self.inputs.haskell-nix-extra-hackage.mkHackagesFor system compiler-nix-name
           (with self.inputs; [
             # TODO: where do we get these from?
             # "${flat}"
@@ -49,9 +47,11 @@
         cabalProjectFileName = "cabal.project";
         inherit compiler-nix-name;
 
-        modules = myhackage.modules ++ [{ }];
+        modules = myhackage.modules;
+        extra-hackages = myhackage.extra-hackages;
+        extra-hackage-tarballs = myhackage.extra-hackage-tarballs;
         shell = commonPlutusShell // {
-          #additional = myhackage;
+          # additional = myhackage;
           #ps: with ps; [
           #  # apropos
           #  # apropos-tx
