@@ -5,15 +5,17 @@ in
 {
   fixHaskellDotNix = import ./fixHaskellDotNix.nix self.inputs.nixpkgs.lib;
   commonPlutusShell = {
-    nativeBuildInputs = with pkgs; [
-      cabal-install
-      hlint
-    ];
-    withHoogle = true;
+    packages = ps:
+      (
+        builtins.attrValues
+        (pkgs.haskell-nix.haskellLib.selectLocalPackages ps)
+      )
+      ++ (with pkgs; [ cabal-install hlint ]);
     tools = {
       haskell-language-server = { };
     };
     exactDeps = true;
+    withHoogle = true;
   };
   commonPlutusModules =
     let
