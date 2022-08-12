@@ -5,13 +5,7 @@ module HelloWorld.Cli.Runners
 -- Contract
 import Contract.Prelude
 import Contract.Config(testnetConfig)
-import Contract.Monad
-  ( Contract
-  , ConfigParams
-  , runContract
-  , askConfig
-  )
-import Contract.Log(logInfo')
+import Contract.Monad (ConfigParams,runContract)
 
 -- Node
 import Node.FS.Aff
