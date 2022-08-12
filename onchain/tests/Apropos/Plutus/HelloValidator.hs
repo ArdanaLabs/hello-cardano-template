@@ -63,8 +63,8 @@ instance HasPermutationGenerator HelloProp HelloModel where
             HelloModel <$> bool
               <*> bool
               <*> bool
-              <*> (fromIntegral <$> int (linear minBound maxBound))
-              <*> (fromIntegral <$> int (linear minBound maxBound))
+              <*> (toInteger <$> int (linear minBound maxBound))
+              <*> (toInteger <$> int (linear minBound maxBound))
         }
     ]
   generators =
@@ -79,7 +79,7 @@ instance HasPermutationGenerator HelloProp HelloModel where
         , match = Not $ Var IsInvalid
         , contract = swap IsInvalid IsValid
         , morphism = \hm@HelloModel {..} -> do
-            j <- genFilter (/= (inDatum + 1)) (fromIntegral <$> int (linear minBound maxBound))
+            j <- genFilter (/= (inDatum + 1)) (toInteger <$> int (linear minBound maxBound))
             pure hm {outDatum = j}
         }
     , Morphism

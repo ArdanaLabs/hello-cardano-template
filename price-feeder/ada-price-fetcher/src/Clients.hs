@@ -10,7 +10,7 @@ import Data.Text.Read (double)
 import Servant.API ((:<|>) (..))
 import Servant.Client (BaseUrl (..), ClientEnv, ClientError (..), Scheme (..), client, runClientM)
 import UnliftIO (MonadIO)
-import UnliftIO.Exception (fromEitherIO, throwString)
+import UnliftIO.Exception (fromEitherIO, stringException, throwIO, throwString)
 
 import Network.Binance.API (PriceResponse (..), tickerAPIProxy)
 import Network.Coinbase.API (CoinbaseResponse (..), SpotPrice (SpotPrice), pricesAPIProxy)
@@ -20,6 +20,10 @@ import Network.Kraken.API qualified as Kraken
 import Network.Kucoin.API (FiatPriceResponse (..), fiatPriceAPIProxy)
 
 import Types (CurrencyPair (..))
+
+fromEither' :: MonadIO m => Either String a -> m a
+fromEither' (Left e) = throwIO . stringException $ e
+fromEither' (Right x) = pure x
 
 eitherDouble :: T.Text -> Either String Double
 eitherDouble text = do
@@ -63,7 +67,7 @@ getBinancePrice :: ClientEnv -> IO Double
 getBinancePrice clientEnv = do
   let CurrencyPair base currency = adaUsdt
   (PriceResponse _ priceText) <- fromEitherIO $ retrying defaultRetryPolicy retryDecider $ \_ -> runClientM (client tickerAPIProxy (Just $ base <> currency)) clientEnv
-  either (\msg -> throwString $ msg <> T.unpack priceText) return $ eitherDouble priceText
+  fromEither' $ eitherDouble priceText
 
 coinbaseBaseUrl :: BaseUrl
 coinbaseBaseUrl =
@@ -80,7 +84,7 @@ getCoinbasePrice clientEnv = do
   coinbaseResponse <- fromEitherIO $ retrying defaultRetryPolicy retryDecider $ \_ -> runClientM (client pricesAPIProxy (base <> "-" <> currency) Nothing) clientEnv
   case coinbaseResponse of
     (CoinbaseResponse (Just errors) _) -> throwString $ show errors
-    (CoinbaseResponse Nothing (Just (SpotPrice priceText _ _))) -> either throwString return $ eitherDouble priceText
+    (CoinbaseResponse Nothing (Just (SpotPrice priceText _ _))) -> fromEither' $ eitherDouble priceText
     (CoinbaseResponse Nothing Nothing) -> throwString "Fatal error :O"
 
 kucoinBaseUrl :: BaseUrl
@@ -97,7 +101,7 @@ getKucoinPrice clientEnv = do
   let CurrencyPair base currency = adaUsd
   (FiatPriceResponse _ dataMap) <- fromEitherIO $ retrying defaultRetryPolicy retryDecider $ \_ -> runClientM (client fiatPriceAPIProxy (Just currency) [base]) clientEnv
   let eitherPriceText = maybe (Left $ "Couldn't find base symbol in the received response: " <> T.unpack base) Right $ M.lookup base dataMap
-  either throwString return $ eitherDouble =<< eitherPriceText
+  fromEither' $ eitherDouble =<< eitherPriceText
 
 huobiBaseUrl :: BaseUrl
 huobiBaseUrl =
@@ -112,10 +116,10 @@ getHuobiPrice :: MonadIO m => ClientEnv -> m Double
 getHuobiPrice clientEnv = do
   let CurrencyPair base currency = adaUsdt
       symbolParam = T.toLower $ base <> currency
-  tick <- _tick <$> (fromEitherIO $ retrying defaultRetryPolicy retryDecider $ \_ -> runClientM (client marketDataAPIProxy (Just $ symbolParam)) clientEnv)
+  tick <- _tick <$> fromEitherIO (retrying defaultRetryPolicy retryDecider $ \_ -> runClientM (client marketDataAPIProxy (Just symbolParam)) clientEnv)
   let (ask, _) = _ask tick
       (bid, _) = _bid tick
-  return $ (ask + bid) / 2
+  pure $ (ask + bid) / 2
 
 krakenBaseUrl :: BaseUrl
 krakenBaseUrl =
@@ -136,8 +140,9 @@ getKrakenPrice clientEnv = do
     (KrakenResponse [] (AssetTickerInfoResponse tickerMap)) -> do
       let eitherPriceText =
             maybe
-              (Left $ "The fetched asset ticker information doesn't contain the expected ticker: " <> (T.unpack currencyPair))
+              (Left $ "The fetched asset ticker information doesn't contain the expected ticker: " <> T.unpack currencyPair)
               (Right . fst . _volumeWeightedAveragePrice)
               $ M.lookup currencyPair tickerMap
-      either throwString return $ eitherDouble =<< eitherPriceText
+
+      fromEither' $ eitherDouble =<< eitherPriceText
     (KrakenResponse errors _) -> throwString $ show errors

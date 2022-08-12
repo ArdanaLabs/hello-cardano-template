@@ -6,7 +6,7 @@
     };
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     cardano-node.url = "github:input-output-hk/cardano-node?rev=73f9a746362695dc2cb63ba757fbcabb81733d23";
-    cardano-transaction-lib.url = "github:Plutonomicon/cardano-transaction-lib?rev=1aaa081fb0b7c669cdc3e1b285c613f78cd598a5";
+    cardano-transaction-lib.url = "github:Plutonomicon/cardano-transaction-lib?rev=c4f27bac079fae2ccc18599587afad6a8ef51971";
     cardano-ogmios.url = "github:input-output-hk/cardano-ogmios";
     mlabs-ogmios.follows = "cardano-transaction-lib/ogmios";
     ogmios-datum-cache.follows = "cardano-transaction-lib/ogmios-datum-cache";
@@ -39,6 +39,7 @@
       flake = false;
       url = "github:nix-community/npmlock2nix";
     };
+    ps-tools.follows = "purs-nix/ps-tools";
     # ps-0.14 is the branch for Purescript 0.14
     # which we use because ctl uses it
     purs-nix.url = "github:ursi/purs-nix/ps-0.14";

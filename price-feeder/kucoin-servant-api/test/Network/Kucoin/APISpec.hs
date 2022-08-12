@@ -17,4 +17,4 @@ testParsePrice = do
   describe "parseJSON FiatPriceResponse" $ do
     it "should succeed parsing the kucoin modelled fiat price" $ do
       eitherDecodeFileStrict "test-resources/fiat-price-response.json"
-        >>= (`shouldBe` (Right $ FiatPriceResponse {_code = "200000", _data = singleton "ADA" "39596.03960396"}))
+        >>= (`shouldBe` Right (FiatPriceResponse {_code = "200000", _data = singleton "ADA" "39596.03960396"}))
