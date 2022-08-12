@@ -4,7 +4,15 @@
     let
       # A flake-module in nix/flake-modules/haskell.nix defines haskell-nix
       # packages once, so we can reuse it here, it's more performant.
-      inherit (config.haskell-nix) pkgs;
+      pkgs =
+        with self.inputs.plutarch-plutus;
+        import inputs.nixpkgs {
+          inherit system;
+          overlays = [
+            inputs.haskell-nix.overlay
+            (import "${inputs.iohk-nix}/overlays/crypto")
+          ];
+        };
       # dusd-lib contains helper functions for dealing with haskell.nix. From it,
       # we inherit fixHaskellDotNix and some common attributes to give to
       # cabalProject'
@@ -17,41 +25,36 @@
 
       compiler-nix-name = "ghc923";
 
-      myhackage =
-        self.inputs.haskell-nix-extra-hackage.mkHackagesFor system compiler-nix-name
-          (with self.inputs; [
-            # TODO: where do we get these from?
-            "${plutarch-plutus.inputs.protolude}"
-            "${plutarch-plutus.inputs.secp256k1-haskell}"
-            "${plutarch-plutus.inputs.flat}"
-            "${cardano-transaction-lib.inputs.cardano-prelude}/cardano-prelude"
-            "${cardano-transaction-lib.inputs.cardano-crypto}"
-            "${cardano-transaction-lib.inputs.cardano-base}/binary"
-            "${cardano-transaction-lib.inputs.cardano-base}/cardano-crypto-class"
+      plutarch-hackage =
+        with self.inputs;
+        plutarch-plutus.inputs.haskell-nix-extra-hackage.mkHackagesFor
+          system
+          compiler-nix-name
+          [
             "${plutarch-plutus}"
             "${plutarch-plutus}/plutarch-extra"
-            "${plutus}/plutus-core"
-            "${plutus}/plutus-ledger-api"
-            "${plutus}/plutus-tx"
-            "${plutus}/prettyprinter-configurable"
-            "${plutus}/word-array"
-            "${plutus}/plutus-tx-plugin" # necessary for FFI tests
-          ])
-      ;
+          ];
+
+      myhackage =
+        self.inputs.plutarch-plutus.applyPlutarchDep pkgs {
+          inherit compiler-nix-name;
+          extra-hackages = plutarch-hackage.extra-hackages;
+          extra-hackage-tarballs = plutarch-hackage.extra-hackage-tarballs;
+          modules = plutarch-hackage.modules;
+        };
 
       project = pkgs.haskell-nix.cabalProject' {
-        src = pkgs.runCommand "fakesrc-onchain" { } ''
-          cp -rT ${./.} $out
-          chmod u+w $out/cabal.project
-          cat $out/cabal-haskell.nix.project >> $out/cabal.project
-        '';
+        src = ./.;
 
         cabalProjectFileName = "cabal.project";
         inherit compiler-nix-name;
 
-        modules = myhackage.modules;
-        extra-hackages = myhackage.extra-hackages;
-        extra-hackage-tarballs = myhackage.extra-hackage-tarballs;
+        inherit (myhackage)
+          extra-hackages
+          extra-hackage-tarballs
+          modules
+          cabalProjectLocal;
+
         shell = commonPlutusShell // {
           # additional = myhackage;
           #ps: with ps; [
@@ -76,7 +79,6 @@
               pkgs.writeShellApplication
                 {
                   name = "run-onchain-tests";
-                  runtimeInputs = [ pkgs.nix ];
                   text = ''
                     nix build -L ${self}#checks.\"${system}\".\"dUSD-onchain:test:tests\"
                     cat result/test-stdout
