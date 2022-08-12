@@ -5,12 +5,13 @@ module Test.Main
 import CmdUtils(fails,failsSaying,passesSaying,spawnAff)
 import Contract.Prelude
 import Contract.Test.Plutip (PlutipConfig, InitialUTxO, runPlutipContract, withPlutipContractEnv, runContractInEnv)
+import Data.String(trim)
 import Effect.Aff(launchAff_)
 import Node.Process(lookupEnv)
 import Test.Spec(it,describe,Spec)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec',defaultConfig)
-import Test.Wallet(makeWallet)
+import Test.Wallet(makeWallet,rmWallet)
 
 import Data.BigInt as BigInt
 import Data.UInt as UInt
@@ -128,6 +129,9 @@ main = do
           $ failsSaying
             ("ls" <> state)
             "No such file"
+      describe "plutip cleanup" do
+        it "remove tmp wallet"
+          $ rmWallet (trim $ conf)
 
 config :: PlutipConfig
 config =
