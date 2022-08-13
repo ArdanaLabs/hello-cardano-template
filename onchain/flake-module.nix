@@ -56,7 +56,7 @@
           ;
 
         shell = commonPlutusShell // {
-           additional = ps: with ps; [
+          additional = ps: with ps; [
             # apropos
             # apropos-tx
             plutarch
