@@ -110,17 +110,6 @@ class (MonadTrans t, Monad m) => TxInfoBuilder t m where
   setTxInfoData :: [(DatumHash, Datum)] -> t m ()
   setTxInfoId :: BuiltinByteString -> t m ()
 
-  txInfoInputsUntouched :: t m ()
-  txInfoOutputsUntouched :: t m ()
-  txInfoFeeUntouched :: t m ()
-  txInfoMintUntouched :: t m ()
-  txInfoDCertUntouched :: t m ()
-  txInfoWdrlUntouched :: t m ()
-  txInfoValidRangeUntouched :: t m ()
-  txInfoSignatoriesUntouched :: t m ()
-  txInfoDataUntouched :: t m ()
-  txInfoIdUntouched :: t m ()
-
 instance Monad m => TxInfoBuilder (StateT TxInfo) m where
   runTxInfoBuilder = flip execStateT
   buildTxInfo = runTxInfoBuilder emptyTxInfo
@@ -169,16 +158,3 @@ instance Monad m => TxInfoBuilder (StateT TxInfo) m where
   setTxInfoData d = modify (\txi -> txi {txInfoData = d})
   setTxInfoId b = modify (\txi -> txi {txInfoId = TxId b})
 
-  txInfoInputsUntouched = modify (\txi -> txi {txInfoInputs = untouched "txInfoInputs"})
-  txInfoOutputsUntouched = modify (\txi -> txi {txInfoOutputs = untouched "txInfoOutputs"})
-  txInfoFeeUntouched = modify (\txi -> txi {txInfoFee = untouched "txInfoFee"})
-  txInfoMintUntouched = modify (\txi -> txi {txInfoMint = untouched "txInfoMint"})
-  txInfoDCertUntouched = modify (\txi -> txi {txInfoDCert = untouched "txInfoDCert"})
-  txInfoWdrlUntouched = modify (\txi -> txi {txInfoWdrl = untouched "txInfoWdrl"})
-  txInfoValidRangeUntouched = modify (\txi -> txi {txInfoValidRange = untouched "txInfoValidRange"})
-  txInfoSignatoriesUntouched = modify (\txi -> txi {txInfoSignatories = untouched "txInfoSignatories"})
-  txInfoDataUntouched = modify (\txi -> txi {txInfoData = untouched "txInfoData"})
-  txInfoIdUntouched = modify (\txi -> txi {txInfoId = untouched "txInfoId"})
-
-untouched :: String -> a
-untouched e = error ("Did not expect script to touch " <> e <> ".")

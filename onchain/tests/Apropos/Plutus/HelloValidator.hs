@@ -111,14 +111,6 @@ mkCtx HelloModel {..} =
     withTxInfo $ do
       addInput nullTxOutRef helloAddress someAda (Just datumIn)
       addOutput outAddr someAda (Just datumOut)
-
-      txInfoIdUntouched
-      txInfoSignatoriesUntouched
-      txInfoValidRangeUntouched
-      txInfoWdrlUntouched
-      txInfoDCertUntouched
-      txInfoMintUntouched
-      txInfoFeeUntouched
   where
     outAddr = if isContinuing then helloAddress else pubKeyHashAddress ""
     datumIn = Datum $ toBuiltinData inDatum
