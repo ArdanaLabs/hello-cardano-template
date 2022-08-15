@@ -17,6 +17,13 @@
     plutarch = {
       url = "github:Plutonomicon/plutarch-plutus";
     };
+    apropos = {
+      url = "github:mlabs-haskell/apropos?rev=9dbe96f1a1108b453aaf65ade4d6280cc92cccea";
+    };
+    digraph = {
+      url = "github:mlabs-haskell/digraph?rev=d4dfec22f6a6eb646dcfa9591eaca0a9be88d260";
+      flake = false;
+    };
     lint-utils = {
       type = "git";
       url = "https://gitlab.homotopic.tech/nix/lint-utils.git";

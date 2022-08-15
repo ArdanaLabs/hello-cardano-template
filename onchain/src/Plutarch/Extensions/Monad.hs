@@ -32,7 +32,7 @@ pmatchFieldC ::
   , KnownNat n
   , a ~ PUnLabel (IndexList n as)
   , PIsData a
-  , PMatch a
+  , PlutusType a
   ) =>
   Term s p ->
   TermCont s (a s)

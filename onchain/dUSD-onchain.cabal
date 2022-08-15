@@ -83,12 +83,39 @@ library
   build-depends:
     , base
     , bytestring
+    , data-default
     , generics-sop
     , plutarch
     , plutarch-extra
     , plutus-core
     , plutus-ledger-api
     , serialise
+    , pretty
+
+library apropos-tx
+  import:          lang
+  exposed-modules:
+    Apropos.Script
+    Apropos.ContextBuilder
+  hs-source-dirs:  apropos-tx
+  build-depends:
+    , apropos
+    , base
+    , containers
+    , free
+    , hedgehog
+    , lens
+    , minisat-solver
+    , mtl
+    , plutarch
+    , plutus-core
+    , plutus-ledger-api
+    , pretty
+    , pretty-show
+    , safe
+    , template-haskell
+    , text
+    , transformers
 
 executable hello-world
   import:         lang
@@ -124,13 +151,7 @@ test-suite tests
   hs-source-dirs: tests
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
   other-modules:
-    Apropos.Plutus.AssetClass
-    Apropos.Plutus.Auction
     Apropos.Plutus.HelloValidator
-    Apropos.Plutus.Integer
-    Apropos.Plutus.SingletonValue
-    Apropos.Plutus.Value
-    Apropos.Plutus.Vault
     Gen
     Tests
 
@@ -153,6 +174,5 @@ test-suite tests
     , tasty-hedgehog
     , transformers
     , with-utf8
-
---, apropos
---, apropos-tx
+    , apropos
+    , apropos-tx

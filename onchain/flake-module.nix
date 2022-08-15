@@ -2,7 +2,7 @@
 {
   perSystem = { config, self', inputs', system, ... }:
     let
-      inherit (self.inputs) plutarch;
+      inherit (self.inputs) plutarch apropos apropos-tx digraph;
       # We use plutarch's nixpkgs / haskell.nix etc. to make sure that we don't
       # bother with mixing and matching nixpkgs / haskell.nix versions.
       pkgs =
@@ -30,6 +30,8 @@
           system
           compiler-nix-name
           [
+            "${apropos}"
+            "${digraph}"
             "${plutarch}"
             "${plutarch}/plutarch-extra"
           ];
@@ -57,8 +59,9 @@
 
         shell = commonPlutusShell // {
           additional = ps: with ps; [
-            # apropos
+            apropos
             # apropos-tx
+            digraph
             plutarch
             plutarch-extra
             # sydtest

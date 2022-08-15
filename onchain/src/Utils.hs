@@ -8,13 +8,14 @@ module Utils (
 
 import Codec.Serialise (serialise)
 import Data.ByteString.Lazy qualified as BSL
+import Data.Default (Default (def))
 import Data.List (intercalate)
 import Data.Word (Word8)
 import Numeric
 import Plutarch (compile)
 import Plutarch.Api.V1
 import Plutarch.Prelude
-import Plutus.V1.Ledger.Scripts (Validator)
+import PlutusLedgerApi.V1.Scripts (Validator)
 
 {- | This function turns a validator into a hex string usable with CTL.
  It works by serialising  the validator to a cbor byte string,
@@ -26,7 +27,7 @@ validatorToHexString :: Validator -> String
 validatorToHexString v = concatMap byteToHex $ BSL.unpack $ serialise v
 
 closedTermToHexString :: forall (p :: PType). ClosedTerm p -> String
-closedTermToHexString t = concatMap byteToHex $ BSL.unpack $ serialise $ compile t
+closedTermToHexString t = concatMap byteToHex $ BSL.unpack $ serialise $ compile def t
 
 byteToHex :: Word8 -> String
 byteToHex b = padToLen 2 '0' (showHex b "")
@@ -35,9 +36,9 @@ padToLen :: Int -> Char -> String -> String
 padToLen len c w = replicate (len - length w) c <> w
 
 trivialHexString :: String
-trivialHexString = validatorToHexString $ mkValidator trivialValidator
+trivialHexString = validatorToHexString $ mkValidator def trivialValidator
 
-trivialValidator :: ClosedTerm (PData :--> PData :--> PScriptContext :--> POpaque)
+trivialValidator :: ClosedTerm PValidator
 trivialValidator = plam $ \_ _ _ -> popaque $ pcon PUnit
 
 -- | Represents a declaration of a constant cbor string in purescript
