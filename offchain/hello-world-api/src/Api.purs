@@ -21,7 +21,7 @@ import Data.BigInt as BigInt
 import Data.Time.Duration(Minutes(..))
 
 import Contract.Aeson (decodeAeson, fromString)
-import Contract.Log(logInfo')
+import Contract.Log(logInfo',logError')
 import Contract.Monad ( Contract , liftContractM,liftContractAffM)
 import Contract.PlutusData (Datum(Datum),Redeemer(Redeemer),getDatumByHash)
 import Contract.ScriptLookups as Lookups
@@ -144,7 +144,9 @@ helloScript n = do
   -- TODO It'd be cool if this could be an Integer not Data
   applyArgs paramValidator [Integer $ BigInt.fromInt n]
     >>= case _ of
-      Left err -> liftEffect $ throw $ show err
+      Left err -> do
+        logError' $ show paramValidator
+        liftEffect $ throw $ show err
       Right val -> pure val
 
 
