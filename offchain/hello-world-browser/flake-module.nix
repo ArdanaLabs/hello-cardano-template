@@ -125,7 +125,7 @@
             trap "pkill -f live-server" EXIT
             # runs this in a subshell for the trap to kill
             (live-server $PWD/tmp-build 1<&- &)
-            find $PWD/offchain -regex ".*\(\.purs\|\.html\|\.css\)" | entr -ps "echo bundling; nix build .#"offchain:hello-world-browser" --out-link $PWD/tmp-build"
+            find $PWD/offchain -regex ".*\(\.purs\|\.html\|\.css\)" | entr -ps "echo building; nix build .#"offchain:hello-world-browser" --out-link $PWD/tmp-build; echo 'refresh the page'"
           '';
         };
         "offchain:hello-world-browser:e2e" =
