@@ -89,14 +89,15 @@ library
     , plutarch-extra
     , plutus-core
     , plutus-ledger-api
-    , serialise
     , pretty
+    , serialise
 
 library apropos-tx
   import:          lang
   exposed-modules:
-    Apropos.Script
     Apropos.ContextBuilder
+    Apropos.Script
+
   hs-source-dirs:  apropos-tx
   build-depends:
     , apropos
@@ -156,6 +157,8 @@ test-suite tests
     Tests
 
   build-depends:
+    , apropos
+    , apropos-tx
     , base
     , bytestring
     , containers
@@ -174,5 +177,3 @@ test-suite tests
     , tasty-hedgehog
     , transformers
     , with-utf8
-    , apropos
-    , apropos-tx

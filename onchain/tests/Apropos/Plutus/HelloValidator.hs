@@ -10,13 +10,13 @@ import Apropos.Script
 import Test.Syd hiding (Context)
 import Test.Syd.Hedgehog
 
-import PlutusLedgerApi.V1.Address (pubKeyHashAddress)
 import PlutusLedgerApi.V1 (
   BuiltinData (BuiltinData),
   Redeemer (..),
   Value (..),
   toBuiltinData,
  )
+import PlutusLedgerApi.V1.Address (pubKeyHashAddress)
 import PlutusLedgerApi.V1.Scripts (Context (..), Datum (..), applyValidator)
 import PlutusLedgerApi.V1.Value (currencySymbol, tokenName)
 import PlutusLedgerApi.V2 (fromList)

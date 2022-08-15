@@ -15,7 +15,7 @@ import Utils (closedTermToHexString, validatorToHexString)
 
 import PlutusLedgerApi.V1.Address (Address (..))
 import PlutusLedgerApi.V1.Credential (Credential (..))
-import PlutusLedgerApi.V1.Scripts (Validator,ValidatorHash)
+import PlutusLedgerApi.V1.Scripts (Validator, ValidatorHash)
 
 import Plutarch.Prelude
 
@@ -26,7 +26,6 @@ import Plutarch.Unsafe (punsafeCoerce)
 
 import Plutarch.Extra.TermCont (pmatchC)
 
-
 data HelloRedemer (s :: S)
   = Inc (Term s (PDataRecord '[]))
   | Spend (Term s (PDataRecord '[]))
@@ -34,7 +33,6 @@ data HelloRedemer (s :: S)
   deriving anyclass (PlutusType, PIsData, PEq)
 
 instance DerivePlutusType HelloRedemer where type DPTStrat _ = PlutusTypeData
-
 
 helloWorldHexString :: String
 helloWorldHexString = validatorToHexString helloValidator

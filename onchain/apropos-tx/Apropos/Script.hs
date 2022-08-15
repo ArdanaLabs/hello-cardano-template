@@ -20,9 +20,9 @@ import Hedgehog (
   property,
   withTests,
  )
-import PlutusLedgerApi.V1(ExCPU (..), ExMemory (..))
-import PlutusLedgerApi.V1.Scripts (Script, ScriptError (..), evaluateScript)
 import PlutusCore.Evaluation.Machine.ExBudget (ExBudget (..))
+import PlutusLedgerApi.V1 (ExCPU (..), ExMemory (..))
+import PlutusLedgerApi.V1.Scripts (Script, ScriptError (..), evaluateScript)
 import Text.PrettyPrint (
   Doc,
   Style (lineLength),
