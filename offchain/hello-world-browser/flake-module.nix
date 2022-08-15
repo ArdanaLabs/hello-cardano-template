@@ -117,18 +117,15 @@
         "offchain:hello-world-browser:loop" = pkgs.mkShell {
           name = "hello-world-browser-loop";
           buildInputs = (with pkgs; [
-            (hello-world-browser.ps.command { bundle.esbuild.outfile = "bundle.js"; })
-            simple-http-server
+            nodePackages.live-server
             entr
-            xdg-utils
           ]);
           shellHook = ''
             nix build .#"offchain:hello-world-browser" --out-link $PWD/tmp-build
-            trap "pkill -f simple-http-server" EXIT
+            trap "pkill -f live-server" EXIT
             # runs this in a subshell for the trap to kill
-            (simple-http-server -s --nocache -i -- $PWD/tmp-build/ 1<&- &)
-            xdg-open http://localhost:8000
-            alias watch='find $PWD/offchain -name "*.purs" | entr -ps "echo bundling; nix build .#"offchain:hello-world-browser" --out-link $PWD/tmp-build"'
+            (live-server $PWD/tmp-build 1<&- &)
+            find $PWD/offchain -regex ".*\(\.purs\|\.html\|\.css\)" | entr -ps "echo bundling; nix build .#"offchain:hello-world-browser" --out-link $PWD/tmp-build"
           '';
         };
         "offchain:hello-world-browser:e2e" =
