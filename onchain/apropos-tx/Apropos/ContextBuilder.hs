@@ -157,4 +157,3 @@ instance Monad m => TxInfoBuilder (StateT TxInfo) m where
   setTxInfoSignatories s = modify (\txi -> txi {txInfoSignatories = s})
   setTxInfoData d = modify (\txi -> txi {txInfoData = d})
   setTxInfoId b = modify (\txi -> txi {txInfoId = TxId b})
-
