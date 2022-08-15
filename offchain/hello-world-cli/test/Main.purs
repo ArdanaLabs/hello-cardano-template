@@ -32,7 +32,7 @@ main = do
             <> show (UInt.toInt (unwrap env).config.datumCacheConfig.port)
           <> " "
     let cli = "hello-world-cli " <> plutipPorts
-    conf <- (\w -> " " <> w <> " ") <$> makeWallet plutipWalletDir "plutip" alice
+    conf <- (\w -> " " <> w <> " ") <$> makeWallet (unwrap env).config.networkId plutipWalletDir "plutip" alice
     let badConf = jsonDir <> "badWalletCfg.json "
     let state = " script.clistate "
     let badState = jsonDir <> "badState.json "

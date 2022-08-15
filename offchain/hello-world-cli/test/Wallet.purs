@@ -14,20 +14,23 @@ import Node.FS.Aff
   ,writeTextFile
   ,unlink
   )
+import Serialization.Address (NetworkId(TestnetId,MainnetId))
 import Wallet.Key(KeyWallet)
 import Wallet.Key(keyWalletPrivatePaymentKey,keyWalletPrivateStakeKey)
 
 import HelloWorld.Cli.Types (ParsedConf)
 
-makeWallet :: String -> String -> KeyWallet -> Aff String
-makeWallet dir name wallet = do
+makeWallet :: NetworkId -> String -> String -> KeyWallet -> Aff String
+makeWallet network dir name wallet = do
   let cfgName = dir <> name <>  "-cfg.json"
   let walletName = name <> "-wallet.skey"
   let stakeName = name <> "-staking.skey"
   writeTextFile UTF8 cfgName $ encodeAeson >>>show $
     { walletPath : walletName
     , stakingPath : stakeName <$ keyWalletPrivateStakeKey wallet
-    , network : "Mainnet" -- Plutip just uses the Mainnet id
+    , network : case network of
+        MainnetId -> "Mainnet"
+        TestnetId -> "Testnet"
     }
   privatePaymentKeyToFile walletName $ keyWalletPrivatePaymentKey wallet
   void $ traverse (privateStakeKeyToFile stakeName) $ keyWalletPrivateStakeKey wallet
