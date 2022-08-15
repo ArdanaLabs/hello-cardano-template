@@ -88,13 +88,12 @@
                     done
                     # sleep 1 second between updates
                     sleep 1
-                    # is the test command still running or not
+                    # check if the test command still running or not
                     if ps -p $TEST_PID > /dev/null; then
-                      # if yes, clear the amount of lines we printed
+                      # clear the amount of lines we printed
                       tput cuu ''${#outfiles[@]}
                       tput ed
                     else
-                      # if not, break the loop
                       break
                     fi
                   done
