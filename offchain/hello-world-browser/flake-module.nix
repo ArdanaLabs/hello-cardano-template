@@ -104,6 +104,34 @@
       apps = {
         "offchain:hello-world-browser:serve" =
           dusd-lib.makeServeApp self'.packages."offchain:hello-world-browser";
+        "offchain:hello-world-browser:serve-live" =
+          dusd-lib.mkApp (
+            pkgs.writeShellApplication {
+              name = "hello-world-browser-serve-loop";
+              runtimeInputs = with pkgs; [
+                entr
+                findutils # for find
+                procps # for pkill
+                nodePackages.live-server
+              ];
+              text =
+                let
+                  resultDir = "$PWD/tmp-result";
+                  buildBrowser =
+                    ''nix build .#"offchain:hello-world-browser" --out-link "${resultDir}"'';
+                in
+                ''
+                  # build once to ensure that the server has something to serve
+                  ${buildBrowser}
+                  trap "pkill -f live-server" EXIT
+                  # runs this in a subshell for the trap to kill
+                  (live-server "${resultDir}" 1<&- &)
+                  # shellcheck disable=SC2016
+                  find "$PWD/offchain" -regex ".*\(\.purs\|\.html\|\.css\)" \
+                    | entr -ps 'echo building; ${buildBrowser}; echo "refresh the page"'
+                '';
+            }
+          );
         "offchain:hello-world-browser:test" =
           dusd-lib.mkApp hello-world-browser-tests;
       };
@@ -114,20 +142,6 @@
       devShells = {
         "offchain:hello-world-browser" =
           offchain-lib.makeProjectShell hello-world-browser { };
-        "offchain:hello-world-browser:loop" = pkgs.mkShell {
-          name = "hello-world-browser-loop";
-          buildInputs = (with pkgs; [
-            nodePackages.live-server
-            entr
-          ]);
-          shellHook = ''
-            nix build .#"offchain:hello-world-browser" --out-link $PWD/tmp-build
-            trap "pkill -f live-server" EXIT
-            # runs this in a subshell for the trap to kill
-            (live-server $PWD/tmp-build 1<&- &)
-            find $PWD/offchain -regex ".*\(\.purs\|\.html\|\.css\)" | entr -ps "echo building; nix build .#"offchain:hello-world-browser" --out-link $PWD/tmp-build; echo 'refresh the page'"
-          '';
-        };
         "offchain:hello-world-browser:e2e" =
           offchain-lib.makeProjectShell hello-world-browser-e2e { };
       };
