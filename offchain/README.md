@@ -69,7 +69,7 @@ nix run .#offchain:hello-world-cli:test
 or in the dev shell run
 ```
 nix build .#offchain:hello-world-cli
-PATH=$PATH:./result/bin
+export PATH=$PATH:./result/bin
 purs-nix test
 ```
 
