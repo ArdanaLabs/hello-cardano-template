@@ -1,11 +1,13 @@
 module Test.Wallet
-  (makeWallet
-  ,rmWallet
+  (withPlutipWalletFile
   ) where
 
 import Aeson(decodeAeson,parseJsonStringToAeson,encodeAeson)
 import Contract.Prelude
+import Contract.Test.Plutip (PlutipConfig, withPlutipContractEnv)
 import Contract.Wallet.KeyFile(privatePaymentKeyToFile,privateStakeKeyToFile)
+import Data.BigInt(BigInt)
+import Data.UInt as UInt
 import Data.String(take,lastIndexOf,Pattern(Pattern))
 import Effect.Exception(throw)
 import Node.Encoding (Encoding(UTF8))
@@ -19,6 +21,20 @@ import Wallet.Key(KeyWallet)
 import Wallet.Key(keyWalletPrivatePaymentKey,keyWalletPrivateStakeKey)
 
 import HelloWorld.Cli.Types (ParsedConf)
+
+-- TODO if it becomes usefull this could be made to work with optionally many wallets
+-- but that's non-trivial and we don't need it yet
+withPlutipWalletFile :: forall a. PlutipConfig -> Array BigInt -> String -> (String -> String -> Aff a) -> Aff a
+withPlutipWalletFile config vals walletDir f = withPlutipContractEnv config vals \env wallet -> do
+  w <- makeWallet (unwrap env).config.networkId walletDir "plutip" wallet
+  let portArgs =
+        " --ctl-port " <> show (UInt.toInt (unwrap env).config.ctlServerConfig.port)
+        <> " --ogmios-port " <> show (UInt.toInt (unwrap env).config.ogmiosConfig.port)
+        <> " --odc-port " <> show (UInt.toInt (unwrap env).config.datumCacheConfig.port)
+        <> " "
+  res <- f portArgs (" " <> w <> " ") -- spaces are convenient for passing it as an argument
+  rmWallet w
+  pure res
 
 makeWallet :: NetworkId -> String -> String -> KeyWallet -> Aff String
 makeWallet network dir name wallet = do
