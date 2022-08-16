@@ -41,7 +41,7 @@
         ctl-runtime = ctl-pkgs.launchCtlRuntime ctlRuntimeConfig;
         "offchain:docs:serve" =
           dusd-lib.makeServeApp
-            "${self'.packages."offchain:docs"}/generated-docs/html/";
+            "${self'.packages."offchain:docs"}/hello-world-api/generated-docs/html/";
         "offchain:test" =
           let
             getTestScript = outputName:

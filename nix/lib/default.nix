@@ -21,7 +21,7 @@
         {
           name = "serve";
           runtimeInputs = [ pkgs.simple-http-server ];
-          text = "simple-http-server --nocache -i -- ${pathToServe}";
+          text = "simple-http-server --ip 127.0.0.1 -p 8080 --nocache -i -- ${pathToServe}";
         }
     );
 }
