@@ -38,9 +38,8 @@ main = do
             "."
       describe "help page" do
         it "knows its own name" -- it used to call itself `purs-nix run`
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports _wallet ->
-            passesSaying
-            (cli <> ports <> "--help")
+          $ passesSaying
+            (cli <> "--help")
             "Usage: hello-world-cli"
       describe "lock" do
         it "fails on no conf"
@@ -124,7 +123,7 @@ main = do
             passesSaying
               (cli <> ports <> "-c" <> wallet <> "-s" <> state <> "lock -i 0 -p 1")
               "finished"
-            unlink state
+            unlink $ trim state
             failsSaying
               ("ls" <> state)
               "No such file"
@@ -136,7 +135,7 @@ main = do
             passesSaying
               (cli <> ports <> "-c" <> wallet <> "-s" <> state <> "query")
               "Current datum:0"
-            unlink state
+            unlink $ trim state
             failsSaying
               ("ls" <> state)
               "No such file"
@@ -151,7 +150,7 @@ main = do
             passesSaying
               (cli <> ports <> "-c" <> wallet <> "-s" <> state <> "increment")
               "finished"
-            unlink state
+            unlink $ trim state
             failsSaying
               ("ls" <> state)
               "No such file"
@@ -169,7 +168,7 @@ main = do
             passesSaying
               (cli <> ports <> "-c" <> wallet <> "-s" <> state <> "query")
               "Current datum:1"
-            unlink state
+            unlink $ trim state
             failsSaying
               ("ls" <> state)
               "No such file"
@@ -190,7 +189,6 @@ main = do
             passesSaying
               (cli <> ports <> "-c" <> wallet <> "-s" <> state <> "unlock")
               "finished"
-            unlink state
             failsSaying
               ("ls" <> state)
               "No such file"
