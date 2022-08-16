@@ -28,4 +28,5 @@ cbors :: [CBOR]
 cbors =
   [ CBOR "paramHello" paramHelloCBOR
   , CBOR "hello" helloWorldHexString
+  , CBOR "trivial" trivialCBOR
   ]

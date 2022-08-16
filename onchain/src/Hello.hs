@@ -7,6 +7,7 @@ module Hello (
   helloAddress,
   helloWorldHexString,
   paramHelloCBOR,
+  trivialCBOR,
   HelloRedemer (..),
 ) where
 
@@ -40,6 +41,9 @@ helloWorldHexString = validatorToHexString helloValidator
 paramHelloCBOR :: String
 paramHelloCBOR = closedTermToHexString paramValidator
 
+trivialCBOR :: String
+trivialCBOR = closedTermToHexString trivial
+
 helloValidator :: Validator
 helloValidator = mkValidator def (paramValidator #$ pforgetData (pdata (1 :: Term _ PInteger)))
 
@@ -48,6 +52,9 @@ helloValidatorHash = validatorHash helloValidator
 
 helloAddress :: Address
 helloAddress = Address (ScriptCredential helloValidatorHash) Nothing
+
+trivial :: ClosedTerm (PData :--> PValidator)
+trivial = plam $ \_ _ _ _ -> popaque $ pcon PUnit
 
 paramValidator :: ClosedTerm (PData :--> PValidator)
 paramValidator = plam $ \dCountBy dn dunit dsc -> do
