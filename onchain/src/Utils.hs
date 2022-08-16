@@ -16,6 +16,7 @@ import Plutarch (compile)
 import Plutarch.Api.V1
 import Plutarch.Prelude
 import PlutusLedgerApi.V1.Scripts (Validator)
+import System.Exit(die)
 
 {- | This function turns a validator into a hex string usable with CTL.
  It works by serialising  the validator to a cbor byte string,
@@ -24,13 +25,13 @@ import PlutusLedgerApi.V1.Scripts (Validator)
  to show each byte in hexidecimal.
 -}
 validatorToHexString :: Validator -> String
-validatorToHexString v = drop 4 $ concatMap byteToHex $ BSL.unpack $ serialise v
+validatorToHexString v = concatMap byteToHex $ BSL.unpack $ serialise v
 
--- I'm not sure why, but in newer versions of plutus the script serialization results in an extra prefix of 8201
--- this causes a decoding error but removing this prefix fixes it
-
-closedTermToHexString :: forall (p :: PType). ClosedTerm p -> String
-closedTermToHexString t = drop 4 $ concatMap byteToHex $ BSL.unpack $ serialise $ compile def t
+closedTermToHexString :: forall (p :: PType). ClosedTerm p -> Maybe String
+closedTermToHexString t = do
+  case compile def t of
+    Left _ -> Nothing
+    Right script -> Just $ concatMap byteToHex $ BSL.unpack $ serialise script
 
 byteToHex :: Word8 -> String
 byteToHex b = padToLen 2 '0' (showHex b "")
@@ -45,16 +46,16 @@ trivialValidator :: ClosedTerm PValidator
 trivialValidator = plam $ \_ _ _ -> popaque $ pcon PUnit
 
 -- | Represents a declaration of a constant cbor string in purescript
-data CBOR = CBOR {name :: String, cbor :: String}
+data CBOR = CBOR {name :: String, cbor :: Maybe String}
 
 -- | Turns a list of CBOR objects into the text of a purescript module which declares them all
-toPureScript :: [CBOR] -> String
+toPureScript :: [CBOR] -> IO String
 toPureScript cs =
-  "module CBOR (\n  " <> intercalate ",\n  " (name <$> cs) <> "\n) where\n\n"
-    <> intercalate "\n\n" (toDec <$> cs)
+  (("module CBOR (\n  " <> intercalate ",\n  " (name <$> cs) <> "\n) where\n\n") <>)
+    . intercalate "\n\n" <$> mapM toDec cs
 
-toDec :: CBOR -> String
-toDec c =
-  name c <> " :: String\n" <> name c <> " = \""
-    <> cbor c
-    <> "\""
+toDec :: CBOR -> IO String
+toDec c = case cbor c of
+            Nothing -> die $ name c <> " didn't compile"
+            Just hex -> pure $ name c <> " :: String\n"
+                        <> name c <> " = \"" <> hex <> "\""

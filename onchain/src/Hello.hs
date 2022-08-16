@@ -38,10 +38,10 @@ instance DerivePlutusType HelloRedemer where type DPTStrat _ = PlutusTypeData
 helloWorldHexString :: String
 helloWorldHexString = validatorToHexString helloValidator
 
-paramHelloCBOR :: String
+paramHelloCBOR :: Maybe String
 paramHelloCBOR = closedTermToHexString paramValidator
 
-trivialCBOR :: String
+trivialCBOR :: Maybe String
 trivialCBOR = closedTermToHexString trivial
 
 helloValidator :: Validator
