@@ -45,7 +45,6 @@
             name = "hello-world-cli-tests";
             runtimeInputs = [
               pkgs.coreutils
-              pkgs.nodejs
               pkgs.postgresql
               self'.packages."offchain:hello-world-cli"
               self.inputs.cardano-transaction-lib.inputs.plutip.packages.${pkgs.system}."plutip:exe:plutip-server"
