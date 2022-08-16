@@ -114,8 +114,10 @@
               mkdir -p $out
               # link hello-world-api docs
               ln -sf ${self'.packages."offchain:hello-world-api:docs"}/generated-docs/html $out/html
-              # The ls is a regresion test for the path to index.html changing
-              ls $out/html/index.html
+              if [ -f "$out/html/index.html" ]; then
+                echo "file does not exist"
+                exit 1
+              fi
             '';
       };
     };
