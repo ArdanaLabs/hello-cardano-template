@@ -121,7 +121,7 @@
           dusd-lib.mkApp hello-world-browser-tests;
       };
       checks = {
-        run-hello-world-browser-tests =
+        "offchain:hello-world-browser:lighthouse" =
           let test = hello-world-browser-tests; in
           pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
             "${test}/bin/${test.meta.mainProgram} | tee $out";
