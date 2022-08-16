@@ -115,7 +115,7 @@
               # link hello-world-api docs
               ln -sf ${self'.packages."offchain:hello-world-api:docs"}/generated-docs/html $out/html
               if ! [ -f "$out/html/index.html" ]; then
-                echo "file does not exist"
+                echo "doc generation did not create index.html in the expected location"
                 exit 1
               fi
             '';
