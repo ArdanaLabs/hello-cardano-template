@@ -121,11 +121,11 @@
           dusd-lib.mkApp hello-world-browser-tests;
       };
       checks = {
-        "offchain:hello-world-browser:lighthouse" =
+        "offchain:hello-world-browser" =
           let test = hello-world-browser-tests; in
           pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
             "${test}/bin/${test.meta.mainProgram} | tee $out";
-        hello-world-browser-lighthouse-test =
+        "offchain:hello-world-browser:lighthouse" =
           pkgs.callPackage ../../nixos/tests/hello-world-browser-lighthouse.nix {
             lighthouse =
               (dream2nix.lib.makeOutputs { source = self.inputs.lighthouse-src; }).packages.lighthouse;
