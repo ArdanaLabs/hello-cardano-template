@@ -51,7 +51,6 @@
               self.inputs.cardano-transaction-lib.packages.${pkgs.system}."ctl-server:exe:ctl-server"
               self.inputs.mlabs-ogmios.defaultPackage.${pkgs.system}
               self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system}
-              testExe
             ];
             text = ''
               export LC_ALL=C.utf-8
