@@ -41,7 +41,7 @@
         ctl-runtime = ctl-pkgs.launchCtlRuntime ctlRuntimeConfig;
         "offchain:docs:serve" =
           dusd-lib.makeServeApp
-            "${self'.packages."offchain:docs"}/hello-world-api/generated-docs/html/";
+            "${self'.packages."offchain:docs"}/html/";
         "offchain:test" =
           let
             getTestScript = outputName:
@@ -113,7 +113,9 @@
             ''
               mkdir -p $out
               # link hello-world-api docs
-              ln -sf ${self'.packages."offchain:hello-world-api:docs"} $out/hello-world-api
+              ln -sf ${self'.packages."offchain:hello-world-api:docs"}/generated-docs/html $out/html
+              # The ls is a regresion test for the path to index.html changing
+              ls $out/html/index.html
             '';
       };
     };
