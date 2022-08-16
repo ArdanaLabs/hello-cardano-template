@@ -2,7 +2,7 @@
 {
   perSystem = { config, self', inputs', system, ... }:
     let
-      inherit (self.inputs) plutarch apropos digraph;
+      inherit (self.inputs) plutarch;
       # We use plutarch's nixpkgs / haskell.nix etc. to make sure that we don't
       # bother with mixing and matching nixpkgs / haskell.nix versions.
       pkgs =
@@ -19,53 +19,43 @@
       # we inherit fixHaskellDotNix and some common attributes to give to
       # cabalProject'
       inherit (config) dusd-lib;
-      inherit (dusd-lib.haskell) fixHaskellDotNix;
-      commonPlutusShell = dusd-lib.haskell.commonPlutusShell compiler-nix-name pkgs;
+      inherit (dusd-lib.haskell) fixHaskellDotNix mkCommonPlutusShell;
+
+      commonPlutusShell = mkCommonPlutusShell compiler-nix-name pkgs;
 
       plutarch-hackage =
         plutarch.inputs.haskell-nix-extra-hackage.mkHackagesFor
           system
           compiler-nix-name
           [
-            "${apropos}"
-            "${digraph}"
+            "${self.inputs.apropos}"
+            "${self.inputs.digraph}"
             "${plutarch}"
             "${plutarch}/plutarch-extra"
           ];
-      myhackage =
+
+      project = pkgs.haskell-nix.cabalProject' (
         plutarch.applyPlutarchDep pkgs {
+          src = ./.;
+
           inherit compiler-nix-name;
+
           inherit (plutarch-hackage)
             extra-hackages
             extra-hackage-tarballs
             modules
             ;
-        };
 
-      project = pkgs.haskell-nix.cabalProject' {
-        src = ./.;
-
-        inherit compiler-nix-name;
-
-        inherit (myhackage)
-          extra-hackages
-          extra-hackage-tarballs
-          modules
-          cabalProjectLocal
-          ;
-
-        shell = commonPlutusShell // {
-          additional = ps: [
-            ps.apropos
-            # apropos-tx
-            ps.digraph
-            ps.plutarch
-            ps.plutarch-extra
-            # sydtest
-            # sydtest-hedgehog
-          ];
-        };
-      };
+          shell = commonPlutusShell // {
+            additional = ps: [
+              ps.apropos
+              ps.digraph
+              ps.plutarch
+              ps.plutarch-extra
+            ];
+          };
+        }
+      );
 
       haskellNixFlake =
         fixHaskellDotNix (project.flake { }) [ ./dUSD-onchain.cabal ];
