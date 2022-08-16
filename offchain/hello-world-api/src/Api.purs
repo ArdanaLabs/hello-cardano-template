@@ -135,7 +135,7 @@ helloScript :: Int -> Contract () Validator
 helloScript n = do
   let maybeParamValidator :: Maybe Validator
       maybeParamValidator =
-          CBOR.trivial
+          CBOR.paramHello
             # fromString
             # decodeAeson
             # hush

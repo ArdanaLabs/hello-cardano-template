@@ -24,10 +24,10 @@ import PlutusLedgerApi.V1.Scripts (Validator)
  to show each byte in hexidecimal.
 -}
 validatorToHexString :: Validator -> String
-validatorToHexString v = concatMap byteToHex $ BSL.unpack $ serialise v
+validatorToHexString v = drop 4 $ concatMap byteToHex $ BSL.unpack $ serialise v
 
 closedTermToHexString :: forall (p :: PType). ClosedTerm p -> String
-closedTermToHexString t = concatMap byteToHex $ BSL.unpack $ serialise $ compile def t
+closedTermToHexString t = drop 4 $ concatMap byteToHex $ BSL.unpack $ serialise $ compile def t
 
 byteToHex :: Word8 -> String
 byteToHex b = padToLen 2 '0' (showHex b "")
