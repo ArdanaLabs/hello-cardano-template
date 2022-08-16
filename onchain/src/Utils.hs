@@ -25,6 +25,7 @@ import PlutusLedgerApi.V1.Scripts (Validator)
 -}
 validatorToHexString :: Validator -> String
 validatorToHexString v = drop 4 $ concatMap byteToHex $ BSL.unpack $ serialise v
+
 -- I'm not sure why, but in newer versions of plutus the script serialization results in an extra prefix of 8201
 -- this causes a decoding error but removing this prefix fixes it
 

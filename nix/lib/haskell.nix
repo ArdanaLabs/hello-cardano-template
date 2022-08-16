@@ -1,21 +1,19 @@
-{ self, pkgs }:
+{ self }:
 let
   lib = self.inputs.nixpkgs.lib;
 in
 {
   fixHaskellDotNix = import ./fixHaskellDotNix.nix self.inputs.nixpkgs.lib;
-  commonPlutusShell = {
+  commonPlutusShell = compiler-nix-name: pkgs: {
     nativeBuildInputs = with pkgs; [
       cabal-install
       hlint
+      (self.inputs.plutarch.hlsFor' compiler-nix-name pkgs).hsPkgs.haskell-language-server.components.exes.haskell-language-server
     ];
-    withHoogle = true;
-    tools = {
-      haskell-language-server = { };
-    };
     exactDeps = true;
+    withHoogle = true;
   };
-  commonPlutusModules =
+  commonPlutusModules = pkgs:
     let
       deferPluginErrors = true;
       commonPkgconfigDeps = [

@@ -2,7 +2,7 @@
 {
   perSystem = { config, self', inputs', system, ... }:
     let
-      inherit (self.inputs) plutarch apropos apropos-tx digraph;
+      inherit (self.inputs) plutarch apropos digraph;
       # We use plutarch's nixpkgs / haskell.nix etc. to make sure that we don't
       # bother with mixing and matching nixpkgs / haskell.nix versions.
       pkgs =
@@ -13,17 +13,14 @@
             (import "${plutarch.inputs.iohk-nix}/overlays/crypto")
           ];
         };
+      compiler-nix-name = "ghc923";
+
       # dusd-lib contains helper functions for dealing with haskell.nix. From it,
       # we inherit fixHaskellDotNix and some common attributes to give to
       # cabalProject'
       inherit (config) dusd-lib;
-      inherit (dusd-lib.haskell)
-        commonPlutusModules
-        commonPlutusShell
-        fixHaskellDotNix
-        ;
-
-      compiler-nix-name = "ghc923";
+      inherit (dusd-lib.haskell) fixHaskellDotNix;
+      commonPlutusShell = dusd-lib.haskell.commonPlutusShell compiler-nix-name pkgs;
 
       plutarch-hackage =
         plutarch.inputs.haskell-nix-extra-hackage.mkHackagesFor
@@ -58,12 +55,12 @@
           ;
 
         shell = commonPlutusShell // {
-          additional = ps: with ps; [
-            apropos
+          additional = ps: [
+            ps.apropos
             # apropos-tx
-            digraph
-            plutarch
-            plutarch-extra
+            ps.digraph
+            ps.plutarch
+            ps.plutarch-extra
             # sydtest
             # sydtest-hedgehog
           ];
