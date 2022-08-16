@@ -43,9 +43,8 @@ main = do
             "Usage: hello-world-cli"
       describe "lock" do
         it "fails on no conf"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports _wallet ->
-            failsSaying
-            (cli <> ports <> "-s" <> state <> "lock -i 0 -p 1")
+          $ failsSaying
+            (cli <> "-s" <> state <> "lock -i 0 -p 1")
             "Missing: (-c|--config CONFIG_FILE)"
         it "fails on no state"
           $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
@@ -59,8 +58,7 @@ main = do
           $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
             fails $ cli <> ports <> "-c" <> wallet <> "-s" <> state <> "lock -i 0"
         it "fails on bad conf"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
-            fails $ cli <> ports <> "-c" <> badConf <> "-s" <> state <> "lock -i 0 -p 1"
+          $ fails $ cli <> "-c" <> badConf <> "-s" <> state <> "lock -i 0 -p 1"
         -- There's no hard reason this couldn't be made to work without the runtime
         -- but it happens to look up the datum before noticing the state shouldn't exist
         it "fails when state exists"
@@ -70,9 +68,8 @@ main = do
             "Can't use lock when state file already exists"
       describe "increment" do
         it "fails on no conf"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
-            failsSaying
-            (cli <> ports <> "-s" <> state <> "increment")
+          $ failsSaying
+            (cli <> "-s" <> state <> "increment")
             "Missing: (-c|--config CONFIG_FILE)"
         it "fails on no state"
           $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
@@ -80,15 +77,13 @@ main = do
             (cli <> ports <> "-c" <> wallet <> "increment")
             "Missing: (-s|--state-file STATE_FILE)"
         it "fails when state doesn't exists"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
-            failsSaying
-            (cli <> ports <> "-c bad_path -s" <> state <> "increment")
+          $ failsSaying
+            (cli <> "-c bad_path -s" <> state <> "increment")
             "[Error: ENOENT: no such file or directory, open 'bad_path']"
       describe "unlock" do
         it "fails on no conf"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
-            failsSaying
-            (cli <> ports <> "-s" <> state <> "unlock")
+          $ failsSaying
+            (cli <> "-s" <> state <> "unlock")
             "Missing: (-c|--config CONFIG_FILE)"
         it "fails on no state"
           $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
@@ -96,15 +91,13 @@ main = do
             (cli <> ports <> "-c" <> wallet <> "unlock")
             "Missing: (-s|--state-file STATE_FILE)"
         it "fails when state doesn't exists"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
-            failsSaying
-            (cli <> ports <> "-c bad_path -s" <> state <> "unlock")
+          $ failsSaying
+            (cli <> "-c bad_path -s" <> state <> "unlock")
             "[Error: ENOENT: no such file or directory, open 'bad_path']"
       describe "query" do
         it "fails on no conf"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
-            failsSaying
-            (cli <> ports <> "-s" <> state <> "query")
+          $ failsSaying
+            (cli <> "-s" <> state <> "query")
             "Missing: (-c|--config CONFIG_FILE)"
         it "fails on no state"
           $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
@@ -112,9 +105,8 @@ main = do
             (cli <> ports <> "-c" <> wallet <> "query")
             "Missing: (-s|--state-file STATE_FILE)"
         it "fails when state doesn't exists"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
-            failsSaying
-            (cli <> ports <> "-c bad_path -s" <> state <> "query")
+          $ failsSaying
+            (cli <> "-c bad_path -s" <> state <> "query")
             "[Error: ENOENT: no such file or directory, open 'bad_path']"
       describe "integration test" do
         -- TODO I'm not sure why they aren't saying finished
