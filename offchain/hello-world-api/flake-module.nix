@@ -76,7 +76,7 @@
             ''
               mkdir $out && cd $out
               # it may make sense to eventually add cli and browser to the srcs, but we need to not define Main twice
-              ${hello-world-api.ps.command { }}/bin/purs-nix docs
+              ${hello-world-api.ps.command { srcs = [ ./src ];}}/bin/purs-nix docs
             '';
       };
     };
