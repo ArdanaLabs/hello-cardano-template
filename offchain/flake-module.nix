@@ -114,7 +114,7 @@
               mkdir -p $out
               # link hello-world-api docs
               ln -sf ${self'.packages."offchain:hello-world-api:docs"}/generated-docs/html $out/html
-              if [ -f "$out/html/index.html" ]; then
+              if ! [ -f "$out/html/index.html" ]; then
                 echo "file does not exist"
                 exit 1
               fi
