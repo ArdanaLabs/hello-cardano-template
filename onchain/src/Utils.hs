@@ -16,7 +16,7 @@ import Plutarch (compile)
 import Plutarch.Api.V1
 import Plutarch.Prelude
 import PlutusLedgerApi.V1.Scripts (Validator)
-import System.Exit(die)
+import System.Exit (die)
 
 {- | This function turns a validator into a hex string usable with CTL.
  It works by serialising  the validator to a cbor byte string,
@@ -52,10 +52,16 @@ data CBOR = CBOR {name :: String, cbor :: Maybe String}
 toPureScript :: [CBOR] -> IO String
 toPureScript cs =
   (("module CBOR (\n  " <> intercalate ",\n  " (name <$> cs) <> "\n) where\n\n") <>)
-    . intercalate "\n\n" <$> mapM toDec cs
+    . intercalate "\n\n"
+    <$> mapM toDec cs
 
 toDec :: CBOR -> IO String
 toDec c = case cbor c of
-            Nothing -> die $ name c <> " didn't compile"
-            Just hex -> pure $ name c <> " :: String\n"
-                        <> name c <> " = \"" <> hex <> "\""
+  Nothing -> die $ name c <> " didn't compile"
+  Just hex ->
+    pure $
+      name c <> " :: String\n"
+        <> name c
+        <> " = \""
+        <> hex
+        <> "\""
