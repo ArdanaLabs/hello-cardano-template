@@ -104,6 +104,37 @@
       apps = {
         "offchain:hello-world-browser:serve" =
           dusd-lib.makeServeApp self'.packages."offchain:hello-world-browser";
+        "offchain:hello-world-browser:serve-live" =
+          dusd-lib.mkApp (
+            pkgs.writeShellApplication {
+              name = "hello-world-browser-serve-loop";
+              runtimeInputs = with pkgs; [
+                entr
+                findutils # for find
+                procps # for pkill
+                nodePackages.live-server
+              ];
+              text =
+                let
+                  resultDir = "$PWD/tmp-result";
+                  buildBrowser =
+                    ''nix build .#"offchain:hello-world-browser" --out-link "${resultDir}"'';
+                in
+                ''
+                  # build once to ensure that the server has something to serve
+                  ${buildBrowser}
+                  # kill live-serve and cleanup result dir on exit
+                  trap 'pkill -f live-server && rm -r "${resultDir}"' EXIT
+                  # runs this in a subshell for the trap to kill
+                  (live-server "${resultDir}" &)
+                  # disable this shellcheck because it complains about
+                  # "variable won't expand in single quotes" which is what we want here.
+                  # shellcheck disable=SC2016
+                  find "$PWD/offchain" -regex ".*\(\.purs\|\.html\|\.css\)" \
+                    | entr -ps 'echo building; ${buildBrowser}; echo "refresh the page"'
+                '';
+            }
+          );
         "offchain:hello-world-browser:test" =
           dusd-lib.mkApp hello-world-browser-tests;
       };

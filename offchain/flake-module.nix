@@ -41,7 +41,7 @@
         ctl-runtime = ctl-pkgs.launchCtlRuntime ctlRuntimeConfig;
         "offchain:docs:serve" =
           dusd-lib.makeServeApp
-            "${self'.packages."offchain:docs"}/generated-docs/html/";
+            "${self'.packages."offchain:docs"}/html/";
         "offchain:test" =
           let
             getTestScript = outputName:
@@ -113,7 +113,11 @@
             ''
               mkdir -p $out
               # link hello-world-api docs
-              ln -sf ${self'.packages."offchain:hello-world-api:docs"} $out/hello-world-api
+              ln -sf ${self'.packages."offchain:hello-world-api:docs"}/generated-docs/html $out/html
+              if ! [ -f "$out/html/index.html" ]; then
+                echo "doc generation did not create index.html in the expected location"
+                exit 1
+              fi
             '';
       };
     };
