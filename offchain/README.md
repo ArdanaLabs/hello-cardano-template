@@ -26,7 +26,9 @@ nix run .#offchain:hello-world-api:test
 
 ## The Browser-app
 
-To enter the browser app's dev shell run `nix develop .#offchain:hello-world-browser`.
+To enter the browser app's dev shell with Nami Wallet extension run `nix develop .#offchain:hello-world-browser:nami-wallet`.
+
+To enter the browser app's dev shell with Key Wallet extension run `nix develop .#offchain:hello-world-browser:key-wallet`.
 
 Once you are in the dev shell you can obtain a repl with: `purs-nix repl`, or compile the browser app with `purs-nix compile`.
 
@@ -34,10 +36,13 @@ To run the browser app you can use:
 ```
 nix run .#offchain:hello-world-browser:serve
 ```
-
-To run the browser tests use:
+To run the browser tests with Key Wallet use:
 ```
-nix run .#offchain:hello-world-browser:test
+nix run .#offchain:hello-world-browser:e2e:key-wallet
+```
+To run the browser tests with Nami Wallet use:
+```
+nix run .#offchain:hello-world-browser:e2e:nami-wallet
 ```
 
 # The CLI

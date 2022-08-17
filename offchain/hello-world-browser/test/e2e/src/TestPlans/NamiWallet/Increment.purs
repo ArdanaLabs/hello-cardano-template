@@ -1,11 +1,12 @@
-module HelloWorld.Test.E2E.TestPlans.Increment where
+module HelloWorld.Test.E2E.TestPlans.NamiWallet.Increment where
 
 import Contract.Prelude
 
 import Contract.Test.E2E (RunningExample(..), TestOptions, WalletExt(..), delaySec, namiConfirmAccess)
 import Data.String (Pattern(..), contains)
 import HelloWorld.Test.E2E.Constants as Constants
-import HelloWorld.Test.E2E.Helpers (clickButton, getCurrentValueBody, injectJQuery, namiSign', readString, runE2ETest)
+import HelloWorld.Test.E2E.Helpers (clickButton, getCurrentValueBody, injectJQuery, readString)
+import HelloWorld.Test.E2E.NamiWallet (namiSign', runE2ETest)
 import Mote (group)
 import Test.Unit.Assert as Assert
 import TestM (TestPlanM)
