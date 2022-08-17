@@ -28,23 +28,32 @@
               srcs = [ "src/KeyWallet" "src/HelloWorld" ];
             };
         package =
-          pkgs.runCommand "build-hello-world-browser-key-wallet" { }
-          # see buildPursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
-          # see bundlePursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L149
-          ''
-            mkdir $out && cd $out
-            export BROWSER_RUNTIME=1
-            cp -r ${hello-world-browser-key-wallet.ps.modules."KeyWallet.Main".output { }} output
-            cp ${./KeyWallet.js} index.js
-            cp ${./index.html} index.html
-            cp ${../webpack.config.js} webpack.config.js
-            cp -r ${config.ctl.nodeModules}/* .
-            export NODE_PATH="node_modules"
-            export PATH="bin:$PATH"
-            mkdir dist
-            cp ${./main.css} dist/main.css
-            webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
-          '';
+          pkgs.runCommand "build-hello-world-browser-key-wallet"
+            {
+              buildInputs = [
+                pkgs.postgresql
+                self.inputs.cardano-transaction-lib.inputs.plutip.packages.${pkgs.system}."plutip:exe:plutip-server"
+                self.inputs.cardano-transaction-lib.packages.${pkgs.system}."ctl-server:exe:ctl-server"
+                self.inputs.mlabs-ogmios.defaultPackage.${pkgs.system}
+                self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system}
+              ];
+            }
+            # see buildPursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
+            # see bundlePursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L149
+            ''
+              mkdir $out && cd $out
+              export BROWSER_RUNTIME=1
+              cp -r ${hello-world-browser-key-wallet.ps.modules."KeyWallet.Main".output { }} output
+              cp ${./KeyWallet.js} index.js
+              cp ${./index.html} index.html
+              cp ${../webpack.config.js} webpack.config.js
+              cp -r ${config.ctl.nodeModules}/* .
+              export NODE_PATH="node_modules"
+              export PATH="bin:$PATH"
+              mkdir dist
+              cp ${./main.css} dist/main.css
+              webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
+            '';
       };
 
       hello-world-browser-nami-wallet = {
@@ -68,22 +77,22 @@
             };
         package =
           pkgs.runCommand "build-hello-world-browser-nami-wallet" { }
-          # see buildPursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
-          # see bundlePursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L149
-          ''
-            mkdir $out && cd $out
-            export BROWSER_RUNTIME=1
-            cp -r ${hello-world-browser-nami-wallet.ps.modules."NamiWallet.Main".output { }} output
-            cp ${./NamiWallet.js} index.js
-            cp ${./index.html} index.html
-            cp ${../webpack.config.js} webpack.config.js
-            cp -r ${config.ctl.nodeModules}/* .
-            export NODE_PATH="node_modules"
-            export PATH="bin:$PATH"
-            mkdir dist
-            cp ${./main.css} dist/main.css
-            webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
-          '';
+            # see buildPursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
+            # see bundlePursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L149
+            ''
+              mkdir $out && cd $out
+              export BROWSER_RUNTIME=1
+              cp -r ${hello-world-browser-nami-wallet.ps.modules."NamiWallet.Main".output { }} output
+              cp ${./NamiWallet.js} index.js
+              cp ${./index.html} index.html
+              cp ${../webpack.config.js} webpack.config.js
+              cp -r ${config.ctl.nodeModules}/* .
+              export NODE_PATH="node_modules"
+              export PATH="bin:$PATH"
+              mkdir dist
+              cp ${./main.css} dist/main.css
+              webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
+            '';
       };
 
       hello-world-browser-e2e = {
@@ -120,15 +129,7 @@
             name = scriptName;
             runtimeInputs =
               [ self'.packages."offchain:hello-world-browser:key-wallet" ]
-              ++ [
-                pkgs.nodejs
-                pkgs.chromium
-                pkgs.postgresql
-                self.inputs.cardano-transaction-lib.inputs.plutip.packages.${pkgs.system}."plutip:exe:plutip-server"
-                self.inputs.cardano-transaction-lib.packages.${pkgs.system}."ctl-server:exe:ctl-server"
-                self.inputs.mlabs-ogmios.defaultPackage.${pkgs.system}
-                self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system}
-              ];
+              ++ (with pkgs; [ nodejs chromium ]);
             text = ''
               export LC_ALL=C.utf-8
               # this fixes a postgresql issue for me (Brian)
