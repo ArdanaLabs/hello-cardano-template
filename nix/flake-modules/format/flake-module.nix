@@ -33,6 +33,7 @@
         format =
           pkgs.runCommandLocal "format-check" { buildInputs = dependencies ++ [ pkgs.git ]; }
             ''
+              # script taken from https://github.com/srid/treefmt-flake/blob/master/flake-module.nix
               set -e
               # treefmt uses a cache at $HOME. But we can use --no-cache
               # to make treefmt not use a cache. We still seem to need
