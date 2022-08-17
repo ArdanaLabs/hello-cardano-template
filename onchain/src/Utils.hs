@@ -15,7 +15,7 @@ import Numeric
 import Plutarch (compile)
 import Plutarch.Api.V1
 import Plutarch.Prelude
-import PlutusLedgerApi.V1.Scripts (Validator)
+import PlutusLedgerApi.V1.Scripts (Validator,Script)
 import System.Exit (die)
 
 {- | This function turns a validator into a hex string usable with CTL.
@@ -25,13 +25,13 @@ import System.Exit (die)
  to show each byte in hexidecimal.
 -}
 validatorToHexString :: Validator -> String
-validatorToHexString v = concatMap byteToHex $ BSL.unpack $ serialise v
+validatorToHexString v = concatMap byteToHex $ BSL.unpack $ serialise (v :: Validator)
 
 closedTermToHexString :: forall (p :: PType). ClosedTerm p -> Maybe String
 closedTermToHexString t = do
   case compile def t of
     Left _ -> Nothing
-    Right script -> Just $ concatMap byteToHex $ BSL.unpack $ serialise script
+    Right script -> Just $ concatMap byteToHex $ BSL.unpack $ serialise (script :: Script)
 
 byteToHex :: Word8 -> String
 byteToHex b = padToLen 2 '0' (showHex b "")
