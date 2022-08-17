@@ -7,11 +7,13 @@
       # Uses https://github.com/numtide/treefmt to provide auto-formating for multiple
       # languages. Configure the behaviour in treefmt.toml at project root.
       pkgs = inputs'.nixpkgs.legacyPackages;
+      ps-tools = inputs'.ps-tools.legacyPackages;
       dependencies = with pkgs; [
         haskellPackages.cabal-fmt
         haskellPackages.fourmolu
         treefmt
         nixpkgs-fmt
+        ps-tools.purs-tidy
       ];
     in
     {
