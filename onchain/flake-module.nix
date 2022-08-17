@@ -2,38 +2,60 @@
 {
   perSystem = { config, self', inputs', system, ... }:
     let
-      # A flake-module in nix/flake-modules/haskell.nix defines haskell-nix
-      # packages once, so we can reuse it here, it's more performant.
-      pkgs = config.haskell-nix.pkgs;
+      inherit (self.inputs) plutarch;
+      # We use plutarch's nixpkgs / haskell.nix etc. to make sure that we don't
+      # bother with mixing and matching nixpkgs / haskell.nix versions.
+      pkgs =
+        import plutarch.inputs.nixpkgs {
+          inherit system;
+          overlays = [
+            plutarch.inputs.haskell-nix.overlay
+            (import "${plutarch.inputs.iohk-nix}/overlays/crypto")
+          ];
+        };
+      compiler-nix-name = "ghc923";
+
       # dusd-lib contains helper functions for dealing with haskell.nix. From it,
       # we inherit fixHaskellDotNix and some common attributes to give to
       # cabalProject'
-      dusd-lib = config.dusd-lib;
-      inherit (dusd-lib.haskell) commonPlutusModules commonPlutusShell fixHaskellDotNix;
+      inherit (config) dusd-lib;
+      inherit (dusd-lib.haskell) fixHaskellDotNix mkCommonPlutusShell;
 
-      project = pkgs.haskell-nix.cabalProject' {
-        src = pkgs.runCommand "fakesrc-onchain" { } ''
-          cp -rT ${./.} $out
-          chmod u+w $out/cabal.project
-          cat $out/cabal-haskell.nix.project >> $out/cabal.project
-        '';
+      commonPlutusShell = mkCommonPlutusShell compiler-nix-name pkgs;
 
-        cabalProjectFileName = "cabal.project";
-        compiler-nix-name = "ghc8107";
-        sha256map = import ./sha256map;
-
-        modules = commonPlutusModules ++ [{ }];
-        shell = commonPlutusShell // {
-          additional = ps: with ps; [
-            apropos
-            apropos-tx
-            plutarch
-            plutarch-extra
-            sydtest
-            sydtest-hedgehog
+      plutarch-hackage =
+        plutarch.inputs.haskell-nix-extra-hackage.mkHackagesFor
+          system
+          compiler-nix-name
+          [
+            "${self.inputs.apropos}"
+            "${self.inputs.digraph}"
+            "${plutarch}"
+            "${plutarch}/plutarch-extra"
           ];
-        };
-      };
+
+      project = pkgs.haskell-nix.cabalProject' (
+        plutarch.applyPlutarchDep pkgs {
+          src = ./.;
+
+          inherit compiler-nix-name;
+
+          inherit (plutarch-hackage)
+            extra-hackages
+            extra-hackage-tarballs
+            modules
+            ;
+
+          shell = commonPlutusShell // {
+            additional = ps: [
+              ps.apropos
+              ps.digraph
+              ps.plutarch
+              ps.plutarch-extra
+            ];
+          };
+        }
+      );
 
       haskellNixFlake =
         fixHaskellDotNix (project.flake { }) [ ./dUSD-onchain.cabal ];
@@ -46,7 +68,6 @@
               pkgs.writeShellApplication
                 {
                   name = "run-onchain-tests";
-                  runtimeInputs = [ pkgs.nix ];
                   text = ''
                     nix build -L ${self}#checks.\"${system}\".\"dUSD-onchain:test:tests\"
                     cat result/test-stdout

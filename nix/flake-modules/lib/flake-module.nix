@@ -18,7 +18,6 @@ in
         '';
         default = import ../../lib {
           inherit self;
-          pkgs = config.haskell-nix.pkgs;
           realPkgs = inputs'.nixpkgs.legacyPackages;
         };
       };
