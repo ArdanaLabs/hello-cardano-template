@@ -41,7 +41,7 @@
               # but we need to wait until a release is made and that release gets
               # into the nixpkgs we use.
               export HOME="$TMP"
-              treefmt -vvv --no-cache --fail-on-change -C ${self}
+              treefmt -vvv --no-cache -C ${self}
               touch $out
             '';
       };
