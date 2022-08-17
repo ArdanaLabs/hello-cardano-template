@@ -2,7 +2,7 @@ module Utils (
   validatorToHexString,
   trivialHexString,
   closedTermToHexString,
-  CBOR (..),
+  Cbor (..),
   toPureScript,
 ) where
 
@@ -46,16 +46,16 @@ trivialValidator :: ClosedTerm PValidator
 trivialValidator = plam $ \_ _ _ -> popaque $ pcon PUnit
 
 -- | Represents a declaration of a constant cbor string in purescript
-data CBOR = CBOR {name :: String, cbor :: Maybe String}
+data Cbor = Cbor {name :: String, cbor :: Maybe String}
 
--- | Turns a list of CBOR objects into the text of a purescript module which declares them all
-toPureScript :: [CBOR] -> IO String
+-- | Turns a list of Cbor objects into the text of a purescript module which declares them all
+toPureScript :: [Cbor] -> IO String
 toPureScript cs =
-  (("module CBOR (\n  " <> intercalate ",\n  " (name <$> cs) <> "\n) where\n\n") <>)
+  (("module Cbor (\n  " <> intercalate ",\n  " (name <$> cs) <> "\n) where\n\n") <>)
     . intercalate "\n\n"
     <$> mapM toDec cs
 
-toDec :: CBOR -> IO String
+toDec :: Cbor -> IO String
 toDec c = case cbor c of
   Nothing -> die $ name c <> " didn't compile"
   Just hex ->

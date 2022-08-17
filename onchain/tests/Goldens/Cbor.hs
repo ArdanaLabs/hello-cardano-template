@@ -1,15 +1,15 @@
 module Goldens.Cbor (spec) where
 
 import Test.Syd
-import Hello(trivialCBOR,helloWorldHexString,paramHelloCBOR)
+import Hello(trivialCbor,helloWorldCbor,paramHelloCbor)
 
 spec :: Spec
 spec = describe "goldens" $ do
   it "trivial" $
-      pureGoldenStringFile "./goldens/trivial" (show trivialCBOR)
+      pureGoldenStringFile "./goldens/trivial" (show trivialCbor)
   it "hello" $
-      pureGoldenStringFile "./goldens/hello" helloWorldHexString
+      pureGoldenStringFile "./goldens/hello" helloWorldCbor
   it "param-hello" $
-      pureGoldenStringFile "./goldens/param-hello" (show paramHelloCBOR)
+      pureGoldenStringFile "./goldens/param-hello" (show paramHelloCbor)
 
 
