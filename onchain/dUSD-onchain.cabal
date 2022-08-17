@@ -176,5 +176,6 @@ test-suite tests
     , sydtest-hedgehog
     , tasty
     , tasty-hedgehog
+    , text
     , transformers
     , with-utf8
