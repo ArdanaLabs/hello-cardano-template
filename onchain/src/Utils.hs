@@ -15,7 +15,7 @@ import Numeric
 import Plutarch (compile)
 import Plutarch.Api.V1
 import Plutarch.Prelude
-import PlutusLedgerApi.V1.Scripts (Validator,Script)
+import PlutusLedgerApi.V1.Scripts (Script, Validator)
 import System.Exit (die)
 
 {- | This function turns a validator into a hex string usable with CTL.
