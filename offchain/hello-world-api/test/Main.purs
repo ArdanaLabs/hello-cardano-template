@@ -6,6 +6,7 @@ import Prelude
 import Effect (Effect)
 import Test.Encoding as Encoding
 import Test.HelloWorld.Api as Test.HelloWorld.Api
+import Test.HelloWorld.Discovery.Api as Test.HelloWorld.Discovery.Api
 
 import Effect.Aff (launchAff_)
 import Test.Spec.Runner (runSpec',defaultConfig)
@@ -17,3 +18,4 @@ main = do
   launchAff_ $ runSpec' defaultConfig{timeout=Nothing} [ consoleReporter ] do
     Encoding.spec
     Test.HelloWorld.Api.spec
+    Test.HelloWorld.Discovery.Api.spec
