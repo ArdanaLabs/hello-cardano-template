@@ -1,5 +1,6 @@
 {
   imports = [
+    ./dream2nix/flake-module.nix
     ./haskell.nix/flake-module.nix
     ./format/flake-module.nix
     ./lint/flake-module.nix
