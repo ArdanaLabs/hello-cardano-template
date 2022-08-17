@@ -41,7 +41,20 @@
               # but we need to wait until a release is made and that release gets
               # into the nixpkgs we use.
               export HOME="$TMP"
-              treefmt -vvv --no-cache -C ${self}
+              # `treefmt --fail-on-change` is broken for purs-tidy; So we must rely
+              # on git to detect changes. An unintended advantage of this approach
+              # is that when the check fails, it will print a helpful diff at the end.
+              cp -r ${self} $HOME/project
+              chmod -R a+w $HOME/project
+              cd $HOME/project
+              git init
+              git config user.email "nix@localhost"
+              git config user.name Nix
+              git add .
+              git commit -m init
+              treefmt --no-cache
+              git status
+              git --no-pager diff --exit-code
               touch $out
             '';
       };
