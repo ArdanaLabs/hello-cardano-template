@@ -56,12 +56,15 @@
               cp -r ${hello-world-browser-key-wallet.ps.modules."KeyWallet.Main".output { }} output
               cp ${./KeyWallet.js} index.js
               cp ${./index.html} index.html
+              cp ${./package.json} package.json
+              cp ${./package-lock.json} package-lock.json
+              cp ${./.postcssrc.json} .postcssrc.json
               cp ${../webpack.config.js} webpack.config.js
               cp -r ${nodeModules}/* .
               export NODE_PATH="node_modules"
               export PATH="bin:$PATH"
               mkdir dist
-              cp ${./main.css} dist/main.css
+              postcss ${./main.css} --config=.postcssrc.json > dist/main.css
               webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
             '';
       };
