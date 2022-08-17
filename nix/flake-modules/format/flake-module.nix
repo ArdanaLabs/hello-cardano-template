@@ -31,7 +31,7 @@
       checks = {
         # Checks that the project tree is *already* formatted.
         format =
-          pkgs.runCommandLocal "format-check" { buildInputs = dependencies ++ [pkgs.git]; }
+          pkgs.runCommandLocal "format-check" { buildInputs = dependencies ++ [ pkgs.git ]; }
             ''
               set -e
               # treefmt uses a cache at $HOME. But we can use --no-cache
