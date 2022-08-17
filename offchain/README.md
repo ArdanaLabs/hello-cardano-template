@@ -40,6 +40,12 @@ To run the browser tests use:
 nix run .#offchain:hello-world-browser:test
 ```
 
+To run the lighthouse tests use:
+```
+nix build .#checks.x86_64-linux."offchain:hello-world-browser:lighthouse"
+```
+then view the generated report (result/lighthouse-report.json) with https://googlechrome.github.io/lighthouse/viewer/
+
 # The CLI
 
 The CLI also has a dev shell entered with `nix develop .#offchain:hello-world-cli`

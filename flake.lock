@@ -4090,6 +4090,23 @@
         "type": "github"
       }
     },
+    "lighthouse-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1646875274,
+        "narHash": "sha256-M2YepfUlxytNGfbQHdzxj7q1frwjRSyQAGZ1SGRRyR0=",
+        "owner": "GoogleChrome",
+        "repo": "lighthouse",
+        "rev": "ff52c9d56107695b30419ce453d3ba6da1cff632",
+        "type": "github"
+      },
+      "original": {
+        "owner": "GoogleChrome",
+        "ref": "v9.5.0",
+        "repo": "lighthouse",
+        "type": "github"
+      }
+    },
     "ixset-typed": {
       "flake": false,
       "locked": {
@@ -6521,6 +6538,7 @@
         "dream2nix": "dream2nix",
         "flake-parts": "flake-parts",
         "haskell-nix": "haskell-nix_3",
+        "lighthouse-src": "lighthouse-src",
         "lint-utils": "lint-utils",
         "mlabs-ogmios": [
           "cardano-transaction-lib",

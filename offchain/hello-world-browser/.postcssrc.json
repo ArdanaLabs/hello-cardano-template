@@ -1,0 +1,15 @@
+{
+  "plugins": {
+    "postcss-import": {},
+    "postcss-flexbugs-fixes": {},
+    "autoprefixer": {
+      "flexbox": "no-2009",
+      "grid": true
+    },
+    "postcss-csso": {
+      "forceMediaMerge": true,
+      "comments": "exclaimation"
+    },
+    "postcss-fail-on-warn": {}
+  }
+}
