@@ -51,7 +51,7 @@ data Cbor = Cbor {name :: String, cbor :: Maybe String}
 -- | Turns a list of Cbor objects into the text of a purescript module which declares them all
 toPureScript :: [Cbor] -> IO String
 toPureScript cs =
-  (("module Cbor (\n  " <> intercalate ",\n  " (name <$> cs) <> "\n) where\n\n") <>)
+  (("module CBOR (\n  " <> intercalate ",\n  " (name <$> cs) <> "\n) where\n\n") <>)
     . intercalate "\n\n"
     <$> mapM toDec cs
 
