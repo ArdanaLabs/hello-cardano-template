@@ -1,5 +1,3 @@
-index-state: 2021-10-20T00:00:00Z
-
 packages: ./dUSD-onchain.cabal
 
 -- Always build tests and benchmarks.
@@ -8,3 +6,29 @@ benchmarks: true
 
 -- The only sensible test display option
 test-show-details: direct
+
+-- You never, ever, want this.
+write-ghc-environment-files: never
+
+-- Always build tests and benchmarks.
+tests: true
+benchmarks: true
+
+-- The only sensible test display option
+test-show-details: direct
+
+-- These packages appear in our dependency tree and are very slow to build.
+-- Empirically, turning off optimization shaves off ~50% build time.
+-- It also mildly improves recompilation avoidance.
+-- For deve work we don't care about performance so much, so this is okay.
+package cardano-ledger-alonzo
+  optimization: False
+package ouroboros-consensus-shelley
+  optimization: False
+package ouroboros-consensus-cardano
+  optimization: False
+package cardano-api
+  optimization: False
+
+allow-newer:
+  digraph:base

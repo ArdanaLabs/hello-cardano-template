@@ -14,7 +14,7 @@ module Gen (
 
 import Apropos (Gen, choice, element, int, linear, list)
 
-import Plutus.V1.Ledger.Api (
+import PlutusLedgerApi.V1 (
   Address (Address),
   Credential (..),
   CurrencySymbol,
@@ -32,8 +32,8 @@ import PlutusTx.IsData.Class (ToData (toBuiltinData))
 import Control.Monad (replicateM)
 import Data.String (IsString (..))
 import GHC.Real (Ratio ((:%)))
-import Plutus.V1.Ledger.Value (AssetClass)
-import Plutus.V1.Ledger.Value qualified as Value
+import PlutusLedgerApi.V1.Value (AssetClass)
+import PlutusLedgerApi.V1.Value qualified as Value
 
 -- TODO address should get it's own apropos model
 address :: Gen Address
