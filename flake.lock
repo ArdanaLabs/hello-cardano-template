@@ -6537,14 +6537,8 @@
         "digraph": "digraph",
         "dream2nix": "dream2nix",
         "flake-parts": "flake-parts",
-<<<<<<< HEAD
-        "haskell-nix": "haskell-nix_2",
-        "lighthouse-src": "lighthouse-src",
-||||||| 05a2f6d
-        "haskell-nix": "haskell-nix_2",
-=======
         "haskell-nix": "haskell-nix_3",
->>>>>>> master
+        "lighthouse-src": "lighthouse-src",
         "lint-utils": "lint-utils",
         "mlabs-ogmios": [
           "cardano-transaction-lib",
