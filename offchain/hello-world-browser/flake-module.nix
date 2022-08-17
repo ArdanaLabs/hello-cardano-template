@@ -181,7 +181,7 @@
             name = scriptName;
             runtimeInputs =
               [ self'.packages."offchain:hello-world-browser:nami-wallet" ]
-              ++ (with pkgs; [ nodejs chromium unzip coreutils ]);
+              ++ (with pkgs; [ nodejs chromium unzip ]);
             text = ''
               export TEST_WALLET="NamiWallet"
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
