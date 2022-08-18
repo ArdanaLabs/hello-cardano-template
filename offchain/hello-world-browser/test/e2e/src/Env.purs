@@ -6,7 +6,7 @@ module HelloWorld.Test.E2E.Env
   , namiWallet2
   , namiWallet3
   , noRuntime
-  , testWallet
+  , runtimeType
   ) where
 
 chromeExe :: String
@@ -27,8 +27,8 @@ namiWallet3 = "NAMI_TEST_WALLET_3"
 noRuntime :: String
 noRuntime = "NO_RUNTIME"
 
-testWallet :: String
-testWallet = "TEST_WALLET"
+runtimeType :: String
+runtimeType = "RUNTIME_TYPE"
 
 helloWorldBrowserIndex :: String
 helloWorldBrowserIndex = "HELLO_WORLD_BROWSER_INDEX"

@@ -100,7 +100,7 @@
               self'.packages."offchain:hello-world-browser"
             ];
             text = ''
-              export TEST_WALLET="KeyWallet"
+              export RUNTIME_TYPE=KEY_WALLET
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
               export CHROME_EXE="${pkgs.chromium}/bin/chromium"
               export HELLO_WORLD_BROWSER_INDEX=${self'.packages."offchain:hello-world-browser"}
@@ -127,7 +127,7 @@
               [ self'.packages."offchain:hello-world-browser" ]
               ++ (with pkgs; [ nodejs chromium unzip ]);
             text = ''
-              export TEST_WALLET="NamiWallet"
+              export RUNTIME_TYPE=NAMI_WALLET
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
               export CHROME_EXE="${pkgs.chromium}/bin/chromium"
               export HELLO_WORLD_BROWSER_INDEX=${self'.packages."offchain:hello-world-browser"}

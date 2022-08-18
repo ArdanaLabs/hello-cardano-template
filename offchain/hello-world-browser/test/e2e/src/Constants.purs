@@ -5,7 +5,7 @@ import Data.Newtype (class Newtype, wrap)
 import Node.Express.Types (Port)
 
 port :: Port
-port = 8080
+port = 6789
 
 localhost :: String
 localhost = "http://127.0.0.1"

@@ -3,7 +3,6 @@ module HelloWorld.Test.E2E.Helpers where
 import Contract.Prelude
 
 import Data.Newtype (class Newtype, unwrap, wrap)
-import Data.UInt as UInt
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign (Foreign, unsafeFromForeign)
@@ -15,8 +14,6 @@ import Node.Express.Middleware.Static (static)
 import Node.Express.Response (clearCookie, setCookie)
 import Node.Express.Types (defaultCookieOptions)
 import Node.HTTP (close, Server)
-import Plutip.Types (PlutipConfig)
-import Serialization.Address (NetworkId)
 import Toppokki as T
 
 -- | A String representing a jQuery selector, e.g. "#my-id" or ".my-class"
@@ -59,17 +56,24 @@ injectJQuery jQuery page = do
   unless alreadyInjected $ void $ T.unsafeEvaluateStringFunction jQuery
     page
 
-startStaticServer :: String -> Maybe String -> NetworkId -> String -> Aff Server
-startStaticServer paymentKey stakeKey networkId directory = do
+newtype Cookie = Cookie
+  { key :: String
+  , value :: Maybe String
+  }
+
+derive instance newtypeCookie :: Newtype Cookie _
+derive instance eqCookie :: Eq Cookie
+
+startStaticServer :: Array Cookie -> String -> Aff Server
+startStaticServer cookies directory = do
   liftEffect $ listenHttp (use staticServer) Constants.port $ \_ -> pure unit
   where
   staticServer :: HandlerM Unit
   staticServer = do
-    _ <- setCookie "networkId" (show networkId) defaultCookieOptions
-    _ <- setCookie "paymentKey" paymentKey defaultCookieOptions
-    case stakeKey of
-      Nothing -> clearCookie "stakeKey" "/"
-      Just stakeKey' -> setCookie "stakeKey" stakeKey' defaultCookieOptions
+    for_ cookies $ \(Cookie { key, value }) ->
+      case value of
+        Just value' -> setCookie key value' defaultCookieOptions
+        Nothing -> clearCookie key "/"
     static directory
 
 closeStaticServer :: Server -> Aff Unit
