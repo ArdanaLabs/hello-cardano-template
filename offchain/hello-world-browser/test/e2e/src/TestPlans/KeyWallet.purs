@@ -23,3 +23,4 @@ runTestPlans = do
         TestPlanIncrement.testPlan testOptions2
         TestPlanRedeem.testPlan testOptions3
     )
+    Utils.InSequence

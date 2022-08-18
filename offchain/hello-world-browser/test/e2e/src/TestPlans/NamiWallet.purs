@@ -4,10 +4,10 @@ import Contract.Prelude
 
 import Control.Parallel (parTraverse_)
 import HelloWorld.Test.E2E.Constants as Constants
+import HelloWorld.Test.E2E.NamiWallet (mkTestOptions, testWallet1, testWallet2, testWallet3, topup)
 import HelloWorld.Test.E2E.TestPlans.NamiWallet.Increment as TestPlanIncrement
 import HelloWorld.Test.E2E.TestPlans.NamiWallet.Initialize as TestPlanInitialize
 import HelloWorld.Test.E2E.TestPlans.NamiWallet.Redeem as TestPlanRedeem
-import HelloWorld.Test.E2E.NamiWallet (mkTestOptions, testWallet1, testWallet2, testWallet3, topup)
 import Mote (group)
 import Test.Spec.Runner as SpecRunner
 import Utils as Utils
@@ -31,3 +31,4 @@ runTestPlans = do
         TestPlanIncrement.testPlan testOptions2
         TestPlanRedeem.testPlan testOptions3
     )
+    Utils.InParallel
