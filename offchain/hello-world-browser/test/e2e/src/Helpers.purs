@@ -3,14 +3,20 @@ module HelloWorld.Test.E2E.Helpers where
 import Contract.Prelude
 
 import Data.Newtype (class Newtype, unwrap, wrap)
+import Data.UInt as UInt
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign (Foreign, unsafeFromForeign)
 import Foreign as Foreign
 import HelloWorld.Test.E2E.Constants as Constants
 import Node.Express.App (listenHttp, use)
+import Node.Express.Handler (HandlerM)
 import Node.Express.Middleware.Static (static)
+import Node.Express.Response (clearCookie, setCookie)
+import Node.Express.Types (defaultCookieOptions)
 import Node.HTTP (close, Server)
+import Plutip.Types (PlutipConfig)
+import Serialization.Address (NetworkId)
 import Toppokki as T
 
 -- | A String representing a jQuery selector, e.g. "#my-id" or ".my-class"
@@ -53,9 +59,18 @@ injectJQuery jQuery page = do
   unless alreadyInjected $ void $ T.unsafeEvaluateStringFunction jQuery
     page
 
-startStaticServer :: String -> Aff Server
-startStaticServer directory =
-  liftEffect $ listenHttp (use $ static directory) Constants.port $ \_ -> pure unit
+startStaticServer :: String -> Maybe String -> NetworkId -> String -> Aff Server
+startStaticServer paymentKey stakeKey networkId directory = do
+  liftEffect $ listenHttp (use staticServer) Constants.port $ \_ -> pure unit
+  where
+  staticServer :: HandlerM Unit
+  staticServer = do
+    _ <- setCookie "networkId" (show networkId) defaultCookieOptions
+    _ <- setCookie "paymentKey" paymentKey defaultCookieOptions
+    case stakeKey of
+      Nothing -> clearCookie "stakeKey" "/"
+      Just stakeKey' -> setCookie "stakeKey" stakeKey' defaultCookieOptions
+    static directory
 
 closeStaticServer :: Server -> Aff Unit
 closeStaticServer server = liftEffect $ close server (pure unit)

@@ -19,7 +19,7 @@ import TestM (TestPlanM)
 interpret' :: SpecRunner.Config -> TestPlanM Unit -> Aff Unit
 interpret' config spif = do
   plan <- planT spif
-  runSpec' config [ consoleReporter ] $ parallel $ go plan
+  runSpec' config [ consoleReporter ] $ go plan
   where
   go :: Plan (Const Void) (Aff Unit) -> Spec Unit
   go =
