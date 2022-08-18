@@ -61,18 +61,18 @@ paramValidator = plam $ \dCountBy dn dunit dsc -> do
   let n = pfromData (punsafeCoerce dn)
       u = pfromData (punsafeCoerce dunit)
       res cb = paramValidator' # cb # n # u # dsc
-   in ptryFrom @(PAsData PInteger) dCountBy $ \(_, i) -> popaque $ res i
+   in ptryFrom @(PAsData PInteger) dCountBy $ \(_, i) -> res i
 
 -- TODO Try wrapping the counter in a newtype to
 -- test shareing newtypes/datatypes with apps
 
-paramValidator' :: ClosedTerm (PInteger :--> PInteger :--> HelloRedemer :--> PScriptContext :--> PUnit)
+paramValidator' :: ClosedTerm (PInteger :--> PInteger :--> HelloRedemer :--> PScriptContext :--> POpaque)
 paramValidator' = plam $ \countBy n r sc -> unTermCont $ do
   pmatchC r >>= \case
     Inc _ -> do
       datum <- pgetContinuingDatum @PInteger sc
       pure $ helloLogic # countBy # n # pfromData datum
-    Spend _ -> pure $ pcon PUnit
+    Spend _ -> pure $ popaque $ pcon PUnit
 
-helloLogic :: ClosedTerm (PInteger :--> PInteger :--> PInteger :--> PUnit)
+helloLogic :: ClosedTerm (PInteger :--> PInteger :--> PInteger :--> POpaque)
 helloLogic = plam $ \countBy n m -> unTermCont $ passert "int was not correct" $ n + countBy #== m

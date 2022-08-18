@@ -74,6 +74,7 @@ library
   exposed-modules:
     DUSD
     Hello
+    HelloDiscovery
     Plutarch.Extensions.Api
     Plutarch.Extensions.List
     Plutarch.Extensions.Monad

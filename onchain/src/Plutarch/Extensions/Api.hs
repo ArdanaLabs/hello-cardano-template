@@ -38,5 +38,5 @@ pgetContinuingDatum ctx = do
   pure datum
 
 -- | fails with provided message if the bool is false otherwise returns unit
-passert :: Term s PString -> Term s PBool -> TermCont s (Term s PUnit)
-passert msg bool = pure $ pif bool (pcon PUnit) (ptraceError msg)
+passert :: Term s PString -> Term s PBool -> TermCont s (Term s POpaque)
+passert msg bool = pure $ pif bool (popaque $ pcon PUnit) (ptraceError msg)
