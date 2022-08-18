@@ -4,8 +4,9 @@ module Test.Main
 
 import CmdUtils(fails,failsSaying,passesSaying)
 import Contract.Prelude
-import Contract.Test.Plutip (PlutipConfig, withPlutipContractEnv)
+import Contract.Test.Plutip (PlutipConfig)
 import Data.String(trim)
+import Effect.Exception(throw)
 import Effect.Aff(launchAff_)
 import Node.Process(lookupEnv)
 import Node.FS.Aff(unlink)
@@ -23,6 +24,14 @@ main = do
   let initialAdaAmount = BigInt.fromInt 20_000_000
   let jsonDir = fixturesDir <> "/jsons/"
   let plutipWalletDir = "./" -- TODO get a writeable dir from nix
+  usePlutip <- lookupEnv "MODE" >>= case _ of
+    Just "local" -> pure true
+    Just "testnet" -> pure false
+    Just e -> throw $ "expected local or testnet got: " <> e
+    Nothing -> throw "expected MODE to be set"
+  let withEnv f = if usePlutip
+                      then withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir f
+                      else f "" (jsonDir <> "testWalletCfg.json ")
   launchAff_ $ do
     let cli = "hello-world-cli "
     let badConf = jsonDir <> "badWalletCfg.json "
@@ -47,22 +56,22 @@ main = do
             (cli <> "-s" <> state <> "lock -i 0 -p 1")
             "Missing: (-c|--config CONFIG_FILE)"
         it "fails on no state"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
+          $ withEnv $ \ports wallet ->
             failsSaying
             (cli <> ports <> "-c" <> wallet <> "lock -i 0 -p 1")
             "Missing: (-s|--state-file STATE_FILE)"
         it "fails on no inc"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
+          $ withEnv $ \ports wallet ->
             fails $ cli <> ports <> "-c" <> wallet <> "-s" <> state <> "lock -p 1"
         it "fails on no param"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
+          $ withEnv $ \ports wallet ->
             fails $ cli <> ports <> "-c" <> wallet <> "-s" <> state <> "lock -i 0"
         it "fails on bad conf"
           $ fails $ cli <> "-c" <> badConf <> "-s" <> state <> "lock -i 0 -p 1"
         -- There's no hard reason this couldn't be made to work without the runtime
         -- but it happens to look up the datum before noticing the state shouldn't exist
         it "fails when state exists"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
+          $ withEnv $ \ports wallet ->
             failsSaying
             (cli <> ports <> "-c" <> wallet <> "-s" <> badState <> "lock -i 0 -p 1")
             "Can't use lock when state file already exists"
@@ -72,7 +81,7 @@ main = do
             (cli <> "-s" <> state <> "increment")
             "Missing: (-c|--config CONFIG_FILE)"
         it "fails on no state"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
+          $ withEnv $ \ports wallet ->
             failsSaying
             (cli <> ports <> "-c" <> wallet <> "increment")
             "Missing: (-s|--state-file STATE_FILE)"
@@ -86,7 +95,7 @@ main = do
             (cli <> "-s" <> state <> "unlock")
             "Missing: (-c|--config CONFIG_FILE)"
         it "fails on no state"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
+          $ withEnv $ \ports wallet ->
             failsSaying
             (cli <> ports <> "-c" <> wallet <> "unlock")
             "Missing: (-s|--state-file STATE_FILE)"
@@ -100,7 +109,7 @@ main = do
             (cli <> "-s" <> state <> "query")
             "Missing: (-c|--config CONFIG_FILE)"
         it "fails on no state"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet ->
+          $ withEnv $ \ports wallet ->
             failsSaying
             (cli <> ports <> "-c" <> wallet <> "query")
             "Missing: (-s|--state-file STATE_FILE)"
@@ -111,7 +120,7 @@ main = do
       describe "integration test" do
         -- TODO I'm not sure why they aren't saying finished
         it "locks the value"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet -> do
+          $ withEnv $ \ports wallet -> do
             passesSaying
               (cli <> ports <> "-c" <> wallet <> "-s" <> state <> "lock -i 0 -p 1")
               "finished"
@@ -120,7 +129,7 @@ main = do
               ("ls" <> state)
               "No such file"
         it "querys the state"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet -> do
+          $ withEnv $ \ports wallet -> do
             passesSaying
               (cli <> ports <> "-c" <> wallet <> "-s" <> state <> "lock -i 0 -p 1")
               "finished"
@@ -132,7 +141,7 @@ main = do
               ("ls" <> state)
               "No such file"
         it "increments the datum"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet -> do
+          $ withEnv $ \ports wallet -> do
             passesSaying
               (cli <> ports <> "-c" <> wallet <> "-s" <> state <> "lock -i 0 -p 1")
               "finished"
@@ -147,7 +156,7 @@ main = do
               ("ls" <> state)
               "No such file"
         it "querys the new state"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet -> do
+          $ withEnv $ \ports wallet -> do
             passesSaying
               (cli <> ports <> "-c" <> wallet <> "-s" <> state <> "lock -i 0 -p 1")
               "finished"
@@ -165,7 +174,7 @@ main = do
               ("ls" <> state)
               "No such file"
         it "it unlocks the value"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet -> do
+          $ withEnv $ \ports wallet -> do
             passesSaying
               (cli <> ports <> "-c" <> wallet <> "-s" <> state <> "lock -i 0 -p 1")
               "finished"
@@ -185,7 +194,7 @@ main = do
               ("ls" <> state)
               "No such file"
         it "removed the state file"
-          $ withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir $ \ports wallet -> do
+          $ withEnv $ \ports wallet -> do
             passesSaying
               (cli <> ports <> "-c" <> wallet <> "-s" <> state <> "lock -i 0 -p 1")
               "finished"

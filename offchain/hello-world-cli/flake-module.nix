@@ -38,7 +38,7 @@
             '';
       };
 
-      hello-world-cli-tests =
+      hello-world-cli-tests = mode:
         let testExe = hello-world-cli.ps.test.run { }; in
         pkgs.writeShellApplication
           {
@@ -53,6 +53,7 @@
               self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system}
             ];
             text = ''
+              export MODE=${mode}
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
               export TEST_RESOURCES=${./fixtures}
               ${testExe}
@@ -60,7 +61,8 @@
           };
     in
     {
-      apps."offchain:hello-world-cli:test" = dusd-lib.mkApp hello-world-cli-tests;
+      apps."offchain:hello-world-cli:test:local" = dusd-lib.mkApp (hello-world-cli-tests "local");
+      apps."offchain:hello-world-cli:test:testnet" = dusd-lib.mkApp (hello-world-cli-tests "testnet");
       checks.run-hello-world-cli-tests =
         let test = hello-world-cli-tests; in
         pkgs.runCommand test.name { }

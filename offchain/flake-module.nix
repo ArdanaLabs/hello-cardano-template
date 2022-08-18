@@ -56,7 +56,7 @@
                   '. {} &> "$(basename {.})-output"' ::: \
                   ${getTestScript "hello-world-api"} \
                   ${getTestScript "hello-world-browser"} \
-                  ${getTestScript "hello-world-cli"}
+                  ${self'.apps."offchain:hello-world-cli:test:local".program}
                 printf "$?" > "$TEST_EXITCODE_FILE"
               '';
           in
