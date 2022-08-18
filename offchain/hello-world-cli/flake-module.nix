@@ -64,7 +64,7 @@
       apps."offchain:hello-world-cli:test:local" = dusd-lib.mkApp (hello-world-cli-tests "local");
       apps."offchain:hello-world-cli:test:testnet" = dusd-lib.mkApp (hello-world-cli-tests "testnet");
       checks.run-hello-world-cli-tests =
-        let test = hello-world-cli-tests; in
+        let test = hello-world-cli-tests "local"; in
         pkgs.runCommand test.name { }
           "${test}/bin/${test.meta.mainProgram} | tee $out";
       devShells."offchain:hello-world-cli" =
