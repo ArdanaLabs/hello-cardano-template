@@ -33,4 +33,5 @@ cbors =
   , CBOR "hello" $ pure helloWorldHexString
   , CBOR "trivial" trivialCBOR
   , CBOR "configScript" $ pure configScriptCbor
+  , CBOR "nft" nftCbor
   ]

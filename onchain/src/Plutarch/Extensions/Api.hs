@@ -1,6 +1,7 @@
 module Plutarch.Extensions.Api (
   pgetContinuingDatum,
   passert,
+  passert_,
 ) where
 
 import Plutarch.Prelude
@@ -14,6 +15,7 @@ import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extensions.Monad (pmatchFieldC)
 import Plutarch.Extra.Api (pgetContinuingOutputs, pparseDatum)
 import Plutarch.Extra.TermCont (pmatchC)
+import Control.Monad(void)
 
 {- | enfroces that there is a unique continuing output gets it's Datum
  - and converts it to the desired type via pfromData
@@ -40,3 +42,6 @@ pgetContinuingDatum ctx = do
 -- | fails with provided message if the bool is false otherwise returns unit
 passert :: Term s PString -> Term s PBool -> TermCont s (Term s POpaque)
 passert msg bool = pure $ pif bool (popaque $ pcon PUnit) (ptraceError msg)
+
+passert_ :: Term s PString -> Term s PBool -> TermCont s ()
+passert_ msg bool = void $ passert msg bool
