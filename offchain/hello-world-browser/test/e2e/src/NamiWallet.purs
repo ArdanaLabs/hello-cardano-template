@@ -78,7 +78,7 @@ mkTestOptions testWallet = do
     , namiDir
     , geroDir: ""
     , chromeUserDataDir
-    , noHeadless: true
+    , noHeadless: false
     }
 
 newtype NamiDir = NamiDir String

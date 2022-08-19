@@ -52,7 +52,7 @@ mkTestOptions = do
     , namiDir: ""
     , geroDir: ""
     , chromeUserDataDir
-    , noHeadless: true
+    , noHeadless: false
     }
 
 mkTempDir :: Effect String
