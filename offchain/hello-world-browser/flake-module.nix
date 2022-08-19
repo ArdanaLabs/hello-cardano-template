@@ -125,7 +125,7 @@
             name = scriptName;
             runtimeInputs =
               [ self'.packages."offchain:hello-world-browser" ]
-              ++ (with pkgs; [ nodejs chromium unzip ]);
+              ++ (with pkgs; [ nodejs chromium unzip curl ]);
             text = ''
               export RUNTIME_TYPE=NAMI_WALLET
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
