@@ -5,25 +5,25 @@ module HelloWorld.Discovery.Api
 import Contract.Prelude
 
 import CBOR as CBOR
+import Contract.ScriptLookups as Lookups
+import Contract.TxConstraints as Constraints
+import Data.BigInt as BigInt
+import Plutus.Types.Value as Value
+
 import Contract.Address (PaymentPubKeyHash(..), StakePubKeyHash(..), getWalletAddress)
 import Contract.Aeson (decodeAeson, fromString)
 import Contract.Credential (Credential(..), StakingCredential(..))
 import Contract.Log (logInfo')
 import Contract.Monad (Contract, liftContractM, liftContractAffM)
 import Contract.Prim.ByteArray (hexToByteArray)
-import Contract.ScriptLookups as Lookups
 import Contract.Scripts (applyArgsM)
-import Contract.Transaction (TransactionHash, TransactionInput(..))
+import Contract.Transaction (TransactionHash, TransactionInput)
 import Contract.TxConstraints (TxConstraints)
-import Contract.TxConstraints as Constraints
 import Contract.Value (mkTokenName, scriptCurrencySymbol)
-import Data.BigInt as BigInt
 import Data.Time.Duration (Minutes(..))
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.UInt as UInt
 import Plutus.Types.Address (Address(..))
 import Plutus.Types.CurrencySymbol (CurrencySymbol)
-import Plutus.Types.Value as Value
 import ToData (toData)
 import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
@@ -32,7 +32,8 @@ import Util (buildBalanceSignAndSubmitTx, waitForTx)
 mintNft :: Contract () (CurrencySymbol /\ TransactionHash)
 mintNft = do
   logInfo' $ "started"
-  -- Turns out this doesn't work for keywallets with plutip (or maybe in general)
+  -- Turns out colatoral doesn't work for keywallets with plutip (or maybe in general)
+  -- That would probably be a simpler/better way to do this
   txOut <- liftContractM "seed tx failed" =<< seedTx
   logInfo' $ "seed passed: " <> show txOut
   logInfo' "started cbor"
@@ -43,7 +44,7 @@ mintNft = do
   logInfo' "got mintingPolicy"
   cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
   logInfo' $ "got cs: " <> show cs
-  tn <- liftContractM "token name failed to decode" $ mkTokenName =<< hexToByteArray "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  tn <- liftContractM "token name failed to decode" $ mkTokenName =<< hexToByteArray "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   logInfo' $ "got tn: " <> show tn
   let
     lookups :: Lookups.ScriptLookups PlutusData
@@ -51,7 +52,7 @@ mintNft = do
     constraints :: TxConstraints Unit Unit
     constraints =
       Constraints.mustMintValue (Value.singleton cs tn (BigInt.fromInt 1))
-      <> Constraints.mustSpendPubKeyOutput txOut
+      -- <> Constraints.mustSpendPubKeyOutput txOut
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   pure $ cs /\ txId
 
