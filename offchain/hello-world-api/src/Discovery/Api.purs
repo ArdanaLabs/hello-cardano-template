@@ -51,6 +51,7 @@ mintNft = do
     lookups = Lookups.mintingPolicy nftPolicy
     constraints :: TxConstraints Unit Unit
     constraints =
+      -- TODO the error is because I don't set the minting redeemer
       Constraints.mustMintValue (Value.singleton cs tn (BigInt.fromInt 1))
       -- <> Constraints.mustSpendPubKeyOutput txOut
   txId <- buildBalanceSignAndSubmitTx lookups constraints
