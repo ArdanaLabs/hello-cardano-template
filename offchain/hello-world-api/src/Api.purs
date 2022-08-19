@@ -15,31 +15,30 @@ module HelloWorld.Api
 import Contract.Prelude
 
 import CBOR as CBOR
-import Util(buildBalanceSignAndSubmitTx,waitForTx,getUtxos)
-
-import Data.BigInt as BigInt
-import Data.Time.Duration(Minutes(..))
-
+import Contract.Address (scriptHashAddress)
 import Contract.Aeson (decodeAeson, fromString)
-import Contract.Log(logInfo',logError')
-import Contract.Monad ( Contract , liftContractM,liftContractAffM)
-import Contract.PlutusData (Datum(Datum),Redeemer(Redeemer),getDatumByHash)
+import Contract.Log (logInfo', logError')
+import Contract.Monad (Contract, liftContractM, liftContractAffM)
+import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer), getDatumByHash)
 import Contract.ScriptLookups as Lookups
-import Contract.Scripts (Validator, ValidatorHash, applyArgs,validatorHash)
-import Contract.Transaction ( TransactionInput)
+import Contract.Scripts (Validator, ValidatorHash, applyArgs, validatorHash)
+import Contract.Transaction (TransactionInput)
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
-import Contract.Utxos(getUtxo, getWalletBalance)
+import Contract.Utxos (getUtxo, getWalletBalance)
 import Contract.Value as Value
-import Effect.Exception(throw)
-import Plutus.Types.Transaction(TransactionOutput(TransactionOutput))
-import Plutus.Types.Value (Value)
-import ToData(class ToData,toData)
-import Types.PlutusData (PlutusData(Constr,Integer))
-import Data.Map(keys)
+import Data.BigInt as BigInt
+import Data.Foldable (for_)
+import Data.List ((..), List)
+import Data.Map (keys)
 import Data.Set as Set
-import Data.Foldable(for_)
-import Data.List((..),List)
+import Data.Time.Duration (Minutes(..))
+import Effect.Exception (throw)
+import Plutus.Types.Transaction (TransactionOutput(TransactionOutput))
+import Plutus.Types.Value (Value)
+import ToData (class ToData, toData)
+import Types.PlutusData (PlutusData(Constr, Integer))
+import Util (buildBalanceSignAndSubmitTx, waitForTx, getUtxos)
 
 initialize :: Int -> Int -> Contract () TransactionInput
 initialize param initialValue = do
@@ -86,7 +85,7 @@ sendDatumToScript n vhash = do
         )
         enoughForFees
   txId <- buildBalanceSignAndSubmitTx lookups constraints
-  liftContractM "gave up waiting for sendDatumToScript TX" =<< waitForTx waitTime vhash txId
+  liftContractM "gave up waiting for sendDatumToScript TX" =<< waitForTx waitTime (scriptHashAddress vhash) txId
 
 setDatumAtScript
   :: Int
@@ -95,7 +94,7 @@ setDatumAtScript
   -> TransactionInput
   -> Contract () TransactionInput
 setDatumAtScript n vhash validator txInput = do
-  utxos <- getUtxos vhash
+  utxos <- getUtxos (scriptHashAddress vhash)
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.validator validator
@@ -113,7 +112,7 @@ setDatumAtScript n vhash validator txInput = do
         enoughForFees
       )
   txId <- buildBalanceSignAndSubmitTx lookups constraints
-  liftContractM "failed waiting for increment" =<< waitForTx waitTime vhash txId
+  liftContractM "failed waiting for increment" =<< waitForTx waitTime (scriptHashAddress vhash) txId
 
 redeemFromScript
   :: ValidatorHash
@@ -121,7 +120,7 @@ redeemFromScript
   -> TransactionInput
   -> Contract () Unit
 redeemFromScript vhash validator txInput = do
-  utxos <- getUtxos vhash
+  utxos <- getUtxos (scriptHashAddress vhash)
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.validator validator
@@ -174,7 +173,7 @@ grabFreeAdaSingleParam :: Int -> Contract () Unit
 grabFreeAdaSingleParam n = do
   validator <- helloScript n
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-  utxos <- getUtxos vhash
+  utxos <- getUtxos (scriptHashAddress vhash)
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.validator validator

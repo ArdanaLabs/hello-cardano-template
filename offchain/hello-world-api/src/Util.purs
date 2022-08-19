@@ -3,69 +3,49 @@ module Util
   ,buildBalanceSignAndSubmitTx
   ,getUtxos
   ,getTxScanUrl
-  ,ourLogger
+  ,withOurLogger
   ) where
 
 import Contract.Prelude
 
-import Aeson
-  (Aeson
-  ,getField
-  ,toArray
-  ,toObject
-  )
-import Contract.Address (scriptHashAddress)
-import Contract.Log(logInfo',logWarn',logError')
-import Contract.Monad (Contract,liftedE)
-import Contract.Utxos (UtxoM(UtxoM), utxosAt,getUtxo)
+import Aeson (Aeson, getField, toArray, toObject)
+import Contract.Log (logInfo', logWarn', logError')
+import Contract.Monad (Contract, ContractEnv, liftedE)
 import Contract.ScriptLookups as Lookups
-import Contract.Scripts (ValidatorHash)
-import Contract.Transaction
-  ( TransactionHash(TransactionHash)
-  , TransactionOutput
-  , TransactionInput(TransactionInput)
-  , balanceAndSignTxE
-  , submitE
-  )
+import Contract.Transaction (TransactionHash(TransactionHash), TransactionOutput, TransactionInput(TransactionInput), balanceAndSignTxE, submitE)
 import Contract.TxConstraints (TxConstraints)
-import Control.Monad.Error.Class(throwError)
-import Data.Array(toUnfoldable,fromFoldable,catMaybes)
+import Contract.Utxos (UtxoM(UtxoM), utxosAt, getUtxo)
+import Control.Monad.Error.Class (throwError)
+import Data.Array (toUnfoldable, fromFoldable, catMaybes)
+import Data.List (filterM, List)
+import Data.Log.Formatter.Pretty (prettyFormatter)
+import Data.Log.Message (Message)
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Time.Duration
-  (Milliseconds(..)
-  ,Seconds(..)
-  ,Minutes(..)
-  ,class Duration
-  ,fromDuration
-  ,convertDuration
-  ,negateDuration
-  )
-import Data.List(filterM,List)
-import Data.Log.Formatter.Pretty(prettyFormatter)
-import Data.Log.Message(Message)
+import Data.Time.Duration (Milliseconds(..), Seconds(..), Minutes(..), class Duration, fromDuration, convertDuration, negateDuration)
 import Effect.Aff (delay)
-import Effect.Aff.Retry(retrying,limitRetries,RetryStatus(RetryStatus))
-import Effect.Exception(error)
-import Node.Encoding(Encoding(UTF8))
-import Node.FS.Aff(appendTextFile)
-import Serialization.Address (NetworkId(TestnetId,MainnetId))
-import Types.ByteArray (byteArrayToHex,hexToByteArray)
+import Effect.Aff.Retry (retrying, limitRetries, RetryStatus(RetryStatus))
+import Effect.Exception (error)
+import Node.Encoding (Encoding(UTF8))
+import Node.FS.Aff (appendTextFile)
+import Plutus.Types.Address (Address)
+import Serialization.Address (NetworkId(TestnetId, MainnetId))
+import Types.ByteArray (byteArrayToHex, hexToByteArray)
 import Types.PlutusData (PlutusData)
-import Types.Transaction(TransactionInput,TransactionHash)
+import Types.Transaction (TransactionInput, TransactionHash)
 
 waitForTx
   :: forall a.
   Duration a
   => a
-  -> ValidatorHash
+  -> Address
   -> TransactionHash
   -> Contract () (Maybe TransactionInput)
-waitForTx d vhash txid = do
+waitForTx d adr txid = do
   let hasTransactionId :: TransactionInput /\ TransactionOutput -> Boolean
       hasTransactionId (TransactionInput tx /\ _) =
         tx.transactionId == txid
-  utxos <- getUtxos vhash
+  utxos <- getUtxos adr
   case fst <$> find hasTransactionId (Map.toUnfoldable utxos :: Array (TransactionInput /\ TransactionOutput)) of
       Nothing ->
         if (fromDuration d <= (Milliseconds 0.0))
@@ -74,7 +54,7 @@ waitForTx d vhash txid = do
           else do
               logInfo' $ "No tx yet, waiting for: " <> show (convertDuration d :: Seconds)
               (liftAff <<< delay <<< wrap) (waitTime # fromDuration # unwrap)
-              waitForTx (fromDuration d <> fromDuration (negateDuration waitTime)) vhash txid
+              waitForTx (fromDuration d <> fromDuration (negateDuration waitTime)) adr txid
       Just txin -> do
         logInfo' $ "found tx:" <> show txid
         pure $ Just txin
@@ -173,10 +153,9 @@ waitForSpent' d inputs = do
       else
         pure spent
 
-getUtxos :: ValidatorHash -> Contract () (Map TransactionInput TransactionOutput)
-getUtxos vhash = do
-  let scriptAddress = scriptHashAddress vhash
-  UtxoM utxos <- fromMaybe (UtxoM Map.empty) <$> utxosAt scriptAddress
+getUtxos :: Address -> Contract () (Map TransactionInput TransactionOutput)
+getUtxos adr = do
+  UtxoM utxos <- fromMaybe (UtxoM Map.empty) <$> utxosAt adr
   pure utxos
 
 getTxScanUrl :: NetworkId -> TransactionInput -> String
@@ -188,6 +167,14 @@ getTxScanUrl MainnetId (TransactionInput {transactionId:TransactionHash hash}) =
 isSpent :: TransactionInput -> Contract () Boolean
 isSpent input = isNothing <$> getUtxo input
 
+withOurLogger :: String -> ContractEnv () -> ContractEnv ()
+withOurLogger path env = wrap $ (unwrap env)
+  {config{
+    customLogger = Just $ ourLogger path,
+    logLevel = Warn
+    }
+  }
+
 ourLogger :: String -> Message -> Aff Unit
 ourLogger path msg = do
   pretty <- prettyFormatter msg
@@ -197,4 +184,3 @@ ourLogger path msg = do
 -- The time to wait between ogmios querries when retrying
 waitTime :: Seconds
 waitTime = Seconds 1.0
-
