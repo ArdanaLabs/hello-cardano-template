@@ -62,7 +62,7 @@
           purs-nix.purs
             {
               dependencies =
-                (with ps-pkgs;
+                with ps-pkgs;
                 [
                   aff
                   ctl-pkgs.cardano-transaction-lib
@@ -73,7 +73,7 @@
                   ctl-pkgs.toppokki
                   node-child-process
                   parallel
-                ]);
+                ];
               dir = ./.;
               srcs = [ "test/e2e/src" ];
             };
@@ -186,9 +186,7 @@
         "offchain:hello-world-browser:e2e" =
           offchain-lib.makeProjectShell hello-world-browser-e2e { };
       };
-      packages = {
-        "offchain:hello-world-browser" = hello-world-browser.package;
-      };
+      packages."offchain:hello-world-browser" = hello-world-browser.package;
     };
   flake = { };
 }
