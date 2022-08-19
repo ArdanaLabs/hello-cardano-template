@@ -55,7 +55,7 @@
                 ${pkgs.parallel}/bin/parallel --will-cite \
                   '. {} &> "$(basename {.})-output"' ::: \
                   ${getTestScript "hello-world-api"} \
-                  ${getTestScript "hello-world-browser"} \
+                  ${getTestScript "hello-world-browser:e2e:key-wallet"} \
                   ${getTestScript "hello-world-cli"}
                 printf "$?" > "$TEST_EXITCODE_FILE"
               '';

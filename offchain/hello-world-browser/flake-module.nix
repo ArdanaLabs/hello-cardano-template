@@ -152,9 +152,9 @@
           dusd-lib.makeServeApp self'.packages."offchain:hello-world-browser";
         "offchain:hello-world-browser:serve-live" =
           dusd-lib.makeServeLive self'.packages."offchain:hello-world-browser";
-        "offchain:hello-world-browser:e2e:key-wallet" =
+        "offchain:hello-world-browser:e2e:key-wallet:test" =
           dusd-lib.mkApp hello-world-browser-e2e-with-key-wallet;
-        "offchain:hello-world-browser:e2e:nami-wallet" =
+        "offchain:hello-world-browser:e2e:nami-wallet:test" =
           dusd-lib.mkApp hello-world-browser-e2e-with-nami-wallet;
       };
       checks = {
