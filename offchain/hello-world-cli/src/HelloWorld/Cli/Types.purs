@@ -13,11 +13,16 @@ import Contract.Transaction ( TransactionInput)
 import Serialization.Address(NetworkId)
 import Data.Generic.Rep (class Generic)
 import Data.Show.Generic(genericShow)
+import Data.Maybe(Maybe)
+import Data.UInt(UInt)
 
 data Options = Options
   { command :: Command
   , statePath :: String
   , conf :: Conf
+  , ctlPort :: Maybe UInt
+  , ogmiosPort :: Maybe UInt
+  , odcPort :: Maybe UInt
   }
 
 data Command
@@ -46,14 +51,14 @@ data CliState
 data Conf
   = Conf
   { walletPath :: String
-  , stakingPath :: String
+  , stakingPath :: Maybe String
   , network :: NetworkId
   }
 
 type ParsedConf
   =
   { walletPath :: String
-  , stakingPath :: String
+  , stakingPath :: Maybe String
   , network :: String
   }
 
@@ -62,6 +67,9 @@ data ParsedOptions = ParsedOptions
   { command :: Command
   , statePath :: String
   , configFile :: String
+  , ctlPort :: Maybe UInt
+  , ogmiosPort :: Maybe UInt
+  , odcPort :: Maybe UInt
   }
 
 derive instance Generic Command _
