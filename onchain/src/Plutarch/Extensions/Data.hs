@@ -1,12 +1,12 @@
 module Plutarch.Extensions.Data (
   parseData,
   unsafeParseData,
-  ) where
+) where
 
 import Plutarch.Prelude
 
-import Plutarch.Unsafe (punsafeCoerce)
 import Plutarch.Extra.TermCont (pletC)
+import Plutarch.Unsafe (punsafeCoerce)
 
 -- TODO is there a helper for this I couldn't find it
 parseData :: forall a s. (PTryFrom PData (PAsData a), PIsData a) => Term s PData -> TermCont s (Term s a)

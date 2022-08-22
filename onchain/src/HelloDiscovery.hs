@@ -7,7 +7,7 @@ import Plutarch.Prelude
 import Plutarch.Api.V2
 
 import Plutarch.Extensions.Api (passert)
-import Plutarch.Extensions.Data(parseData)
+import Plutarch.Extensions.Data (parseData)
 import Utils (closedTermToHexString)
 
 nftCbor :: Maybe String
@@ -22,4 +22,3 @@ standardNFT = phoistAcyclic $
             #$ pfield @"inputs"
             #$ pfield @"txInfo" # sc
     passert "didn't spend out ref" $ pelem # outRef # inputs
-
