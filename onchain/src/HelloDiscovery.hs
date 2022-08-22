@@ -7,7 +7,7 @@ import Plutarch.Prelude
 import Plutarch.Api.V2
 
 import Plutarch.Extensions.Api (passert)
-import Plutarch.Extensions.Data(unsafeParseData)
+import Plutarch.Extensions.Data(parseData)
 import Utils (closedTermToHexString)
 
 nftCbor :: Maybe String
@@ -16,8 +16,7 @@ nftCbor = closedTermToHexString standardNFT
 standardNFT :: ClosedTerm (PData :--> PMintingPolicy)
 standardNFT = phoistAcyclic $
   plam $ \outRefData _ sc -> unTermCont $ do
-    --outRef :: Term _ PTxOutRef <- parseData outRefData
-    outRef :: Term _ PTxOutRef <- unsafeParseData outRefData
+    outRef :: Term _ PTxOutRef <- parseData outRefData
     let (inputs :: Term _ (PBuiltinList PTxOutRef)) =
           pmap # pfield @"outRef"
             #$ pfield @"inputs"

@@ -15,7 +15,7 @@
       url = "github:input-output-hk/plutus";
     };
     plutarch = {
-      url = "github:Plutonomicon/plutarch-plutus";
+      url = "github:Plutonomicon/plutarch-plutus?rev=803aa46916501236de47c73131e2847caa581d5f";
     };
     apropos = {
       url = "github:mlabs-haskell/apropos?rev=9dbe96f1a1108b453aaf65ade4d6280cc92cccea";

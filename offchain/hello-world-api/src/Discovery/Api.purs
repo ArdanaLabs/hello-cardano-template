@@ -1,5 +1,6 @@
 module HelloWorld.Discovery.Api
   ( mintNft
+  , doubleMint
   ) where
 
 import Contract.Prelude
@@ -44,7 +45,7 @@ mintNft = do
   logInfo' "got mintingPolicy"
   cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
   logInfo' $ "got cs: " <> show cs
-  tn <- liftContractM "token name failed to decode" $ mkTokenName =<< hexToByteArray "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  tn <- liftContractM "token name failed to decode" $ mkTokenName =<< hexToByteArray ""
   logInfo' $ "got tn: " <> show tn
   let
     lookups :: Lookups.ScriptLookups PlutusData
@@ -55,6 +56,35 @@ mintNft = do
       -- <> Constraints.mustSpendPubKeyOutput txOut
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   pure $ cs /\ txId
+
+-- should fail
+doubleMint :: Contract () Unit
+doubleMint = do
+  logInfo' $ "started"
+  -- Turns out colatoral doesn't work for keywallets with plutip (or maybe in general)
+  -- That would probably be a simpler/better way to do this
+  txOut <- liftContractM "seed tx failed" =<< seedTx
+  logInfo' $ "seed passed: " <> show txOut
+  logInfo' "started cbor"
+  paramNft <- liftContractM "nft decode failed" maybeParamNft
+  logInfo' "got cbor"
+  nftPolicy :: MintingPolicy <- liftContractM "apply args failed"
+    =<< applyArgsM paramNft [ toData txOut ]
+  logInfo' "got mintingPolicy"
+  cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
+  logInfo' $ "got cs: " <> show cs
+  tn <- liftContractM "token name failed to decode" $ mkTokenName =<< hexToByteArray "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  logInfo' $ "got tn: " <> show tn
+  let
+    lookups :: Lookups.ScriptLookups PlutusData
+    lookups = Lookups.mintingPolicy nftPolicy
+    constraints :: TxConstraints Unit Unit
+    constraints =
+      Constraints.mustMintValue (Value.singleton cs tn (BigInt.fromInt 1))
+      -- <> Constraints.mustSpendPubKeyOutput txOut
+  _ <- buildBalanceSignAndSubmitTx lookups constraints
+  _ <- buildBalanceSignAndSubmitTx lookups constraints
+  pure unit
 
 seedTx :: Contract () (Maybe TransactionInput)
 seedTx = do
