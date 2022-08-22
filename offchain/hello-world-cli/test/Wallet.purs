@@ -17,8 +17,7 @@ import Node.FS.Aff
   ,unlink
   )
 import Serialization.Address (NetworkId(TestnetId,MainnetId))
-import Wallet.Key(KeyWallet)
-import Wallet.Key(keyWalletPrivatePaymentKey,keyWalletPrivateStakeKey)
+import Wallet.Key(KeyWallet,keyWalletPrivatePaymentKey,keyWalletPrivateStakeKey)
 
 import HelloWorld.Cli.Types (ParsedConf)
 

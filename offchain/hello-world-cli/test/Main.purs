@@ -29,7 +29,10 @@ main = do
     Just "testnet" -> pure false
     Just e -> throw $ "expected local or testnet got: " <> e
     Nothing -> throw "expected MODE to be set"
-  let withEnv f = if usePlutip
+  let
+    -- The first string is the port arguments the second string is the wallet config path
+    withEnv :: (String -> String -> Aff Unit) -> Aff Unit
+    withEnv f = if usePlutip
                       then withPlutipWalletFile config [ initialAdaAmount ] plutipWalletDir f
                       else f "" (jsonDir <> "testWalletCfg.json ")
   launchAff_ $ do
