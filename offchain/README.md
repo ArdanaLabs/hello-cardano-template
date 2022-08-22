@@ -2,10 +2,10 @@
 
 ## Ctl-runtime
 
-In order for most tests and apps to work you need to be running the Ctl-runtime.
+In order for some tests and apps to work you need to be running the Ctl-runtime.
 The ctl-runtime requires that docker is installed and the docker daemon is running.
 Installing docker will depend on your package manager, but might look like `sudo apt-get docker` or `pacman -S docker`.
-Starting the docker daemon depends on your init system but is usally `sudo systemctl start docker`.
+Starting the docker daemon depends on your init system but is usually `sudo systemctl start docker`.
 You probably also want to run `sudo systemctl enable docker` so that docker will start automatically when your reboot.
 
 Once you have docker you can start the ctl-runtime by running:
@@ -13,6 +13,9 @@ Once you have docker you can start the ctl-runtime by running:
 ```
 nix run .#ctl-runtime
 ```
+
+Currently only the browser tests require the ctl-runtime.
+The cli and api tests use plutip.
 
 ## The API
 
@@ -69,14 +72,19 @@ To run the CLI tests, run:
 ```
 nix run .#offchain:hello-world-cli:test
 ```
-or use `purs-nix test` in the dev shell.
+or in the dev shell run
+```
+nix build .#offchain:hello-world-cli
+export PATH=$PATH:./result/bin
+purs-nix test
+```
 
 ## wallet configs
 
 The wallet config is a json file who's path must be provided in the `CONFIG_FILE` argument of each cli command.
-It must provide the fields:
+The config format has the following fields:
 - `walletPath` which needs to be the path to a skey file for the wallet
-- `stakingPath` which needs to be the path to a skey file for the staking credential
+- Optional `stakingPath` which needs to be the path to a skey file for the staking credential, if omitted the wallet will not have a staking key.
 - network which needs to be `Testnet` or `Mainnet` and must indicate which network the wallet belongs to and the test will use.
 
 Here's an example config:
@@ -90,7 +98,7 @@ Here's an example config:
 # Test-wallet
 
 Many of our tests use a keywallet on testnet.
-The test-wallet addres is:
+The test-wallet address is:
 `addr_test1qqevfdhu80jsmjhzkf8lkkv5rza9h6k0u6hmwwr0r7vyjt9j3f374a2all0hc6vzxa6v7sax7du2lk5fu5q592d5fhqswar4hc`.
 Here's a link to faucet: https://testnets.cardano.org/en/testnets/cardano/tools/faucet/ .
 If the wallet runs out tests can fail.
