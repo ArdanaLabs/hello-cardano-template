@@ -17,5 +17,6 @@ main :: Effect Unit
 main = do
   launchAff_ $ runSpec' defaultConfig{timeout=Nothing} [ consoleReporter ] do
     Encoding.spec
+    Test.HelloWorld.Discovery.Api.spec
     Test.HelloWorld.Api.spec
     Test.HelloWorld.Discovery.Api.spec

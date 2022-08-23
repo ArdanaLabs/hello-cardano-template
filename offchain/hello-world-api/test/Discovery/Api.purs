@@ -8,9 +8,11 @@ import Data.UInt as UInt
 import Contract.Prelude
 import Contract.Test.Plutip (PlutipConfig, withPlutipContractEnv, runContractInEnv)
 import Contract.Wallet (withKeyWallet)
+import HelloWorld.Discovery.Api (mintNft,doubleMint)
 import HelloWorld.Discovery.Api (setConfig,stealConfig)
 import Test.Spec(Spec,describe,it)
-import Test.Spec.Assertions(expectError)
+import Test.Spec.Assertions (expectError)
+import Util (withOurLogger)
 
 config :: PlutipConfig
 config =
@@ -48,12 +50,35 @@ config =
 spec :: Spec Unit
 spec = do
   describe "HelloWorld.Discovery.Api" $ do
-    tryToStealConfig
+    describe "config" do
+      tryToStealConfig
+    describe "nft" do
+      tryMintNft
+      tryDoubleMint
+
+tryMintNft :: Spec Unit
+tryMintNft = do
+    it "minting an nft should succeed" $ do
+      let initialAdaAmount = BigInt.fromInt 20_000_000
+      withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
+        runContractInEnv (withOurLogger "./apiTest.log" env) $
+          withKeyWallet alice do
+            _ <- mintNft
+            pure unit
+
+tryDoubleMint :: Spec Unit
+tryDoubleMint = do
+    it "double minting an nft should not succeed" $ expectError do
+      let initialAdaAmount = BigInt.fromInt 20_000_000
+      withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
+        runContractInEnv (withOurLogger "./apiTest.log" env) $
+          withKeyWallet alice do
+            _ <- doubleMint
+            pure unit
 
 tryToStealConfig :: Spec Unit
 tryToStealConfig = do
-  describe "steal fails" do
-    it "should sets a config but fail to steal the utxo" $ do
+    it "sets a config but fail to steal the utxo" $ do
       let initialAdaAmount = BigInt.fromInt 20_000_000
           initialValue = 20
       withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do

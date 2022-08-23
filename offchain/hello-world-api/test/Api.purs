@@ -5,19 +5,18 @@ module Test.HelloWorld.Api
 import Data.BigInt as BigInt
 import Data.UInt as UInt
 
-import Plutus.Types.Value (Value, lovelaceValueOf, valueToCoin, getLovelace)
+import Plutus.Types.Value (Value, valueToCoin, getLovelace)
 
-import Test.Spec(Spec,describe,it,itOnly)
+import Test.Spec(Spec,describe,it)
 import Test.Spec.Assertions(shouldReturn, expectError, shouldEqual, shouldSatisfy)
-import Test.QuickCheck ((===))
-import Test.Spec.QuickCheck (quickCheck)
 
 import HelloWorld.Api (initialize, increment, redeem, query, helloScript, sendDatumToScript, datumLookup)
 import Contract.Monad (liftContractAffM)
 import Contract.Prelude
 import Contract.Scripts (validatorHash)
-import Contract.Test.Plutip (PlutipConfig, InitialUTxO, runPlutipContract, withPlutipContractEnv, runContractInEnv)
+import Contract.Test.Plutip (PlutipConfig, runPlutipContract, withPlutipContractEnv, runContractInEnv)
 import Contract.Wallet (withKeyWallet)
+import Util(withOurLogger)
 
 config :: PlutipConfig
 config =
@@ -72,11 +71,11 @@ testInitialize = do
           incParam = 200
       withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
         initOutput <-
-          runContractInEnv env $
+          runContractInEnv (withOurLogger "apiTest.log" env) $
             withKeyWallet alice do
               initialize incParam initialValue
         (datum /\ value) <-
-          runContractInEnv env $
+          runContractInEnv (withOurLogger "apiTest.log" env) $
             withKeyWallet alice do
               query initOutput
         datum `shouldEqual` initialValue
@@ -96,15 +95,15 @@ testIncrement = do
           distribution = [ BigInt.fromInt 20_000_000 ]
       withPlutipContractEnv config distribution \env alice -> do
         initOutput <-
-          runContractInEnv env $
+          runContractInEnv (withOurLogger "apiTest.log" env) $
             withKeyWallet alice do
               initialize incParam initialValue
         incOutput <-
-          runContractInEnv env $
+          runContractInEnv (withOurLogger "apiTest.log" env) $
             withKeyWallet alice do
               increment incParam initOutput
         (datum /\ _) <-
-          runContractInEnv env $
+          runContractInEnv (withOurLogger "apiTest.log" env) $
             withKeyWallet alice do
               query incOutput
         datum `shouldEqual` (initialValue + incParam)
@@ -113,56 +112,56 @@ testIncrement = do
           distribution = [ BigInt.fromInt 20_000_000 ]
       withPlutipContractEnv config distribution \env alice -> do
         lastOutput <-
-          runContractInEnv env $
+          runContractInEnv (withOurLogger "apiTest.log" env) $
             withKeyWallet alice do
               initialize 2 initialValue
         expectError $
-          runContractInEnv env $
+          runContractInEnv (withOurLogger "apiTest.log" env) $
             withKeyWallet alice do
               increment 3 lastOutput
-            
+
 testRedeem :: Spec Unit
 testRedeem = do
   describe "redeem" do
     it "should return the locked Ada to a wallet" $ do
-      let initialValue = 20 
+      let initialValue = 20
           incParam = 5
           initialAdaAmountAlice = BigInt.fromInt 20_000_000
           initialAdaAmountBob = BigInt.fromInt 5_000_000
           distribution = [ initialAdaAmountAlice ] /\ [ initialAdaAmountBob ]
       withPlutipContractEnv config distribution \env (alice /\ bob) -> do
         lastOutput <-
-          runContractInEnv env $
+          runContractInEnv (withOurLogger "apiTest.log" env) $
             withKeyWallet alice do
               initialize incParam initialValue
-        runContractInEnv env $
+        runContractInEnv (withOurLogger "apiTest.log" env) $
            withKeyWallet bob do
              redeem incParam lastOutput `shouldReturn` unit
         (_ /\ value) <-
-          runContractInEnv env $
+          runContractInEnv (withOurLogger "apiTest.log" env) $
             withKeyWallet bob do
               query lastOutput
         -- Bob should have more than at the beginning after redeeming
         getAmount value `shouldSatisfy` (==) initialAdaAmountBob
-      
+
     it "should succeed after successful initialization and increment" $ do
       let initialValue = 20
           incParam = 50
           distribution = [ BigInt.fromInt 20_000_000 ]
       withPlutipContractEnv config distribution \env alice -> do
         initOutput <-
-          runContractInEnv env $
+          runContractInEnv (withOurLogger "apiTest.log" env) $
             withKeyWallet alice do
               initialize incParam initialValue
         incOutput <-
-          runContractInEnv env $
+          runContractInEnv (withOurLogger "apiTest.log" env) $
             withKeyWallet alice do
               increment incParam initOutput
-        runContractInEnv env $
+        runContractInEnv (withOurLogger "apiTest.log" env) $
             withKeyWallet alice do
               redeem incParam incOutput `shouldReturn` unit
         (datum /\ value) <-
-          runContractInEnv env $
+          runContractInEnv (withOurLogger "apiTest.log" env) $
             withKeyWallet alice do
               query incOutput
         datum `shouldEqual` (initialValue + incParam)

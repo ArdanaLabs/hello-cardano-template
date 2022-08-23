@@ -76,6 +76,7 @@ library
     Hello
     HelloDiscovery
     Plutarch.Extensions.Api
+    Plutarch.Extensions.Data
     Plutarch.Extensions.List
     Plutarch.Extensions.Monad
     Utils

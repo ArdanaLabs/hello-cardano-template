@@ -9,13 +9,14 @@ import Plutarch.Prelude
 import Plutarch.Api.V2
 
 import Data.Default (Default (def))
+import Plutarch.Api.V1 (PValue(PValue), PTokenName (PTokenName))
+import Plutarch.Api.V1.AssocMap qualified as AssocMap
+import Plutarch.DataRepr (PDataFields)
 import Plutarch.Extensions.Api (passert,passert_)
+import Plutarch.Extensions.Data (parseData)
+import Plutarch.Extensions.List(unsingleton)
 import Plutarch.Extra.TermCont
 import Utils (validatorToHexString, closedTermToHexString)
-import Plutarch.Api.V1.AssocMap qualified as AssocMap
-import Plutarch.Api.V1 (PValue(PValue), PTokenName (PTokenName))
-import Plutarch.Extensions.List(unsingleton)
-import Plutarch.DataRepr (PDataFields)
 
 newtype CounterDatum (s :: S) = CounterDatum
       ( Term
@@ -57,8 +58,8 @@ standardNFT :: ClosedTerm (PData :--> PMintingPolicy)
 standardNFT = phoistAcyclic $
   plam $ \outRefData _ sc -> unTermCont $ do
     outRef :: Term _ PTxOutRef <- parseData outRefData
-    let (inputs :: Term _ (PBuiltinList PTxOutRef))
-          = pmap # pfield @"outRef"
+    let (inputs :: Term _ (PBuiltinList PTxOutRef)) =
+          pmap # pfield @"outRef"
             #$ pfield @"inputs"
             #$ pfield @"txInfo" # sc
     passert "didn't spend out ref" $ pelem # outRef # inputs
@@ -98,9 +99,4 @@ authTokenMP = phoistAcyclic $
           )
         #$ inputs
 
--- helpers
-
--- TODO is there a helper for this I couldn't find it
-parseData :: forall a s. (PTryFrom PData (PAsData a),PIsData a) => Term s PData -> TermCont s (Term s a)
-parseData d = pfromData . fst <$> tcont (ptryFrom @(PAsData a) d)
 
