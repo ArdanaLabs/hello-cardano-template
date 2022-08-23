@@ -3,6 +3,7 @@ module Plutarch.Extensions.Api (
   passert,
   passert_,
   pfindOwnInput,
+  pgetContinuingOutput,
 ) where
 
 import Plutarch.Prelude
@@ -11,36 +12,39 @@ import Control.Monad (void)
 import Plutarch.Api.V2 (
   PAddress,
   PDatum (PDatum),
+  POutputDatum (POutputDatum),
   PScriptContext (..),
   PScriptPurpose (PSpending),
   PTxInInfo,
   PTxOut,
   PTxOutRef,
-  POutputDatum(POutputDatum),
  )
+import Plutarch.Extensions.Data (parseData)
 import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extensions.Monad (pmatchFieldC)
 import Plutarch.Extra.TermCont (pmatchC)
-import Plutarch.Extensions.Data (parseData)
 
 {- | enfroces that there is a unique continuing output gets it's Datum
  - and converts it to the desired type via pfromData
 -}
-pgetContinuingDatum :: forall p s. (PTryFrom PData (PAsData p),PIsData p) => Term s PScriptContext -> TermCont s (Term s p)
+pgetContinuingDatum :: forall p s. (PTryFrom PData (PAsData p), PIsData p) => Term s PScriptContext -> TermCont s (Term s p)
 pgetContinuingDatum ctx = do
-  ctxF <- tcont $ pletFields @["txInfo", "purpose"] ctx
-  txInfoF <- tcont $ pletFields @["inputs", "outputs", "datums"] $ getField @"txInfo" ctxF
-  PSpending outRef <- pmatchC $ getField @"purpose" ctxF
-  let out =
-        unsingleton $
-          pgetContinuingOutputs
-            # getField @"inputs" txInfoF
-            # getField @"outputs" txInfoF
-            # (pfield @"_0" # outRef)
+  out <- pgetContinuingOutput ctx
   POutputDatum datum <- pmatchFieldC @"datum" out
   PDatum d <- pmatchFieldC @"outputDatum" datum
   parseData d
 
+pgetContinuingOutput :: forall s. Term s PScriptContext -> TermCont s (Term s PTxOut)
+pgetContinuingOutput ctx = do
+  ctxF <- tcont $ pletFields @["txInfo", "purpose"] ctx
+  txInfoF <- tcont $ pletFields @["inputs", "outputs", "datums"] $ getField @"txInfo" ctxF
+  PSpending outRef <- pmatchC $ getField @"purpose" ctxF
+  pure $
+    unsingleton $
+      pgetContinuingOutputs
+        # getField @"inputs" txInfoF
+        # getField @"outputs" txInfoF
+        # (pfield @"_0" # outRef)
 
 -- | fails with provided message if the bool is false otherwise returns unit
 passert :: Term s PString -> Term s PBool -> TermCont s (Term s POpaque)
@@ -49,7 +53,7 @@ passert msg bool = pure $ pif bool (popaque $ pcon PUnit) (ptraceError msg)
 passert_ :: Term s PString -> Term s PBool -> TermCont s ()
 passert_ msg bool = void $ passert msg bool
 
--- Taken from plutarch-extra to use current api
+-- Taken from plutarch-extra to use current api version
 
 pgetContinuingOutputs :: Term s (PBuiltinList PTxInInfo :--> PBuiltinList PTxOut :--> PTxOutRef :--> PBuiltinList PTxOut)
 pgetContinuingOutputs = phoistAcyclic $
