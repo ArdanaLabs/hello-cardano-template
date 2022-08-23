@@ -5,13 +5,7 @@ module HelloWorld.Cli.Runners
 -- Contract
 import Contract.Prelude
 import Contract.Config(testnetConfig)
-import Contract.Monad
-  ( ConfigParams
-  , runContract
-  , liftContractAffM
-  , liftContractM
-  )
-import Contract.Scripts (validatorHash)
+import Contract.Monad (ConfigParams,runContract)
 
 -- Node
 import Node.FS.Aff
@@ -42,8 +36,7 @@ import Wallet.Spec
 
 -- Local
 import HelloWorld.Api
-  (helloScript
-  ,initialize
+  (initialize
   ,increment
   ,redeem
   ,query
@@ -76,8 +69,11 @@ readConfig (ParsedOptions o)= do
     ,statePath: o.statePath
     ,conf:Conf conf
       {walletPath=dir<>conf.walletPath
-      ,stakingPath=dir<>conf.stakingPath
+      ,stakingPath=(dir<>_) <$> conf.stakingPath
       }
+    ,ctlPort: o.ctlPort
+    ,ogmiosPort: o.ogmiosPort
+    ,odcPort: o.odcPort
     }
 
 lookupNetwork :: ParsedConf -> Either String Conf
@@ -95,8 +91,14 @@ throwE (Left a) = liftEffect $ throw $ show a
 throwE (Right b) = pure b
 
 runCmd :: Options -> Aff Unit
-runCmd (Options {conf,statePath,command}) = do
-  let cfg = toConfigParams conf
+runCmd (Options {conf,statePath,command,ctlPort,ogmiosPort,odcPort}) = do
+  let cfg' = toConfigParams conf
+  -- update ports from config
+  let cfg=cfg'
+            {ctlServerConfig{port = fromMaybe cfg'.ctlServerConfig.port ctlPort}
+            ,ogmiosConfig{port = fromMaybe cfg'.ogmiosConfig.port ogmiosPort}
+            ,datumCacheConfig{port = fromMaybe cfg'.datumCacheConfig.port odcPort }
+            }
   case command of
     Lock {contractParam:param,initialDatum:init} -> do
       stateExists <- liftEffect $ exists statePath
@@ -165,5 +167,6 @@ toConfigParams
   (Conf{walletPath,stakingPath,network}) =
   let wallet = UseKeys
                 (PrivatePaymentKeyFile walletPath)
-                (Just $ PrivateStakeKeyFile stakingPath)
+                (PrivateStakeKeyFile <$> stakingPath)
   in testnetConfig{walletSpec=Just wallet,networkId=network}
+
