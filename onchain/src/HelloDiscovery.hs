@@ -2,26 +2,43 @@ module HelloDiscovery (
   configScriptCbor,
   nftCbor,
   authTokenCbor,
+  vaultScriptCbor,
 ) where
 
 import Plutarch.Prelude
 
 import Plutarch.Api.V2
+  (PValidator
+  ,PTxInInfo
+  ,PScriptPurpose(PSpending,PMinting)
+  ,PMintingPolicy
+  ,PTxOutRef
+  ,PAddress
+  ,PTxId
+  ,PPubKeyHash
+  ,PDatum(PDatum)
+  ,mkValidator
+  )
 
 import Plutarch.Api.V1.AssocMap qualified as AssocMap
 import Plutarch.Api.V1.Value qualified as Value
+import Plutarch.Api.V1.AssocMap (plookup)
+import Plutarch.Api.V1.Value (pforgetPositive)
+import Plutarch.Api.V1
+  (PTokenName (PTokenName)
+  ,PValue (PValue)
+  ,PCurrencySymbol
+  ,PCredential(PScriptCredential)
+  )
 
 import Data.Default (Default (def))
-import Plutarch.Api.V1 (PTokenName (PTokenName), PValue (PValue), PCurrencySymbol)
 import Plutarch.DataRepr (PDataFields)
-import Plutarch.Extensions.Api (passert, passert_)
+import Plutarch.Extensions.Api (passert, passert_,pgetContinuingDatum,pfindOwnInput)
 import Plutarch.Extensions.Data (parseData)
 import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extra.TermCont
 import Utils (closedTermToHexString, validatorToHexString)
-import Plutarch.Api.V1.AssocMap (plookup)
 import Plutarch.Builtin (pforgetData)
-import Plutarch.Api.V1.Value (pforgetPositive)
 
 configScriptCbor :: String
 configScriptCbor = validatorToHexString $ mkValidator def configScript
@@ -31,6 +48,9 @@ nftCbor = closedTermToHexString standardNFT
 
 authTokenCbor :: Maybe String
 authTokenCbor = closedTermToHexString authTokenMP
+
+vaultScriptCbor :: Maybe String
+vaultScriptCbor = closedTermToHexString vaultAdrValidator
 
 -- | The config validator
 -- the config validator
@@ -113,13 +133,65 @@ authTokenMP = phoistAcyclic $
     (datum :: Term _ CounterDatum) <- parseData dat
     passert "count wasn't 0" $ (0 :: Term _ PInteger) #== pfield @"count" # datum
 
+-- | The vault address validator
+-- paremetized by an asset class
+-- to validate:
+-- The owner must sign the tx
+-- the config must be a read only input
+-- the utxo must have a valid nft
+-- the redemer must be inc or spend
+-- if it's inc
+  -- there must be a new output
+  -- it must have the same owner
+  -- the counter must be 1 higher
+  -- the new output must have the same nft
+-- if it's spend
+  -- the nft must be burned
+vaultAdrValidator :: ClosedTerm (PData :--> PValidator)
+vaultAdrValidator = plam $ \configNftCsData datum' redeemer' sc -> unTermCont $ do
+  datum :: Term _ CounterDatum <- parseData datum'
+  info <- pletC $ pfield @"txInfo" # sc
+  passert_ "owner signed tx" $
+    pelem # (pfield @"owner" # datum) #$ pfield @"signatories" # info
+  redeemer <- parseData redeemer'
+  configNftCs :: Term _ PCurrencySymbol <- parseData configNftCsData
+  PJust config <- pmatchC $ pfind
+    # plam (\(ininfo :: Term _ PTxInInfo) -> unTermCont $ do
+        out <- pletC $ pfield @"resolved" # ininfo
+        pure $ (pfield @"credential" #$ pfield @"address" # out) #== pcon (PScriptCredential $ pdcons # pconstant (mkValidator _) # pdnil ))
+    # (pfield @"referenceInputs" # info)
+  let nftCs = undefined configNftCsData
+  PSpending  outRef <- pmatchC $ pfield @"purpose" # sc
+  PJust inInfo <- pmatchC $ pfindOwnInput # (pfield @"inputs" # info) #$ pfield @"_0" # outRef
+  passert_ "has nft" $ 0 #< (Value.pvalueOf # (pfield @"value" #$ pfield @"resolved" # inInfo) # nftCs # pconstant "")
+  pmatchC redeemer >>= \case
+    Inc _ -> do
+      datum2 :: Term _ CounterDatum <- pgetContinuingDatum sc
+      passert_ "owner is the same" $ pfield @"owner" # datum2 #== pfield @"owner" # datum
+      passert "count is 1 more" $ pfield @"count" # datum2 #== pfield @"count" # datum + (1 :: Term _ PInteger)
+      -- check has same nft
+    Spend _ -> do
+      -- NFT was burned
+      pure $ popaque $ pcon PUnit
+
+
 -- Types
+
+data HelloRedemer (s :: S)
+  = Inc (Term s (PDataRecord '[]))
+  | Spend (Term s (PDataRecord '[]))
+  deriving stock (Generic)
+  deriving anyclass (PlutusType, PIsData, PEq)
+
+instance DerivePlutusType HelloRedemer where type DPTStrat _ = PlutusTypeData
+instance PTryFrom PData (PAsData HelloRedemer)
+
 newtype CounterDatum (s :: S)
   = CounterDatum
       ( Term
           s
           ( PDataRecord
-              '[ "owner" ':= PAddress
+              '[ "owner" ':= PPubKeyHash
                , "count" ':= PInteger
                ]
           )
@@ -144,3 +216,4 @@ newtype AuthRedeemer (s :: S)
   deriving anyclass (PlutusType, PIsData, PDataFields, PEq)
 instance DerivePlutusType AuthRedeemer where type DPTStrat _ = PlutusTypeData
 instance PTryFrom PData (PAsData AuthRedeemer)
+
