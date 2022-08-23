@@ -11,13 +11,12 @@ import Contract.Aeson (decodeAeson, fromString)
 import Contract.Credential (Credential(..), StakingCredential(..))
 import Contract.Log (logInfo')
 import Contract.Monad (Contract, liftContractM, liftContractAffM)
-import Contract.Prim.ByteArray (hexToByteArray)
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (applyArgsM)
 import Contract.Transaction (TransactionHash, TransactionInput)
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
-import Contract.Value (adaToken, mkTokenName, scriptCurrencySymbol)
+import Contract.Value (adaToken, scriptCurrencySymbol)
 import Data.BigInt as BigInt
 import Data.Time.Duration (Minutes(..))
 import Data.Tuple.Nested ((/\), type (/\))
