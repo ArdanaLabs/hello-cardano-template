@@ -6,6 +6,7 @@ module Plutarch.Extensions.Api (
 
 import Plutarch.Prelude
 
+import Control.Monad (void)
 import Plutarch.Api.V1 (
   PMaybeData (..),
   PScriptContext (..),
@@ -15,7 +16,6 @@ import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extensions.Monad (pmatchFieldC)
 import Plutarch.Extra.Api (pgetContinuingOutputs, pparseDatum)
 import Plutarch.Extra.TermCont (pmatchC)
-import Control.Monad(void)
 
 {- | enfroces that there is a unique continuing output gets it's Datum
  - and converts it to the desired type via pfromData

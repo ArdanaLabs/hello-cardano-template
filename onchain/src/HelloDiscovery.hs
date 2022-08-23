@@ -9,16 +9,17 @@ import Plutarch.Prelude
 import Plutarch.Api.V2
 
 import Data.Default (Default (def))
-import Plutarch.Api.V1 (PValue(PValue), PTokenName (PTokenName))
+import Plutarch.Api.V1 (PTokenName (PTokenName), PValue (PValue))
 import Plutarch.Api.V1.AssocMap qualified as AssocMap
 import Plutarch.DataRepr (PDataFields)
-import Plutarch.Extensions.Api (passert,passert_)
+import Plutarch.Extensions.Api (passert, passert_)
 import Plutarch.Extensions.Data (parseData)
-import Plutarch.Extensions.List(unsingleton)
+import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extra.TermCont
-import Utils (validatorToHexString, closedTermToHexString)
+import Utils (closedTermToHexString, validatorToHexString)
 
-newtype CounterDatum (s :: S) = CounterDatum
+newtype CounterDatum (s :: S)
+  = CounterDatum
       ( Term
           s
           ( PDataRecord
@@ -46,10 +47,10 @@ configScript :: ClosedTerm PValidator
 configScript = phoistAcyclic $
   plam $ \_datum _redemer sc -> unTermCont $ do
     PSpending outRef' <- pmatchC (pfield @"purpose" # sc)
-    let (outRef :: Term _ PTxOutRef)
-          = pfield @"_0" # outRef'
-        (refrenceInputOutRefs :: Term _ (PBuiltinList PTxOutRef))
-          = pmap # pfield @"outRef"
+    let (outRef :: Term _ PTxOutRef) =
+          pfield @"_0" # outRef'
+        (refrenceInputOutRefs :: Term _ (PBuiltinList PTxOutRef)) =
+          pmap # pfield @"outRef"
             #$ pfield @"referenceInputs"
             #$ pfield @"txInfo" # sc
     passert "wasn't a refrence input" $ pelem # outRef # refrenceInputOutRefs
@@ -75,10 +76,10 @@ authTokenMP = phoistAcyclic $
     PValue m <- pmatchC minting
     PJust mintedAtCs <- pmatchC $ AssocMap.plookup # cs # m
     tn <- parseData redeemer
-    passert_ "did not mint exactly one token of this currency symbol"
-      $ mintedAtCs #== (AssocMap.psingleton # tn # 1)
+    passert_ "did not mint exactly one token of this currency symbol" $
+      mintedAtCs #== (AssocMap.psingleton # tn # 1)
     let outputs = pfield @"outputs" # info
-    vault <- pletC $ unsingleton $ pfilter # plam ((vaultAdr #==).(pfield @"address" #)) # outputs
+    vault <- pletC $ unsingleton $ pfilter # plam ((vaultAdr #==) . (pfield @"address" #)) # outputs
     outDatum <- pletC $ pfield @"datum" # vault
     POutputDatum datum' <- pmatchC outDatum
     PDatum dat <- pmatchC $ pfield @"outputDatum" # datum'
@@ -90,13 +91,12 @@ authTokenMP = phoistAcyclic $
     let (inputs :: Term _ (PBuiltinList PTxInInfo)) = pfield @"inputs" # info
     passert "spent right input for token name" $
       pany
-        # plam (\input -> unTermCont $ do
-          out <- pletC $ pfield @"outRef" # input
-          pure $
-            (pfield @"_0" #$ pfield @"id" # out) #== tnid
-            -- we could allow more than one byte for the idx but I don't think we need to
-            #&& (pconsBS # (pfield @"idx" # out) # pconstant "000" #== tnidx)
+        # plam
+          ( \input -> unTermCont $ do
+              out <- pletC $ pfield @"outRef" # input
+              pure $
+                (pfield @"_0" #$ pfield @"id" # out) #== tnid
+                  -- we could allow more than one byte for the idx but I don't think we need to
+                  #&& (pconsBS # (pfield @"idx" # out) # pconstant "000" #== tnidx)
           )
         #$ inputs
-
-
