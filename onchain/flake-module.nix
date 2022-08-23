@@ -62,6 +62,29 @@
     in
     {
       apps = {
+        "onchain:docs:serve" = dusd-lib.mkApp
+          (
+              pkgs.writeShellApplication
+                {
+                  name = "onchain-docs";
+                  text = ''
+                    nix develop .#onchain -c hoogle generate --database=hoogle-db --local
+                    nix develop .#onchain -c hoogle server --database=hoogle-db --port=8081 --local
+                  '';
+                }
+          );
+
+        "onchain:docs" = dusd-lib.mkApp
+          (
+              pkgs.writeShellApplication
+                {
+                  name = "onchain-docs";
+                  text = ''
+                    nix develop .#onchain -c hoogle generate --database=$out/hoogle-db --local
+                  '';
+                }
+          );
+
         "onchain:test" =
           dusd-lib.mkApp
             (
