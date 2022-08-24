@@ -4,6 +4,8 @@ module HelloWorld.Cli.Parser
 
 import Prelude
 
+import Data.Maybe (Maybe(Nothing, Just))
+import Data.UInt (UInt, fromInt)
 import Options.Applicative
   ( CommandFields
   , Mod
@@ -23,6 +25,8 @@ import Options.Applicative
   , header
   , commandGroup
   , helper
+  , help
+  , value
   )
 
 import HelloWorld.Cli.Types (ParsedOptions(..), Command(..))
@@ -37,16 +41,48 @@ parser = info rawParser
 rawParser :: Parser ParsedOptions
 rawParser = (helper <*> _)
   $ map ParsedOptions
-  $ { configFile: _, statePath: _, command: _ }
+  $ { configFile: _, statePath: _, command: _, ctlPort: _, ogmiosPort: _, odcPort: _ }
       <$> config
       <*> stateFile
       <*> com
+      <*> ctlPort
+      <*> ogmiosPort
+      <*> odcPort
 
 config :: Parser String
-config = strOption (long "config" <> short 'c' <> metavar "CONFIG_FILE")
+config = strOption $
+  long "config"
+    <> short 'c'
+    <> metavar "CONFIG_FILE"
+    <> help "the config file for the wallet to be used"
 
 stateFile :: Parser String
-stateFile = strOption (long "state-file" <> short 's' <> metavar "STATE_FILE")
+stateFile = strOption $
+  long "state-file"
+    <> short 's'
+    <> metavar "STATE_FILE"
+    <> help "the path to the state file to be used"
+
+ctlPort :: Parser (Maybe UInt)
+ctlPort = option (Just <<< fromInt <$> int) $
+  long "ctl-port"
+    <> metavar "CTL_PORT"
+    <> value Nothing
+    <> help "The port number for the ctl-server. You usually don't need to change this"
+
+ogmiosPort :: Parser (Maybe UInt)
+ogmiosPort = option (Just <<< fromInt <$> int) $
+  long "ogmios-port"
+    <> metavar "OGMIOS_PORT"
+    <> value Nothing
+    <> help "The port number for ogmios. You usually don't need to change this"
+
+odcPort :: Parser (Maybe UInt)
+odcPort = option (Just <<< fromInt <$> int) $
+  long "odc-port"
+    <> metavar "ODC_PORT"
+    <> value Nothing
+    <> help "The port number for the ogmios datum cache. You usually don't need to change this"
 
 -- the name command is taken
 com :: Parser Command
