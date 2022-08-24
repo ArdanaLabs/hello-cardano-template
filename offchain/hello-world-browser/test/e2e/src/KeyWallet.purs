@@ -2,24 +2,21 @@ module HelloWorld.Test.E2E.KeyWallet
   ( mkTestOptions
   , runE2ETest
   , withBrowser
-  , RunningExample(..)
   ) where
 
-import Contract.Prelude
+import Prelude
 
-import Contract.Test.E2E (Mode(..), TestOptions(..))
+import Contract.Test.E2E (Mode(..), RunningExample, TestOptions(..), withExample)
 import Data.Maybe (fromMaybe)
 import Data.String (trim)
 import Effect (Effect)
 import Effect.Aff (Aff, bracket)
-import Effect.Exception (throw)
 import HelloWorld.Test.E2E.Env as Env
 import HelloWorld.Test.E2E.Helpers (helloWorldBrowserURL)
 import Mote (test)
 import Node.Buffer as Buffer
 import Node.ChildProcess (defaultExecSyncOptions, execSync)
 import Node.Encoding (Encoding(..))
-import Node.FS.Sync (readTextFile)
 import Node.Process (lookupEnv)
 import TestM (TestPlanM)
 import Toppokki as Toppokki
@@ -67,38 +64,6 @@ mkChromeUserDataDir :: Effect String
 mkChromeUserDataDir = do
   tempDir <- mkTempDir
   pure $ tempDir <> "/test-data/chrome-user-data"
-
-newtype RunningExample = RunningExample
-  { browser :: Toppokki.Browser
-  , jQuery :: String
-  , page :: Toppokki.Page
-  }
-
-derive instance Newtype RunningExample _
-
-startExample :: Toppokki.URL -> Toppokki.Browser -> Aff RunningExample
-startExample url browser = do
-  page <- Toppokki.newPage browser
-
-  jQuery <- liftEffect $ lookupEnv "JQUERY_MIN_SRC" >>= \mSrc -> do
-    case mSrc of
-      Nothing -> throw "Failed to load jQuery"
-      Just src -> readTextFile UTF8 src
-  Toppokki.goto url page
-  pure $ wrap
-    { browser: browser
-    , jQuery: jQuery
-    , page: page
-    }
-
-withExample
-  :: forall (a :: Type)
-   . Toppokki.URL
-  -> Toppokki.Browser
-  -> (RunningExample -> Aff a)
-  -> Aff a
-withExample url browser = bracket (startExample url browser)
-  (const $ pure unit)
 
 runE2ETest
   :: forall (a :: Type)
