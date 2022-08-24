@@ -54,7 +54,7 @@
                 # shellcheck disable=SC2016
                 ${pkgs.parallel}/bin/parallel --will-cite \
                   '. {} &> "$(basename {.})-output"' ::: \
-                  ${getTestScript "hello-world-api"} \
+                  ${self'.apps."offchain:hello-world-api:test:local".program}
                   ${getTestScript "hello-world-browser"} \
                   ${self'.apps."offchain:hello-world-cli:test:local".program}
                 printf "$?" > "$TEST_EXITCODE_FILE"
