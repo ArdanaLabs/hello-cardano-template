@@ -94,7 +94,7 @@
         // {
           "onchain:docs:hoogle-db" =
             let s = self'.devShells.onchain; in
-            pkgs.runCommand "onchain-docs"
+            pkgs.runCommand "onchain-docs-db"
               { inherit (s) buildInputs nativeBuildInputs; }
               ''
                 ${s.shellHook}
