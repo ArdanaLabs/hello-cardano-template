@@ -79,12 +79,12 @@
             };
       };
 
-      hello-world-browser-e2e-with-key-wallet =
+      hello-world-browser-e2e-with-local =
         let
           testModule =
             hello-world-browser-e2e.ps.modules."HelloWorld.Test.E2E.Main".output
               { };
-          scriptName = "hello-world-browser-e2e-with-key-wallet";
+          scriptName = "hello-world-browser-e2e-with-local";
         in
         pkgs.writeShellApplication
           {
@@ -100,7 +100,7 @@
               self'.packages."offchain:hello-world-browser"
             ];
             text = ''
-              export RUNTIME_TYPE=KEY_WALLET
+              export MODE=local
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
               export CHROME_EXE="${pkgs.chromium}/bin/chromium"
               export HELLO_WORLD_BROWSER_INDEX=${self'.packages."offchain:hello-world-browser"}
@@ -113,12 +113,12 @@
             '';
           };
 
-      hello-world-browser-e2e-with-nami-wallet =
+      hello-world-browser-e2e-with-testnet =
         let
           testModule =
             hello-world-browser-e2e.ps.modules."HelloWorld.Test.E2E.Main".output
               { };
-          scriptName = "hello-world-browser-e2e-with-nami-wallet";
+          scriptName = "hello-world-browser-e2e-with-testnet";
         in
         pkgs.writeShellApplication
           {
@@ -127,7 +127,7 @@
               [ self'.packages."offchain:hello-world-browser" ]
               ++ (with pkgs; [ nodejs chromium unzip curl ]);
             text = ''
-              export RUNTIME_TYPE=NAMI_WALLET
+              export MODE=testnet
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
               export CHROME_EXE="${pkgs.chromium}/bin/chromium"
               export HELLO_WORLD_BROWSER_INDEX=${self'.packages."offchain:hello-world-browser"}
@@ -152,10 +152,10 @@
           dusd-lib.makeServeApp self'.packages."offchain:hello-world-browser";
         "offchain:hello-world-browser:serve-live" =
           dusd-lib.makeServeLive self'.packages."offchain:hello-world-browser";
-        "offchain:hello-world-browser:e2e:key-wallet" =
-          dusd-lib.mkApp hello-world-browser-e2e-with-key-wallet;
-        "offchain:hello-world-browser:e2e:nami-wallet" =
-          dusd-lib.mkApp hello-world-browser-e2e-with-nami-wallet;
+        "offchain:hello-world-browser:e2e:local" =
+          dusd-lib.mkApp hello-world-browser-e2e-with-local;
+        "offchain:hello-world-browser:e2e:testnet" =
+          dusd-lib.mkApp hello-world-browser-e2e-with-testnet;
       };
       checks = {
         "offchain:hello-world-browser:lighthouse" =

@@ -38,14 +38,14 @@ To run the browser app you can use:
 nix run .#offchain:hello-world-browser:serve
 ```
 
-To run the browser tests with Nami wallet use:
+To run the browser tests with testnet use:
 ```
-nix run .#offchain:hello-world-browser:e2e:nami-wallet
+nix run .#offchain:hello-world-browser:e2e:testnet
 ```
 
-To run the browser tests with key wallet use:
+To run the browser tests with local use:
 ```
-nix run .#offchain:hello-world-browser:e2e:key-wallet
+nix run .#offchain:hello-world-browser:e2e:local
 ```
 
 To run the lighthouse tests use:

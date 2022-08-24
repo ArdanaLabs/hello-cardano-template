@@ -22,8 +22,8 @@ main =
   lookupEnv Env.helloWorldBrowserIndex >>= case _ of
     Nothing -> throw "HELLO_WORLD_BROWSER_INDEX not set"
     Just index ->
-      lookupEnv Env.runtimeType >>= case _ of
-        Just "NAMI_WALLET" ->
+      lookupEnv Env.mode >>= case _ of
+        Just "testnet" ->
           launchAff_ do
             let
               cookies =
@@ -32,7 +32,7 @@ main =
                 , Cookie { key: "networkId", value: Nothing }
                 ]
             bracket (startStaticServer cookies index) closeStaticServer $ const Nami.runTestPlans
-        Just "KEY_WALLET" ->
+        Just "local" ->
           launchAff_
             $ withPlutipContractEnv config [ BigInt.fromInt 2_000_000_000 ] \env wallet -> do
                 paymentKey <- liftM (error "Failed to format payment key") $ formatPaymentKey (keyWalletPrivatePaymentKey wallet)
@@ -45,7 +45,8 @@ main =
                     , Cookie { key: "networkId", value: Just (show networkId) }
                     ]
                 bracket (startStaticServer cookies index) closeStaticServer $ const Key.runTestPlans
-        _ -> throw "Unknow runtime type"
+        Just e -> throw $ "expected local or testnet got: " <> e
+        Nothing -> throw "MODE not set"
 
 config :: PlutipConfig
 config =
