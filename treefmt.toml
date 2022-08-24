@@ -19,3 +19,8 @@ includes = ["*.cabal"]
 [formatter.nix]
 command = "nixpkgs-fmt"
 includes = ["*.nix"]
+
+[formatter.purscript]
+command = "purs-tidy"
+options = ["format-in-place"]
+includes = ["*.purs"]
