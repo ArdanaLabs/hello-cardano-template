@@ -16,18 +16,21 @@
             aff
             bigints
             ctl-pkgs.cardano-transaction-lib
-            node-child-process
             node-fs-aff
-            node-process
             ordered-collections
-            spec
             aff-retry
             self'.packages."offchain:hello-world-cbor"
+          ];
+        test-dependencies =
+          with ps-pkgs;
+          [
+            node-process
+            spec
           ];
         ps =
           purs-nix.purs
             {
-              inherit (hello-world-api) dependencies;
+              inherit (hello-world-api) dependencies test-dependencies;
               dir = ./.;
             };
         package =
@@ -42,7 +45,7 @@
             };
       };
 
-      hello-world-api-tests =
+      hello-world-api-tests = mode:
         let testExe = hello-world-api.ps.test.run { }; in
         pkgs.writeShellApplication
           {
@@ -56,16 +59,20 @@
               self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system}
             ];
             text = ''
+              export MODE=${mode}
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
               ${testExe}
             '';
           };
     in
     {
-      apps."offchain:hello-world-api:test" = dusd-lib.mkApp hello-world-api-tests;
+      apps = {
+        "offchain:hello-world-api:test:testnet" = dusd-lib.mkApp (hello-world-api-tests "testnet");
+        "offchain:hello-world-api:test:local" = dusd-lib.mkApp (hello-world-api-tests "local");
+      };
       checks.run-hello-world-api-tests =
-        let test = hello-world-api-tests; in
-        pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
+        let test = hello-world-api-tests "local"; in
+        pkgs.runCommand test.name { }
           "${test}/bin/${test.meta.mainProgram} | tee $out";
       devShells."offchain:hello-world-api" =
         offchain-lib.makeProjectShell hello-world-api { };
