@@ -5,7 +5,6 @@ module HelloWorld.Test.E2E.Env
   , namiWallet1
   , namiWallet2
   , namiWallet3
-  , noRuntime
   , runtimeType
   ) where
 
@@ -23,9 +22,6 @@ namiWallet2 = "NAMI_TEST_WALLET_2"
 
 namiWallet3 :: String
 namiWallet3 = "NAMI_TEST_WALLET_3"
-
-noRuntime :: String
-noRuntime = "NO_RUNTIME"
 
 runtimeType :: String
 runtimeType = "RUNTIME_TYPE"

@@ -23,20 +23,15 @@ main =
     Nothing -> throw "HELLO_WORLD_BROWSER_INDEX not set"
     Just index ->
       lookupEnv Env.runtimeType >>= case _ of
-        Just "NAMI_WALLET" -> do
-          noRuntime <- isJust <$> lookupEnv Env.noRuntime
-
-          if noRuntime then
-            log "skip the test since there's no ctl-runtime"
-          else
-            launchAff_ do
-              let
-                cookies =
-                  [ Cookie { key: "paymentKey", value: Nothing }
-                  , Cookie { key: "stakeKey", value: Nothing }
-                  , Cookie { key: "networkId", value: Nothing }
-                  ]
-              bracket (startStaticServer cookies index) closeStaticServer $ const Nami.runTestPlans
+        Just "NAMI_WALLET" ->
+          launchAff_ do
+            let
+              cookies =
+                [ Cookie { key: "paymentKey", value: Nothing }
+                , Cookie { key: "stakeKey", value: Nothing }
+                , Cookie { key: "networkId", value: Nothing }
+                ]
+            bracket (startStaticServer cookies index) closeStaticServer $ const Nami.runTestPlans
         Just "KEY_WALLET" ->
           launchAff_
             $ withPlutipContractEnv config [ BigInt.fromInt 2_000_000_000 ] \env wallet -> do

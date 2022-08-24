@@ -152,25 +152,12 @@
           dusd-lib.makeServeApp self'.packages."offchain:hello-world-browser";
         "offchain:hello-world-browser:serve-live" =
           dusd-lib.makeServeLive self'.packages."offchain:hello-world-browser";
-        "offchain:hello-world-browser:e2e:key-wallet:test" =
+        "offchain:hello-world-browser:e2e:key-wallet" =
           dusd-lib.mkApp hello-world-browser-e2e-with-key-wallet;
-        "offchain:hello-world-browser:e2e:nami-wallet:test" =
+        "offchain:hello-world-browser:e2e:nami-wallet" =
           dusd-lib.mkApp hello-world-browser-e2e-with-nami-wallet;
       };
       checks = {
-        "offchain:hello-world-browser:e2e:key-wallet" =
-          let test = hello-world-browser-e2e-with-key-wallet; in
-          pkgs.runCommand test.name { }
-            ''
-              HOME="$TMPDIR/home"
-              export HOME
-              mkdir "$HOME"
-              ${test}/bin/${test.meta.mainProgram} | tee $out
-            '';
-        "offchain:hello-world-browser:e2e:nami-wallet" =
-          let test = hello-world-browser-e2e-with-nami-wallet; in
-          pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
-            "${test}/bin/${test.meta.mainProgram} | tee $out";
         "offchain:hello-world-browser:lighthouse" =
           pkgs.callPackage ../../nixos/tests/hello-world-browser-lighthouse.nix {
             lighthouse =
