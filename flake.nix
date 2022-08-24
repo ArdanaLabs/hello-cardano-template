@@ -51,14 +51,16 @@
       url = "github:GoogleChrome/lighthouse/v9.5.0";
       flake = false;
     };
+    treefmt-flake.url = "github:srid/treefmt-flake";
   };
 
-  outputs = { self, flake-parts, ... }:
+  outputs = { self, flake-parts, treefmt-flake, ... }:
     (flake-parts.lib.evalFlakeModule
       { inherit self; }
       {
         systems = [ "x86_64-linux" ];
         imports = [
+          treefmt-flake.flakeModule
           ./offchain
           ./onchain
           ./docs

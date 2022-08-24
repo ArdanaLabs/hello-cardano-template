@@ -1,5 +1,5 @@
 module Test.HelloWorld.Discovery.Api
- ( spec
+  ( spec
   ) where
 
 import Data.BigInt as BigInt
@@ -8,9 +8,9 @@ import Data.UInt as UInt
 import Contract.Prelude
 import Contract.Test.Plutip (PlutipConfig, withPlutipContractEnv, runContractInEnv)
 import Contract.Wallet (withKeyWallet)
-import HelloWorld.Discovery.Api (mintNft,doubleMint)
-import HelloWorld.Discovery.Api (setConfig,stealConfig)
-import Test.Spec(Spec,describe,it)
+import HelloWorld.Discovery.Api (mintNft, doubleMint)
+import HelloWorld.Discovery.Api (setConfig, stealConfig)
+import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (expectError)
 import Util (withOurLogger)
 
@@ -58,32 +58,33 @@ spec = do
 
 tryMintNft :: Spec Unit
 tryMintNft = do
-    it "minting an nft should succeed" $ do
-      let initialAdaAmount = BigInt.fromInt 20_000_000
-      withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
-        runContractInEnv (withOurLogger "./apiTest.log" env) $
-          withKeyWallet alice do
-            _ <- mintNft
-            pure unit
+  it "minting an nft should succeed" $ do
+    let initialAdaAmount = BigInt.fromInt 20_000_000
+    withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
+      runContractInEnv (withOurLogger "./apiTest.log" env) $
+        withKeyWallet alice do
+          _ <- mintNft
+          pure unit
 
 tryDoubleMint :: Spec Unit
 tryDoubleMint = do
-    it "double minting an nft should not succeed" $ expectError do
-      let initialAdaAmount = BigInt.fromInt 20_000_000
-      withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
-        runContractInEnv (withOurLogger "./apiTest.log" env) $
-          withKeyWallet alice do
-            _ <- doubleMint
-            pure unit
+  it "double minting an nft should not succeed" $ expectError do
+    let initialAdaAmount = BigInt.fromInt 20_000_000
+    withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
+      runContractInEnv (withOurLogger "./apiTest.log" env) $
+        withKeyWallet alice do
+          _ <- doubleMint
+          pure unit
 
 tryToStealConfig :: Spec Unit
 tryToStealConfig = do
-    it "sets a config but fail to steal the utxo" $ do
-      let initialAdaAmount = BigInt.fromInt 20_000_000
-          initialValue = 20
-      withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
-          runContractInEnv env $
-            withKeyWallet alice do
-              txin <- setConfig initialValue
-              expectError $ stealConfig txin
+  it "sets a config but fail to steal the utxo" $ do
+    let
+      initialAdaAmount = BigInt.fromInt 20_000_000
+      initialValue = 20
+    withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
+      runContractInEnv env $
+        withKeyWallet alice do
+          txin <- setConfig initialValue
+          expectError $ stealConfig txin
 
