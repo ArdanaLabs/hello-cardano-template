@@ -10,16 +10,21 @@ import Apropos.Script
 import Test.Syd hiding (Context)
 import Test.Syd.Hedgehog
 
-import PlutusLedgerApi.V1 (
+import PlutusLedgerApi.V2 (
   BuiltinData (BuiltinData),
   Redeemer (..),
   Value (..),
+  ScriptContext(..),
+  Datum(..),
+  Script,
+  Validator(Validator),
   toBuiltinData,
+  fromList,
+  toData,
  )
 import PlutusLedgerApi.V1.Address (pubKeyHashAddress)
-import PlutusLedgerApi.V1.Scripts (Context (..), Datum (..), applyValidator)
 import PlutusLedgerApi.V1.Value (currencySymbol, tokenName)
-import PlutusLedgerApi.V2 (fromList)
+import PlutusLedgerApi.V1.Scripts (applyArguments)
 
 import Plutarch.Prelude
 
@@ -105,7 +110,7 @@ instance HasPermutationGenerator HelloProp HelloModel where
 instance HasParameterisedGenerator HelloProp HelloModel where
   parameterisedGenerator = buildGen
 
-mkCtx :: HelloModel -> Context
+mkCtx :: HelloModel -> ScriptContext
 mkCtx HelloModel {..} =
   buildContext $ do
     withTxInfo $ do
@@ -142,3 +147,7 @@ spec = do
 
 incRedeemer :: Redeemer
 incRedeemer = Redeemer $ BuiltinData $ plift $ pforgetData $ pdata (pcon $ Inc pdnil)
+
+applyValidator :: ScriptContext -> Validator -> Datum -> Redeemer -> Script
+applyValidator sc (Validator s) d r = applyArguments s [toData d,toData r,toData sc]
+
