@@ -62,6 +62,20 @@
     in
     {
       apps = {
+        "onchain:docs:serve" =
+          let s = self'.devShells.onchain; in
+          dusd-lib.mkApp
+            (
+              pkgs.writeShellApplication {
+                name = "onchain-docs-serve";
+                runtimeInputs = s.buildInputs ++ s.nativeBuildInputs;
+                text = ''
+                  ${s.shellHook}
+                  hoogle server --database=${self'.packages."onchain:docs:hoogle-db"} --port=8081 --local
+                '';
+              }
+            );
+
         "onchain:test" =
           dusd-lib.mkApp
             (
@@ -78,6 +92,14 @@
       packages =
         haskellNixFlake.packages
         // {
+          "onchain:docs:hoogle-db" =
+            let s = self'.devShells.onchain; in
+            pkgs.runCommand "onchain-docs-db"
+              { inherit (s) buildInputs nativeBuildInputs; }
+              ''
+                ${s.shellHook}
+                hoogle generate --database=$out --local
+              '';
           "onchain:scripts" =
             pkgs.runCommand "onchain-scripts"
               { buildInputs = [ haskellNixFlake.packages."dUSD-onchain:exe:scripts" ]; }
