@@ -1,45 +1,45 @@
 module HelloWorld.Api
-  (initialize
-  ,increment
-  ,redeem
-  ,query
-  ,sendDatumToScript
-  ,setDatumAtScript
-  ,redeemFromScript
-  ,helloScript
-  ,enoughForFees
-  ,datumLookup
-  ,grabFreeAda
+  ( initialize
+  , increment
+  , redeem
+  , query
+  , sendDatumToScript
+  , setDatumAtScript
+  , redeemFromScript
+  , helloScript
+  , enoughForFees
+  , datumLookup
+  , grabFreeAda
   ) where
 
 import Contract.Prelude
 
 import CBOR as CBOR
-import Util(buildBalanceSignAndSubmitTx,waitForTx,getUtxos)
+import Util (buildBalanceSignAndSubmitTx, waitForTx, getUtxos)
 
 import Data.BigInt as BigInt
-import Data.Time.Duration(Minutes(..))
+import Data.Time.Duration (Minutes(..))
 
 import Contract.Aeson (decodeAeson, fromString)
-import Contract.Log(logInfo',logError')
-import Contract.Monad ( Contract , liftContractM,liftContractAffM)
-import Contract.PlutusData (Datum(Datum),Redeemer(Redeemer),getDatumByHash)
+import Contract.Log (logInfo', logError')
+import Contract.Monad (Contract, liftContractM, liftContractAffM)
+import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer), getDatumByHash)
 import Contract.ScriptLookups as Lookups
-import Contract.Scripts (Validator, ValidatorHash, applyArgs,validatorHash)
-import Contract.Transaction ( TransactionInput)
+import Contract.Scripts (Validator, ValidatorHash, applyArgs, validatorHash)
+import Contract.Transaction (TransactionInput)
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
-import Contract.Utxos(getUtxo, getWalletBalance)
+import Contract.Utxos (getUtxo, getWalletBalance)
 import Contract.Value as Value
-import Effect.Exception(throw)
-import Plutus.Types.Transaction(TransactionOutput(TransactionOutput))
+import Effect.Exception (throw)
+import Plutus.Types.Transaction (TransactionOutput(TransactionOutput))
 import Plutus.Types.Value (Value)
-import ToData(class ToData,toData)
-import Types.PlutusData (PlutusData(Constr,Integer))
-import Data.Map(keys)
+import ToData (class ToData, toData)
+import Types.PlutusData (PlutusData(Constr, Integer))
+import Data.Map (keys)
 import Data.Set as Set
-import Data.Foldable(for_)
-import Data.List((..),List)
+import Data.Foldable (for_)
+import Data.List ((..), List)
 
 initialize :: Int -> Int -> Contract () TransactionInput
 initialize param initialValue = do
@@ -76,13 +76,14 @@ sendDatumToScript n vhash = do
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = mempty
+
     constraints :: TxConstraints Unit Unit
     constraints =
       Constraints.mustPayToScript
         vhash
-        (Datum $ n
-          # BigInt.fromInt
-          # toData
+        ( Datum $ n
+            # BigInt.fromInt
+            # toData
         )
         enoughForFees
   txId <- buildBalanceSignAndSubmitTx lookups constraints
@@ -99,19 +100,20 @@ setDatumAtScript n vhash validator txInput = do
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.validator validator
-        <> Lookups.unspentOutputs utxos
+      <> Lookups.unspentOutputs utxos
+
     constraints :: TxConstraints Unit Unit
     constraints =
       (Constraints.mustSpendScriptOutput txInput incRedeemer)
-      <>
-      (Constraints.mustPayToScript
-        vhash
-        (Datum $ n
-          # BigInt.fromInt
-          # toData
-        )
-        enoughForFees
-      )
+        <>
+          ( Constraints.mustPayToScript
+              vhash
+              ( Datum $ n
+                  # BigInt.fromInt
+                  # toData
+              )
+              enoughForFees
+          )
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   liftContractM "failed waiting for increment" =<< waitForTx waitTime vhash txId
 
@@ -126,6 +128,7 @@ redeemFromScript vhash validator txInput = do
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.validator validator
       <> Lookups.unspentOutputs utxos
+
     constraints :: TxConstraints Unit Unit
     constraints = Constraints.mustSpendScriptOutput txInput spendRedeemer
   _ <- buildBalanceSignAndSubmitTx lookups constraints
@@ -133,22 +136,22 @@ redeemFromScript vhash validator txInput = do
 
 helloScript :: Int -> Contract () Validator
 helloScript n = do
-  let maybeParamValidator :: Maybe Validator
-      maybeParamValidator =
-          CBOR.paramHello
-            # fromString
-            # decodeAeson
-            # hush
-            # map wrap
+  let
+    maybeParamValidator :: Maybe Validator
+    maybeParamValidator =
+      CBOR.paramHello
+        # fromString
+        # decodeAeson
+        # hush
+        # map wrap
   paramValidator <- liftContractM "decoding failed" maybeParamValidator
   -- TODO It'd be cool if this could be an Integer not Data
-  applyArgs paramValidator [Integer $ BigInt.fromInt n]
+  applyArgs paramValidator [ Integer $ BigInt.fromInt n ]
     >>= case _ of
       Left err -> do
         logError' $ show paramValidator
         liftEffect $ throw $ show err
       Right val -> pure val
-
 
 datumLookup :: TransactionInput -> Contract () Int
 datumLookup lastOutput = do
@@ -156,9 +159,9 @@ datumLookup lastOutput = do
     >>= liftContractM "couldn't find utxo"
   oldDatum <-
     utxo.dataHash
-    # liftContractM "UTxO had no datum hash"
-    >>= getDatumByHash
-    >>= liftContractM "Couldn't find datum by hash"
+      # liftContractM "UTxO had no datum hash"
+      >>= getDatumByHash
+      >>= liftContractM "Couldn't find datum by hash"
   asBigInt <- liftContractM "datum wasn't an integer" $ case oldDatum of
     Datum (Integer n) -> Just n
     _ -> Nothing
@@ -179,11 +182,12 @@ grabFreeAdaSingleParam n = do
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.validator validator
       <> Lookups.unspentOutputs utxos
+
     constraintsList :: List (TxConstraints Unit Unit)
     constraintsList =
       (\input -> Constraints.mustSpendScriptOutput input spendRedeemer)
-      <$>
-      (Set.toUnfoldable $ keys utxos)
+        <$>
+          (Set.toUnfoldable $ keys utxos)
   logInfo' $ "starting balance" <> show n
   traverse_ (buildBalanceSignAndSubmitTx lookups) constraintsList
   logInfo' $ "finished: " <> show n

@@ -1,20 +1,20 @@
 module HelloWorld.Cli.Types
-  (Options(..)
-  ,Command(..)
-  ,CliState(..)
-  ,Conf(..)
-  ,ParsedOptions(..)
-  ,ParsedConf
-  ,FileState
+  ( Options(..)
+  , Command(..)
+  , CliState(..)
+  , Conf(..)
+  , ParsedOptions(..)
+  , ParsedConf
+  , FileState
   ) where
 
 import Prelude
-import Contract.Transaction ( TransactionInput)
-import Serialization.Address(NetworkId)
+import Contract.Transaction (TransactionInput)
+import Serialization.Address (NetworkId)
 import Data.Generic.Rep (class Generic)
-import Data.Show.Generic(genericShow)
-import Data.Maybe(Maybe)
-import Data.UInt(UInt)
+import Data.Show.Generic (genericShow)
+import Data.Maybe (Maybe)
+import Data.UInt (UInt)
 
 data Options = Options
   { command :: Command
@@ -27,9 +27,9 @@ data Options = Options
 
 data Command
   = Lock
-    { contractParam :: Int
-    , initialDatum :: Int
-    }
+      { contractParam :: Int
+      , initialDatum :: Int
+      }
   | Increment
   | Unlock
   | Query
@@ -37,26 +37,23 @@ data Command
 type FileState =
   { param :: Int
   , lastOutput ::
-    { index :: Int
-    , transactionId :: String
-    }
+      { index :: Int
+      , transactionId :: String
+      }
   }
 
-data CliState
-  = State
+data CliState = State
   { param :: Int
   , lastOutput :: TransactionInput
   }
 
-data Conf
-  = Conf
+data Conf = Conf
   { walletPath :: String
   , stakingPath :: Maybe String
   , network :: NetworkId
   }
 
-type ParsedConf
-  =
+type ParsedConf =
   { walletPath :: String
   , stakingPath :: Maybe String
   , network :: String
