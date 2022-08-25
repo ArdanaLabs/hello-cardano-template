@@ -7,7 +7,6 @@ import Contract.Prelude
 import Cardano.TextEnvelope (TextEnvelopeType(..), textEnvelopeBytes)
 import Contract.Config (NetworkId(..), PrivatePaymentKey(..), PrivatePaymentKeySource(..), PrivateStakeKey(..), PrivateStakeKeySource(..), privateKeyFromBytes, testnetConfig, testnetNamiConfig)
 import Effect (Effect)
-import Effect.Console (logShow)
 import Effect.Exception (error, throw)
 import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
@@ -42,7 +41,6 @@ useKeyWallet =
 loadWalletSpec :: Aff WalletSpec
 loadWalletSpec = do
   mPaymentKeyStr <- getCookie "paymentKey"
-  liftEffect $ logShow mPaymentKeyStr
   paymentKeyStr <- liftM (error "payment key not found in the cookie") mPaymentKeyStr
   paymentKeyBytes <- textEnvelopeBytes paymentKeyStr PaymentSigningKeyShelleyed25519
   paymentKey <- liftM (error "Unable to decode private payment key")
@@ -59,7 +57,6 @@ loadWalletSpec = do
 loadNetworkId :: Aff NetworkId
 loadNetworkId = do
   mNetworkId <- getCookie "networkId"
-  liftEffect $ logShow mNetworkId
   networkId <- liftM (error "network ID not found in the cookie") mNetworkId
   case networkId of
     "MainnetId" -> pure MainnetId
