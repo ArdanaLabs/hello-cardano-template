@@ -53,6 +53,8 @@ config =
   { host: "127.0.0.1"
   , port: UInt.fromInt 8082
   , logLevel: Error
+  , customLogger: Nothing
+  , suppressLogs: false
   -- Server configs are used to deploy the corresponding services.
   , ogmiosConfig:
       { port: UInt.fromInt 1337
@@ -66,7 +68,7 @@ config =
       , secure: false
       , path: Nothing
       }
-  , ctlServerConfig:
+  , ctlServerConfig: Just
       { port: UInt.fromInt 8081
       , host: "127.0.0.1"
       , secure: false
