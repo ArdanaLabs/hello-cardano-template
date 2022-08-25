@@ -9,6 +9,7 @@ module Util
 import Contract.Prelude
 
 import Aeson (Aeson, getField, toArray, toObject)
+import Contract.Address (scriptHashAddress)
 import Contract.Log (logInfo', logWarn', logError')
 import Contract.Monad (Contract, ContractEnv, liftedE)
 import Contract.ScriptLookups as Lookups

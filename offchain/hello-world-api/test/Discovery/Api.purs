@@ -8,8 +8,7 @@ import Data.UInt as UInt
 import Contract.Prelude
 import Contract.Test.Plutip (PlutipConfig, withPlutipContractEnv, runContractInEnv)
 import Contract.Wallet (withKeyWallet)
-import HelloWorld.Discovery.Api (mintNft, doubleMint)
-import HelloWorld.Discovery.Api (setConfig, stealConfig)
+import HelloWorld.Discovery.Api (setConfig, stealConfig, doubleMint, mintNft)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (expectError)
 import Util (withOurLogger)

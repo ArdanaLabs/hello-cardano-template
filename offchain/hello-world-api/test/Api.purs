@@ -5,17 +5,17 @@ module Test.HelloWorld.Api
 import Data.BigInt as BigInt
 import Data.UInt as UInt
 
-import Plutus.Types.Value (Value, valueToCoin, getLovelace)
-
-import Test.Spec (Spec, describe, it)
-import Test.Spec.Assertions (shouldReturn, expectError, shouldEqual, shouldSatisfy)
-
-import HelloWorld.Api (initialize, increment, redeem, query, helloScript, sendDatumToScript, datumLookup)
 import Contract.Monad (liftContractAffM)
 import Contract.Prelude
 import Contract.Scripts (validatorHash)
 import Contract.Test.Plutip (PlutipConfig, runPlutipContract, withPlutipContractEnv, runContractInEnv)
 import Contract.Wallet (withKeyWallet)
+import HelloWorld.Api (initialize, increment, redeem, query, helloScript, sendDatumToScript, datumLookup)
+import Plutus.Types.Value (Value, valueToCoin, getLovelace)
+import Test.QuickCheck ((===))
+import Test.Spec (Spec, describe, it)
+import Test.Spec.Assertions (shouldReturn, expectError, shouldEqual, shouldSatisfy)
+import Test.Spec.QuickCheck (quickCheck)
 import Util (withOurLogger)
 
 config :: PlutipConfig

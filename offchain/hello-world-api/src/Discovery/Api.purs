@@ -67,8 +67,7 @@ stealConfig input = do
   utxos <- getUtxos (scriptHashAddress vhash)
   let
     lookups :: Lookups.ScriptLookups PlutusData
-    lookups = Lookups.validator validator
-      <> Lookups.unspentOutputs utxos
+    lookups = Lookups.validator validator <> Lookups.unspentOutputs utxos
 
     constraints :: TxConstraints Unit Unit
     constraints = Constraints.mustSpendScriptOutput input (Redeemer (toData unit))
