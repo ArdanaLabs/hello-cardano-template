@@ -65,3 +65,7 @@ generated-docs
 
 # ignore logs
 *.log
+
+# ignore hoogle generated db
+hoogle-db
+hoogle-db.warn
