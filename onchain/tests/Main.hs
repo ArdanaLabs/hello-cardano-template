@@ -3,6 +3,9 @@ module Main (main) where
 import Apropos.Plutus.HelloValidator qualified as HelloValidator
 import Goldens.Cbor qualified as Cbor
 
+import Control.Monad (when)
+import Data.Maybe (fromMaybe, isNothing)
+import System.Environment (lookupEnv)
 import Test.Syd
 import System.Environment(lookupEnv)
 import Data.Maybe(fromMaybe,isNothing)

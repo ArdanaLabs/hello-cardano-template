@@ -112,10 +112,10 @@
         };
       checks = haskellNixFlake.checks // {
         check-name =
-          haskellNixFlake.checks.check-name.overrideAttrs (old: {
-            GOLDEN_FILES = "${self}/.";
+          haskellNixFlake.checks."dUSD-onchain:test:tests".overrideAttrs (old: {
+            GOLDEN_FILES = "${self}/onchain/";
           });
-        };
+      };
       devShells.onchain = haskellNixFlake.devShell // { };
     };
   flake = { };
