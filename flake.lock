@@ -4090,22 +4090,6 @@
         "type": "github"
       }
     },
-    "ixset-typed": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1652177108,
-        "narHash": "sha256-g0N1jiumsxHzfo9SGVR+q9awRvHEehSRaoW89LXCCnY=",
-        "owner": "well-typed",
-        "repo": "ixset-typed",
-        "rev": "244d3b72fd051b8d78f2d4edb6208269f29d85b7",
-        "type": "github"
-      },
-      "original": {
-        "owner": "well-typed",
-        "repo": "ixset-typed",
-        "type": "github"
-      }
-    },
     "jquery": {
       "flake": false,
       "locked": {
@@ -4120,6 +4104,22 @@
         "owner": "jquery",
         "ref": "3.6.0",
         "repo": "jquery",
+        "type": "github"
+      }
+    },
+    "ixset-typed": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1652177108,
+        "narHash": "sha256-g0N1jiumsxHzfo9SGVR+q9awRvHEehSRaoW89LXCCnY=",
+        "owner": "well-typed",
+        "repo": "ixset-typed",
+        "rev": "244d3b72fd051b8d78f2d4edb6208269f29d85b7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "well-typed",
+        "repo": "ixset-typed",
         "type": "github"
       }
     },
@@ -6574,7 +6574,8 @@
           "purs-nix",
           "ps-tools"
         ],
-        "purs-nix": "purs-nix"
+        "purs-nix": "purs-nix",
+        "treefmt-flake": "treefmt-flake"
       }
     },
     "rust-analyzer-src": {
@@ -6897,6 +6898,21 @@
         "owner": "srid",
         "ref": "master",
         "repo": "tailwind-haskell",
+        "type": "github"
+      }
+    },
+    "treefmt-flake": {
+      "locked": {
+        "lastModified": 1660850981,
+        "narHash": "sha256-Y2rt0W0ZnfVgH5mnuAkU/5gJGSbjk5NbAwcuLDONHgI=",
+        "owner": "srid",
+        "repo": "treefmt-flake",
+        "rev": "49306df9084ffbd73102e6002241e1f14812f0fe",
+        "type": "github"
+      },
+      "original": {
+        "owner": "srid",
+        "repo": "treefmt-flake",
         "type": "github"
       }
     },
