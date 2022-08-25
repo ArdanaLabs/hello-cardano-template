@@ -110,7 +110,12 @@
               ${haskellNixFlake.packages."dUSD-onchain:exe:hello-world"}/bin/hello-world $out/src
             '';
         };
-      checks = haskellNixFlake.checks // { };
+      checks = haskellNixFlake.checks // {
+        check-name =
+          haskellNixFlake.checks."dUSD-onchain:test:tests".overrideAttrs (old: {
+            GOLDEN_FILES = "${self}/onchain/";
+          });
+      };
       devShells.onchain = haskellNixFlake.devShell // { };
     };
   flake = { };
