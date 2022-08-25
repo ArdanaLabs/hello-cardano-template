@@ -3,10 +3,10 @@ module Main (main) where
 import Apropos.Plutus.HelloValidator qualified as HelloValidator
 import Goldens.Cbor qualified as Cbor
 
+import Control.Monad (when)
+import Data.Maybe (fromMaybe, isNothing)
+import System.Environment (lookupEnv)
 import Test.Syd
-import System.Environment(lookupEnv)
-import Data.Maybe(fromMaybe,isNothing)
-import Control.Monad(when)
 
 -- TODO use sydtest-discover once nix stabalizes a bit more
 -- TODO figure out why sydtest breaks the histograms and fix it
