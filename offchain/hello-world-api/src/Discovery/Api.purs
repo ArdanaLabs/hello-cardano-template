@@ -40,6 +40,7 @@ mintNft = do
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.mintingPolicy nftPolicy
+
     constraints :: TxConstraints Unit Unit
     constraints =
       Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
@@ -55,6 +56,7 @@ doubleMint = do
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.mintingPolicy nftPolicy
+
     constraints :: TxConstraints Unit Unit
     constraints =
       Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
@@ -68,38 +70,36 @@ makeNftPolcy txOut = do
   logInfo' "got cbor"
   liftContractM "apply args failed" =<< applyArgsM paramNft [ toData txOut ]
 
-
 seedTx :: Contract () (Maybe TransactionInput)
 seedTx = do
   logInfo' "started seedTx"
-  adr@(Address{addressCredential,addressStakingCredential})
-    <- liftContractM "no wallet" =<< getWalletAddress
+  adr@(Address { addressCredential, addressStakingCredential }) <- liftContractM "no wallet" =<< getWalletAddress
   pkh <- liftContractM "wallet was a script" $ case addressCredential of
     PubKeyCredential pkh -> Just pkh
     _ -> Nothing
   mskh <- case addressStakingCredential of
-              Nothing -> pure Nothing
-              Just (StakingHash (PubKeyCredential skh)) -> pure $ Just skh
-              Just (StakingHash (ScriptCredential _)) -> liftEffect $ throw "Wallet was a script? Probably not possible"
-              Just (StakingPtr _) -> liftEffect $ throw "Wallet staking credential was a staking ptr."
-                -- TODO look into if this is possible and if we should support it
+    Nothing -> pure Nothing
+    Just (StakingHash (PubKeyCredential skh)) -> pure $ Just skh
+    Just (StakingHash (ScriptCredential _)) -> liftEffect $ throw "Wallet was a script? Probably not possible"
+    Just (StakingPtr _) -> liftEffect $ throw "Wallet staking credential was a staking ptr."
+  -- TODO look into if this is possible and if we should support it
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = mempty
+
     constraints :: TxConstraints Unit Unit
     constraints =
       Constraints.singleton $ Constraints.MustPayToPubKeyAddress (PaymentPubKeyHash pkh) (StakePubKeyHash <$> mskh) Nothing enoughForFees
   th <- buildBalanceSignAndSubmitTx lookups constraints
   waitForTx waitTime adr th
 
-
 maybeParamNft :: Maybe MintingPolicy
 maybeParamNft =
-    CBOR.nft
-      # fromString
-      # decodeAeson
-      # hush
-      # map wrap
+  CBOR.nft
+    # fromString
+    # decodeAeson
+    # hush
+    # map wrap
 
 waitTime :: Minutes
 waitTime = Minutes 5.0
