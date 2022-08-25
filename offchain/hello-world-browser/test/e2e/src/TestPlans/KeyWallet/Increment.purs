@@ -2,11 +2,11 @@ module HelloWorld.Test.E2E.TestPlans.KeyWallet.Increment where
 
 import Contract.Prelude
 
-import Contract.Test.E2E (RunningExample(..), TestOptions)
+import Contract.Test.E2E (TestOptions)
 import Data.String (Pattern(..), contains)
 import HelloWorld.Test.E2E.Constants as Constants
 import HelloWorld.Test.E2E.Helpers (clickButton, getCurrentValueBody, injectJQuery, readString)
-import HelloWorld.Test.E2E.KeyWallet (runE2ETest)
+import HelloWorld.Test.E2E.KeyWallet (RunningExample(..), runE2ETest)
 import Mote (group)
 import Test.Unit.Assert as Assert
 import TestM (TestPlanM)
@@ -14,7 +14,7 @@ import Toppokki as T
 
 testPlan :: TestOptions -> TestPlanM Unit
 testPlan testOptions = group "When increment button is clicked" do
-  runE2ETest "It shows loading dialog" testOptions $ \(RunningExample { jQuery, main: page }) -> do
+  runE2ETest "It shows loading dialog" testOptions $ \(RunningExample { jQuery, page }) -> do
     injectJQuery jQuery page
 
     clickButton "Initialize" page
@@ -25,7 +25,7 @@ testPlan testOptions = group "When increment button is clicked" do
     content <- T.content page
     Assert.assert "Incrementing" (contains (Pattern "Incrementing from 3 to 5 ...") content)
 
-  runE2ETest "It increments the datum at script address by 2" testOptions $ \(RunningExample { jQuery, main: page }) -> do
+  runE2ETest "It increments the datum at script address by 2" testOptions $ \(RunningExample { jQuery, page }) -> do
     injectJQuery jQuery page
 
     clickButton "Initialize" page

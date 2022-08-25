@@ -104,6 +104,7 @@
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
               export CHROME_EXE="${pkgs.chromium}/bin/chromium"
               export HELLO_WORLD_BROWSER_INDEX=${self'.packages."offchain:hello-world-browser"}
+              export JQUERY_MIN_SRC="${self.inputs.jquery}/dist/jquery.min.js"
 
               node \
                 --preserve-symlinks \
