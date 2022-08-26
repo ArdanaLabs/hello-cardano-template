@@ -52,9 +52,10 @@
             name = "hello-world-api-tests";
             runtimeInputs = [
               pkgs.nodejs
-              self.inputs.cardano-transaction-lib.packages.${pkgs.system}."ctl-server:exe:ctl-server"
-              self.inputs.cardano-transaction-lib.inputs.plutip.packages.${pkgs.system}."plutip:exe:plutip-server"
+            ] ++ pkgs.lib.optionals (mode == "local") [
               pkgs.postgresql
+              self.inputs.cardano-transaction-lib.inputs.plutip.packages.${pkgs.system}."plutip:exe:plutip-server"
+              self.inputs.cardano-transaction-lib.packages.${pkgs.system}."ctl-server:exe:ctl-server"
               self.inputs.mlabs-ogmios.defaultPackage.${pkgs.system}
               self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system}
             ];

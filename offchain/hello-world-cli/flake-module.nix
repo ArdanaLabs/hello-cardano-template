@@ -45,8 +45,9 @@
             name = "hello-world-cli-tests";
             runtimeInputs = [
               pkgs.coreutils
-              pkgs.postgresql
               self'.packages."offchain:hello-world-cli"
+            ] ++ pkgs.lib.optionals (mode == "local") [
+              pkgs.postgresql
               self.inputs.cardano-transaction-lib.inputs.plutip.packages.${pkgs.system}."plutip:exe:plutip-server"
               self.inputs.cardano-transaction-lib.packages.${pkgs.system}."ctl-server:exe:ctl-server"
               self.inputs.mlabs-ogmios.defaultPackage.${pkgs.system}
