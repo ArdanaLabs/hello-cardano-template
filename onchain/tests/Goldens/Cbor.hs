@@ -7,11 +7,11 @@ import Test.Syd
 
 spec :: FilePath -> Spec
 spec dir =
-  modifyRunSettings (\tde -> tde{testRunSettingGoldenStart=testRunSettingGoldenReset tde}) $
-  describe "cbor" $ do
-    defaultGolden dir "trivial" trivialCbor
-    defaultGolden dir "hello" helloWorldCbor
-    defaultGolden dir "param-hello" paramHelloCbor
+  modifyRunSettings (\tde -> tde {testRunSettingGoldenStart = testRunSettingGoldenReset tde}) $
+    describe "cbor" $ do
+      defaultGolden dir "trivial" trivialCbor
+      defaultGolden dir "hello" helloWorldCbor
+      defaultGolden dir "param-hello" paramHelloCbor
 
 -- If we add more goldens this should probably be moved somewhere more central ie. a new Goldens.hs
 defaultGolden :: Show a => FilePath -> String -> a -> _
