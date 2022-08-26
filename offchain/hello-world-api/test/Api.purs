@@ -1,23 +1,28 @@
 module Test.HelloWorld.Api
   ( spec
+  , testnetSpec
   ) where
 
+import Contract.Prelude
+
+import Contract.Config (testnetConfig)
+import Contract.Monad (Contract, liftContractAffM, runContract)
+import Contract.Scripts (validatorHash)
+import Contract.Test.Plutip (PlutipConfig, runPlutipContract, withPlutipContractEnv, runContractInEnv)
+import Contract.Wallet (withKeyWallet)
 import Data.BigInt as BigInt
 import Data.UInt as UInt
-
-import Plutus.Types.Value (Value, lovelaceValueOf, valueToCoin, getLovelace)
-
-import Test.Spec (Spec, describe, it, itOnly)
-import Test.Spec.Assertions (shouldReturn, expectError, shouldEqual, shouldSatisfy)
-import Test.QuickCheck ((===))
-import Test.Spec.QuickCheck (quickCheck)
-
 import HelloWorld.Api (initialize, increment, redeem, query, helloScript, sendDatumToScript, datumLookup)
-import Contract.Monad (liftContractAffM)
-import Contract.Prelude
-import Contract.Scripts (validatorHash)
-import Contract.Test.Plutip (PlutipConfig, InitialUTxO, runPlutipContract, withPlutipContractEnv, runContractInEnv)
-import Contract.Wallet (withKeyWallet)
+import Node.Process (lookupEnv)
+import Plutus.Types.Value (Value, valueToCoin, getLovelace)
+import Test.Spec (Spec, describe, it)
+import Test.Spec.Assertions (shouldReturn, expectError, shouldEqual, shouldSatisfy)
+import Util (ourLogger)
+import Wallet.Spec
+  ( WalletSpec(UseKeys)
+  , PrivatePaymentKeySource(PrivatePaymentKeyFile)
+  , PrivateStakeKeySource(PrivateStakeKeyFile)
+  )
 
 config :: PlutipConfig
 config =
@@ -188,3 +193,48 @@ testDatumLookup = do
             ti1 <- sendDatumToScript expectedDatum vhash
             datumLookup ti1
         datum `shouldEqual` expectedDatum
+
+-- impure testnet tests
+
+testnetSpec :: Spec Unit
+testnetSpec = do
+  testHelloWorldApiOnTestnet
+
+runContractOnTestnet :: forall a. Contract () a -> Aff a
+runContractOnTestnet contract = do
+  testResourcesDir <- liftEffect $ fromMaybe "./fixtures/" <$> lookupEnv "TEST_RESOURCES"
+  let walletSpec = UseKeys (PrivatePaymentKeyFile $ testResourcesDir <> "/wallet.skey") (Just $ PrivateStakeKeyFile $ testResourcesDir <> "/staking.skey")
+  let
+    tConfig = testnetConfig
+      { walletSpec = Just walletSpec
+      , logLevel = Warn
+      , customLogger = Just $ ourLogger "./apiTest.log"
+      }
+  runContract tConfig $ contract
+
+testHelloWorldApiOnTestnet :: Spec Unit
+testHelloWorldApiOnTestnet = do
+  describe "HelloWorld API" do
+    it "should initialize, increment, redeem and query without successfully" $ do
+      let
+        initialValue = 20
+        incParam = 200
+      -- initialize
+      initOutput <- runContractOnTestnet $ initialize incParam initialValue
+      (datum /\ _) <- runContractOnTestnet $ query initOutput
+      datum `shouldEqual` initialValue
+
+      -- increment by 200
+      incOutput <- runContractOnTestnet $ increment incParam initOutput
+      (datum1 /\ _) <- runContractOnTestnet $ query incOutput
+      datum1 `shouldEqual` (initialValue + incParam)
+
+      -- increment by another 200
+      incOutput2 <- runContractOnTestnet $ increment incParam incOutput
+      (datum2 /\ _) <- runContractOnTestnet $ query incOutput2
+      datum2 `shouldEqual` (initialValue + (2 * incParam))
+
+      -- redeem, datum should not change
+      runContractOnTestnet $ redeem incParam incOutput2 `shouldReturn` unit
+      (datum3 /\ _) <- runContractOnTestnet $ query incOutput2
+      datum3 `shouldEqual` (initialValue + (2 * incParam))

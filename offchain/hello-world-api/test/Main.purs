@@ -3,17 +3,17 @@ module Test.Main
   ) where
 
 import Prelude
+
+import Data.Maybe (Maybe(Just, Nothing))
 import Effect (Effect)
+import Effect.Aff (launchAff_)
 import Effect.Exception (throw)
+import Node.Process (lookupEnv)
 import Test.Encoding as Encoding
 import Test.HelloWorld.Api as Test.HelloWorld.Api
-
-import Node.Process (lookupEnv)
-import Effect.Aff (launchAff_)
 import Test.Spec (Spec, describe)
-import Test.Spec.Runner (runSpec', defaultConfig)
 import Test.Spec.Reporter.Console (consoleReporter)
-import Data.Maybe (Maybe(Just, Nothing))
+import Test.Spec.Runner (runSpec', defaultConfig)
 
 main :: Effect Unit
 main = do
@@ -23,11 +23,16 @@ main = do
     Just e -> throw $ "expected local or testnet got: " <> e
     Nothing -> throw "expected MODE to be set"
   launchAff_ $ runSpec' defaultConfig { timeout = Nothing } [ consoleReporter ] $
-    if usePlutip then pureSpecs
-    else pure unit
+    if usePlutip then pureSpec
+    else impureSpec
 
-pureSpecs :: Spec Unit
-pureSpecs = do
+pureSpec :: Spec Unit
+pureSpec = do
   describe "pure tests" do
     Encoding.spec
     Test.HelloWorld.Api.spec
+
+impureSpec :: Spec Unit
+impureSpec = do
+  describe "impure tests" do
+    Test.HelloWorld.Api.testnetSpec
