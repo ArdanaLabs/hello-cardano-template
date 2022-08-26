@@ -1,7 +1,4 @@
-module Apropos.Plutus.HelloValidator (
-  HelloProp (..),
-  spec,
-) where
+module Apropos.Plutus.HelloValidator (spec) where
 
 import Apropos
 import Apropos.ContextBuilder
@@ -17,9 +14,9 @@ import PlutusLedgerApi.V1 (
   toBuiltinData,
  )
 import PlutusLedgerApi.V1.Address (pubKeyHashAddress)
-import PlutusLedgerApi.V1.Scripts (Context (..), Datum (..), applyValidator)
+import PlutusLedgerApi.V1.Scripts (Datum (..))
 import PlutusLedgerApi.V1.Value (currencySymbol, tokenName)
-import PlutusLedgerApi.V2 (fromList)
+import PlutusLedgerApi.V2 (fromList, ScriptContext)
 
 import Plutarch.Prelude
 
@@ -105,7 +102,7 @@ instance HasPermutationGenerator HelloProp HelloModel where
 instance HasParameterisedGenerator HelloProp HelloModel where
   parameterisedGenerator = buildGen
 
-mkCtx :: HelloModel -> Context
+mkCtx :: HelloModel -> ScriptContext
 mkCtx HelloModel {..} =
   buildContext $ do
     withTxInfo $ do

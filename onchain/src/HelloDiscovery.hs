@@ -1,5 +1,6 @@
 module HelloDiscovery (
   nftCbor,
+  standardNftMp,
 ) where
 
 import Plutarch.Prelude
@@ -9,9 +10,14 @@ import Plutarch.Api.V2
 import Plutarch.Extensions.Api (passert)
 import Plutarch.Extensions.Data (parseData)
 import Utils (closedTermToHexString)
+import PlutusLedgerApi.V2 (MintingPolicy, TxOutRef, toData)
+import Data.Default (Default(def))
 
 nftCbor :: Maybe String
 nftCbor = closedTermToHexString standardNFT
+
+standardNftMp :: TxOutRef -> MintingPolicy
+standardNftMp outRef = mkMintingPolicy def (standardNFT # pconstant (toData outRef))
 
 standardNFT :: ClosedTerm (PData :--> PMintingPolicy)
 standardNFT = phoistAcyclic $
