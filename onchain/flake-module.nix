@@ -113,7 +113,7 @@
       checks = haskellNixFlake.checks // {
         check-name =
           haskellNixFlake.checks."dUSD-onchain:test:tests".overrideAttrs (old: {
-            GOLDEN_FILES = "${self}/onchain/";
+            GOLDEN_FILES = "${self}/onchain/goldens/";
           });
       };
       devShells.onchain = haskellNixFlake.devShell // { };

@@ -14,6 +14,6 @@ spec dir = describe "cbor" $ do
 -- If we add more goldens this should probably be moved somewhere more central ie. a new Goldens.hs
 defaultGolden :: Show a => FilePath -> String -> a -> _
 defaultGolden dir name a = do
-  path <- reverse <$> getTestDescriptionPath
+  path <- tail . reverse <$> getTestDescriptionPath
   let path' = dir <> intercalate "/" (unpack <$> path) <> "/" <> name
   it name $ pureGoldenStringFile path' (show a)

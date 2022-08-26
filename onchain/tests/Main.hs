@@ -15,7 +15,7 @@ main :: IO ()
 main = do
   maybeGoldenDir <- lookupEnv "GOLDEN_FILES"
   when (isNothing maybeGoldenDir) $ putStrLn "env GOLDEN_FILES not set"
-  let goldenDir = fromMaybe "./" maybeGoldenDir
+  let goldenDir = fromMaybe "./goldens/" maybeGoldenDir
   putStrLn goldenDir
   sydTest $ do
     describe "plutus" $ do
