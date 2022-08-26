@@ -26,9 +26,9 @@ import Plutarch.Prelude
 import Plutarch.Api.V2 (PScriptContext, PValidator, mkValidator, validatorHash)
 import Plutarch.Builtin (pforgetData)
 import Plutarch.Extensions.Api (passert, pgetContinuingDatum)
-import Plutarch.Unsafe (punsafeCoerce)
 
 import Plutarch.Extra.TermCont (pmatchC)
+import Plutarch.Extensions.Data (parseData)
 
 data HelloRedemer (s :: S)
   = Inc (Term s (PDataRecord '[]))
@@ -37,6 +37,7 @@ data HelloRedemer (s :: S)
   deriving anyclass (PlutusType, PIsData, PEq)
 
 instance DerivePlutusType HelloRedemer where type DPTStrat _ = PlutusTypeData
+instance PTryFrom PData (PAsData HelloRedemer)
 
 helloWorldCbor :: String
 helloWorldCbor = validatorToHexString helloValidator
@@ -60,11 +61,11 @@ trivial :: ClosedTerm (PData :--> PValidator)
 trivial = plam $ \_ _ _ _ -> popaque $ pcon PUnit
 
 paramValidator :: ClosedTerm (PData :--> PValidator)
-paramValidator = plam $ \dCountBy dn dunit dsc -> do
-  let n = pfromData (punsafeCoerce dn)
-      u = pfromData (punsafeCoerce dunit)
-      res cb = paramValidator' # cb # n # u # dsc
-   in ptryFrom @(PAsData PInteger) dCountBy $ \(_, i) -> res i
+paramValidator = plam $ \dCountBy dn dr dsc -> unTermCont $ do
+   cb <- parseData dCountBy
+   n <- parseData dn
+   r <- parseData dr
+   pure $ paramValidator' # cb # n # r # dsc
 
 -- TODO Try wrapping the counter in a newtype to
 -- test shareing newtypes/datatypes with apps

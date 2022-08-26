@@ -21,9 +21,8 @@ import Contract.TxConstraints as Constraints
 import Data.Set as Set
 
 import Contract.Address (scriptHashAddress)
-import Contract.Aeson (decodeAeson, fromString)
 import Contract.Log (logInfo', logError')
-import Contract.Monad (Contract, liftContractM, liftContractAffM)
+import Contract.Monad (Contract, liftContractM)
 import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer), getDatumByHash)
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (Validator, ValidatorHash, applyArgs, validatorHash)
@@ -39,18 +38,19 @@ import Plutus.Types.Transaction (TransactionOutput(TransactionOutput))
 import Plutus.Types.Value (Value)
 import ToData (class ToData, toData)
 import Types.PlutusData (PlutusData(Constr, Integer))
-import Util (buildBalanceSignAndSubmitTx, waitForTx, getUtxos)
+import Types.OutputDatum(OutputDatum(..))
+import Util (buildBalanceSignAndSubmitTx, waitForTx, getUtxos,decodeCbor)
 
 initialize :: Int -> Int -> Contract () TransactionInput
 initialize param initialValue = do
   validator <- helloScript param
-  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  let vhash = validatorHash validator
   sendDatumToScript initialValue vhash
 
 increment :: Int -> TransactionInput -> Contract () TransactionInput
 increment param lastOutput = do
   validator <- helloScript param
-  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  let vhash = validatorHash validator
   oldDatum <- datumLookup lastOutput
   let newDatum = oldDatum + param
   setDatumAtScript newDatum vhash validator lastOutput
@@ -58,7 +58,7 @@ increment param lastOutput = do
 redeem :: Int -> TransactionInput -> Contract () Unit
 redeem param lastOutput = do
   validator <- helloScript param
-  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  let vhash = validatorHash validator
   redeemFromScript vhash validator lastOutput
 
 query :: TransactionInput -> Contract () (Int /\ Value)
@@ -136,15 +136,7 @@ redeemFromScript vhash validator txInput = do
 
 helloScript :: Int -> Contract () Validator
 helloScript n = do
-  let
-    maybeParamValidator :: Maybe Validator
-    maybeParamValidator =
-      CBOR.paramHello
-        # fromString
-        # decodeAeson
-        # hush
-        # map wrap
-  paramValidator <- liftContractM "decoding failed" maybeParamValidator
+  paramValidator <- liftContractM "decode failed" $ decodeCbor CBOR.paramHello
   -- TODO It'd be cool if this could be an Integer not Data
   applyArgs paramValidator [ Integer $ BigInt.fromInt n ]
     >>= case _ of
@@ -157,11 +149,10 @@ datumLookup :: TransactionInput -> Contract () Int
 datumLookup lastOutput = do
   TransactionOutput utxo <- getUtxo lastOutput
     >>= liftContractM "couldn't find utxo"
-  oldDatum <-
-    utxo.dataHash
-      # liftContractM "UTxO had no datum hash"
-      >>= getDatumByHash
-      >>= liftContractM "Couldn't find datum by hash"
+  oldDatum <- case utxo.datum of
+    NoOutputDatum  -> liftEffect $ throw "no output datum"
+    OutputDatumHash dh -> getDatumByHash dh >>= liftContractM "Datum hash lookup failed"
+    OutputDatum d -> pure d
   asBigInt <- liftContractM "datum wasn't an integer" $ case oldDatum of
     Datum (Integer n) -> Just n
     _ -> Nothing
@@ -176,7 +167,7 @@ grabFreeAda = for_ (0 .. 10) grabFreeAdaSingleParam
 grabFreeAdaSingleParam :: Int -> Contract () Unit
 grabFreeAdaSingleParam n = do
   validator <- helloScript n
-  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  let vhash = validatorHash validator
   utxos <- getUtxos (scriptHashAddress vhash)
   let
     lookups :: Lookups.ScriptLookups PlutusData

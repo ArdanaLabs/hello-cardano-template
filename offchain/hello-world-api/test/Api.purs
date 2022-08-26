@@ -181,7 +181,7 @@ testDatumLookup = do
         datum <- runPlutipContract config [ BigInt.fromInt 20_000_000 ] $ \alice -> do
           withKeyWallet alice do
             validator <- helloScript 1
-            vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+            let vhash = validatorHash validator
             ti1 <- sendDatumToScript expectedDatum vhash
             datumLookup ti1
         datum `shouldEqual` expectedDatum
