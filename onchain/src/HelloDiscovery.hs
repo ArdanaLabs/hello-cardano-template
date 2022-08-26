@@ -7,11 +7,11 @@ import Plutarch.Prelude
 
 import Plutarch.Api.V2
 
+import Data.Default (Default (def))
 import Plutarch.Extensions.Api (passert)
 import Plutarch.Extensions.Data (parseData)
-import Utils (closedTermToHexString)
 import PlutusLedgerApi.V2 (MintingPolicy, TxOutRef, toData)
-import Data.Default (Default(def))
+import Utils (closedTermToHexString)
 
 nftCbor :: Maybe String
 nftCbor = closedTermToHexString standardNFT

@@ -7,7 +7,7 @@ import Apropos.Script
 import Test.Syd hiding (Context)
 import Test.Syd.Hedgehog
 
-import HelloDiscovery(standardNftMp)
+import HelloDiscovery (standardNftMp)
 
 import PlutusLedgerApi.V1 (
   BuiltinData (BuiltinData),
@@ -16,14 +16,14 @@ import PlutusLedgerApi.V1 (
   toData,
  )
 import PlutusLedgerApi.V1.Scripts (Datum (..))
-import PlutusLedgerApi.V2 (ScriptContext,TxOutRef,Address)
+import PlutusLedgerApi.V2 (Address, ScriptContext, TxOutRef)
 
-import Gen(txOutRef, address,value,maybeOf,datum)
 import Control.Monad (forM_)
+import Gen (address, datum, maybeOf, txOutRef, value)
 
 data NFTModel = NFTModel
   { param :: TxOutRef
-  , inputs :: [(TxOutRef,Address,Value,Maybe Datum)]
+  , inputs :: [(TxOutRef, Address, Value, Maybe Datum)]
   }
   deriving stock (Show)
 
@@ -36,7 +36,7 @@ instance LogicalModel NFTProp where
   logic = Yes
 
 instance HasLogicalModel NFTProp NFTModel where
-  satisfiesProperty HasParam (NFTModel{..}) = param `elem` [ ref | (ref,_,_,_) <- inputs]
+  satisfiesProperty HasParam (NFTModel {..}) = param `elem` [ref | (ref, _, _, _) <- inputs]
 
 instance HasPermutationGenerator NFTProp NFTModel where
   sources =
@@ -55,8 +55,8 @@ instance HasPermutationGenerator NFTProp NFTModel where
         , match = Not $ Var HasParam
         , contract = add HasParam
         , morphism = \hm@NFTModel {..} -> do
-          newIn <- (param,,,) <$> address <*> value <*> maybeOf datum
-          pure hm {inputs = newIn :inputs}
+            newIn <- (param,,,) <$> address <*> value <*> maybeOf datum
+            pure hm {inputs = newIn : inputs}
         }
     ]
 
@@ -67,11 +67,11 @@ mkCtx :: NFTModel -> ScriptContext
 mkCtx NFTModel {..} =
   buildContext $ do
     withTxInfo $ do
-      forM_ inputs $ \(ref,adr,val,md) -> addInput ref adr val md
+      forM_ inputs $ \(ref, adr, val, md) -> addInput ref adr val md
 
 instance ScriptModel NFTProp NFTModel where
   expect = Var HasParam
-  script hm@NFTModel{param} =
+  script hm@NFTModel {param} =
     let redeemer = toData ()
      in applyMintingPolicy (mkCtx hm) (standardNftMp param) (Redeemer $ BuiltinData redeemer)
 

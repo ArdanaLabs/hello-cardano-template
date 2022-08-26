@@ -16,7 +16,7 @@ import PlutusLedgerApi.V1 (
 import PlutusLedgerApi.V1.Address (pubKeyHashAddress)
 import PlutusLedgerApi.V1.Scripts (Datum (..))
 import PlutusLedgerApi.V1.Value (currencySymbol, tokenName)
-import PlutusLedgerApi.V2 (fromList, ScriptContext)
+import PlutusLedgerApi.V2 (ScriptContext, fromList)
 
 import Plutarch.Prelude
 

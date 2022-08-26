@@ -18,9 +18,13 @@ import PlutusLedgerApi.V2 (
   Address,
   BuiltinByteString,
   DCert,
+  Datum,
+  MintingPolicy (..),
   OutputDatum (NoOutputDatum, OutputDatum),
   POSIXTimeRange,
   PubKeyHash,
+  Redeemer,
+  Script,
   ScriptContext (..),
   ScriptPurpose (..),
   TxId (..),
@@ -28,12 +32,8 @@ import PlutusLedgerApi.V2 (
   TxInfo (..),
   TxOut (..),
   TxOutRef (..),
+  Validator (..),
   Value (..),
-  Validator(..),
-  MintingPolicy(..),
-  Redeemer,
-  Script,
-  Datum,
   fromList,
   toData,
  )
@@ -162,7 +162,6 @@ instance Monad m => TxInfoBuilder (StateT TxInfo) m where
 
   --setTxInfoData d = modify (\txi -> txi {txInfoData = fromList d})
   setTxInfoId b = modify (\txi -> txi {txInfoId = TxId b})
-
 
 -- For some reason plutus doesn't have this for V2 so I wrote it here
 applyValidator :: ScriptContext -> Validator -> Datum -> Redeemer -> Script
