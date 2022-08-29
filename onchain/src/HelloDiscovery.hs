@@ -1,6 +1,7 @@
 module HelloDiscovery (
   configScriptCbor,
   nftCbor,
+  standardNftMp,
   authTokenCbor,
   vaultScriptCbor,
 ) where
@@ -21,9 +22,8 @@ import Plutarch.Api.V2 (
   PValidator,
   mkValidator,
   validatorHash,
+  mkMintingPolicy,
  )
-
--- TODO can these be made V2 just for clarity
 
 import Plutarch.Api.V1 (
   PCredential (PScriptCredential),
@@ -31,26 +31,30 @@ import Plutarch.Api.V1 (
   PTokenName (PTokenName),
   PValue (PValue),
  )
+
+
+import Data.Default (Default (def))
+import Utils (closedTermToHexString, validatorToHexString)
+
 import Plutarch.Api.V1.AssocMap (plookup)
 import Plutarch.Api.V1.AssocMap qualified as AssocMap
 import Plutarch.Api.V1.Value (pforgetPositive)
 import Plutarch.Api.V1.Value qualified as Value
-
-import Data.Default (Default (def))
 import Plutarch.Builtin (pforgetData)
 import Plutarch.DataRepr (PDataFields)
 import Plutarch.Extensions.Api (passert, passert_, pfindOwnInput, pgetContinuingOutput)
 import Plutarch.Extensions.Data (parseData, parseDatum)
 import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extra.TermCont
+
+import PlutusLedgerApi.V1 (MintingPolicy, TxOutRef)
 import PlutusLedgerApi.V2 (adaToken)
-import Utils (closedTermToHexString, validatorToHexString)
 
 configScriptCbor :: String
 configScriptCbor = validatorToHexString $ mkValidator def configScript
 
 nftCbor :: Maybe String
-nftCbor = closedTermToHexString standardNFT
+nftCbor = closedTermToHexString standardNft
 
 authTokenCbor :: Maybe String
 authTokenCbor = closedTermToHexString authTokenMP
@@ -81,8 +85,13 @@ configScript = phoistAcyclic $
  to mint:
  the txid must be spent as an input
 -}
-standardNFT :: ClosedTerm (PData :--> PMintingPolicy)
-standardNFT = phoistAcyclic $
+standardNftMp :: TxOutRef -> MintingPolicy
+standardNftMp outRef =
+  mkMintingPolicy def $
+    standardNft # pforgetData (pdata (pconstant outRef))
+
+standardNft :: ClosedTerm (PData :--> PMintingPolicy)
+standardNft = phoistAcyclic $
   plam $ \outRefData _ sc -> unTermCont $ do
     outRef :: Term _ PTxOutRef <- parseData outRefData
     let (inputs :: Term _ (PBuiltinList PTxOutRef)) =
