@@ -27,10 +27,10 @@ import PlutusLedgerApi.V1 (
   StakingCredential (..),
   TokenName,
   TxId,
-  TxOutRef (TxOutRef),
   ValidatorHash,
   Value,
   singleton,
+  TxOutRef(TxOutRef),
  )
 import PlutusTx.IsData.Class (ToData (toBuiltinData))
 
@@ -66,7 +66,7 @@ hexString l u = do
 -- TODO review length constraints
 
 currencySymbol :: Gen CurrencySymbol
-currencySymbol = choice [pure "", hexString 32 32]
+currencySymbol = choice [ pure "",hexString 32 32]
 
 tokenName :: Gen TokenName
 tokenName = hexString 0 32

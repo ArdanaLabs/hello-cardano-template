@@ -14,12 +14,12 @@ module Hello (
 import Data.Default (Default (def))
 import Utils (closedTermToHexString, validatorToHexString)
 
-import PlutusLedgerApi.V2 (
-  Address (..),
-  Credential (..),
-  Validator,
-  ValidatorHash,
- )
+import PlutusLedgerApi.V2
+  (Validator
+  ,ValidatorHash
+  ,Address(..)
+  ,Credential(..)
+  )
 
 import Plutarch.Prelude
 
