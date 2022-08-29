@@ -56,7 +56,7 @@
                   '. {} &> "$(basename {.})-output"' ::: \
                   ${getTestScript "hello-world-api"} \
                   ${getTestScript "hello-world-browser"} \
-                  ${getTestScript "hello-world-cli"}
+                  ${self'.apps."offchain:hello-world-cli:test:local".program}
                 printf "$?" > "$TEST_EXITCODE_FILE"
               '';
           in
@@ -79,21 +79,24 @@
                   # set a trap so if we CTRL+C the script test command is killed
                   trap 'kill $TEST_PID' EXIT
 
-                  # print if parallel is still running
-                  while true; do
-                    outfiles=(*-output)
-                    # print logs
+                  function print_logs {
                     for file in "''${outfiles[@]}"; do
                       echo -e "$file: $(grep . "$file" | tail -qn 1)"
                     done
+                  }
+
+                  # print if parallel is still running
+                  while true; do
+                    outfiles=(*-output)
+                    print_logs
                     # sleep 1 second between updates
                     sleep 1
+                    # clear the amount of lines we printed
+                    tput cuu ''${#outfiles[@]}
+                    tput ed
                     # check if the test command still running or not
-                    if ps -p $TEST_PID > /dev/null; then
-                      # clear the amount of lines we printed
-                      tput cuu ''${#outfiles[@]}
-                      tput ed
-                    else
+                    if ! ps -p $TEST_PID > /dev/null; then
+                      print_logs
                       break
                     fi
                   done

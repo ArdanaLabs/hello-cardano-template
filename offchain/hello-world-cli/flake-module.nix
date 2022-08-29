@@ -20,6 +20,7 @@
                   node-fs
                   dotenv
                   stringutils
+                  bigints
                   self'.packages."offchain:hello-world-api"
                 ];
               dir = ./.;
@@ -37,27 +38,34 @@
             '';
       };
 
-      hello-world-cli-tests =
+      hello-world-cli-tests = mode:
         let testExe = hello-world-cli.ps.test.run { }; in
         pkgs.writeShellApplication
           {
             name = "hello-world-cli-tests";
             runtimeInputs = [
-              testExe
-              self'.packages."offchain:hello-world-cli"
               pkgs.coreutils
+              pkgs.postgresql
+              self'.packages."offchain:hello-world-cli"
+              self.inputs.cardano-transaction-lib.inputs.plutip.packages.${pkgs.system}."plutip:exe:plutip-server"
+              self.inputs.cardano-transaction-lib.packages.${pkgs.system}."ctl-server:exe:ctl-server"
+              self.inputs.mlabs-ogmios.defaultPackage.${pkgs.system}
+              self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system}
             ];
             text = ''
+              export MODE=${mode}
+              export NODE_PATH=${config.ctl.nodeModules}/node_modules
               export TEST_RESOURCES=${./fixtures}
               ${testExe}
             '';
           };
     in
     {
-      apps."offchain:hello-world-cli:test" = dusd-lib.mkApp hello-world-cli-tests;
+      apps."offchain:hello-world-cli:test:local" = dusd-lib.mkApp (hello-world-cli-tests "local");
+      apps."offchain:hello-world-cli:test:testnet" = dusd-lib.mkApp (hello-world-cli-tests "testnet");
       checks.run-hello-world-cli-tests =
-        let test = hello-world-cli-tests; in
-        pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
+        let test = hello-world-cli-tests "local"; in
+        pkgs.runCommand test.name { }
           "${test}/bin/${test.meta.mainProgram} | tee $out";
       devShells."offchain:hello-world-cli" =
         offchain-lib.makeProjectShell hello-world-cli { };

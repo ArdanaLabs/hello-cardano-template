@@ -1533,17 +1533,17 @@
         "servant-purescript": "servant-purescript_2"
       },
       "locked": {
-        "lastModified": 1659536516,
-        "narHash": "sha256-toPqMC3RAaVNlYk7qN9S8B4jwLmvJetHabBHHfodcdM=",
+        "lastModified": 1660112245,
+        "narHash": "sha256-U8cKjnI2sHBLEa0O4VTXxA5/flutZhmMONQbOn9vJaI=",
         "owner": "Plutonomicon",
         "repo": "cardano-transaction-lib",
-        "rev": "c4f27bac079fae2ccc18599587afad6a8ef51971",
+        "rev": "6cdbad6e3250101ac909c582be743c9ab2566d99",
         "type": "github"
       },
       "original": {
         "owner": "Plutonomicon",
         "repo": "cardano-transaction-lib",
-        "rev": "c4f27bac079fae2ccc18599587afad6a8ef51971",
+        "rev": "6cdbad6e3250101ac909c582be743c9ab2566d99",
         "type": "github"
       }
     },
@@ -4090,6 +4090,22 @@
         "type": "github"
       }
     },
+    "ixset-typed": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1652177108,
+        "narHash": "sha256-g0N1jiumsxHzfo9SGVR+q9awRvHEehSRaoW89LXCCnY=",
+        "owner": "well-typed",
+        "repo": "ixset-typed",
+        "rev": "244d3b72fd051b8d78f2d4edb6208269f29d85b7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "well-typed",
+        "repo": "ixset-typed",
+        "type": "github"
+      }
+    },
     "lighthouse-src": {
       "flake": false,
       "locked": {
@@ -4104,22 +4120,6 @@
         "owner": "GoogleChrome",
         "ref": "v9.5.0",
         "repo": "lighthouse",
-        "type": "github"
-      }
-    },
-    "ixset-typed": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1652177108,
-        "narHash": "sha256-g0N1jiumsxHzfo9SGVR+q9awRvHEehSRaoW89LXCCnY=",
-        "owner": "well-typed",
-        "repo": "ixset-typed",
-        "rev": "244d3b72fd051b8d78f2d4edb6208269f29d85b7",
-        "type": "github"
-      },
-      "original": {
-        "owner": "well-typed",
-        "repo": "ixset-typed",
         "type": "github"
       }
     },
@@ -6556,7 +6556,8 @@
           "purs-nix",
           "ps-tools"
         ],
-        "purs-nix": "purs-nix"
+        "purs-nix": "purs-nix",
+        "treefmt-flake": "treefmt-flake"
       }
     },
     "rust-analyzer-src": {
@@ -6879,6 +6880,21 @@
         "owner": "srid",
         "ref": "master",
         "repo": "tailwind-haskell",
+        "type": "github"
+      }
+    },
+    "treefmt-flake": {
+      "locked": {
+        "lastModified": 1660850981,
+        "narHash": "sha256-Y2rt0W0ZnfVgH5mnuAkU/5gJGSbjk5NbAwcuLDONHgI=",
+        "owner": "srid",
+        "repo": "treefmt-flake",
+        "rev": "49306df9084ffbd73102e6002241e1f14812f0fe",
+        "type": "github"
+      },
+      "original": {
+        "owner": "srid",
+        "repo": "treefmt-flake",
         "type": "github"
       }
     },
