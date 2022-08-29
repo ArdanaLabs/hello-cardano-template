@@ -10,14 +10,14 @@ import Test.Syd.Hedgehog
 import HelloDiscovery (standardNftMp)
 
 import PlutusLedgerApi.V2 (
-  ScriptContext,
   Address,
   BuiltinData (BuiltinData),
+  MintingPolicy (..),
   Redeemer (..),
+  Script,
+  ScriptContext,
   TxOutRef,
   Value (..),
-  MintingPolicy(..),
-  Script,
   toData,
  )
 
@@ -91,7 +91,6 @@ spec = do
       fromHedgehogGroup
       [ runScriptTestsWhere @NFTProp "validation" Yes
       ]
-
 
 applyMintingPolicy :: ScriptContext -> MintingPolicy -> Redeemer -> Script
 applyMintingPolicy sc (MintingPolicy s) r = applyArguments s [toData r, toData sc]

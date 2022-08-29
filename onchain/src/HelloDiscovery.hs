@@ -20,9 +20,9 @@ import Plutarch.Api.V2 (
   PTxInInfo,
   PTxOutRef,
   PValidator,
+  mkMintingPolicy,
   mkValidator,
   validatorHash,
-  mkMintingPolicy,
  )
 
 import Plutarch.Api.V1 (
@@ -31,7 +31,6 @@ import Plutarch.Api.V1 (
   PTokenName (PTokenName),
   PValue (PValue),
  )
-
 
 import Data.Default (Default (def))
 import Utils (closedTermToHexString, validatorToHexString)
