@@ -14,16 +14,13 @@ module Hello (
 import Data.Default (Default (def))
 import Utils (closedTermToHexString, validatorToHexString)
 
-import PlutusLedgerApi.V2
-  (Validator
-  ,ValidatorHash
-  ,Address(..)
-  ,Credential(..)
-  )
+import PlutusLedgerApi.V1.Address (Address (..))
+import PlutusLedgerApi.V1.Credential (Credential (..))
+import PlutusLedgerApi.V1.Scripts (Validator, ValidatorHash)
 
 import Plutarch.Prelude
 
-import Plutarch.Api.V2 (PScriptContext, PValidator, mkValidator, validatorHash)
+import Plutarch.Api.V1 (PScriptContext, PValidator, mkValidator, validatorHash)
 import Plutarch.Builtin (pforgetData)
 import Plutarch.Extensions.Api (passert, pgetContinuingDatum)
 import Plutarch.Unsafe (punsafeCoerce)
@@ -74,7 +71,7 @@ paramValidator' = plam $ \countBy n r sc -> unTermCont $ do
   pmatchC r >>= \case
     Inc _ -> do
       datum <- pgetContinuingDatum @PInteger sc
-      pure $ helloLogic # countBy # n # datum
+      pure $ helloLogic # countBy # n # pfromData datum
     Spend _ -> pure $ popaque $ pcon PUnit
 
 helloLogic :: ClosedTerm (PInteger :--> PInteger :--> PInteger :--> POpaque)
