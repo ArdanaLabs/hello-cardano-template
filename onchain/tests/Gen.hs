@@ -10,9 +10,6 @@ module Gen (
   rational,
   integer,
   datum,
-  txId,
-  txOutRef,
-  value,
 ) where
 
 import Apropos (Gen, choice, element, int, linear, list)
@@ -26,11 +23,9 @@ import PlutusLedgerApi.V1 (
   PubKeyHash,
   StakingCredential (..),
   TokenName,
-  TxId,
   ValidatorHash,
   Value,
   singleton,
-  TxOutRef(TxOutRef),
  )
 import PlutusTx.IsData.Class (ToData (toBuiltinData))
 
@@ -58,33 +53,32 @@ address = Address <$> credential <*> maybeOf stakingCredential
         , ScriptCredential <$> validatorHash
         ]
 
-hexString :: IsString s => Int -> Int -> Gen s
-hexString l u = do
-  len <- (2 *) <$> int (linear l u)
+hexString :: IsString s => Gen s
+hexString = do
+  len <- (2 *) <$> int (linear 1 32)
   fromString <$> replicateM len hexit
 
--- TODO review length constraints
+-- specific to tokenName and currencySymbol which can both be only 0 or 64 chars
+hexStringName :: IsString s => Gen s
+hexStringName = fromString <$> choice [pure "", replicateM 64 hexit]
 
 currencySymbol :: Gen CurrencySymbol
-currencySymbol = choice [ pure "",hexString 32 32]
+currencySymbol = hexStringName
 
 tokenName :: Gen TokenName
-tokenName = hexString 0 32
+tokenName = hexStringName
 
 assetClass :: Gen AssetClass
 assetClass = Value.assetClass <$> currencySymbol <*> tokenName
 
 pubKeyHash :: Gen PubKeyHash
-pubKeyHash = hexString 32 32
+pubKeyHash = hexString
 
 validatorHash :: Gen ValidatorHash
-validatorHash = hexString 32 32
+validatorHash = hexString
 
 datumHash :: Gen DatumHash
-datumHash = hexString 32 32
-
-txId :: Gen TxId
-txId = hexString 32 32
+datumHash = hexString
 
 hexit :: Gen Char
 hexit = element $ ['0' .. '9'] ++ ['a' .. 'f']
@@ -103,16 +97,12 @@ rational = (:%) <$> integer <*> pos
 
 datum :: Gen Datum
 datum = choice [datumOf integer, datumOf value]
-
-value :: Gen Value
-value = mconcat <$> list (linear 0 64) singletonValue
   where
+    value :: Gen Value
+    value = mconcat <$> list (linear 0 64) singletonValue
     singletonValue :: Gen Value
     singletonValue =
       singleton <$> currencySymbol <*> tokenName <*> pos
 
 datumOf :: ToData a => Gen a -> Gen Datum
 datumOf g = Datum . toBuiltinData <$> g
-
-txOutRef :: Gen TxOutRef
-txOutRef = TxOutRef <$> txId <*> (toInteger <$> int (linear 0 64))
