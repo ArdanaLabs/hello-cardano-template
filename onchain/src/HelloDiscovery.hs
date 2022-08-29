@@ -7,19 +7,20 @@ import Plutarch.Prelude
 
 import Plutarch.Api.V2
 
+import Data.Default (Default (def))
+import Plutarch.Builtin (pforgetData)
 import Plutarch.Extensions.Api (passert)
 import Plutarch.Extensions.Data (parseData)
-import Utils (closedTermToHexString)
 import PlutusLedgerApi.V1 (MintingPolicy, TxOutRef)
-import Data.Default (Default(def))
-import Plutarch.Builtin (pforgetData)
+import Utils (closedTermToHexString)
 
 nftCbor :: Maybe String
 nftCbor = closedTermToHexString standardNft
 
 standardNftMp :: TxOutRef -> MintingPolicy
-standardNftMp outRef = mkMintingPolicy def
-  $ standardNft # pforgetData (pdata (pconstant outRef))
+standardNftMp outRef =
+  mkMintingPolicy def $
+    standardNft # pforgetData (pdata (pconstant outRef))
 
 standardNft :: ClosedTerm (PData :--> PMintingPolicy)
 standardNft = phoistAcyclic $

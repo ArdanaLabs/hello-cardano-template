@@ -10,11 +10,11 @@ import Test.Syd.Hedgehog
 import HelloDiscovery (standardNftMp)
 
 import PlutusLedgerApi.V1 (
+  Address,
   BuiltinData (BuiltinData),
   Redeemer (..),
-  Value (..),
-  Address,
   TxOutRef,
+  Value (..),
   toData,
  )
 import PlutusLedgerApi.V1.Scripts (Context (..), Datum (..), applyMintingPolicyScript)

@@ -26,10 +26,10 @@ import PlutusLedgerApi.V1 (
   PubKeyHash,
   StakingCredential (..),
   TokenName,
-  ValidatorHash,
-  TxOutRef(TxOutRef),
-  Value,
   TxId,
+  TxOutRef (TxOutRef),
+  ValidatorHash,
+  Value,
   singleton,
  )
 import PlutusTx.IsData.Class (ToData (toBuiltinData))
