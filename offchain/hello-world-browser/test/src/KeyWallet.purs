@@ -1,4 +1,4 @@
-module HelloWorld.Test.E2E.KeyWallet
+module HelloWorld.Test.KeyWallet
   ( mkTestOptions
   , runE2ETest
   , withBrowser
@@ -13,8 +13,8 @@ import Data.String (trim)
 import Effect (Effect)
 import Effect.Aff (Aff, bracket)
 import Effect.Exception (throw)
-import HelloWorld.Test.E2E.Env as Env
-import HelloWorld.Test.E2E.Helpers (helloWorldBrowserURL)
+import HelloWorld.Test.Env as Env
+import HelloWorld.Test.Helpers (helloWorldBrowserURL)
 import Mote (test)
 import Node.Buffer as Buffer
 import Node.ChildProcess (defaultExecSyncOptions, execSync)

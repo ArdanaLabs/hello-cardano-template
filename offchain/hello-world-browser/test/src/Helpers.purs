@@ -1,4 +1,4 @@
-module HelloWorld.Test.E2E.Helpers where
+module HelloWorld.Test.Helpers where
 
 import Contract.Prelude
 
@@ -7,7 +7,7 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign (Foreign, unsafeFromForeign)
 import Foreign as Foreign
-import HelloWorld.Test.E2E.Constants as Constants
+import HelloWorld.Test.Constants as Constants
 import Node.Express.App (listenHttp, use)
 import Node.Express.Handler (HandlerM)
 import Node.Express.Middleware.Static (static)

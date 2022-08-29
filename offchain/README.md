@@ -40,12 +40,12 @@ nix run .#offchain:hello-world-browser:serve
 
 To run the browser tests with testnet use:
 ```
-nix run .#offchain:hello-world-browser:e2e:testnet
+nix run .#offchain:hello-world-browser:test:testnet
 ```
 
 To run the browser tests with local use:
 ```
-nix run .#offchain:hello-world-browser:e2e:local
+nix run .#offchain:hello-world-browser:test:local
 ```
 
 To run the lighthouse tests use:

@@ -1,4 +1,4 @@
-module HelloWorld.Test.E2E.Constants where
+module HelloWorld.Test.Constants where
 
 import Contract.Test.E2E (WalletPassword)
 import Data.Newtype (class Newtype, wrap)

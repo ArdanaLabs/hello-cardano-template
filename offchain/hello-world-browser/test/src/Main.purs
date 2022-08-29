@@ -1,4 +1,4 @@
-module HelloWorld.Test.E2E.Main where
+module HelloWorld.Test.Main where
 
 import Contract.Prelude
 
@@ -7,10 +7,10 @@ import Data.Maybe (Maybe(..))
 import Data.UInt as UInt
 import Effect.Aff (bracket, launchAff_)
 import Effect.Exception (throw, error)
-import HelloWorld.Test.E2E.Env as Env
-import HelloWorld.Test.E2E.Helpers (Cookie(..), closeStaticServer, startStaticServer)
-import HelloWorld.Test.E2E.TestPlans.KeyWallet as Key
-import HelloWorld.Test.E2E.TestPlans.NamiWallet as Nami
+import HelloWorld.Test.Env as Env
+import HelloWorld.Test.Helpers (Cookie(..), closeStaticServer, startStaticServer)
+import HelloWorld.Test.TestPlans.KeyWallet as Key
+import HelloWorld.Test.TestPlans.NamiWallet as Nami
 import Node.Process (lookupEnv)
 import Plutip.Server (withPlutipContractEnv)
 import Plutip.Types (PlutipConfig)

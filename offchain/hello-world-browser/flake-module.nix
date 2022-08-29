@@ -57,7 +57,7 @@
             '';
       };
 
-      hello-world-browser-e2e = {
+      hello-world-browser-test = {
         ps =
           purs-nix.purs
             {
@@ -75,16 +75,16 @@
                   parallel
                 ];
               dir = ./.;
-              srcs = [ "test/e2e/src" ];
+              srcs = [ "test/src" ];
             };
       };
 
-      hello-world-browser-e2e-with-local =
+      hello-world-browser-test-with-local =
         let
           testModule =
-            hello-world-browser-e2e.ps.modules."HelloWorld.Test.E2E.Main".output
+            hello-world-browser-test.ps.modules."HelloWorld.Test.Main".output
               { };
-          scriptName = "hello-world-browser-e2e-with-local";
+          scriptName = "hello-world-browser-test-with-local";
         in
         pkgs.writeShellApplication
           {
@@ -109,17 +109,17 @@
               node \
                 --preserve-symlinks \
                 --input-type=module \
-                -e 'import { main } from "${testModule}/HelloWorld.Test.E2E.Main/index.js"; main()' \
+                -e 'import { main } from "${testModule}/HelloWorld.Test.Main/index.js"; main()' \
                 -- "${scriptName}" "''$@"
             '';
           };
 
-      hello-world-browser-e2e-with-testnet =
+      hello-world-browser-test-with-testnet =
         let
           testModule =
-            hello-world-browser-e2e.ps.modules."HelloWorld.Test.E2E.Main".output
+            hello-world-browser-test.ps.modules."HelloWorld.Test.Main".output
               { };
-          scriptName = "hello-world-browser-e2e-with-testnet";
+          scriptName = "hello-world-browser-test-with-testnet";
         in
         pkgs.writeShellApplication
           {
@@ -135,14 +135,14 @@
 
               export NAMI_EXTENSION="${self.inputs.cardano-transaction-lib}/test-data/chrome-extensions/nami_3.2.5_1.crx"
 
-              export NAMI_TEST_WALLET_1=${./test/e2e/NamiWallets/nami-test-wallet-1.tar.gz}
-              export NAMI_TEST_WALLET_2=${./test/e2e/NamiWallets/nami-test-wallet-2.tar.gz}
-              export NAMI_TEST_WALLET_3=${./test/e2e/NamiWallets/nami-test-wallet-3.tar.gz}
+              export NAMI_TEST_WALLET_1=${./test/NamiWallets/nami-test-wallet-1.tar.gz}
+              export NAMI_TEST_WALLET_2=${./test/NamiWallets/nami-test-wallet-2.tar.gz}
+              export NAMI_TEST_WALLET_3=${./test/NamiWallets/nami-test-wallet-3.tar.gz}
 
               node \
                 --preserve-symlinks \
                 --input-type=module \
-                -e 'import { main } from "${testModule}/HelloWorld.Test.E2E.Main/index.js"; main()' \
+                -e 'import { main } from "${testModule}/HelloWorld.Test.Main/index.js"; main()' \
                 -- "${scriptName}" "''$@"
             '';
           };
@@ -153,10 +153,10 @@
           dusd-lib.makeServeApp self'.packages."offchain:hello-world-browser";
         "offchain:hello-world-browser:serve-live" =
           dusd-lib.makeServeLive self'.packages."offchain:hello-world-browser";
-        "offchain:hello-world-browser:e2e:local" =
-          dusd-lib.mkApp hello-world-browser-e2e-with-local;
-        "offchain:hello-world-browser:e2e:testnet" =
-          dusd-lib.mkApp hello-world-browser-e2e-with-testnet;
+        "offchain:hello-world-browser:test:local" =
+          dusd-lib.mkApp hello-world-browser-test-with-local;
+        "offchain:hello-world-browser:test:testnet" =
+          dusd-lib.mkApp hello-world-browser-test-with-testnet;
       };
       checks = {
         "offchain:hello-world-browser:lighthouse" =
@@ -176,8 +176,8 @@
       devShells = {
         "offchain:hello-world-browser" =
           offchain-lib.makeProjectShell hello-world-browser { };
-        "offchain:hello-world-browser:e2e" =
-          offchain-lib.makeProjectShell hello-world-browser-e2e { };
+        "offchain:hello-world-browser:test" =
+          offchain-lib.makeProjectShell hello-world-browser-test { };
       };
       packages."offchain:hello-world-browser" = hello-world-browser.package;
     };

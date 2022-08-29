@@ -1,13 +1,13 @@
-module HelloWorld.Test.E2E.TestPlans.NamiWallet where
+module HelloWorld.Test.TestPlans.NamiWallet where
 
 import Contract.Prelude
 
 import Control.Parallel (parTraverse_)
-import HelloWorld.Test.E2E.Constants as Constants
-import HelloWorld.Test.E2E.NamiWallet (mkTestOptions, testWallet1, testWallet2, testWallet3, topup)
-import HelloWorld.Test.E2E.TestPlans.NamiWallet.Increment as TestPlanIncrement
-import HelloWorld.Test.E2E.TestPlans.NamiWallet.Initialize as TestPlanInitialize
-import HelloWorld.Test.E2E.TestPlans.NamiWallet.Redeem as TestPlanRedeem
+import HelloWorld.Test.Constants as Constants
+import HelloWorld.Test.NamiWallet (mkTestOptions, testWallet1, testWallet2, testWallet3, topup)
+import HelloWorld.Test.TestPlans.NamiWallet.Increment as TestPlanIncrement
+import HelloWorld.Test.TestPlans.NamiWallet.Initialize as TestPlanInitialize
+import HelloWorld.Test.TestPlans.NamiWallet.Redeem as TestPlanRedeem
 import Mote (group)
 import Test.Spec.Runner as SpecRunner
 import Utils as Utils

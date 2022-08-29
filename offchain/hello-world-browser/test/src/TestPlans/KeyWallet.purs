@@ -1,12 +1,12 @@
-module HelloWorld.Test.E2E.TestPlans.KeyWallet where
+module HelloWorld.Test.TestPlans.KeyWallet where
 
 import Contract.Prelude
 
-import HelloWorld.Test.E2E.Constants as Constants
-import HelloWorld.Test.E2E.KeyWallet (mkTestOptions)
-import HelloWorld.Test.E2E.TestPlans.KeyWallet.Increment as TestPlanIncrement
-import HelloWorld.Test.E2E.TestPlans.KeyWallet.Initialize as TestPlanInitialize
-import HelloWorld.Test.E2E.TestPlans.KeyWallet.Redeem as TestPlanRedeem
+import HelloWorld.Test.Constants as Constants
+import HelloWorld.Test.KeyWallet (mkTestOptions)
+import HelloWorld.Test.TestPlans.KeyWallet.Increment as TestPlanIncrement
+import HelloWorld.Test.TestPlans.KeyWallet.Initialize as TestPlanInitialize
+import HelloWorld.Test.TestPlans.KeyWallet.Redeem as TestPlanRedeem
 import Mote (group)
 import Test.Spec.Runner as SpecRunner
 import Utils as Utils

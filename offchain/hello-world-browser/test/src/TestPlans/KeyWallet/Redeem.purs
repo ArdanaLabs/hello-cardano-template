@@ -1,12 +1,12 @@
-module HelloWorld.Test.E2E.TestPlans.KeyWallet.Redeem where
+module HelloWorld.Test.TestPlans.KeyWallet.Redeem where
 
 import Contract.Prelude
 
 import Contract.Test.E2E (TestOptions)
 import Data.String (Pattern(..), contains)
-import HelloWorld.Test.E2E.Constants as Constants
-import HelloWorld.Test.E2E.Helpers (clickButton, injectJQuery)
-import HelloWorld.Test.E2E.KeyWallet (RunningExample(..), runE2ETest)
+import HelloWorld.Test.Constants as Constants
+import HelloWorld.Test.Helpers (clickButton, injectJQuery)
+import HelloWorld.Test.KeyWallet (RunningExample(..), runE2ETest)
 import Mote (group)
 import Test.Unit.Assert as Assert
 import TestM (TestPlanM)

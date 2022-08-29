@@ -1,4 +1,4 @@
-module HelloWorld.Test.E2E.NamiWallet where
+module HelloWorld.Test.NamiWallet where
 
 import Contract.Prelude
 
@@ -9,10 +9,10 @@ import Data.String (trim)
 import Effect (Effect)
 import Effect.Aff (bracket, try)
 import Effect.Exception (throw)
-import HelloWorld.Test.E2E.Constants (PaymentAddress)
-import HelloWorld.Test.E2E.Constants as Constants
-import HelloWorld.Test.E2E.Env as Env
-import HelloWorld.Test.E2E.Helpers (helloWorldBrowserURL)
+import HelloWorld.Test.Constants (PaymentAddress)
+import HelloWorld.Test.Constants as Constants
+import HelloWorld.Test.Env as Env
+import HelloWorld.Test.Helpers (helloWorldBrowserURL)
 import Mote (test)
 import Node.Buffer as Buffer
 import Node.ChildProcess (defaultExecSyncOptions, execSync)

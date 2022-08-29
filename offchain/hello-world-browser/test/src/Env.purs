@@ -1,4 +1,4 @@
-module HelloWorld.Test.E2E.Env
+module HelloWorld.Test.Env
   ( chromeExe
   , helloWorldBrowserIndex
   , namiExtension
