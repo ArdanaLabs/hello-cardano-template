@@ -4,17 +4,16 @@ module Util
   , getUtxos
   , getTxScanUrl
   , withOurLogger
-  , decodeCbor
-  , decodeCborMp
   ) where
 
 import Contract.Prelude
 
+import Contract.ScriptLookups as Lookups
+import Data.Map as Map
+
 import Aeson (Aeson, getField, toArray, toObject)
 import Contract.Log (logInfo', logWarn', logError')
 import Contract.Monad (Contract, ContractEnv, liftedE)
-import Contract.ScriptLookups as Lookups
-import Contract.Scripts (MintingPolicy(MintingPolicy), Validator(Validator))
 import Contract.Transaction (TransactionHash(TransactionHash), TransactionOutput, TransactionInput(TransactionInput), balanceAndSignTxE, submitE)
 import Contract.TxConstraints (TxConstraints)
 import Contract.Utxos (UtxoM(UtxoM), utxosAt, getUtxo)
@@ -24,8 +23,15 @@ import Data.List (filterM, List)
 import Data.Log.Formatter.Pretty (prettyFormatter)
 import Data.Log.Message (Message)
 import Data.Map (Map)
-import Data.Map as Map
-import Data.Time.Duration (Milliseconds(..), Seconds(..), Minutes(..), class Duration, fromDuration, convertDuration, negateDuration)
+import Data.Time.Duration
+  ( Milliseconds(..)
+  , Seconds(..)
+  , Minutes(..)
+  , class Duration
+  , fromDuration
+  , convertDuration
+  , negateDuration
+  )
 import Effect.Aff (delay)
 import Effect.Aff.Retry (retrying, limitRetries, RetryStatus(RetryStatus))
 import Effect.Exception (error)
@@ -35,7 +41,6 @@ import Plutus.Types.Address (Address)
 import Serialization.Address (NetworkId(TestnetId, MainnetId))
 import Types.ByteArray (byteArrayToHex, hexToByteArray)
 import Types.PlutusData (PlutusData)
-import Types.Scripts (plutusV2Script)
 import Types.Transaction (TransactionInput, TransactionHash)
 
 waitForTx
@@ -170,12 +175,6 @@ getTxScanUrl MainnetId (TransactionInput { transactionId: TransactionHash hash }
 isSpent :: TransactionInput -> Contract () Boolean
 isSpent input = isNothing <$> getUtxo input
 
-decodeCbor :: String -> Maybe Validator
-decodeCbor cborHex = Validator <<< plutusV2Script <$> hexToByteArray cborHex
-
-decodeCborMp :: String -> Maybe MintingPolicy
-decodeCborMp cborHex = MintingPolicy <<< plutusV2Script <$> hexToByteArray cborHex
-
 withOurLogger :: String -> ContractEnv () -> ContractEnv ()
 withOurLogger path env = wrap $ (unwrap env)
   { config
@@ -193,4 +192,3 @@ ourLogger path msg = do
 -- The time to wait between ogmios querries when retrying
 waitTime :: Seconds
 waitTime = Seconds 1.0
-

@@ -29,7 +29,7 @@ import Plutarch.Extra.TermCont (pmatchC)
 -}
 pgetContinuingDatum :: forall p s. (PTryFrom PData (PAsData p), PIsData p) => Term s PScriptContext -> TermCont s (Term s p)
 pgetContinuingDatum ctx = do
-  out <- ptraceShowId <$> pgetContinuingOutput ctx
+  out <- pgetContinuingOutput ctx
   POutputDatum datum <- pmatchFieldC @"datum" out
   PDatum d <- pmatchFieldC @"outputDatum" datum
   parseData d

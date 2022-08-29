@@ -5,16 +5,10 @@ module Test.Encoding
 import Contract.Prelude
 
 import CBOR as CBOR
-import Contract.Monad (Contract, runContractInEnv)
-import Contract.Scripts (Validator(Validator))
-import Contract.Test.Plutip (PlutipConfig, withKeyWallet, withPlutipContractEnv)
-import Contract.TextEnvelope (textEnvelopeBytes, TextEnvelopeType(PlutusScriptV2))
-import Data.BigInt as BigInt
-import Data.UInt as UInt
 import Test.Spec (Spec, it, describe)
-import Test.Spec.Assertions (shouldEqual,shouldNotEqual)
-import Types.Scripts (plutusV2Script)
-import Util (withOurLogger, decodeCbor)
+import Test.Spec.Assertions (shouldNotEqual, shouldEqual)
+import Contract.Aeson (decodeAeson, fromString)
+import Contract.Scripts (Validator)
 
 spec :: Spec Unit
 spec = describe "decodeCbor" $ do
@@ -27,3 +21,6 @@ spec = describe "decodeCbor" $ do
 -- as it wouldn't needlesly require (Eq a)
 -- and imo is more readable
 -- but shouldSatisify fails to import for some reason
+
+decodeCbor :: String -> Maybe Validator
+decodeCbor = fromString >>> decodeAeson >>> hush >>> map wrap

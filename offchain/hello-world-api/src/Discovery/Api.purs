@@ -10,7 +10,7 @@ import Contract.Address (PaymentPubKeyHash(..), StakePubKeyHash(..), getWalletAd
 import Contract.Aeson (decodeAeson, fromString)
 import Contract.Credential (Credential(..), StakingCredential(..))
 import Contract.Log (logInfo')
-import Contract.Monad (Contract, liftContractM)
+import Contract.Monad (Contract, liftContractM, liftContractAffM)
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (applyArgsM)
 import Contract.Transaction (TransactionHash, TransactionInput)
@@ -27,7 +27,7 @@ import Plutus.Types.Value as Value
 import ToData (toData)
 import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
-import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, waitForTx)
+import Util (buildBalanceSignAndSubmitTx, waitForTx)
 
 mintNft :: Contract () (CurrencySymbol /\ TransactionHash)
 mintNft = do
@@ -35,7 +35,7 @@ mintNft = do
   -- That would probably be a simpler/better way to do this
   txOut <- liftContractM "seed tx failed" =<< seedTx
   nftPolicy <- makeNftPolcy txOut
-  cs <- liftContractM "hash failed" $ scriptCurrencySymbol nftPolicy
+  cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
   logInfo' $ "NFT cs: " <> show cs
   let
     lookups :: Lookups.ScriptLookups PlutusData
@@ -52,7 +52,7 @@ doubleMint :: Contract () Unit
 doubleMint = do
   txOut <- liftContractM "seed tx failed" =<< seedTx
   nftPolicy <- makeNftPolcy txOut
-  cs <- liftContractM "hash failed" $ scriptCurrencySymbol nftPolicy
+  cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.mintingPolicy nftPolicy
@@ -66,7 +66,7 @@ doubleMint = do
 
 makeNftPolcy :: TransactionInput -> Contract () MintingPolicy
 makeNftPolcy txOut = do
-  paramNft <- liftContractM "decode failed" $ decodeCborMp CBOR.nft
+  paramNft <- liftContractM "nft decode failed" maybeParamNft
   logInfo' "got cbor"
   liftContractM "apply args failed" =<< applyArgsM paramNft [ toData txOut ]
 
@@ -92,6 +92,14 @@ seedTx = do
       Constraints.singleton $ Constraints.MustPayToPubKeyAddress (PaymentPubKeyHash pkh) (StakePubKeyHash <$> mskh) Nothing enoughForFees
   th <- buildBalanceSignAndSubmitTx lookups constraints
   waitForTx waitTime adr th
+
+maybeParamNft :: Maybe MintingPolicy
+maybeParamNft =
+  CBOR.nft
+    # fromString
+    # decodeAeson
+    # hush
+    # map wrap
 
 waitTime :: Minutes
 waitTime = Minutes 5.0
