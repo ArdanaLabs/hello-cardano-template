@@ -5,8 +5,9 @@ module Test.HelloWorld.Api
 
 import Contract.Prelude
 
+import Effect.Exception (throw)
 import Contract.Config (testnetConfig)
-import Contract.Monad (Contract, liftContractAffM, runContract)
+import Contract.Monad (Contract, ContractEnv, liftContractAffM, runContract, withContractEnv)
 import Contract.Scripts (validatorHash)
 import Contract.Test.Plutip (PlutipConfig, runPlutipContract, withPlutipContractEnv, runContractInEnv)
 import Contract.Wallet (withKeyWallet)
@@ -18,11 +19,25 @@ import Plutus.Types.Value (Value, valueToCoin, getLovelace)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldReturn, expectError, shouldEqual, shouldSatisfy)
 import Util (ourLogger)
-import Wallet.Spec
-  ( WalletSpec(UseKeys)
-  , PrivatePaymentKeySource(PrivatePaymentKeyFile)
-  , PrivateStakeKeySource(PrivateStakeKeyFile)
-  )
+import Wallet.Key (KeyWallet, privateKeysToKeyWallet)
+import Wallet.KeyFile (privatePaymentKeyFromFile, privateStakeKeyFromFile)
+import Wallet.Spec (WalletSpec(UseKeys), PrivatePaymentKeySource(PrivatePaymentKeyFile), PrivateStakeKeySource(PrivateStakeKeyFile))
+
+type Runner = ((ContractEnv () -> KeyWallet -> Aff Unit) -> Aff Unit)
+
+getRunner :: Aff Runner
+getRunner = do
+  (liftEffect $ lookupEnv "MODE") >>= case _ of
+    Just "local" -> pure $ withPlutipContractEnv config [ BigInt.fromInt 20_000_000 ]
+    Just "testnet" -> do
+      testResourcesDir <- liftEffect $ fromMaybe "./fixtures/" <$> lookupEnv "TEST_RESOURCES"
+      key <- privatePaymentKeyFromFile $ testResourcesDir <> "/wallet.skey"
+      stakeKey <- privateStakeKeyFromFile $ testResourcesDir <> "/staking.skey"
+      let keyWallet = privateKeysToKeyWallet key (Just stakeKey)
+      pure 
+        $ \f -> withContractEnv testnetConfig $ \env -> f (env :: ContractEnv ()) (keyWallet :: KeyWallet)
+    Just e -> liftEffect $ throw $ "expected local or testnet got: " <> e
+    Nothing -> liftEffect $ throw "expected MODE to be set"
 
 config :: PlutipConfig
 config =
@@ -76,7 +91,7 @@ testInitialize = do
         initialAdaAmount = BigInt.fromInt 20_000_000
         initialValue = 20
         incParam = 200
-      withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
+      getRunner \env alice -> do
         initOutput <-
           runContractInEnv env $
             withKeyWallet alice do
