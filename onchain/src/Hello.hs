@@ -14,9 +14,10 @@ module Hello (
 import Data.Default (Default (def))
 import Utils (closedTermToHexString, validatorToHexString)
 
+import PlutusLedgerApi.V2 (Validator, ValidatorHash)
+
 import PlutusLedgerApi.V1.Address (Address (..))
 import PlutusLedgerApi.V1.Credential (Credential (..))
-import PlutusLedgerApi.V1.Scripts (Validator, ValidatorHash)
 
 import Plutarch.Prelude
 
@@ -26,6 +27,7 @@ import Plutarch.Extensions.Api (passert, pgetContinuingDatum)
 import Plutarch.Unsafe (punsafeCoerce)
 
 import Plutarch.Extra.TermCont (pmatchC)
+import Plutarch (Config(tracingMode), TracingMode (DetTracing))
 
 data HelloRedemer (s :: S)
   = Inc (Term s (PDataRecord '[]))
@@ -45,7 +47,7 @@ trivialCbor :: Maybe String
 trivialCbor = closedTermToHexString trivial
 
 helloValidator :: Validator
-helloValidator = mkValidator def (paramValidator #$ pforgetData (pdata (1 :: Term _ PInteger)))
+helloValidator = mkValidator def{tracingMode=DetTracing} (paramValidator #$ pforgetData (pdata (1 :: Term _ PInteger)))
 
 helloValidatorHash :: ValidatorHash
 helloValidatorHash = validatorHash helloValidator

@@ -4,6 +4,8 @@ module Util
   , getUtxos
   , getTxScanUrl
   , withOurLogger
+  , decodeCbor
+  , decodeCborMp
   ) where
 
 import Contract.Prelude
@@ -13,7 +15,8 @@ import Contract.Address (scriptHashAddress)
 import Contract.Log (logInfo', logWarn', logError')
 import Contract.Monad (Contract, ContractEnv, liftedE)
 import Contract.ScriptLookups as Lookups
-import Contract.Transaction (TransactionHash(TransactionHash), TransactionOutput, TransactionInput(TransactionInput), balanceAndSignTxE, submitE)
+import Contract.Scripts (MintingPolicy(..), Validator(..))
+import Contract.Transaction (TransactionHash(TransactionHash), TransactionInput(TransactionInput), TransactionOutput, balanceAndSignTxE, plutusV2Script, submitE)
 import Contract.TxConstraints (TxConstraints)
 import Contract.Utxos (UtxoM(UtxoM), utxosAt, getUtxo)
 import Control.Monad.Error.Class (throwError)
@@ -175,6 +178,12 @@ withOurLogger path env = wrap $ (unwrap env)
       }
   }
 
+decodeCbor :: String -> Maybe Validator
+decodeCbor cborHex = Validator <<< plutusV2Script <$> hexToByteArray cborHex
+
+decodeCborMp :: String -> Maybe MintingPolicy
+decodeCborMp cborHex = MintingPolicy <<< plutusV2Script <$> hexToByteArray cborHex
+
 ourLogger :: String -> Message -> Aff Unit
 ourLogger path msg = do
   pretty <- prettyFormatter msg
@@ -184,3 +193,4 @@ ourLogger path msg = do
 -- The time to wait between ogmios querries when retrying
 waitTime :: Seconds
 waitTime = Seconds 1.0
+

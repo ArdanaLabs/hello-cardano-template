@@ -8,26 +8,20 @@ module HelloWorld.Discovery.Api
 import Contract.Prelude
 
 import CBOR as CBOR
-import Contract.ScriptLookups as Lookups
-import Contract.TxConstraints as Constraints
-import Contract.Value as Value
-import Data.BigInt as BigInt
-
-import Contract.Address
-  ( PaymentPubKeyHash(..)
-  , StakePubKeyHash(..)
-  , getWalletAddress
-  , scriptHashAddress
-  )
+import Contract.Address (PaymentPubKeyHash(..), StakePubKeyHash(..), getWalletAddress, scriptHashAddress)
 import Contract.Aeson (decodeAeson, fromString)
 import Contract.Credential (Credential(..), StakingCredential(..))
 import Contract.Log (logInfo')
-import Contract.Monad (Contract, liftContractM, liftContractAffM)
+import Contract.Monad (Contract, liftContractM)
 import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer))
+import Contract.ScriptLookups as Lookups
 import Contract.Scripts (Validator, validatorHash, applyArgsM)
 import Contract.Transaction (TransactionHash, TransactionInput)
 import Contract.TxConstraints (TxConstraints)
+import Contract.TxConstraints as Constraints
 import Contract.Value (adaToken, scriptCurrencySymbol)
+import Contract.Value as Value
+import Data.BigInt as BigInt
 import Data.Time.Duration (Minutes(..))
 import Data.Tuple.Nested ((/\), type (/\))
 import Effect.Exception (throw)
@@ -36,13 +30,13 @@ import Plutus.Types.CurrencySymbol (CurrencySymbol)
 import ToData (toData)
 import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
-import Util (buildBalanceSignAndSubmitTx, waitForTx, getUtxos)
+import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getUtxos, waitForTx)
 
 -- this should later use bytestrings
 setConfig :: Int -> Contract () TransactionInput
 setConfig n = do
   validator <- liftContractM "decoding failed" maybeConfig
-  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  let vhash = validatorHash validator
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = mempty
@@ -63,7 +57,7 @@ setConfig n = do
 stealConfig :: TransactionInput -> Contract () Unit
 stealConfig input = do
   validator <- liftContractM "decoding failed" maybeConfig
-  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  let vhash = validatorHash validator
   utxos <- getUtxos (scriptHashAddress vhash)
   let
     lookups :: Lookups.ScriptLookups PlutusData
@@ -80,7 +74,7 @@ mintNft = do
   -- That would probably be a simpler/better way to do this
   txOut <- liftContractM "seed tx failed" =<< seedTx
   nftPolicy <- makeNftPolcy txOut
-  cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
+  cs <- liftContractM "hash failed" $ scriptCurrencySymbol nftPolicy
   logInfo' $ "NFT cs: " <> show cs
   let
     lookups :: Lookups.ScriptLookups PlutusData
@@ -97,7 +91,7 @@ doubleMint :: Contract () Unit
 doubleMint = do
   txOut <- liftContractM "seed tx failed" =<< seedTx
   nftPolicy <- makeNftPolcy txOut
-  cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
+  cs <- liftContractM "hash failed" $ scriptCurrencySymbol nftPolicy
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.mintingPolicy nftPolicy
@@ -139,19 +133,10 @@ seedTx = do
   waitForTx waitTime adr th
 
 maybeParamNft :: Maybe MintingPolicy
-maybeParamNft =
-  CBOR.nft
-    # fromString
-    # decodeAeson
-    # hush
-    # map wrap
+maybeParamNft = decodeCborMp CBOR.nft
 
 maybeConfig :: Maybe Validator
-maybeConfig = CBOR.configScript
-  # fromString
-  # decodeAeson
-  # hush
-  # map wrap
+maybeConfig = decodeCbor CBOR.configScript
 
 -- Constants copied from api
 enoughForFees :: Value.Value

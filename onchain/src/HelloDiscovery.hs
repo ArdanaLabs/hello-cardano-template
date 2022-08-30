@@ -35,19 +35,20 @@ import Plutarch.Api.V1 (
 import Data.Default (Default (def))
 import Utils (closedTermToHexString, validatorToHexString)
 
-import Plutarch.Api.V1.AssocMap (plookup)
+import PlutusLedgerApi.V2 (MintingPolicy, TxOutRef, adaToken)
+
 import Plutarch.Api.V1.AssocMap qualified as AssocMap
-import Plutarch.Api.V1.Value (pforgetPositive)
 import Plutarch.Api.V1.Value qualified as Value
+
+import Plutarch.Api.V1.AssocMap (plookup)
+import Plutarch.Api.V1.Value (pforgetPositive)
+
 import Plutarch.Builtin (pforgetData)
 import Plutarch.DataRepr (PDataFields)
 import Plutarch.Extensions.Api (passert, passert_, pfindOwnInput, pgetContinuingOutput)
 import Plutarch.Extensions.Data (parseData, parseDatum)
 import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extra.TermCont
-
-import PlutusLedgerApi.V1 (MintingPolicy, TxOutRef)
-import PlutusLedgerApi.V2 (adaToken)
 
 configScriptCbor :: String
 configScriptCbor = validatorToHexString $ mkValidator def configScript
