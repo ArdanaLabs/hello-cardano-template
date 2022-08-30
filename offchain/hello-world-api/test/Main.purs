@@ -15,24 +15,26 @@ import Test.Spec (Spec, describe)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec', defaultConfig)
 
+data Mode = Local | Testnet
+
 main :: Effect Unit
 main = do
-  usePlutip <- lookupEnv "MODE" >>= case _ of
-    Just "local" -> pure true
-    Just "testnet" -> pure false
+  mode <- lookupEnv "MODE" >>= case _ of
+    Just "local" -> pure Local
+    Just "testnet" -> pure Testnet
     Just e -> throw $ "expected local or testnet got: " <> e
     Nothing -> throw "expected MODE to be set"
   launchAff_ $ runSpec' defaultConfig { timeout = Nothing } [ consoleReporter ] $
-    if usePlutip then pureSpec
-    else impureSpec
+    case mode of
+      Local -> do
+        describe "pure tests" do
+          Test.HelloWorld.Api.localOnlySpec
+          spec
+      Testnet -> do
+        describe "impure tests" do
+          spec
 
-pureSpec :: Spec Unit
-pureSpec = do
-  describe "pure tests" do
-    Encoding.spec
-    Test.HelloWorld.Api.spec
-
-impureSpec :: Spec Unit
-impureSpec = do
-  describe "impure tests" do
-    Test.HelloWorld.Api.testnetSpec
+spec :: Spec Unit
+spec = do
+  Encoding.spec
+  Test.HelloWorld.Api.spec
