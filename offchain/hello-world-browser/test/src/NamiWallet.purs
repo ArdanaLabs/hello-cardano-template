@@ -64,7 +64,7 @@ unzipNamiExtension tmpDir = do
 
 topup :: NamiWallet -> Effect Unit
 topup (NamiWallet { paymentAddress }) = do
-  let url = "https://faucet.cardano-testnet.iohkdev.io/send-money/" <> (unwrap paymentAddress) <> "?apiKey=" <> Constants.faucetApiKey
+  let url = Constants.faucetUrl <> (unwrap paymentAddress) <> "?apiKey=" <> Constants.faucetApiKey
   void $ execSync ("curl -XPOST " <> url) defaultExecSyncOptions
 
 mkTestOptions :: NamiWallet -> Effect TestOptions
