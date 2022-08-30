@@ -64,6 +64,13 @@ newtype Cookie = Cookie
 derive instance newtypeCookie :: Newtype Cookie _
 derive instance eqCookie :: Eq Cookie
 
+mkCookies :: Maybe String -> Maybe String -> Maybe String -> Array Cookie
+mkCookies paymentKey stakeKey networkId =
+  [ Cookie { key: "paymentKey", value: paymentKey }
+  , Cookie { key: "stakeKey", value: stakeKey }
+  , Cookie { key: "networkId", value: networkId }
+  ]
+
 startStaticServer :: Array Cookie -> String -> Aff Server
 startStaticServer cookies directory = do
   liftEffect $ listenHttp (use staticServer) Constants.port $ \_ -> pure unit

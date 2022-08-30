@@ -8,7 +8,7 @@ import Data.UInt as UInt
 import Effect.Aff (bracket, launchAff_)
 import Effect.Exception (throw, error)
 import HelloWorld.Test.Env as Env
-import HelloWorld.Test.Helpers (Cookie(..), closeStaticServer, startStaticServer)
+import HelloWorld.Test.Helpers (closeStaticServer, mkCookies, startStaticServer)
 import HelloWorld.Test.TestPlans.KeyWallet as Key
 import HelloWorld.Test.TestPlans.NamiWallet as Nami
 import Node.Process (lookupEnv)
@@ -26,11 +26,7 @@ main =
         Just "testnet" ->
           launchAff_ do
             let
-              cookies =
-                [ Cookie { key: "paymentKey", value: Nothing }
-                , Cookie { key: "stakeKey", value: Nothing }
-                , Cookie { key: "networkId", value: Nothing }
-                ]
+              cookies = mkCookies Nothing Nothing Nothing
             bracket (startStaticServer cookies index) closeStaticServer $ const Nami.runTestPlans
         Just "local" ->
           launchAff_
@@ -39,11 +35,7 @@ main =
                 let
                   stakeKey = keyWalletPrivateStakeKey wallet >>= formatStakeKey
                   networkId = (unwrap env).config.networkId
-                  cookies =
-                    [ Cookie { key: "paymentKey", value: Just paymentKey }
-                    , Cookie { key: "stakeKey", value: stakeKey }
-                    , Cookie { key: "networkId", value: Just (show networkId) }
-                    ]
+                  cookies = mkCookies (Just paymentKey) stakeKey (Just $ show networkId)
                 bracket (startStaticServer cookies index) closeStaticServer $ const Key.runTestPlans
         Just e -> throw $ "expected local or testnet got: " <> e
         Nothing -> throw "MODE not set"
