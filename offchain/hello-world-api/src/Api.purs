@@ -151,7 +151,7 @@ datumLookup lastOutput = do
   TransactionOutput utxo <- getUtxo lastOutput
     >>= liftContractM "couldn't find utxo"
   oldDatum <- case utxo.datum of
-    NoOutputDatum  -> liftEffect $ throw "no output datum"
+    NoOutputDatum -> liftEffect $ throw "no output datum"
     OutputDatumHash dh -> getDatumByHash dh >>= liftContractM "Datum hash lookup failed"
     OutputDatum d -> pure d
   asBigInt <- liftContractM "datum wasn't an integer" $ case oldDatum of

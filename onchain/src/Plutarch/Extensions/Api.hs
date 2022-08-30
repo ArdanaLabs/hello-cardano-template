@@ -9,6 +9,7 @@ module Plutarch.Extensions.Api (
 import Plutarch.Prelude
 
 import Control.Monad (void)
+import Plutarch.Api.V1.AssocMap (plookup)
 import Plutarch.Api.V2 (
   PAddress,
   PDatum (PDatum),
@@ -23,7 +24,6 @@ import Plutarch.Extensions.Data (parseData)
 import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extensions.Monad (pmatchFieldC)
 import Plutarch.Extra.TermCont (pmatchC)
-import Plutarch.Api.V1.AssocMap (plookup)
 
 {- | enfroces that there is a unique continuing output gets it's Datum
  - and converts it to the desired type via pfromData
@@ -31,15 +31,17 @@ import Plutarch.Api.V1.AssocMap (plookup)
 pgetContinuingDatum :: forall p s. (PTryFrom PData (PAsData p), PIsData p) => Term s PScriptContext -> TermCont s (Term s p)
 pgetContinuingDatum ctx = do
   out <- pgetContinuingOutput ctx
-  datum <- pmatchFieldC @"datum" out >>= \case
-    PNoOutputDatum _ -> fail "no data"
-    POutputDatum datum -> pure $ pfield @"outputDatum" # datum
-    POutputDatumHash dh -> do
-      PJust datum <- pmatchC
-        $ plookup
-        # pfromData (pfield @"datumHash" # dh)
-        #$ pfromData (pfield @"datums" #$ pfield @"txInfo" # ctx)
-      pure datum
+  datum <-
+    pmatchFieldC @"datum" out >>= \case
+      PNoOutputDatum _ -> fail "no data"
+      POutputDatum datum -> pure $ pfield @"outputDatum" # datum
+      POutputDatumHash dh -> do
+        PJust datum <-
+          pmatchC $
+            plookup
+              # pfromData (pfield @"datumHash" # dh)
+              #$ pfromData (pfield @"datums" #$ pfield @"txInfo" # ctx)
+        pure datum
   PDatum d <- pmatchC datum
   parseData d
 

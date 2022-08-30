@@ -26,8 +26,8 @@ import Plutarch.Builtin (pforgetData)
 import Plutarch.Extensions.Api (passert, pgetContinuingDatum)
 import Plutarch.Unsafe (punsafeCoerce)
 
+import Plutarch (Config (tracingMode), TracingMode (DetTracing))
 import Plutarch.Extra.TermCont (pmatchC)
-import Plutarch (Config(tracingMode), TracingMode (DetTracing))
 
 data HelloRedemer (s :: S)
   = Inc (Term s (PDataRecord '[]))
@@ -47,7 +47,7 @@ trivialCbor :: Maybe String
 trivialCbor = closedTermToHexString trivial
 
 helloValidator :: Validator
-helloValidator = mkValidator def{tracingMode=DetTracing} (paramValidator #$ pforgetData (pdata (1 :: Term _ PInteger)))
+helloValidator = mkValidator def {tracingMode = DetTracing} (paramValidator #$ pforgetData (pdata (1 :: Term _ PInteger)))
 
 helloValidatorHash :: ValidatorHash
 helloValidatorHash = validatorHash helloValidator

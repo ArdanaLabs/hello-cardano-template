@@ -9,7 +9,7 @@ import Test.Spec (Spec, it, describe)
 import Test.Spec.Assertions (shouldNotEqual, shouldEqual)
 import Contract.Aeson (decodeAeson, fromString)
 import Contract.Scripts (Validator)
-import Util(decodeCbor)
+import Util (decodeCbor)
 
 spec :: Spec Unit
 spec = describe "decodeCbor" $ do
