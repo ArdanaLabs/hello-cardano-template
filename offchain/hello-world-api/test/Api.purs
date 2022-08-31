@@ -5,82 +5,30 @@ module Test.HelloWorld.Api
 
 import Contract.Prelude
 
-import Contract.Config (testnetConfig)
-import Contract.Monad (ContractEnv, liftContractAffM, liftContractM, withContractEnv)
+import Contract.Monad (liftContractAffM, liftContractM)
 import Contract.Scripts (validatorHash)
-import Contract.Test.Plutip (PlutipConfig, runPlutipContract, withPlutipContractEnv, runContractInEnv)
+import Contract.Test.Plutip (runPlutipContract, withPlutipContractEnv, runContractInEnv)
 import Contract.Utxos (getWalletBalance)
 import Contract.Wallet (withKeyWallet)
 import Data.BigInt as BigInt
-import Data.UInt as UInt
-import Effect.Exception (throw)
 import HelloWorld.Api (initialize, increment, redeem, query, helloScript, sendDatumToScript, datumLookup)
-import Node.Process (lookupEnv)
 import Plutus.Types.Value (Value, valueToCoin, getLovelace)
+import Test.HelloWorld.EnvRunner (EnvRunner, plutipConfig)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldReturn, expectError, shouldEqual, shouldSatisfy)
-import Wallet.Key (KeyWallet, privateKeysToKeyWallet)
-import Wallet.KeyFile (privatePaymentKeyFromFile, privateStakeKeyFromFile)
-
-type Runner = (ContractEnv () -> KeyWallet -> Aff Unit) -> Aff Unit
-
-getRunner :: Aff Runner
-getRunner = do
-  (liftEffect $ lookupEnv "MODE") >>= case _ of
-    Just "local" -> pure $ withPlutipContractEnv config [ BigInt.fromInt 20_000_000 ]
-    Just "testnet" -> do
-      testResourcesDir <- liftEffect $ fromMaybe "./fixtures/" <$> lookupEnv "TEST_RESOURCES"
-      key <- privatePaymentKeyFromFile $ testResourcesDir <> "/wallet.skey"
-      stakeKey <- privateStakeKeyFromFile $ testResourcesDir <> "/staking.skey"
-      let keyWallet = privateKeysToKeyWallet key (Just stakeKey)
-      pure
-        $ \f -> withContractEnv (testnetConfig { logLevel = Warn }) $ \env -> f (env :: ContractEnv ()) (keyWallet :: KeyWallet)
-    Just e -> liftEffect $ throw $ "expected local or testnet got: " <> e
-    Nothing -> liftEffect $ throw "expected MODE to be set"
-
-config :: PlutipConfig
-config =
-  { host: "127.0.0.1"
-  , port: UInt.fromInt 8082
-  , logLevel: Error
-  -- Server configs are used to deploy the corresponding services.
-  , ogmiosConfig:
-      { port: UInt.fromInt 1338
-      , host: "127.0.0.1"
-      , secure: false
-      , path: Nothing
-      }
-  , ogmiosDatumCacheConfig:
-      { port: UInt.fromInt 10000
-      , host: "127.0.0.1"
-      , secure: false
-      , path: Nothing
-      }
-  , ctlServerConfig:
-      { port: UInt.fromInt 8083
-      , host: "127.0.0.1"
-      , secure: false
-      , path: Nothing
-      }
-  , postgresConfig:
-      { host: "127.0.0.1"
-      , port: UInt.fromInt 5433
-      , user: "ctxlib"
-      , password: "ctxlib"
-      , dbname: "ctxlib"
-      }
-  }
 
 getAmount :: Value -> BigInt.BigInt
 getAmount = getLovelace <<< valueToCoin
 
-spec :: Spec Unit
-spec = do
+spec :: EnvRunner -> Spec Unit
+spec envRunner = do
   describe "HelloWorld.Api" $ do
-    testInitialize
-    testIncrement
-    testRedeem
-    testDatumLookup
+    traverse_ (\f -> f envRunner)
+      [ testInitialize
+      , testIncrement
+      , testRedeem
+      , testDatumLookup
+      ]
 
 localOnlySpec :: Spec Unit
 localOnlySpec = do
@@ -89,15 +37,14 @@ localOnlySpec = do
     testIncrementLocal
     testRedeemLocal
 
-testInitialize :: Spec Unit
-testInitialize = do
+testInitialize :: EnvRunner -> Spec Unit
+testInitialize envRunner = do
   describe "initialize" do
     it "should set the datum to the initial value" $ do
       let
         initialDatum = 20
         incParam = 200
-      runner <- getRunner
-      runner \env alice -> do
+      envRunner \env alice -> do
         initialValue <-
           runContractInEnv env $
             withKeyWallet alice do
@@ -119,19 +66,18 @@ testInitializeLocal = do
     it "should fail if there isn't enough Ada available"
       $ expectError
       $
-        runPlutipContract config [ BigInt.fromInt 1_000_000 ] \alice -> do
+        runPlutipContract plutipConfig [ BigInt.fromInt 1_000_000 ] \alice -> do
           withKeyWallet alice do
             initialize 0 1
 
-testIncrement :: Spec Unit
-testIncrement = do
+testIncrement :: EnvRunner -> Spec Unit
+testIncrement envRunner = do
   describe "increment" do
     it "should increment the datum by the specified increment parameter" $ do
       let
         initialDatum = 10
         incParam = 2
-      runner <- getRunner
-      runner \env alice -> do
+      envRunner \env alice -> do
         initOutput <-
           runContractInEnv env $
             withKeyWallet alice do
@@ -155,7 +101,7 @@ testIncrementLocal = do
         incParam = 2
         wrongIncParam = 23535
 
-      withPlutipContractEnv config [ BigInt.fromInt 20_000_000 ] \env alice -> do
+      withPlutipContractEnv plutipConfig [ BigInt.fromInt 20_000_000 ] \env alice -> do
         lastOutput <-
           runContractInEnv env $
             withKeyWallet alice do
@@ -166,15 +112,14 @@ testIncrementLocal = do
             withKeyWallet alice do
               increment wrongIncParam lastOutput
 
-testRedeem :: Spec Unit
-testRedeem = do
+testRedeem :: EnvRunner -> Spec Unit
+testRedeem envRunner = do
   describe "redeem" do
     it "should succeed after successful initialization and increment" $ do
       let
         initialDatum = 20
         incParam = 50
-      runner <- getRunner
-      runner \env alice -> do
+      envRunner \env alice -> do
         initialValue <-
           runContractInEnv env $
             withKeyWallet alice do
@@ -207,7 +152,7 @@ testRedeemLocal = do
         initialAdaAmountAlice = BigInt.fromInt 20_000_000
         initialAdaAmountBob = BigInt.fromInt 5_000_000
         distribution = [ initialAdaAmountAlice ] /\ [ initialAdaAmountBob ]
-      withPlutipContractEnv config distribution \env (alice /\ bob) -> do
+      withPlutipContractEnv plutipConfig distribution \env (alice /\ bob) -> do
         lastOutput <-
           runContractInEnv env $
             withKeyWallet alice do
@@ -222,13 +167,12 @@ testRedeemLocal = do
         -- Bob should have more than at the beginning after redeeming
         getAmount value `shouldSatisfy` (==) initialAdaAmountBob
 
-testDatumLookup :: Spec Unit
-testDatumLookup = do
+testDatumLookup :: EnvRunner -> Spec Unit
+testDatumLookup envRunner = do
   describe "datumLookup" $
     it "should fetch the correct datum" do
       let expectedDatum = 3
-      runner <- getRunner
-      runner \env alice -> do
+      envRunner \env alice -> do
         datum <- runContractInEnv env $
           withKeyWallet alice do
             validator <- helloScript 1
