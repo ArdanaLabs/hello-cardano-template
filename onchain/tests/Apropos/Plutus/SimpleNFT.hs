@@ -57,7 +57,8 @@ instance HasPermutationGenerator NFTProp NFTModel where
         , contract = add HasParam
         , morphism = \hm@NFTModel {..} -> do
             newIn <- (param,,,) <$> address <*> value <*> maybeOf datum
-            pure hm {inputs = newIn : inputs}
+            ind <- int (linear 0 (length inputs - 1))
+            pure hm {inputs = take ind inputs ++ [newIn] ++ drop ind inputs}
         }
     ]
 
