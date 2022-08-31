@@ -2,7 +2,7 @@ module Utils (
   validatorToHexString,
   trivialHexString,
   closedTermToHexString,
-  CBOR (..),
+  Cbor (..),
   toPureScript,
 ) where
 
@@ -15,7 +15,7 @@ import Numeric
 import Plutarch (compile)
 import Plutarch.Api.V1
 import Plutarch.Prelude
-import PlutusLedgerApi.V1.Scripts (Validator)
+import PlutusLedgerApi.V1.Scripts (Script, Validator)
 import System.Exit (die)
 
 {- | This function turns a validator into a hex string usable with CTL.
@@ -25,13 +25,13 @@ import System.Exit (die)
  to show each byte in hexidecimal.
 -}
 validatorToHexString :: Validator -> String
-validatorToHexString v = concatMap byteToHex $ BSL.unpack $ serialise v
+validatorToHexString v = concatMap byteToHex $ BSL.unpack $ serialise (v :: Validator)
 
 closedTermToHexString :: forall (p :: PType). ClosedTerm p -> Maybe String
 closedTermToHexString t = do
   case compile def t of
     Left _ -> Nothing
-    Right script -> Just $ concatMap byteToHex $ BSL.unpack $ serialise script
+    Right script -> Just $ concatMap byteToHex $ BSL.unpack $ serialise (script :: Script)
 
 byteToHex :: Word8 -> String
 byteToHex b = padToLen 2 '0' (showHex b "")
@@ -46,16 +46,16 @@ trivialValidator :: ClosedTerm PValidator
 trivialValidator = plam $ \_ _ _ -> popaque $ pcon PUnit
 
 -- | Represents a declaration of a constant cbor string in purescript
-data CBOR = CBOR {name :: String, cbor :: Maybe String}
+data Cbor = Cbor {name :: String, cbor :: Maybe String}
 
--- | Turns a list of CBOR objects into the text of a purescript module which declares them all
-toPureScript :: [CBOR] -> IO String
+-- | Turns a list of Cbor objects into the text of a purescript module which declares them all
+toPureScript :: [Cbor] -> IO String
 toPureScript cs =
   (("module CBOR (\n  " <> intercalate ",\n  " (name <$> cs) <> "\n) where\n\n") <>)
     . intercalate "\n\n"
     <$> mapM toDec cs
 
-toDec :: CBOR -> IO String
+toDec :: Cbor -> IO String
 toDec c = case cbor c of
   Nothing -> die $ name c <> " didn't compile"
   Just hex ->

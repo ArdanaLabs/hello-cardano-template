@@ -5,9 +5,9 @@ module Hello (
   helloLogic,
   helloValidatorHash,
   helloAddress,
-  helloWorldHexString,
-  paramHelloCBOR,
-  trivialCBOR,
+  helloWorldCbor,
+  paramHelloCbor,
+  trivialCbor,
   HelloRedemer (..),
 ) where
 
@@ -35,14 +35,14 @@ data HelloRedemer (s :: S)
 
 instance DerivePlutusType HelloRedemer where type DPTStrat _ = PlutusTypeData
 
-helloWorldHexString :: String
-helloWorldHexString = validatorToHexString helloValidator
+helloWorldCbor :: String
+helloWorldCbor = validatorToHexString helloValidator
 
-paramHelloCBOR :: Maybe String
-paramHelloCBOR = closedTermToHexString paramValidator
+paramHelloCbor :: Maybe String
+paramHelloCbor = closedTermToHexString paramValidator
 
-trivialCBOR :: Maybe String
-trivialCBOR = closedTermToHexString trivial
+trivialCbor :: Maybe String
+trivialCbor = closedTermToHexString trivial
 
 helloValidator :: Validator
 helloValidator = mkValidator def (paramValidator #$ pforgetData (pdata (1 :: Term _ PInteger)))
