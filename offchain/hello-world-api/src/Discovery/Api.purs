@@ -1,22 +1,22 @@
 module HelloWorld.Discovery.Api
   ( doubleMint
   , mintNft
-  , setConfig
+  , protocolInit
   , stealConfig
   ) where
 
 import Contract.Prelude
 
 import CBOR as CBOR
+import Cardano.Types.Value (mpsSymbol)
 import Contract.Address (PaymentPubKeyHash(..), StakePubKeyHash(..), getWalletAddress, scriptHashAddress)
-import Contract.Aeson (decodeAeson, fromString)
 import Contract.Credential (Credential(..), StakingCredential(..))
 import Contract.Log (logInfo')
 import Contract.Monad (Contract, liftContractM)
 import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer))
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (Validator, validatorHash, applyArgsM)
-import Contract.Transaction (TransactionHash, TransactionInput)
+import Contract.Transaction (TransactionInput)
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
 import Contract.Value (adaToken, scriptCurrencySymbol)
@@ -27,16 +27,24 @@ import Data.Tuple.Nested ((/\), type (/\))
 import Effect.Exception (throw)
 import Plutus.Types.Address (Address(..))
 import Plutus.Types.CurrencySymbol (CurrencySymbol)
+import Scripts (mintingPolicyHash)
 import ToData (toData)
 import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
 import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getUtxos, waitForTx)
 
 -- this should later use bytestrings
-setConfig :: Int -> Contract () TransactionInput
-setConfig n = do
-  validator <- liftContractM "decoding failed" maybeConfig
-  let vhash = validatorHash validator
+protocolInit :: Contract () (TransactionInput /\ Validator /\ MintingPolicy)
+protocolInit = do
+  configValidator <- liftContractM "decoding failed" maybeConfig
+  let configVhash = validatorHash configValidator
+  cs <- fst <$> mintNft
+  vaultValidatorParam <- liftContractM "decoding failed" $ decodeCbor CBOR.vault
+  vaultValidator <- liftContractM "apply args failed" =<< applyArgsM vaultValidatorParam [toData cs]
+  let vaultValidatorHash = validatorHash vaultValidator
+  vaultAuthParam <- liftContractM "decode failed" $ decodeCborMp CBOR.vaultAuthMp
+  vaultAuthMp <- liftContractM "apply args failed" =<< applyArgsM vaultAuthParam [toData $ vaultValidatorHash ]
+  vaultAuthCs <- liftContractM "mpsSymbol failed" $ mpsSymbol $ mintingPolicyHash vaultAuthMp
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = mempty
@@ -44,14 +52,14 @@ setConfig n = do
     constraints :: TxConstraints Unit Unit
     constraints =
       Constraints.mustPayToScript
-        vhash
-        ( Datum $ n
-            # BigInt.fromInt
+        configVhash
+        ( Datum $ vaultAuthCs
             # toData
         )
-        enoughForFees
+        (enoughForFees <> Value.singleton cs adaToken (BigInt.fromInt 1))
   txId <- buildBalanceSignAndSubmitTx lookups constraints
-  liftContractM "gave up waiting for sendDatumToScript TX" =<< waitForTx waitTime (scriptHashAddress vhash) txId
+  config <- liftContractM "gave up waiting for sendDatumToScript TX" =<< waitForTx waitTime (scriptHashAddress configVhash) txId
+  pure $ config /\ vaultValidator /\ vaultAuthMp
 
 -- This should never work
 stealConfig :: TransactionInput -> Contract () Unit
@@ -68,7 +76,7 @@ stealConfig input = do
   _ <- buildBalanceSignAndSubmitTx lookups constraints
   logInfo' "finished"
 
-mintNft :: Contract () (CurrencySymbol /\ TransactionHash)
+mintNft :: Contract () (CurrencySymbol /\ TransactionInput)
 mintNft = do
   -- Turns out colatoral doesn't work for keywallets with plutip (or maybe in general)
   -- That would probably be a simpler/better way to do this
@@ -84,7 +92,9 @@ mintNft = do
     constraints =
       Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
   txId <- buildBalanceSignAndSubmitTx lookups constraints
-  pure $ cs /\ txId
+  adr <- liftContractM "no wallet" =<< getWalletAddress
+  txIn <- liftContractM "gave up waiting for sendDatumToScript TX" =<< waitForTx waitTime adr txId
+  pure $ cs /\ txIn
 
 -- should fail
 doubleMint :: Contract () Unit

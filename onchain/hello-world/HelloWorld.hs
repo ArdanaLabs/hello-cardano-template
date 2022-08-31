@@ -32,6 +32,8 @@ cbors =
   [ Cbor "paramHello" paramHelloCbor
   , Cbor "hello" $ pure helloWorldCbor
   , Cbor "trivial" trivialCbor
-  , Cbor "configScript" $ pure configScriptCbor
   , Cbor "nft" nftCbor
+  , Cbor "configScript" $ pure configScriptCbor
+  , Cbor "vault" vaultScriptCbor
+  , Cbor "vaultAuthMp" authTokenCbor
   ]

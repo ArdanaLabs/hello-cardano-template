@@ -8,7 +8,7 @@ import Data.UInt as UInt
 import Contract.Prelude
 import Contract.Test.Plutip (PlutipConfig, withPlutipContractEnv, runContractInEnv)
 import Contract.Wallet (withKeyWallet)
-import HelloWorld.Discovery.Api (setConfig, stealConfig, doubleMint, mintNft)
+import HelloWorld.Discovery.Api (protocolInit, stealConfig, doubleMint, mintNft)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (expectError)
 import Util (withOurLogger)
@@ -50,6 +50,7 @@ spec :: Spec Unit
 spec = do
   describe "HelloWorld.Discovery.Api" $ do
     describe "config" do
+      init
       tryToStealConfig
     describe "nft" do
       tryMintNft
@@ -75,15 +76,25 @@ tryDoubleMint = do
           _ <- doubleMint
           pure unit
 
-tryToStealConfig :: Spec Unit
-tryToStealConfig = do
-  it "sets a config but fail to steal the utxo" $ do
+init :: Spec Unit
+init = do
+  it "initialize protocol but fail to steal the utxo" $ do
     let
       initialAdaAmount = BigInt.fromInt 20_000_000
-      initialValue = 20
     withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
       runContractInEnv env $
         withKeyWallet alice do
-          txin <- setConfig initialValue
+          _ <- protocolInit
+          pure unit
+
+tryToStealConfig :: Spec Unit
+tryToStealConfig = do
+  it "initialize protocol but fail to steal the utxo" $ do
+    let
+      initialAdaAmount = BigInt.fromInt 20_000_000
+    withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
+      runContractInEnv env $
+        withKeyWallet alice do
+          txin <- fst <$> protocolInit
           expectError $ stealConfig txin
 
