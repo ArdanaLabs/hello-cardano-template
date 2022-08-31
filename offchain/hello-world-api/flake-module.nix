@@ -20,6 +20,7 @@
             node-fs-aff
             node-process
             ordered-collections
+            node-http
             spec
             aff-retry
             self'.packages."offchain:hello-world-cbor"
