@@ -51,6 +51,10 @@
       url = "github:GoogleChrome/lighthouse/v9.5.0";
       flake = false;
     };
+    jquery = {
+      url = "github:jquery/jquery/3.6.0";
+      flake = false;
+    };
     treefmt-flake.url = "github:srid/treefmt-flake";
   };
 

@@ -16,8 +16,6 @@
               dependencies =
                 with ps-pkgs;
                 [
-                  aff
-                  bigints
                   halogen
                   halogen-store
                   safe-coerce
@@ -59,7 +57,7 @@
             '';
       };
 
-      hello-world-browser-e2e = {
+      hello-world-browser-test = {
         ps =
           purs-nix.purs
             {
@@ -77,38 +75,74 @@
                   parallel
                 ];
               dir = ./.;
-              srcs = [ "test/e2e/src" ];
+              srcs = [ "test/src" ];
             };
       };
 
-      hello-world-browser-tests =
+      hello-world-browser-test-with-local =
         let
           testModule =
-            hello-world-browser-e2e.ps.modules."HelloWorld.Test.E2E.Main".output
+            hello-world-browser-test.ps.modules."HelloWorld.Test.Main".output
               { };
-          scriptName = "hello-world-browser-tests";
+          scriptName = "hello-world-browser-test-with-local";
+        in
+        pkgs.writeShellApplication
+          {
+            name = scriptName;
+            runtimeInputs = [
+              pkgs.nodejs
+              pkgs.chromium
+              pkgs.postgresql
+              self.inputs.cardano-transaction-lib.inputs.plutip.packages.${pkgs.system}."plutip:exe:plutip-server"
+              self.inputs.cardano-transaction-lib.packages.${pkgs.system}."ctl-server:exe:ctl-server"
+              self.inputs.mlabs-ogmios.defaultPackage.${pkgs.system}
+              self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system}
+              self'.packages."offchain:hello-world-browser"
+            ];
+            text = ''
+              export MODE=local
+              export NODE_PATH=${config.ctl.nodeModules}/node_modules
+              export CHROME_EXE="${pkgs.chromium}/bin/chromium"
+              export HELLO_WORLD_BROWSER_INDEX=${self'.packages."offchain:hello-world-browser"}
+              export JQUERY_MIN_SRC="${self.inputs.jquery}/dist/jquery.min.js"
+
+              node \
+                --preserve-symlinks \
+                --input-type=module \
+                -e 'import { main } from "${testModule}/HelloWorld.Test.Main/index.js"; main()' \
+                -- "${scriptName}" "''$@"
+            '';
+          };
+
+      hello-world-browser-test-with-testnet =
+        let
+          testModule =
+            hello-world-browser-test.ps.modules."HelloWorld.Test.Main".output
+              { };
+          scriptName = "hello-world-browser-test-with-testnet";
         in
         pkgs.writeShellApplication
           {
             name = scriptName;
             runtimeInputs =
               [ self'.packages."offchain:hello-world-browser" ]
-              ++ (with pkgs; [ nodejs chromium unzip coreutils ]);
+              ++ (with pkgs; [ nodejs chromium unzip curl ]);
             text = ''
+              export MODE=testnet
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
               export CHROME_EXE="${pkgs.chromium}/bin/chromium"
               export HELLO_WORLD_BROWSER_INDEX=${self'.packages."offchain:hello-world-browser"}
 
               export NAMI_EXTENSION="${self.inputs.cardano-transaction-lib}/test-data/chrome-extensions/nami_3.2.5_1.crx"
 
-              export NAMI_TEST_WALLET_1=${./test/e2e/TestWallets/nami-test-wallet-1.tar.gz}
-              export NAMI_TEST_WALLET_2=${./test/e2e/TestWallets/nami-test-wallet-2.tar.gz}
-              export NAMI_TEST_WALLET_3=${./test/e2e/TestWallets/nami-test-wallet-3.tar.gz}
+              export NAMI_TEST_WALLET_1=${./test/NamiWallets/nami-test-wallet-1.tar.gz}
+              export NAMI_TEST_WALLET_2=${./test/NamiWallets/nami-test-wallet-2.tar.gz}
+              export NAMI_TEST_WALLET_3=${./test/NamiWallets/nami-test-wallet-3.tar.gz}
 
               node \
                 --preserve-symlinks \
                 --input-type=module \
-                -e 'import { main } from "${testModule}/HelloWorld.Test.E2E.Main/index.js"; main()' \
+                -e 'import { main } from "${testModule}/HelloWorld.Test.Main/index.js"; main()' \
                 -- "${scriptName}" "''$@"
             '';
           };
@@ -118,44 +152,13 @@
         "offchain:hello-world-browser:serve" =
           dusd-lib.makeServeApp self'.packages."offchain:hello-world-browser";
         "offchain:hello-world-browser:serve-live" =
-          dusd-lib.mkApp (
-            pkgs.writeShellApplication {
-              name = "hello-world-browser-serve-loop";
-              runtimeInputs = with pkgs; [
-                entr
-                findutils # for find
-                procps # for pkill
-                nodePackages.live-server
-              ];
-              text =
-                let
-                  resultDir = "$PWD/tmp-result";
-                  buildBrowser =
-                    ''nix build .#"offchain:hello-world-browser" --out-link "${resultDir}"'';
-                in
-                ''
-                  # build once to ensure that the server has something to serve
-                  ${buildBrowser}
-                  # kill live-serve and cleanup result dir on exit
-                  trap 'pkill -f live-server && rm -r "${resultDir}"' EXIT
-                  # runs this in a subshell for the trap to kill
-                  (live-server "${resultDir}" &)
-                  # disable this shellcheck because it complains about
-                  # "variable won't expand in single quotes" which is what we want here.
-                  # shellcheck disable=SC2016
-                  find "$PWD/offchain" -regex ".*\(\.purs\|\.html\|\.css\)" \
-                    | entr -ps 'echo building; ${buildBrowser}; echo "refresh the page"'
-                '';
-            }
-          );
-        "offchain:hello-world-browser:test" =
-          dusd-lib.mkApp hello-world-browser-tests;
+          dusd-lib.makeServeLive self'.packages."offchain:hello-world-browser";
+        "offchain:hello-world-browser:test:local" =
+          dusd-lib.mkApp hello-world-browser-test-with-local;
+        "offchain:hello-world-browser:test:testnet" =
+          dusd-lib.mkApp hello-world-browser-test-with-testnet;
       };
       checks = {
-        "offchain:hello-world-browser" =
-          let test = hello-world-browser-tests; in
-          pkgs.runCommand test.name { NO_RUNTIME = "TRUE"; }
-            "${test}/bin/${test.meta.mainProgram} | tee $out";
         "offchain:hello-world-browser:lighthouse" =
           pkgs.callPackage ../../nixos/tests/hello-world-browser-lighthouse.nix {
             lighthouse =
@@ -173,8 +176,8 @@
       devShells = {
         "offchain:hello-world-browser" =
           offchain-lib.makeProjectShell hello-world-browser { };
-        "offchain:hello-world-browser:e2e" =
-          offchain-lib.makeProjectShell hello-world-browser-e2e { };
+        "offchain:hello-world-browser:test" =
+          offchain-lib.makeProjectShell hello-world-browser-test { };
       };
       packages."offchain:hello-world-browser" = hello-world-browser.package;
     };
