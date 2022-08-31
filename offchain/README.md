@@ -38,9 +38,14 @@ To run the browser app you can use:
 nix run .#offchain:hello-world-browser:serve
 ```
 
-To run the browser tests use:
+To run the browser tests with testnet use:
 ```
-nix run .#offchain:hello-world-browser:test
+nix run .#offchain:hello-world-browser:test:testnet
+```
+
+To run the browser tests with local use:
+```
+nix run .#offchain:hello-world-browser:test:local
 ```
 
 To run the lighthouse tests use:
