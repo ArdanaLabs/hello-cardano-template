@@ -4090,6 +4090,23 @@
         "type": "github"
       }
     },
+    "jquery": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1614704895,
+        "narHash": "sha256-ITWgSfUVkQ1DMMJ8gndglmx+KrRVaVLCAUHjoVSAztw=",
+        "owner": "jquery",
+        "repo": "jquery",
+        "rev": "0cc1ad64ab0f482c13d6edd2a5226f309dd00006",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jquery",
+        "ref": "3.6.0",
+        "repo": "jquery",
+        "type": "github"
+      }
+    },
     "ixset-typed": {
       "flake": false,
       "locked": {
@@ -6538,6 +6555,7 @@
         "dream2nix": "dream2nix",
         "flake-parts": "flake-parts",
         "haskell-nix": "haskell-nix_3",
+        "jquery": "jquery",
         "lighthouse-src": "lighthouse-src",
         "lint-utils": "lint-utils",
         "mlabs-ogmios": [
