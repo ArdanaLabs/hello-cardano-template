@@ -5,14 +5,15 @@ module Test.HelloWorld.Api
 
 import Contract.Prelude
 
-import Effect.Exception (throw)
 import Contract.Config (testnetConfig)
-import Contract.Monad (ContractEnv, liftContractAffM, withContractEnv)
+import Contract.Monad (ContractEnv, liftContractAffM, liftContractM, withContractEnv)
 import Contract.Scripts (validatorHash)
 import Contract.Test.Plutip (PlutipConfig, runPlutipContract, withPlutipContractEnv, runContractInEnv)
+import Contract.Utxos (getWalletBalance)
 import Contract.Wallet (withKeyWallet)
 import Data.BigInt as BigInt
 import Data.UInt as UInt
+import Effect.Exception (throw)
 import HelloWorld.Api (initialize, increment, redeem, query, helloScript, sendDatumToScript, datumLookup)
 import Node.Process (lookupEnv)
 import Plutus.Types.Value (Value, valueToCoin, getLovelace)
@@ -33,7 +34,7 @@ getRunner = do
       stakeKey <- privateStakeKeyFromFile $ testResourcesDir <> "/staking.skey"
       let keyWallet = privateKeysToKeyWallet key (Just stakeKey)
       pure
-        $ \f -> withContractEnv testnetConfig $ \env -> f (env :: ContractEnv ()) (keyWallet :: KeyWallet)
+        $ \f -> withContractEnv (testnetConfig { logLevel = Warn }) $ \env -> f (env :: ContractEnv ()) (keyWallet :: KeyWallet)
     Just e -> liftEffect $ throw $ "expected local or testnet got: " <> e
     Nothing -> liftEffect $ throw "expected MODE to be set"
 
@@ -83,8 +84,9 @@ spec = do
 
 localOnlySpec :: Spec Unit
 localOnlySpec = do
-  describe "HelloWorld.Api local only tests" do
+  describe "HelloWorld.Api" do
     testInitializeLocal
+    testIncrementLocal
     testRedeemLocal
 
 testInitialize :: Spec Unit
@@ -92,21 +94,24 @@ testInitialize = do
   describe "initialize" do
     it "should set the datum to the initial value" $ do
       let
-        initialAdaAmount = BigInt.fromInt 20_000_000
-        initialValue = 20
+        initialDatum = 20
         incParam = 200
       runner <- getRunner
       runner \env alice -> do
+        initialValue <-
+          runContractInEnv env $
+            withKeyWallet alice do
+              getWalletBalance >>= liftContractM "Get initial wallet balance failed"
         initOutput <-
           runContractInEnv env $
             withKeyWallet alice do
-              initialize incParam initialValue
+              initialize incParam initialDatum
         (datum /\ value) <-
           runContractInEnv env $
             withKeyWallet alice do
               query initOutput
-        datum `shouldEqual` initialValue
-        getAmount value `shouldSatisfy` (>) initialAdaAmount
+        datum `shouldEqual` initialDatum
+        getAmount value `shouldSatisfy` (>) (getAmount initialValue)
 
 testInitializeLocal :: Spec Unit
 testInitializeLocal = do
@@ -123,14 +128,14 @@ testIncrement = do
   describe "increment" do
     it "should increment the datum by the specified increment parameter" $ do
       let
-        initialValue = 10
+        initialDatum = 10
         incParam = 2
       runner <- getRunner
       runner \env alice -> do
         initOutput <-
           runContractInEnv env $
             withKeyWallet alice do
-              initialize incParam initialValue
+              initialize incParam initialDatum
         incOutput <-
           runContractInEnv env $
             withKeyWallet alice do
@@ -139,35 +144,45 @@ testIncrement = do
           runContractInEnv env $
             withKeyWallet alice do
               query incOutput
-        datum `shouldEqual` (initialValue + incParam)
+        datum `shouldEqual` (initialDatum + incParam)
+
+testIncrementLocal :: Spec Unit
+testIncrementLocal = do
+  describe "increment" do
     it "should fail when providing the wrong increment parameter" $ do
       let
-        initialValue = 10
-      runner <- getRunner
-      runner \env alice -> do
+        initialDatum = 10
+        incParam = 2
+        wrongIncParam = 23535
+
+      withPlutipContractEnv config [ BigInt.fromInt 20_000_000 ] \env alice -> do
         lastOutput <-
           runContractInEnv env $
             withKeyWallet alice do
-              initialize 2 initialValue
+              initialize incParam initialDatum
         expectError
           $ runContractInEnv env
           $
             withKeyWallet alice do
-              increment 3 lastOutput
+              increment wrongIncParam lastOutput
 
 testRedeem :: Spec Unit
 testRedeem = do
   describe "redeem" do
     it "should succeed after successful initialization and increment" $ do
       let
-        initialValue = 20
+        initialDatum = 20
         incParam = 50
       runner <- getRunner
       runner \env alice -> do
+        initialValue <-
+          runContractInEnv env $
+            withKeyWallet alice do
+              getWalletBalance >>= liftContractM "Get initial wallet balance failed"
         initOutput <-
           runContractInEnv env $
             withKeyWallet alice do
-              initialize incParam initialValue
+              initialize incParam initialDatum
         incOutput <-
           runContractInEnv env $
             withKeyWallet alice do
@@ -179,8 +194,8 @@ testRedeem = do
           runContractInEnv env $
             withKeyWallet alice do
               query incOutput
-        datum `shouldEqual` (initialValue + incParam)
-        getAmount value `shouldSatisfy` (>) (BigInt.fromInt 20_000_000)
+        datum `shouldEqual` (initialDatum + incParam)
+        getAmount value `shouldSatisfy` (>) (getAmount initialValue)
 
 testRedeemLocal :: Spec Unit
 testRedeemLocal = do

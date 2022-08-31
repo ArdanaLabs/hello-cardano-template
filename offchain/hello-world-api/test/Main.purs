@@ -28,13 +28,11 @@ main = do
     case mode of
       Local -> do
         describe "pure tests" do
+          Encoding.spec
+          Test.HelloWorld.Api.spec
           Test.HelloWorld.Api.localOnlySpec
-          spec
       Testnet -> do
+        describe "pure tests" do
+          Encoding.spec
         describe "impure tests" do
-          spec
-
-spec :: Spec Unit
-spec = do
-  Encoding.spec
-  Test.HelloWorld.Api.spec
+          Test.HelloWorld.Api.spec
