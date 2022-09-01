@@ -47,7 +47,7 @@
               # shellcheck disable=SC2016
               ${pkgs.parallel}/bin/parallel --will-cite \
                 '. {} &> "$(basename {.})-output"' ::: \
-                ${pkgs.lib.optionalString (mode == "local") ''${getTestScript "hello-world-api:test"}''} \
+                ${getTestScript "hello-world-api:test:${mode}"} \
                 ${getTestScript "hello-world-cli:test:${mode}"} \
                 ${getTestScript "hello-world-browser:test:${mode}"}
               printf "$?" > "$TEST_EXITCODE_FILE"
