@@ -1,6 +1,6 @@
-# Hello world + Discovery + Authentication
+# Hello world + Discovery + Validation
 
-The goal of this protocol is to implement the solutions for vault discovery and vault authentication into the hello world protocol.
+The goal of this protocol is to implement the solutions for vault discovery and vault validation into the hello world protocol.
 To do this we will add some of the features of dUSD vaults to the hello world counter utxos here after referred to as vaults.
 
 ## The Discovery problem
@@ -10,7 +10,7 @@ Users should be able to:
 - Get a list of all their open vaults
 - Inspect the history of a vault
 
-## The Authentication problem
+## The Validation problem
 
 It should be possible to enforce rules about how and when vaults can be opened.
 
@@ -18,7 +18,7 @@ It should be possible to enforce rules about how and when vaults can be opened.
 
 For vault discovery the natural solution is one NFT per vault which can be used to track that vault.
 
-For authentication the solution is similar.
+For validation the solution is similar.
 Part of the design of Cardano is that scripts themselves can't enforce rules about utxos sent to them.
 The standard work around is to consider utxos at an address invalid unless they have a token signifying their validity.
 The minting policy of the token can then enforce any desired constraints.
@@ -29,10 +29,10 @@ The currency symbol is the hash of the minting policy and the token name is just
 Because of this a single minting policy can define a family of NFTs where each NFT has a different token name.
 In our case the minting policy also enforces that these NFTs can only be minted when opening a valid vault, and must be sent to the vault.
 The vault address script validator can further enforce that these NFTs can never leave their vaults.
-This is important because otherwise an NFT could be sent instead of minted circumventing the authentication.
+This is important because otherwise an NFT could be sent instead of minted circumventing the validation.
 
-The need for coordination between the discovery/authentication minting policy and the vault address script validator creates an additional issue.
-The vault address validator needs to know the currency symbol of the discovery/authentication NFTs
+The need for coordination between the discovery/validation minting policy and the vault address script validator creates an additional issue.
+The vault address validator needs to know the currency symbol of the discovery/validation NFTs
 but the minting policy which needs to know the vault	address.
 Since the currency symbol is the hash of the minting policy and the address is the hash of the vault script validator this seems to require finding a hash fix-point.
 
@@ -61,9 +61,9 @@ Parameterized by a txid.
 A validator which enforces that the datum is not changed, and the NFT is not taken.
 Ideally this should use read only inputs.
 
-### Vault Authentication NFT Minting Policy
+### Vault Validation NFT Minting Policy
 
-A minting policy used to mint NFTs to authenticate vaults.
+A minting policy used to mint NFTs to validation vaults.
 Parameterized by the vault Address.
 The policy enforces the following constraints:
 
@@ -81,11 +81,11 @@ The token can always be burned.
 
 This validator is the core of the protocol.
 Parameterized by the config Address and config NFT.
-The vault Authentication NFT currency symbol is read from the config utxo.
+The vault Validation NFT currency symbol is read from the config utxo.
 
 It enforces the following constraints:
 
-- Any spent vault must have a vault Authentication NFT
+- Any spent vault must have a vault Validation NFT
 - The owner must sign the transaction
 
 When the increment redeemer is called:
@@ -103,11 +103,11 @@ When the redeem redeemer is called:Closing a vault only needs to enforce that th
 1) Create arbitrary Tx by sending a few ada from a wallet to itself
 2) Parameterize config NFT with that txid and mint the config NFT.
 3) Compute the vault address with the config NFT and Address
-4) Compute the vault Authentication currency symbol with the vault address
+4) Compute the vault Validation currency symbol with the vault address
 5) Create the config utxo:
 	- The address is the config address
 	- The value includes the config NFT
-	- The datum is the vault Authentication currency symbol.
+	- The datum is the vault Validation currency symbol.
 
 ## Protocol actions
 
@@ -120,8 +120,8 @@ A vault opening Tx must
 	- have a datum where:
 		- the owner is a signatory of the Tx
 		- the counter is 0
-	- Include an authentication NFT in its value.
-- The authentication NFT must be minted in the same TX.
+	- Include an validation NFT in its value.
+- The Validation NFT must be minted in the same TX.
 
 ### Increment a vault
 
@@ -138,6 +138,6 @@ When closing a vault the NFT must be burned.
 
 The api should provide enpoints to query all vaults or all vaults owned by a pubkey.
 
-To query all vaults just query all utxos at the vault address and filter out vaults that don't have an authentication token.
+To query all vaults just query all utxos at the vault address and filter out vaults that don't have an validation token.
 To query vaults owned by a particular user further filter by parsing the vault datum and checking the owner.
 
