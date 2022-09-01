@@ -44,8 +44,6 @@
             "${self'.packages."offchain:docs"}/html/";
         "offchain:test" =
           let
-            getTestScript = outputName:
-              self'.apps."offchain:${outputName}:test".program;
             runTests =
               pkgs.writeScript "run-tests" ''
                 # --will-cite gets rid of the annoying citation notice
