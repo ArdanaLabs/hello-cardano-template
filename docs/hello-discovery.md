@@ -44,7 +44,7 @@ To solve this problem the vault address script validator can,
 instead of taking the currency symbol as a parameter directly,
 take an NFT and address which it can then use to locate a config utxo
 who's datum will provide the currency symbol.
-The NFT is required to prevent the use of a malicious utxo with a different currency symbol.
+The config NFT is required to prevent the use of a malicious utxo with a different currency symbol.
 The config address script also needs to prevent tampering with the utxo.
 
 # Implementation details
@@ -53,7 +53,7 @@ The config address script also needs to prevent tampering with the utxo.
 
 ### Config NFT minting policy
 
-A standard NFT minting policy used for the config NFT.
+A standard NFT minting policy used for the config NFT (the NFT used to locate the config utxo).
 Parameterized by a txid.
 
 ### Config Address Script Validator
