@@ -92,6 +92,7 @@ doubleMint = do
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.mintingPolicy nftPolicy
+
     constraints :: TxConstraints Unit Unit
     constraints =
       Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))

@@ -21,7 +21,7 @@ import Contract.Scripts (applyArgsM)
 import Contract.Transaction (TransactionHash, TransactionInput)
 import Contract.TxConstraints (TxConstraints)
 import Contract.Value (adaToken, scriptCurrencySymbol)
-import Data.Array(head)
+import Data.Array (head)
 import Data.Tuple.Nested ((/\), type (/\))
 import Plutus.Types.CurrencySymbol (CurrencySymbol)
 import ToData (toData)
@@ -53,9 +53,11 @@ makeNftPolicy txOut = do
 
 seedTx :: Contract () TransactionInput
 seedTx = getWalletCollateral
-        >>= liftContractM "No collateral"
-        >>= head >>> liftContractM "Empty collateral"
-        <#> unwrap >>> _.input
+  >>= liftContractM "No collateral"
+  >>= head
+  >>> liftContractM "Empty collateral"
+  <#> unwrap
+  >>> _.input
 
 maybeParamNft :: Maybe MintingPolicy
 maybeParamNft =
