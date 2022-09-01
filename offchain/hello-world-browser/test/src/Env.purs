@@ -1,11 +1,11 @@
-module HelloWorld.Test.E2E.Env
+module HelloWorld.Test.Env
   ( chromeExe
   , helloWorldBrowserIndex
   , namiExtension
   , namiWallet1
   , namiWallet2
   , namiWallet3
-  , noRuntime
+  , mode
   ) where
 
 chromeExe :: String
@@ -23,8 +23,8 @@ namiWallet2 = "NAMI_TEST_WALLET_2"
 namiWallet3 :: String
 namiWallet3 = "NAMI_TEST_WALLET_3"
 
-noRuntime :: String
-noRuntime = "NO_RUNTIME"
+mode :: String
+mode = "MODE"
 
 helloWorldBrowserIndex :: String
 helloWorldBrowserIndex = "HELLO_WORLD_BROWSER_INDEX"

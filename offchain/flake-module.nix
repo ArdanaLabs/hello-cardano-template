@@ -55,7 +55,6 @@
                 ${pkgs.parallel}/bin/parallel --will-cite \
                   '. {} &> "$(basename {.})-output"' ::: \
                   ${self'.apps."offchain:hello-world-api:test:local".program} \
-                  ${getTestScript "hello-world-browser"} \
                   ${self'.apps."offchain:hello-world-cli:test:local".program}
                 printf "$?" > "$TEST_EXITCODE_FILE"
               '';
