@@ -4,6 +4,7 @@ module Test.HelloWorld.Discovery.Api
 
 import Contract.Prelude
 
+import Contract.Monad (ContractEnv(..))
 import Contract.Test.Plutip (PlutipConfig, withPlutipContractEnv, runContractInEnv)
 import Contract.Wallet (withKeyWallet)
 import Data.BigInt as BigInt

@@ -32,11 +32,12 @@ main = do
         Local -> do
           describe "pure tests" do
             Encoding.spec
+            Test.HelloWorld.Discovery.Api.spec
             Test.HelloWorld.Api.spec envRunner
             Test.HelloWorld.Api.localOnlySpec
-            Test.HelloWorld.Discovery.Api.spec
         Testnet -> do
           describe "pure tests" do
             Encoding.spec
           describe "impure tests" do
+            Test.HelloWorld.Discovery.Api.spec
             Test.HelloWorld.Api.spec envRunner
