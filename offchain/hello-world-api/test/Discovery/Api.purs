@@ -53,12 +53,15 @@ spec = do
       tryMintNft
       tryDoubleMint
 
+withApiLogger :: ContractEnv () -> ContractEnv ()
+withApiLogger = withOurLogger "apiTest.log"
+
 tryMintNft :: Spec Unit
 tryMintNft = do
   it "minting an nft should succeed" $ do
     let initialAdaAmount = BigInt.fromInt 20_000_000
     withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
-      runContractInEnv (withOurLogger "./apiTest.log" env) $
+      runContractInEnv (withApiLogger env) $
         withKeyWallet alice do
           _ <- mintNft
           pure unit
@@ -68,7 +71,7 @@ tryDoubleMint = do
   it "double minting an nft should not succeed" $ expectError do
     let initialAdaAmount = BigInt.fromInt 20_000_000
     withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
-      runContractInEnv (withOurLogger "./apiTest.log" env) $
+      runContractInEnv (withApiLogger env) $
         withKeyWallet alice do
           _ <- doubleMint
           pure unit

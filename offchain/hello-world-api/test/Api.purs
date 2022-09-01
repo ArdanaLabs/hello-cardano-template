@@ -3,15 +3,14 @@ module Test.HelloWorld.Api
   , localOnlySpec
   ) where
 
-import Data.BigInt as BigInt
-
 import Contract.Prelude
 
-import Contract.Monad (liftContractAffM, liftContractM)
+import Contract.Monad (ContractEnv, liftContractAffM, liftContractM)
 import Contract.Scripts (validatorHash)
 import Contract.Test.Plutip (runPlutipContract, withPlutipContractEnv, runContractInEnv)
 import Contract.Utxos (getWalletBalance)
 import Contract.Wallet (withKeyWallet)
+import Data.BigInt as BigInt
 import HelloWorld.Api (initialize, increment, redeem, query, helloScript, sendDatumToScript, datumLookup)
 import Plutus.Types.Value (Value, valueToCoin, getLovelace)
 import Test.HelloWorld.EnvRunner (EnvRunner, plutipConfig)
@@ -32,6 +31,9 @@ spec envRunner = do
       , testDatumLookup
       ]
 
+withApiLogger :: ContractEnv () -> ContractEnv ()
+withApiLogger = withOurLogger "apiTest.log"
+
 localOnlySpec :: Spec Unit
 localOnlySpec = do
   describe "HelloWorld.Api" do
@@ -48,15 +50,15 @@ testInitialize envRunner = do
         incParam = 200
       envRunner \env alice -> do
         initialValue <-
-          runContractInEnv (withOurLogger "apiTest.log" env) $
+          runContractInEnv (withApiLogger env) $
             withKeyWallet alice do
               getWalletBalance >>= liftContractM "Get initial wallet balance failed"
         initOutput <-
-          runContractInEnv (withOurLogger "apiTest.log" env) $
+          runContractInEnv (withApiLogger env) $
             withKeyWallet alice do
               initialize incParam initialDatum
         (datum /\ value) <-
-          runContractInEnv (withOurLogger "apiTest.log" env) $
+          runContractInEnv (withApiLogger env) $
             withKeyWallet alice do
               query initOutput
         datum `shouldEqual` initialDatum
@@ -81,15 +83,15 @@ testIncrement envRunner = do
         incParam = 2
       envRunner \env alice -> do
         initOutput <-
-          runContractInEnv (withOurLogger "apiTest.log" env) $
+          runContractInEnv (withApiLogger env) $
             withKeyWallet alice do
               initialize incParam initialDatum
         incOutput <-
-          runContractInEnv (withOurLogger "apiTest.log" env) $
+          runContractInEnv (withApiLogger env) $
             withKeyWallet alice do
               increment incParam initOutput
         (datum /\ _) <-
-          runContractInEnv (withOurLogger "apiTest.log" env) $
+          runContractInEnv (withApiLogger env) $
             withKeyWallet alice do
               query incOutput
         datum `shouldEqual` (initialDatum + incParam)
@@ -105,11 +107,11 @@ testIncrementLocal = do
 
       withPlutipContractEnv plutipConfig [ BigInt.fromInt 20_000_000 ] \env alice -> do
         lastOutput <-
-          runContractInEnv (withOurLogger "apiTest.log" env) $
+          runContractInEnv (withApiLogger env) $
             withKeyWallet alice do
               initialize incParam initialDatum
         expectError
-          $ runContractInEnv (withOurLogger "apiTest.log" env)
+          $ runContractInEnv (withApiLogger env)
           $
             withKeyWallet alice do
               increment wrongIncParam lastOutput
@@ -123,22 +125,22 @@ testRedeem envRunner = do
         incParam = 50
       envRunner \env alice -> do
         initialValue <-
-          runContractInEnv (withOurLogger "apiTest.log" env) $
+          runContractInEnv (withApiLogger env) $
             withKeyWallet alice do
               getWalletBalance >>= liftContractM "Get initial wallet balance failed"
         initOutput <-
-          runContractInEnv (withOurLogger "apiTest.log" env) $
+          runContractInEnv (withApiLogger env) $
             withKeyWallet alice do
               initialize incParam initialDatum
         incOutput <-
-          runContractInEnv (withOurLogger "apiTest.log" env) $
+          runContractInEnv (withApiLogger env) $
             withKeyWallet alice do
               increment incParam initOutput
-        runContractInEnv (withOurLogger "apiTest.log" env) $
+        runContractInEnv (withApiLogger env) $
           withKeyWallet alice do
             redeem incParam incOutput `shouldReturn` unit
         (datum /\ value) <-
-          runContractInEnv (withOurLogger "apiTest.log" env) $
+          runContractInEnv (withApiLogger env) $
             withKeyWallet alice do
               query incOutput
         datum `shouldEqual` (initialDatum + incParam)
@@ -156,14 +158,14 @@ testRedeemLocal = do
         distribution = [ initialAdaAmountAlice ] /\ [ initialAdaAmountBob ]
       withPlutipContractEnv plutipConfig distribution \env (alice /\ bob) -> do
         lastOutput <-
-          runContractInEnv (withOurLogger "apiTest.log" env) $
+          runContractInEnv (withApiLogger env) $
             withKeyWallet alice do
               initialize incParam initialValue
-        runContractInEnv (withOurLogger "apiTest.log" env) $
+        runContractInEnv (withApiLogger env) $
           withKeyWallet bob do
             redeem incParam lastOutput `shouldReturn` unit
         (_ /\ value) <-
-          runContractInEnv (withOurLogger "apiTest.log" env) $
+          runContractInEnv (withApiLogger env) $
             withKeyWallet bob do
               query lastOutput
         -- Bob should have more than at the beginning after redeeming
@@ -175,7 +177,7 @@ testDatumLookup envRunner = do
     it "should fetch the correct datum" do
       let expectedDatum = 3
       envRunner \env alice -> do
-        datum <- runContractInEnv (withOurLogger "apiTest.log" env) $
+        datum <- runContractInEnv (withApiLogger env) $
           withKeyWallet alice do
             validator <- helloScript 1
             vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
