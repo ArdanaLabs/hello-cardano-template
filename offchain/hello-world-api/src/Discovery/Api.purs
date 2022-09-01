@@ -34,7 +34,7 @@ import Util (buildBalanceSignAndSubmitTx, waitForTx)
 mintNft :: Contract () (CurrencySymbol /\ TransactionHash)
 mintNft = do
   txOut <- seedTx
-  nftPolicy <- makeNftPolcy txOut
+  nftPolicy <- makeNftPolicy txOut
   cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
   logInfo' $ "NFT cs: " <> show cs
   let
@@ -51,7 +51,7 @@ mintNft = do
 doubleMint :: Contract () Unit
 doubleMint = do
   txOut <- seedTx
-  nftPolicy <- makeNftPolcy txOut
+  nftPolicy <- makeNftPolicy txOut
   cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
   let
     lookups :: Lookups.ScriptLookups PlutusData
@@ -64,8 +64,8 @@ doubleMint = do
   _ <- buildBalanceSignAndSubmitTx lookups constraints
   pure unit
 
-makeNftPolcy :: TransactionInput -> Contract () MintingPolicy
-makeNftPolcy txOut = do
+makeNftPolicy :: TransactionInput -> Contract () MintingPolicy
+makeNftPolicy txOut = do
   paramNft <- liftContractM "nft decode failed" maybeParamNft
   logInfo' "got cbor"
   liftContractM "apply args failed" =<< applyArgsM paramNft [ toData txOut ]
@@ -75,7 +75,6 @@ seedTx = getWalletCollateral
         >>= liftContractM "No collateral"
         >>= head >>> liftContractM "Empty collateral"
         <#> unwrap >>> _.input
-
 
 maybeParamNft :: Maybe MintingPolicy
 maybeParamNft =
