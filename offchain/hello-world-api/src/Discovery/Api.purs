@@ -1,35 +1,33 @@
 module HelloWorld.Discovery.Api
   ( mintNft
-  , doubleMint
+  -- testing exports
+  , seedTx
+  , makeNftPolicy
   ) where
 
 import Contract.Prelude
 
 import CBOR as CBOR
+import Contract.ScriptLookups as Lookups
+import Contract.TxConstraints as Constraints
 import Data.BigInt as BigInt
 import Plutus.Types.Value as Value
 
-import Contract.Address (PaymentPubKeyHash(..), StakePubKeyHash(..), getWalletAddress, getWalletCollateral)
+import Contract.Address (getWalletCollateral)
 import Contract.Aeson (decodeAeson, fromString)
-import Contract.Credential (Credential(..), StakingCredential(..))
 import Contract.Log (logInfo')
 import Contract.Monad (Contract, liftContractM, liftContractAffM)
-import Contract.ScriptLookups as Lookups
 import Contract.Scripts (applyArgsM)
 import Contract.Transaction (TransactionHash, TransactionInput)
 import Contract.TxConstraints (TxConstraints)
-import Contract.TxConstraints as Constraints
 import Contract.Value (adaToken, scriptCurrencySymbol)
 import Data.Array(head)
-import Data.Time.Duration (Minutes(..))
 import Data.Tuple.Nested ((/\), type (/\))
-import Effect.Exception (throw)
-import Plutus.Types.Address (Address(..))
 import Plutus.Types.CurrencySymbol (CurrencySymbol)
 import ToData (toData)
 import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
-import Util (buildBalanceSignAndSubmitTx, waitForTx)
+import Util (buildBalanceSignAndSubmitTx)
 
 mintNft :: Contract () (CurrencySymbol /\ TransactionHash)
 mintNft = do
@@ -46,23 +44,6 @@ mintNft = do
       Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   pure $ cs /\ txId
-
--- should fail
-doubleMint :: Contract () Unit
-doubleMint = do
-  txOut <- seedTx
-  nftPolicy <- makeNftPolicy txOut
-  cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
-  let
-    lookups :: Lookups.ScriptLookups PlutusData
-    lookups = Lookups.mintingPolicy nftPolicy
-
-    constraints :: TxConstraints Unit Unit
-    constraints =
-      Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
-  _ <- buildBalanceSignAndSubmitTx lookups constraints
-  _ <- buildBalanceSignAndSubmitTx lookups constraints
-  pure unit
 
 makeNftPolicy :: TransactionInput -> Contract () MintingPolicy
 makeNftPolicy txOut = do
@@ -83,9 +64,3 @@ maybeParamNft =
     # decodeAeson
     # hush
     # map wrap
-
-waitTime :: Minutes
-waitTime = Minutes 5.0
-
-enoughForFees :: Value.Value
-enoughForFees = Value.lovelaceValueOf $ BigInt.fromInt 10_000_000

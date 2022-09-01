@@ -4,15 +4,21 @@ module Test.HelloWorld.Discovery.Api
 
 import Contract.Prelude
 
-import Contract.Monad (ContractEnv(..))
+import Contract.Monad (Contract, ContractEnv(..), liftContractAffM, liftContractM)
+import Contract.ScriptLookups as Lookups
 import Contract.Test.Plutip (PlutipConfig, withPlutipContractEnv, runContractInEnv)
+import Contract.TxConstraints (TxConstraints)
+import Contract.TxConstraints as Constraints
+import Contract.Value (adaToken, scriptCurrencySymbol)
 import Contract.Wallet (withKeyWallet)
 import Data.BigInt as BigInt
 import Data.UInt as UInt
-import HelloWorld.Discovery.Api (mintNft, doubleMint)
+import HelloWorld.Discovery.Api (mintNft, seedTx, makeNftPolicy)
+import Plutus.Types.Value as Value
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (expectError)
-import Util (withOurLogger)
+import Types.PlutusData (PlutusData)
+import Util (buildBalanceSignAndSubmitTx, waitForTx, withOurLogger)
 
 config :: PlutipConfig
 config =
@@ -76,4 +82,20 @@ tryDoubleMint = do
         withKeyWallet alice do
           _ <- doubleMint
           pure unit
+
+-- should fail
+doubleMint :: Contract () Unit
+doubleMint = do
+  txOut <- seedTx
+  nftPolicy <- makeNftPolicy txOut
+  cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
+  let
+    lookups :: Lookups.ScriptLookups PlutusData
+    lookups = Lookups.mintingPolicy nftPolicy
+    constraints :: TxConstraints Unit Unit
+    constraints =
+      Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+  _ <- buildBalanceSignAndSubmitTx lookups constraints
+  _ <- buildBalanceSignAndSubmitTx lookups constraints
+  pure unit
 
