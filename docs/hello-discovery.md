@@ -33,7 +33,7 @@ This is important because otherwise an NFT could be sent instead of minted circu
 
 The need for coordination between the discovery/validation minting policy and the vault address script validator creates an additional issue.
 The vault address validator needs to know the currency symbol of the discovery/validation NFTs
-but the minting policy which needs to know the vault	address.
+but the minting policy needs to know the vault address.
 Since the currency symbol is the hash of the minting policy and the address is the hash of the vault script validator this seems to require finding a hash fix-point.
 
 ```
