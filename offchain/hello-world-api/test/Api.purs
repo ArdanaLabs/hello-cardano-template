@@ -23,7 +23,7 @@ getAmount = getLovelace <<< valueToCoin
 spec :: EnvRunner -> Spec Unit
 spec envRunner = do
   describe "HelloWorld.Api" $ do
-    traverse_ (\f -> f envRunner)
+    traverse_ (\testSpec -> testSpec envRunner)
       [ testInitialize
       , testIncrement
       , testRedeem
