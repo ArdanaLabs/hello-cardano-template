@@ -8,7 +8,7 @@ import Contract.Test.Plutip (PlutipConfig)
 import Data.String (trim)
 import Effect.Exception (throw)
 import Effect.Aff (launchAff_)
-import Faucet (topupKeyWallet)
+import Faucet (topup)
 import Node.Process (lookupEnv)
 import Node.FS.Aff (unlink)
 import Test.Spec (it, describe)
@@ -28,7 +28,7 @@ main = do
   usePlutip <- lookupEnv "MODE" >>= case _ of
     Just "local" -> pure true
     Just "testnet" -> do
-      launchAff_ $ topupKeyWallet "addr_test1qrwdtldyjseyn3k978de87renmp2kt3vcajk65nk543tw865kp7y0evgnnne7ukzhqsmdmyefhpevpepl9p7xpe8zqpsag6004"
+      topup "addr_test1qrwdtldyjseyn3k978de87renmp2kt3vcajk65nk543tw865kp7y0evgnnne7ukzhqsmdmyefhpevpepl9p7xpe8zqpsag6004"
       pure false
     Just e -> throw $ "expected local or testnet got: " <> e
     Nothing -> throw "expected MODE to be set"
