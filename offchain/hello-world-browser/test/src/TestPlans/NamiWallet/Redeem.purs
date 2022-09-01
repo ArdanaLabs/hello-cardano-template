@@ -1,11 +1,12 @@
-module HelloWorld.Test.E2E.TestPlans.Redeem where
+module HelloWorld.Test.TestPlans.NamiWallet.Redeem where
 
 import Contract.Prelude
 
 import Contract.Test.E2E (RunningExample(..), TestOptions, WalletExt(..), delaySec, namiConfirmAccess)
 import Data.String (Pattern(..), contains)
-import HelloWorld.Test.E2E.Constants as Constants
-import HelloWorld.Test.E2E.Helpers (clickButton, injectJQuery, namiSign', runE2ETest)
+import HelloWorld.Test.Constants as Constants
+import HelloWorld.Test.Helpers (clickButton, injectJQuery)
+import HelloWorld.Test.NamiWallet (namiSign', runE2ETest)
 import Mote (group)
 import Test.Unit.Assert as Assert
 import TestM (TestPlanM)
