@@ -1,11 +1,11 @@
-module HelloWorld.Test.E2E.Constants where
+module HelloWorld.Test.Constants where
 
 import Contract.Test.E2E (WalletPassword)
 import Data.Newtype (class Newtype, wrap)
 import Node.Express.Types (Port)
 
 port :: Port
-port = 8080
+port = 6789
 
 localhost :: String
 localhost = "http://127.0.0.1"
@@ -37,6 +37,9 @@ paymentAddressForTestWallet2 = PaymentAddress "addr_test1qp7h5urcrtq67nl2tcz473l
 
 paymentAddressForTestWallet3 :: PaymentAddress
 paymentAddressForTestWallet3 = PaymentAddress "addr_test1qpe8yzu8g9pdqq6xxyv2gm3rn39fwcp44pnx6mmng7nqhz3apa7n8svjgrag8vjn9v5juf2wgzfzh0wzxyezlachfx2san47c2"
+
+faucetUrl :: String
+faucetUrl = "https://faucet.cardano-testnet.iohkdev.io/send-money/"
 
 faucetApiKey :: String
 faucetApiKey = "r8m9YXmqCkFWDDZ2540IJaJwr1JBxqXB"

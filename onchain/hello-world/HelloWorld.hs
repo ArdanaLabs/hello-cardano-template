@@ -6,7 +6,7 @@ import Control.Monad (unless)
 import System.Directory (doesDirectoryExist)
 import System.Environment (getArgs)
 import System.Exit (die)
-import Utils (CBOR (..), toPureScript)
+import Utils (Cbor (..), toPureScript)
 
 {- | Main takes a directory as a comand line argument
   and creates a file CBOR.purs in that directory
@@ -26,9 +26,9 @@ main = do
         =<< toPureScript cbors
     _ -> die "usage: cabal run hello-world <file_path>"
 
-cbors :: [CBOR]
+cbors :: [Cbor]
 cbors =
-  [ CBOR "paramHello" paramHelloCBOR
-  , CBOR "hello" $ pure helloWorldHexString
-  , CBOR "trivial" trivialCBOR
+  [ Cbor "paramHello" paramHelloCbor
+  , Cbor "hello" $ pure helloWorldCbor
+  , Cbor "trivial" trivialCbor
   ]

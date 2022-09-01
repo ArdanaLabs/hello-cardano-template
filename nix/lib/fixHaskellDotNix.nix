@@ -19,7 +19,7 @@ let
         b.listToAttrs
           (b.map (name: l.nameValuePair name haskellNix.${attr}.${name}) names);
     in
-    rec {
+    {
       checks =
         makeSet "checks"
           (map (test: "${name}:test:${test}") (getNamesOfType "test-suite"));
@@ -28,8 +28,7 @@ let
           (
             (l.optional library "${name}:lib:${name}")
             ++ map (exe: "${name}:exe:${exe}") (getNamesOfType "executable")
-          )
-        // checks;
+          );
     };
 in
 haskellNix
