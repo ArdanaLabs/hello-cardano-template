@@ -43,30 +43,30 @@ main =
 config :: PlutipConfig
 config =
   { host: "127.0.0.1"
-  , port: UInt.fromInt 8082
+  , port: UInt.fromInt 8086
   , logLevel: Error
   -- Server configs are used to deploy the corresponding services.
   , ogmiosConfig:
-      { port: UInt.fromInt 1337
+      { port: UInt.fromInt 1340
       , host: "127.0.0.1"
       , secure: false
       , path: Nothing
       }
   , ogmiosDatumCacheConfig:
-      { port: UInt.fromInt 9999
+      { port: UInt.fromInt 10002
       , host: "127.0.0.1"
       , secure: false
       , path: Nothing
       }
   , ctlServerConfig:
-      { port: UInt.fromInt 8081
+      { port: UInt.fromInt 8087
       , host: "127.0.0.1"
       , secure: false
       , path: Nothing
       }
   , postgresConfig:
       { host: "127.0.0.1"
-      , port: UInt.fromInt 5432
+      , port: UInt.fromInt 5435
       , user: "ctxlib"
       , password: "ctxlib"
       , dbname: "ctxlib"
