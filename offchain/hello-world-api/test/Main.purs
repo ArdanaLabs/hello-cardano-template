@@ -8,7 +8,7 @@ import Data.Maybe (Maybe(Just, Nothing))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Exception (throw)
-import Faucet(topupKeyWallet)
+import Faucet (topupKeyWallet)
 import Node.Process (lookupEnv)
 import Test.HelloWorld.Api as Test.HelloWorld.Api
 import Test.HelloWorld.Encoding as Encoding

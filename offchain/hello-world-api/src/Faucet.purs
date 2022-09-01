@@ -1,7 +1,7 @@
-module Faucet(topupKeyWallet) where
+module Faucet (topupKeyWallet) where
 
 import Contract.Prelude
-import Wallet.Key(KeyWallet(KeyWallet))
+import Wallet.Key (KeyWallet(KeyWallet))
 import Serialization.Address (NetworkId(TestnetId, MainnetId))
 import Node.ChildProcess (defaultExecSyncOptions, execSync)
 
