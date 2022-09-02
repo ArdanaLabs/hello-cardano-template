@@ -243,7 +243,7 @@ main = do
 config :: PlutipConfig
 config =
   { host: "127.0.0.1"
-  , port: UInt.fromInt 8084
+  , port: UInt.fromInt 8086
   , logLevel: Error
   -- Server configs are used to deploy the corresponding services.
   , ogmiosConfig:
