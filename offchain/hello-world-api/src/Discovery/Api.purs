@@ -8,22 +8,21 @@ module HelloWorld.Discovery.Api
 import Contract.Prelude
 
 import CBOR as CBOR
-import Contract.ScriptLookups as Lookups
-import Contract.TxConstraints as Constraints
-import Data.BigInt as BigInt
-import Plutus.Types.Value as Value
-
 import Contract.Address (getWalletCollateral)
 import Contract.Aeson (decodeAeson, fromString)
-import Contract.Log (logInfo')
+import Contract.Log (logDebug', logInfo')
 import Contract.Monad (Contract, liftContractM, liftContractAffM)
+import Contract.ScriptLookups as Lookups
 import Contract.Scripts (applyArgsM)
 import Contract.Transaction (TransactionHash, TransactionInput)
 import Contract.TxConstraints (TxConstraints)
+import Contract.TxConstraints as Constraints
 import Contract.Value (adaToken, scriptCurrencySymbol)
 import Data.Array (head)
+import Data.BigInt as BigInt
 import Data.Tuple.Nested ((/\), type (/\))
 import Plutus.Types.CurrencySymbol (CurrencySymbol)
+import Plutus.Types.Value as Value
 import ToData (toData)
 import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
@@ -31,7 +30,9 @@ import Util (buildBalanceSignAndSubmitTx)
 
 mintNft :: Contract () (CurrencySymbol /\ TransactionHash)
 mintNft = do
+  logInfo' "starting mint"
   txOut <- seedTx
+  logDebug' $ "txOut was:" <> show txOut
   nftPolicy <- makeNftPolicy txOut
   cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
   logInfo' $ "NFT cs: " <> show cs
@@ -43,7 +44,9 @@ mintNft = do
     constraints =
       Constraints.mustSpendPubKeyOutput txOut
       <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+  logDebug' "about to submit"
   txId <- buildBalanceSignAndSubmitTx lookups constraints
+  logDebug' "submited"
   pure $ cs /\ txId
 
 makeNftPolicy :: TransactionInput -> Contract () MintingPolicy

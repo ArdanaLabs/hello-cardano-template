@@ -8,12 +8,10 @@ module Util
 
 import Contract.Prelude
 
-import Contract.ScriptLookups as Lookups
-import Data.Map as Map
-
 import Aeson (Aeson, getField, toArray, toObject)
-import Contract.Log (logInfo', logWarn', logError')
+import Contract.Log (logDebug', logError', logInfo', logWarn')
 import Contract.Monad (Contract, ContractEnv, liftedE)
+import Contract.ScriptLookups as Lookups
 import Contract.Transaction (TransactionHash(TransactionHash), TransactionOutput, TransactionInput(TransactionInput), balanceAndSignTxE, submitE)
 import Contract.TxConstraints (TxConstraints)
 import Contract.Utxos (UtxoM(UtxoM), utxosAt, getUtxo)
@@ -23,15 +21,8 @@ import Data.List (filterM, List)
 import Data.Log.Formatter.Pretty (prettyFormatter)
 import Data.Log.Message (Message)
 import Data.Map (Map)
-import Data.Time.Duration
-  ( Milliseconds(..)
-  , Seconds(..)
-  , Minutes(..)
-  , class Duration
-  , fromDuration
-  , convertDuration
-  , negateDuration
-  )
+import Data.Map as Map
+import Data.Time.Duration (Milliseconds(..), Seconds(..), Minutes(..), class Duration, fromDuration, convertDuration, negateDuration)
 import Effect.Aff (delay)
 import Effect.Aff.Retry (retrying, limitRetries, RetryStatus(RetryStatus))
 import Effect.Exception (error)
@@ -90,8 +81,10 @@ tryBuildBalanceSignAndSubmitTx
   -> Contract () (Either (Array Aeson) TransactionHash)
 tryBuildBalanceSignAndSubmitTx lookups constraints (RetryStatus { iterNumber }) = do
   ubTx <- liftedE $ Lookups.mkUnbalancedTx lookups constraints
+  logDebug' $ "ubTx was:" <> show ubTx
   balanceAndSignTxE ubTx >>= case _ of
-    Right bsTx ->
+    Right bsTx -> do
+      logDebug' $ "Tx was:" <> show bsTx
       submitE bsTx >>= case _ of
         Left err -> pure $ Left err
         Right txid -> do
