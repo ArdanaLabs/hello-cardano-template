@@ -60,7 +60,8 @@ tryDoubleMint =
 
       constraints :: TxConstraints Unit Unit
       constraints =
-        Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+        Constraints.mustSpendPubKeyOutput txOut
+        <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
     _ <- buildBalanceSignAndSubmitTx lookups constraints
     expectError $ buildBalanceSignAndSubmitTx lookups constraints
 
@@ -76,7 +77,8 @@ txSpentAfterMint = useRunnerSimple "seedTx is spent after mint" $ do
 
     constraints :: TxConstraints Unit Unit
     constraints =
-      Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+      Constraints.mustSpendPubKeyOutput txOut
+      <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   adr <- liftContractM "no Address" =<< getWalletAddress
   _ <- liftContractM "wait timed out" =<< waitForTx waitTime adr txId
@@ -105,7 +107,8 @@ cantBurn = useRunnerSimple "burning nft fails" $ do
 
     mintConstraints :: TxConstraints Unit Unit
     mintConstraints =
-      Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+      Constraints.mustSpendPubKeyOutput txOut
+      <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
   txid <- buildBalanceSignAndSubmitTx mintLookups mintConstraints
   adr <- liftContractM "no wallet" =<< getWalletAddress
   _ <- waitForTx waitTime adr txid
@@ -115,7 +118,8 @@ cantBurn = useRunnerSimple "burning nft fails" $ do
 
     burnConstraints :: TxConstraints Unit Unit
     burnConstraints =
-      Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt $ -1))
+      Constraints.mustSpendPubKeyOutput txOut
+      <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt $ -1))
   expectError
     $ void
     $ buildBalanceSignAndSubmitTx burnLookups burnConstraints

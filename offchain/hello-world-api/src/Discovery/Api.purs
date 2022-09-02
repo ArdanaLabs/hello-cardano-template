@@ -41,7 +41,8 @@ mintNft = do
 
     constraints :: TxConstraints Unit Unit
     constraints =
-      Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+      Constraints.mustSpendPubKeyOutput txOut
+      <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   pure $ cs /\ txId
 
