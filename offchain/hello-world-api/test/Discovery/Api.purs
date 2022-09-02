@@ -41,8 +41,9 @@ spec runer = do
 useRunnerSimple :: forall a. String -> Contract () a -> EnvRunner -> Spec Unit
 useRunnerSimple name contract runer = do
   it name $ runer \env alice -> do
-      runContractInEnv (withOurLogger "apiTest.log" env) $
-        withKeyWallet alice $ void contract
+    runContractInEnv (withOurLogger "apiTest.log" env)
+      $ withKeyWallet alice
+      $ void contract
 
 tryMintNft :: EnvRunner -> Spec Unit
 tryMintNft = useRunnerSimple "mint runs" $ mintNft
@@ -115,8 +116,9 @@ cantBurn = useRunnerSimple "burning nft fails" $ do
     burnConstraints :: TxConstraints Unit Unit
     burnConstraints =
       Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt $ -1))
-  expectError $
-    void $ buildBalanceSignAndSubmitTx burnLookups burnConstraints
+  expectError
+    $ void
+    $ buildBalanceSignAndSubmitTx burnLookups burnConstraints
 
 waitTime :: Minutes
 waitTime = 5.0 # Minutes
