@@ -4,138 +4,67 @@ module Test.HelloWorld.Discovery.Api
 
 import Contract.Prelude
 
+import Contract.ScriptLookups as Lookups
+import Contract.TxConstraints as Constraints
+import Data.BigInt as BigInt
+import Plutus.Types.Value as Value
+
 import Contract.Address (getWalletAddress)
 import Contract.Log (logInfo')
-import Contract.Monad (Contract, ContractEnv(..), liftContractAffM, liftContractM)
-import Contract.ScriptLookups as Lookups
-import Contract.Test.Plutip (PlutipConfig, withPlutipContractEnv, runContractInEnv)
-import Contract.Transaction (TransactionInput(..))
+import Contract.Monad (Contract, liftContractAffM, liftContractM)
+import Contract.Test.Plutip (runContractInEnv)
 import Contract.TxConstraints (TxConstraints)
-import Contract.TxConstraints as Constraints
 import Contract.Utxos (getUtxo, getWalletBalance)
 import Contract.Value (adaToken, scriptCurrencySymbol)
 import Contract.Wallet (withKeyWallet)
-import Data.BigInt as BigInt
 import Data.Time.Duration (Minutes(..))
-import Data.UInt as UInt
 import Effect.Exception (throw)
 import HelloWorld.Discovery.Api (makeNftPolicy, mintNft, seedTx)
-import Plutus.Types.Value as Value
+import Test.HelloWorld.EnvRunner (EnvRunner)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (expectError, shouldEqual)
 import Types.PlutusData (PlutusData)
 import Util (buildBalanceSignAndSubmitTx, waitForTx, withOurLogger)
 
-config :: PlutipConfig
-config =
-  { host: "127.0.0.1"
-  , port: UInt.fromInt 8082
-  , logLevel: Error
-  -- Server configs are used to deploy the corresponding services.
-  , ogmiosConfig:
-      { port: UInt.fromInt 1338
-      , host: "127.0.0.1"
-      , secure: false
-      , path: Nothing
-      }
-  , ogmiosDatumCacheConfig:
-      { port: UInt.fromInt 10000
-      , host: "127.0.0.1"
-      , secure: false
-      , path: Nothing
-      }
-  , ctlServerConfig:
-      { port: UInt.fromInt 8083
-      , host: "127.0.0.1"
-      , secure: false
-      , path: Nothing
-      }
-  , postgresConfig:
-      { host: "127.0.0.1"
-      , port: UInt.fromInt 5433
-      , user: "ctxlib"
-      , password: "ctxlib"
-      , dbname: "ctxlib"
-      }
-  }
-
-spec :: Spec Unit
-spec = do
+spec :: EnvRunner -> Spec Unit
+spec runer = do
   describe "HelloWorld.Discovery.Api" $ do
     describe "nft" do
-      tryMintNft
-      tryDoubleMint
-      txSpent
-      mintingWorks
-      cantBurn
+      traverse_ (_ $ runer)
+        [ tryMintNft
+        , tryDoubleMint
+        , txSpentAfterMint
+        , mintingWorks
+        , cantBurn
+        ]
 
-withApiLogger :: ContractEnv () -> ContractEnv ()
-withApiLogger = withOurLogger "apiTest.log"
+useRunnerSimple :: forall a. String -> Contract () a -> EnvRunner -> Spec Unit
+useRunnerSimple name contract runer = do
+  it name $ runer \env alice -> do
+      runContractInEnv (withOurLogger "apiTest.log" env) $
+        withKeyWallet alice $ void contract
 
-tryMintNft :: Spec Unit
-tryMintNft = do
-  it "minting an nft should succeed" $ do
-    let initialAdaAmount = BigInt.fromInt 20_000_000
-    withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
-      runContractInEnv (withApiLogger env) $
-        withKeyWallet alice do
-          _ <- mintNft
-          pure unit
+tryMintNft :: EnvRunner -> Spec Unit
+tryMintNft = useRunnerSimple "mint runs" $ mintNft
 
-tryDoubleMint :: Spec Unit
-tryDoubleMint = do
-  it "double minting an nft should not succeed" $ do
-    let initialAdaAmount = BigInt.fromInt 20_000_000
-    withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
-      runContractInEnv (withApiLogger env) $
-        withKeyWallet alice do
-          doubleMint
+tryDoubleMint :: EnvRunner -> Spec Unit
+tryDoubleMint =
+  useRunnerSimple "dopuble minting fails on second mint" $ do
+    txOut <- seedTx
+    nftPolicy <- makeNftPolicy txOut
+    cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
+    let
+      lookups :: Lookups.ScriptLookups PlutusData
+      lookups = Lookups.mintingPolicy nftPolicy
 
-txSpent :: Spec Unit
-txSpent = do
-  it "seedTx is spent after mint" $ do
-    let initialAdaAmount = BigInt.fromInt 20_000_000
-    withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
-      runContractInEnv (withApiLogger env) $
-        withKeyWallet alice do
-          checkTxSpent
+      constraints :: TxConstraints Unit Unit
+      constraints =
+        Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+    _ <- buildBalanceSignAndSubmitTx lookups constraints
+    expectError $ buildBalanceSignAndSubmitTx lookups constraints
 
-mintingWorks :: Spec Unit
-mintingWorks = do
-  it "wallet has nft after mint" $ do
-    let initialAdaAmount = BigInt.fromInt 20_000_000
-    withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
-      runContractInEnv (withApiLogger env) $
-        withKeyWallet alice do
-          mintingMints
-
-cantBurn :: Spec Unit
-cantBurn = do
-  it "burn fails after mint" $ do
-    let initialAdaAmount = BigInt.fromInt 20_000_000
-    withPlutipContractEnv config [ initialAdaAmount ] \env alice -> do
-      runContractInEnv (withApiLogger env) $
-        withKeyWallet alice do
-          burnFails
-
--- should fail
-doubleMint :: Contract () Unit
-doubleMint = do
-  txOut <- seedTx
-  nftPolicy <- makeNftPolicy txOut
-  cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
-  let
-    lookups :: Lookups.ScriptLookups PlutusData
-    lookups = Lookups.mintingPolicy nftPolicy
-
-    constraints :: TxConstraints Unit Unit
-    constraints =
-      Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
-  _ <- buildBalanceSignAndSubmitTx lookups constraints
-  expectError $ buildBalanceSignAndSubmitTx lookups constraints
-
-checkTxSpent :: Contract () Unit
-checkTxSpent = do
+txSpentAfterMint :: EnvRunner -> Spec Unit
+txSpentAfterMint = useRunnerSimple "seedTx is spent after mint" $ do
   txOut <- seedTx
   nftPolicy <- makeNftPolicy txOut
   cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
@@ -154,8 +83,8 @@ checkTxSpent = do
     Nothing -> pure unit
     Just _ -> liftEffect $ throw "seed tx still existed"
 
-mintingMints :: Contract () Unit
-mintingMints = do
+mintingWorks :: EnvRunner -> Spec Unit
+mintingWorks = useRunnerSimple "wallet has nft after mint" $ do
   cs /\ txid <- mintNft
   adr <- liftContractM "no wallet" =<< getWalletAddress
   _ <- waitForTx waitTime adr txid
@@ -163,8 +92,8 @@ mintingMints = do
   let nfts = Value.valueOf bal cs adaToken
   nfts `shouldEqual` (BigInt.fromInt 1)
 
-burnFails :: Contract () Unit
-burnFails = do
+cantBurn :: EnvRunner -> Spec Unit
+cantBurn = useRunnerSimple "burning nft fails" $ do
   txOut <- seedTx
   nftPolicy <- makeNftPolicy txOut
   cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
@@ -188,7 +117,6 @@ burnFails = do
       Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt $ -1))
   expectError $
     void $ buildBalanceSignAndSubmitTx burnLookups burnConstraints
-
 
 waitTime :: Minutes
 waitTime = 5.0 # Minutes
