@@ -20,10 +20,10 @@ import Effect.Exception (throw)
 import HelloWorld.Discovery.Api (makeNftPolicy, mintNft, seedTx)
 import Plutus.Types.Value as Value
 import Test.HelloWorld.EnvRunner (EnvRunner)
-import Test.Spec (Spec, describe, describeOnly, it)
+import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (expectError, shouldEqual)
 import Types.PlutusData (PlutusData)
-import Util (buildBalanceSignAndSubmitTx, waitForTx, withOurLogger)
+import Util (buildBalanceSignAndSubmitTx, waitForTx, withOurLogger,maxWait)
 
 spec :: EnvRunner -> Spec Unit
 spec runer = do
@@ -45,11 +45,11 @@ useRunnerSimple name contract runer = do
       $ void contract
 
 tryMintNft :: EnvRunner -> Spec Unit
-tryMintNft = map (describeOnly "tmp") <$> useRunnerSimple "mint runs" $ mintNft
+tryMintNft = useRunnerSimple "mint runs" $ mintNft
 
 tryDoubleMint :: EnvRunner -> Spec Unit
 tryDoubleMint =
-  useRunnerSimple "dopuble minting fails on second mint" $ do
+  useRunnerSimple "double minting fails on second mint" $ do
     txOut <- seedTx
     nftPolicy <- makeNftPolicy txOut
     cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
@@ -61,8 +61,11 @@ tryDoubleMint =
       constraints =
         Constraints.mustSpendPubKeyOutput txOut
         <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
-    _ <- buildBalanceSignAndSubmitTx lookups constraints
+    txId <- buildBalanceSignAndSubmitTx lookups constraints
+    adr <- liftContractM "no wallet" =<< getWalletAddress
+    _ <- waitForTx maxWait adr txId
     expectError $ buildBalanceSignAndSubmitTx lookups constraints
+    pure unit
 
 txSpentAfterMint :: EnvRunner -> Spec Unit
 txSpentAfterMint = useRunnerSimple "seedTx is spent after mint" $ do
@@ -87,9 +90,7 @@ txSpentAfterMint = useRunnerSimple "seedTx is spent after mint" $ do
 
 mintingWorks :: EnvRunner -> Spec Unit
 mintingWorks = useRunnerSimple "wallet has nft after mint" $ do
-  cs /\ txid <- mintNft
-  adr <- liftContractM "no wallet" =<< getWalletAddress
-  _ <- waitForTx waitTime adr txid
+  cs <- mintNft
   bal <- liftContractM "no ballance" =<< getWalletBalance
   let nfts = Value.valueOf bal cs adaToken
   nfts `shouldEqual` (BigInt.fromInt 1)

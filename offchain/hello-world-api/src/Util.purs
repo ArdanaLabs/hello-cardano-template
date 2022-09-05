@@ -4,6 +4,7 @@ module Util
   , getUtxos
   , getTxScanUrl
   , withOurLogger
+  , maxWait
   ) where
 
 import Contract.Prelude
