@@ -16,7 +16,6 @@ import Plutarch.Api.V2 (
   POutputDatum (POutputDatum),
   PPubKeyHash,
   PScriptPurpose (PMinting, PSpending),
-  PTxId,
   PTxInInfo,
   PTxOutRef,
   PValidator,
@@ -132,13 +131,13 @@ authTokenMP = phoistAcyclic $
         -- misc lookups
         vaultAdr :: Term _ PAddress <- parseData vaultAdrData
         tn <- pletC $ pfield @"tokenName" # red
-        txid :: Term _ PTxId <- pletC $ pfield @"txid" # red
+        ref :: Term _ PTxOutRef <- pletC $ pfield @"txOutRef" # red
 
-        -- Token name is hash of txid
+        -- Token name is hash of ref
         PTokenName tn' <- pmatchC tn
-        passert_ "tn was hash of txid" $
+        passert_ "tn was hash of ref" $
           plookup # pcon (PDatumHash tn') # (pfield @"datums" # info)
-            #== pcon (PJust $ pcon $ PDatum $ pforgetData $ pdata txid)
+            #== pcon (PJust $ pcon $ PDatum $ pforgetData $ pdata ref)
 
         -- mints exactly one token
         passert_ "did not mint exactly one token of this currency symbol" $
@@ -263,7 +262,7 @@ data AuthRedeemer (s :: S)
           s
           ( PDataRecord
               '[ "tokenName" ':= PTokenName
-               , "txid" ':= PTxId
+               , "txOutRef" ':= PTxOutRef
                ]
           )
       )

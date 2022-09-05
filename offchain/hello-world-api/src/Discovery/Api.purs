@@ -1,8 +1,9 @@
 module HelloWorld.Discovery.Api
   ( mintNft
   , protocolInit
-  , stealConfig
+  , openVault
   -- testing exports
+  , stealConfig -- TODO move to test module
   , seedTx
   , makeNftPolicy
   ) where
@@ -15,27 +16,56 @@ import Contract.TxConstraints as Constraints
 import Contract.Value as Value
 import Data.BigInt as BigInt
 
-import Cardano.Types.Value (mpsSymbol)
 import Contract.Address (getWalletAddress)
+import Contract.Hashing(datumHash)
 import Contract.Log (logDebug', logInfo')
 import Contract.Monad (Contract, liftContractM)
 import Contract.Scripts (Validator, applyArgsM, validatorHash, mintingPolicyHash, scriptHashAddress)
 import Contract.Transaction (TransactionInput)
 import Contract.TxConstraints (TxConstraints)
-import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer))
-import Contract.Value (adaToken, scriptCurrencySymbol)
+import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer),PlutusData(Constr))
+import Contract.Value (TokenName, scriptCurrencySymbol,mkTokenName,adaToken)
 import Data.Array (head)
 import Data.Map (keys)
 import Data.Set (toUnfoldable)
-import Data.Tuple.Nested ((/\), type (/\))
-import Plutus.Types.CurrencySymbol (CurrencySymbol)
+import Effect.Exception(throw)
+import HelloWorld.Discovery.Types(Protocol,Vault(Vault),NftRedeemer(NftRedeemer))
+import Plutus.Types.Address(Address(Address))
+import Plutus.Types.CurrencySymbol (CurrencySymbol,mpsSymbol)
+import Plutus.Types.Credential (Credential(PubKeyCredential))
+import Types.PubKeyHash(PubKeyHash)
 import ToData (toData)
 import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
 import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getUtxos, waitForTx, maxWait)
 
+openVault :: Protocol -> Contract () Unit
+openVault protocol = do
+  nftCs <- liftContractM "mpsSymbol failed" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
+  txOut <- seedTx
+  nftTn <- liftContractM "failed to make nft token name" $ datumHash (Datum (toData txOut)) <#> unwrap >>= mkTokenName
+  let nftRed = NftRedeemer{tn:nftTn,txId:txOut}
+  pkh <- getWalletAddress >>= case _ of
+    Just (Address{addressCredential: PubKeyCredential pkh}) -> pure pkh
+    _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+  let
+    nft :: Value.Value
+    nft = Value.singleton nftCs nftTn $ BigInt.fromInt 1
+    vault :: Vault
+    vault = Vault{owner:pkh,count:BigInt.fromInt 0}
+    lookups :: Lookups.ScriptLookups PlutusData
+    lookups =
+      Lookups.mintingPolicy protocol.nftMp
+      <> Lookups.validator protocol.vaultValidator
+    constraints :: TxConstraints Unit Unit
+    constraints =
+      Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) (enoughForFees <> nft)
+      <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) nft
+  _ <- buildBalanceSignAndSubmitTx lookups constraints
+  pure unit
+
 -- this should later use bytestrings
-protocolInit :: Contract () (TransactionInput /\ Validator /\ MintingPolicy)
+protocolInit :: Contract () Protocol
 protocolInit = do
   configValidator <- liftContractM "decoding failed" $ decodeCbor CBOR.configScript
   let configVhash = validatorHash configValidator
@@ -54,13 +84,11 @@ protocolInit = do
     constraints =
       Constraints.mustPayToScript
         configVhash
-        ( Datum $ vaultAuthCs
-            # toData
-        )
+        (Datum $ vaultAuthCs # toData)
         (enoughForFees <> Value.singleton cs adaToken (BigInt.fromInt 1))
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   config <- liftContractM "gave up waiting for sendDatumToScript TX" =<< waitForTx maxWait (scriptHashAddress configVhash) txId
-  pure $ config /\ vaultValidator /\ vaultAuthMp
+  pure $ {config,vaultValidator,nftMp:_} vaultAuthMp
 
 -- This should never work
 stealConfig :: TransactionInput -> Contract () Unit

@@ -19,7 +19,7 @@ import Contract.Value (adaToken, scriptCurrencySymbol)
 import Contract.Wallet (withKeyWallet)
 import Data.Time.Duration (Minutes(..))
 import Effect.Exception (throw)
-import HelloWorld.Discovery.Api (makeNftPolicy, mintNft, seedTx, protocolInit, stealConfig)
+import HelloWorld.Discovery.Api (makeNftPolicy, mintNft, seedTx, protocolInit, stealConfig,openVault)
 import Test.HelloWorld.EnvRunner (EnvRunner)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (expectError, shouldEqual)
@@ -29,6 +29,12 @@ import Util (buildBalanceSignAndSubmitTx, waitForTx, withOurLogger, maxWait)
 spec :: EnvRunner -> Spec Unit
 spec runner = do
   describe "HelloWorld.Discovery.Api" $ do
+    describe "protocol" do
+      traverse_ (_ $ runner)
+        [ init
+        , tryToStealConfig
+        , openAVault
+        ]
     describe "nft" do
       traverse_ (_ $ runner)
         [ tryMintNft
@@ -36,11 +42,6 @@ spec runner = do
         , txSpentAfterMint
         , mintingWorks
         , cantBurn
-        ]
-    describe "protocol" do
-      traverse_ (_ $ runner)
-        [ init
-        , tryToStealConfig
         ]
 
 useRunnerSimple :: forall a. Contract () a -> EnvRunner -> Aff Unit
@@ -61,7 +62,7 @@ init = do
 tryToStealConfig :: EnvRunner -> Spec Unit
 tryToStealConfig = do
   it "initialize protocol but fail to steal the utxo" <$> useRunnerSimple do
-    txin <- fst <$> protocolInit
+    txin <- _.config <$> protocolInit
     expectError $ stealConfig txin
 
 tryDoubleMint :: EnvRunner -> Spec Unit
@@ -140,6 +141,11 @@ cantBurn = it "burning nft fails" <$> useRunnerSimple do
   expectError
     $ void
     $ buildBalanceSignAndSubmitTx burnLookups burnConstraints
+
+openAVault :: EnvRunner -> Spec Unit
+openAVault = it "init protocol and open a vault" <$> useRunnerSimple do
+  protocol <- protocolInit
+  openVault protocol
 
 waitTime :: Minutes
 waitTime = 5.0 # Minutes
