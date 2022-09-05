@@ -15,14 +15,14 @@ import Contract.TxConstraints as Constraints
 import Contract.Value as Value
 import Data.BigInt as BigInt
 
-import Cardano.Types.Value(mpsSymbol)
+import Cardano.Types.Value (mpsSymbol)
 import Contract.Address (getWalletAddress)
 import Contract.Log (logDebug', logInfo')
 import Contract.Monad (Contract, liftContractM)
-import Contract.Scripts (Validator,applyArgsM,validatorHash,mintingPolicyHash,scriptHashAddress)
+import Contract.Scripts (Validator, applyArgsM, validatorHash, mintingPolicyHash, scriptHashAddress)
 import Contract.Transaction (TransactionInput)
 import Contract.TxConstraints (TxConstraints)
-import Contract.PlutusData(Datum(Datum),Redeemer(Redeemer))
+import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer))
 import Contract.Value (adaToken, scriptCurrencySymbol)
 import Data.Array (head)
 import Data.Map (keys)
@@ -32,7 +32,7 @@ import Plutus.Types.CurrencySymbol (CurrencySymbol)
 import ToData (toData)
 import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
-import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getUtxos, waitForTx,maxWait)
+import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getUtxos, waitForTx, maxWait)
 
 -- this should later use bytestrings
 protocolInit :: Contract () (TransactionInput /\ Validator /\ MintingPolicy)
@@ -41,10 +41,10 @@ protocolInit = do
   let configVhash = validatorHash configValidator
   cs <- mintNft
   vaultValidatorParam <- liftContractM "decoding failed" $ decodeCbor CBOR.vault
-  vaultValidator <- liftContractM "apply args failed" =<< applyArgsM vaultValidatorParam [toData cs]
+  vaultValidator <- liftContractM "apply args failed" =<< applyArgsM vaultValidatorParam [ toData cs ]
   let vaultValidatorHash = validatorHash vaultValidator
   vaultAuthParam <- liftContractM "decode failed" $ decodeCborMp CBOR.vaultAuthMp
-  vaultAuthMp <- liftContractM "apply args failed" =<< applyArgsM vaultAuthParam [toData $ vaultValidatorHash ]
+  vaultAuthMp <- liftContractM "apply args failed" =<< applyArgsM vaultAuthParam [ toData $ vaultValidatorHash ]
   vaultAuthCs <- liftContractM "mpsSymbol failed" $ mpsSymbol $ mintingPolicyHash vaultAuthMp
   let
     lookups :: Lookups.ScriptLookups PlutusData
