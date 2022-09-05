@@ -8,22 +8,23 @@ module HelloWorld.Discovery.Api
 import Contract.Prelude
 
 import CBOR as CBOR
+import Contract.ScriptLookups as Lookups
+import Contract.TxConstraints as Constraints
+import Data.BigInt as BigInt
+import Plutus.Types.Value as Value
+
 import Contract.Address (getWalletAddress)
 import Contract.Aeson (decodeAeson, fromString)
 import Contract.Log (logDebug', logInfo')
 import Contract.Monad (Contract, liftContractM, liftContractAffM)
-import Contract.ScriptLookups as Lookups
 import Contract.Scripts (applyArgsM)
 import Contract.Transaction (TransactionInput)
 import Contract.TxConstraints (TxConstraints)
-import Contract.TxConstraints as Constraints
 import Contract.Value (adaToken, scriptCurrencySymbol)
 import Data.Array (head)
 import Data.Map (keys)
 import Data.Set (toUnfoldable)
-import Data.BigInt as BigInt
 import Plutus.Types.CurrencySymbol (CurrencySymbol)
-import Plutus.Types.Value as Value
 import ToData (toData)
 import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)

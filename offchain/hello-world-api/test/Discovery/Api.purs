@@ -4,21 +4,22 @@ module Test.HelloWorld.Discovery.Api
 
 import Contract.Prelude
 
+import Contract.ScriptLookups as Lookups
+import Contract.TxConstraints as Constraints
+import Data.BigInt as BigInt
+import Plutus.Types.Value as Value
+
 import Contract.Address (getWalletAddress)
 import Contract.Log (logInfo')
 import Contract.Monad (Contract, liftContractAffM, liftContractM)
-import Contract.ScriptLookups as Lookups
 import Contract.Test.Plutip (runContractInEnv)
 import Contract.TxConstraints (TxConstraints)
-import Contract.TxConstraints as Constraints
 import Contract.Utxos (getUtxo, getWalletBalance)
 import Contract.Value (adaToken, scriptCurrencySymbol)
 import Contract.Wallet (withKeyWallet)
-import Data.BigInt as BigInt
 import Data.Time.Duration (Minutes(..))
 import Effect.Exception (throw)
 import HelloWorld.Discovery.Api (makeNftPolicy, mintNft, seedTx)
-import Plutus.Types.Value as Value
 import Test.HelloWorld.EnvRunner (EnvRunner)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (expectError, shouldEqual)

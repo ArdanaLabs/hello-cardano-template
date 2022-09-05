@@ -9,10 +9,12 @@ module Util
 
 import Contract.Prelude
 
+import Data.Map as Map
+import Contract.ScriptLookups as Lookups
+
 import Aeson (Aeson, getField, toArray, toObject)
 import Contract.Log (logDebug', logError', logInfo', logWarn')
 import Contract.Monad (Contract, ContractEnv, liftedE)
-import Contract.ScriptLookups as Lookups
 import Contract.Transaction (TransactionHash(TransactionHash), TransactionOutput, TransactionInput(TransactionInput), balanceAndSignTxE, submitE)
 import Contract.TxConstraints (TxConstraints)
 import Contract.Utxos (UtxoM(UtxoM), utxosAt, getUtxo)
@@ -22,7 +24,6 @@ import Data.List (filterM, List)
 import Data.Log.Formatter.Pretty (prettyFormatter)
 import Data.Log.Message (Message)
 import Data.Map (Map)
-import Data.Map as Map
 import Data.Time.Duration (Milliseconds(..), Seconds(..), Minutes(..), class Duration, fromDuration, convertDuration, negateDuration)
 import Effect.Aff (delay)
 import Effect.Aff.Retry (retrying, limitRetries, RetryStatus(RetryStatus))
