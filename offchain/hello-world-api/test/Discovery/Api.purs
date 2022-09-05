@@ -23,7 +23,7 @@ import Test.HelloWorld.EnvRunner (EnvRunner)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (expectError, shouldEqual)
 import Types.PlutusData (PlutusData)
-import Util (buildBalanceSignAndSubmitTx, waitForTx, withOurLogger,maxWait)
+import Util (buildBalanceSignAndSubmitTx, waitForTx, withOurLogger, maxWait)
 
 spec :: EnvRunner -> Spec Unit
 spec runner = do
@@ -60,7 +60,7 @@ tryDoubleMint =
       constraints :: TxConstraints Unit Unit
       constraints =
         Constraints.mustSpendPubKeyOutput txOut
-        <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+          <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
     txId <- buildBalanceSignAndSubmitTx lookups constraints
     adr <- liftContractM "no wallet" =<< getWalletAddress
     _ <- waitForTx maxWait adr txId
@@ -80,7 +80,7 @@ txSpentAfterMint = useRunnerSimple "seedTx is spent after mint" $ do
     constraints :: TxConstraints Unit Unit
     constraints =
       Constraints.mustSpendPubKeyOutput txOut
-      <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+        <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   adr <- liftContractM "no Address" =<< getWalletAddress
   _ <- liftContractM "wait timed out" =<< waitForTx waitTime adr txId
@@ -108,7 +108,7 @@ cantBurn = useRunnerSimple "burning nft fails" $ do
     mintConstraints :: TxConstraints Unit Unit
     mintConstraints =
       Constraints.mustSpendPubKeyOutput txOut
-      <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+        <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
   txid <- buildBalanceSignAndSubmitTx mintLookups mintConstraints
   adr <- liftContractM "no wallet" =<< getWalletAddress
   _ <- waitForTx waitTime adr txid
@@ -119,7 +119,7 @@ cantBurn = useRunnerSimple "burning nft fails" $ do
     burnConstraints :: TxConstraints Unit Unit
     burnConstraints =
       Constraints.mustSpendPubKeyOutput txOut
-      <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt $ -1))
+        <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt $ -1))
   expectError
     $ void
     $ buildBalanceSignAndSubmitTx burnLookups burnConstraints

@@ -19,15 +19,15 @@ import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
 import Contract.Value (adaToken, scriptCurrencySymbol)
 import Data.Array (head)
-import Data.Map(keys)
-import Data.Set(toUnfoldable)
+import Data.Map (keys)
+import Data.Set (toUnfoldable)
 import Data.BigInt as BigInt
 import Plutus.Types.CurrencySymbol (CurrencySymbol)
 import Plutus.Types.Value as Value
 import ToData (toData)
 import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
-import Util (buildBalanceSignAndSubmitTx, getUtxos,waitForTx,maxWait)
+import Util (buildBalanceSignAndSubmitTx, getUtxos, waitForTx, maxWait)
 
 mintNft :: Contract () CurrencySymbol
 mintNft = do
@@ -44,7 +44,7 @@ mintNft = do
     constraints :: TxConstraints Unit Unit
     constraints =
       Constraints.mustSpendPubKeyOutput txOut
-      <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+        <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
   logDebug' "about to submit"
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   logDebug' "submited"
@@ -55,8 +55,8 @@ mintNft = do
 -- | Creates the nft mintingPolicy from the transaction input parameter
 makeNftPolicy :: TransactionInput -> Contract () MintingPolicy
 makeNftPolicy txOut = do
-  paramNft <- liftContractM "nft decode failed" $
-    CBOR.nft
+  paramNft <- liftContractM "nft decode failed"
+    $ CBOR.nft
     # fromString
     # decodeAeson
     # hush
