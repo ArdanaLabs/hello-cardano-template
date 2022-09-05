@@ -26,10 +26,10 @@ import Types.PlutusData (PlutusData)
 import Util (buildBalanceSignAndSubmitTx, waitForTx, withOurLogger,maxWait)
 
 spec :: EnvRunner -> Spec Unit
-spec runer = do
+spec runner = do
   describe "HelloWorld.Discovery.Api" $ do
     describe "nft" do
-      traverse_ (_ $ runer)
+      traverse_ (_ $ runner)
         [ tryMintNft
         , tryDoubleMint
         , txSpentAfterMint
@@ -38,8 +38,8 @@ spec runer = do
         ]
 
 useRunnerSimple :: forall a. String -> Contract () a -> EnvRunner -> Spec Unit
-useRunnerSimple name contract runer = do
-  it name $ runer \env alice -> do
+useRunnerSimple name contract runner = do
+  it name $ runner \env alice -> do
     runContractInEnv (withOurLogger "apiTest.log" env)
       $ withKeyWallet alice
       $ void contract
