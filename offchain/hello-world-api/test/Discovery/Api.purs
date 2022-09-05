@@ -37,19 +37,19 @@ spec runner = do
         , cantBurn
         ]
 
-useRunnerSimple :: forall a. String -> Contract () a -> EnvRunner -> Spec Unit
-useRunnerSimple name contract runner = do
-  it name $ runner \env alice -> do
+useRunnerSimple :: forall a. Contract () a -> EnvRunner -> Aff Unit
+useRunnerSimple contract runner = do
+  runner \env alice -> do
     runContractInEnv (withOurLogger "apiTest.log" env)
       $ withKeyWallet alice
       $ void contract
 
 tryMintNft :: EnvRunner -> Spec Unit
-tryMintNft = useRunnerSimple "mint runs" $ mintNft
+tryMintNft = it "mint runs" <$> useRunnerSimple mintNft
 
 tryDoubleMint :: EnvRunner -> Spec Unit
 tryDoubleMint =
-  useRunnerSimple "double minting fails on second mint" $ do
+  it "double minting fails on second mint" <$> useRunnerSimple do
     txOut <- seedTx
     nftPolicy <- makeNftPolicy txOut
     cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
@@ -68,7 +68,7 @@ tryDoubleMint =
     pure unit
 
 txSpentAfterMint :: EnvRunner -> Spec Unit
-txSpentAfterMint = useRunnerSimple "seedTx is spent after mint" $ do
+txSpentAfterMint = it "seedTx is spent after mint" <$> useRunnerSimple do
   txOut <- seedTx
   nftPolicy <- makeNftPolicy txOut
   cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
@@ -89,14 +89,14 @@ txSpentAfterMint = useRunnerSimple "seedTx is spent after mint" $ do
     Just _ -> liftEffect $ throw "seed tx still existed"
 
 mintingWorks :: EnvRunner -> Spec Unit
-mintingWorks = useRunnerSimple "wallet has nft after mint" $ do
+mintingWorks = it "wallet has nft after mint" <$> useRunnerSimple do
   cs <- mintNft
   bal <- liftContractM "no ballance" =<< getWalletBalance
   let nfts = Value.valueOf bal cs adaToken
   nfts `shouldEqual` (BigInt.fromInt 1)
 
 cantBurn :: EnvRunner -> Spec Unit
-cantBurn = useRunnerSimple "burning nft fails" $ do
+cantBurn = it "burning nft fails" <$> useRunnerSimple do
   txOut <- seedTx
   nftPolicy <- makeNftPolicy txOut
   cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
