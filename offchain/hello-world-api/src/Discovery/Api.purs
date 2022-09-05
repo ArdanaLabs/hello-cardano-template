@@ -33,9 +33,9 @@ mintNft :: Contract () CurrencySymbol
 mintNft = do
   logInfo' "starting mint"
   txOut <- seedTx
-  logDebug' $ "txOut was:" <> show txOut
+  logDebug' $ "seed tx id was:" <> show txOut
   nftPolicy <- makeNftPolicy txOut
-  cs <- liftContractAffM "hash failed" $ scriptCurrencySymbol nftPolicy
+  cs <- liftContractAffM "failed to hash MintingPolicy into CurrencySymbol" $ scriptCurrencySymbol nftPolicy
   logInfo' $ "NFT cs: " <> show cs
   let
     lookups :: Lookups.ScriptLookups PlutusData
@@ -52,9 +52,15 @@ mintNft = do
   _ <- waitForTx maxWait adr txId
   pure $ cs
 
+-- | Creates the nft mintingPolicy from the transaction input parameter
 makeNftPolicy :: TransactionInput -> Contract () MintingPolicy
 makeNftPolicy txOut = do
-  paramNft <- liftContractM "nft decode failed" maybeParamNft
+  paramNft <- liftContractM "nft decode failed" $
+    CBOR.nft
+    # fromString
+    # decodeAeson
+    # hush
+    # map wrap
   logInfo' "got cbor"
   liftContractM "apply args failed" =<< applyArgsM paramNft [ toData txOut ]
 
@@ -63,11 +69,3 @@ seedTx = do
   adr <- liftContractM "no wallet" =<< getWalletAddress
   utxos <- getUtxos adr
   liftContractM "no utxos" $ head $ toUnfoldable $ keys utxos
-
-maybeParamNft :: Maybe MintingPolicy
-maybeParamNft =
-  CBOR.nft
-    # fromString
-    # decodeAeson
-    # hush
-    # map wrap
