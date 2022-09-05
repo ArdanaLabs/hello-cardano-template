@@ -6,6 +6,7 @@ module Util
   , withOurLogger
   , decodeCbor
   , decodeCborMp
+  , maxWait
   ) where
 
 import Contract.Prelude
@@ -15,7 +16,7 @@ import Contract.ScriptLookups as Lookups
 
 import Aeson (Aeson, getField, toArray, toObject)
 import Contract.Address (scriptHashAddress)
-import Contract.Log (logInfo', logWarn', logError')
+import Contract.Log (logDebug', logError', logInfo', logWarn')
 import Contract.Monad (Contract, ContractEnv, liftedE)
 import Contract.Scripts (MintingPolicy(..), Validator(..))
 import Contract.Transaction (TransactionHash(TransactionHash), TransactionInput(TransactionInput), TransactionOutput, balanceAndSignTxE, plutusV2Script, submitE)
@@ -86,8 +87,10 @@ tryBuildBalanceSignAndSubmitTx
   -> Contract () (Either (Array Aeson) TransactionHash)
 tryBuildBalanceSignAndSubmitTx lookups constraints (RetryStatus { iterNumber }) = do
   ubTx <- liftedE $ Lookups.mkUnbalancedTx lookups constraints
+  logDebug' $ "ubTx was:" <> show ubTx
   balanceAndSignTxE ubTx >>= case _ of
-    Right bsTx ->
+    Right bsTx -> do
+      logDebug' $ "Tx was:" <> show bsTx
       submitE bsTx >>= case _ of
         Left err -> pure $ Left err
         Right txid -> do

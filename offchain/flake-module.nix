@@ -44,8 +44,6 @@
             "${self'.packages."offchain:docs"}/html/";
         "offchain:test" =
           let
-            getTestScript = outputName:
-              self'.apps."offchain:${outputName}:test".program;
             runTests =
               pkgs.writeScript "run-tests" ''
                 # --will-cite gets rid of the annoying citation notice
@@ -54,8 +52,7 @@
                 # shellcheck disable=SC2016
                 ${pkgs.parallel}/bin/parallel --will-cite \
                   '. {} &> "$(basename {.})-output"' ::: \
-                  ${getTestScript "hello-world-api"} \
-                  ${getTestScript "hello-world-browser"} \
+                  ${self'.apps."offchain:hello-world-api:test:local".program} \
                   ${self'.apps."offchain:hello-world-cli:test:local".program}
                 printf "$?" > "$TEST_EXITCODE_FILE"
               '';

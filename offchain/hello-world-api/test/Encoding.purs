@@ -1,4 +1,4 @@
-module Test.Encoding
+module Test.HelloWorld.Encoding
   ( spec
   ) where
 
