@@ -24,7 +24,7 @@ data Mode = Local | Testnet
 type EnvRunner = (ContractEnv () -> KeyWallet -> Aff Unit) -> Aff Unit
 
 getEnvRunner :: Mode -> Aff EnvRunner
-getEnvRunner Local = pure $ withPlutipContractEnv plutipConfig [ BigInt.fromInt 30_000_000 ]
+getEnvRunner Local = pure $ withPlutipContractEnv plutipConfig [ BigInt.fromInt 40_000_000 ]
 getEnvRunner Testnet = do
   testResourcesDir <- liftEffect $ fromMaybe "./fixtures/" <$> lookupEnv "TEST_RESOURCES"
   key <- privatePaymentKeyFromFile $ testResourcesDir <> "/wallet.skey"

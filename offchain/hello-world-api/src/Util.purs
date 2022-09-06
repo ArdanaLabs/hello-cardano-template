@@ -7,6 +7,7 @@ module Util
   , decodeCbor
   , decodeCborMp
   , maxWait
+  , getDatum
   ) where
 
 import Contract.Prelude
@@ -15,11 +16,11 @@ import Data.Map as Map
 import Contract.ScriptLookups as Lookups
 
 import Aeson (Aeson, getField, toArray, toObject)
-import Contract.Address (scriptHashAddress)
 import Contract.Log (logDebug', logError', logInfo', logWarn')
-import Contract.Monad (Contract, ContractEnv, liftedE)
+import Contract.Monad (Contract, ContractEnv, liftedE,liftContractM)
+import Contract.PlutusData(Datum,getDatumByHash)
 import Contract.Scripts (MintingPolicy(..), Validator(..))
-import Contract.Transaction (TransactionHash(TransactionHash), TransactionInput(TransactionInput), TransactionOutput, balanceAndSignTxE, plutusV2Script, submitE)
+import Contract.Transaction (OutputDatum(..),TransactionHash(TransactionHash), TransactionInput(TransactionInput), TransactionOutput, balanceAndSignTxE, plutusV2Script, submitE)
 import Contract.TxConstraints (TxConstraints)
 import Contract.Utxos (UtxoM(UtxoM), utxosAt, getUtxo)
 import Control.Monad.Error.Class (throwError)
@@ -31,7 +32,7 @@ import Data.Map (Map)
 import Data.Time.Duration (Milliseconds(..), Seconds(..), Minutes(..), class Duration, fromDuration, convertDuration, negateDuration)
 import Effect.Aff (delay)
 import Effect.Aff.Retry (retrying, limitRetries, RetryStatus(RetryStatus))
-import Effect.Exception (error)
+import Effect.Exception (throw,error)
 import Node.Encoding (Encoding(UTF8))
 import Node.FS.Aff (appendTextFile)
 import Plutus.Types.Address (Address)
@@ -181,6 +182,12 @@ withOurLogger path env = wrap $ (unwrap env)
       , logLevel = Warn
       }
   }
+
+getDatum :: OutputDatum -> Contract () Datum
+getDatum = case _ of
+  NoOutputDatum -> liftEffect $ throw "no output datum"
+  OutputDatumHash dh -> getDatumByHash dh >>= liftContractM "Datum hash lookup failed"
+  OutputDatum d -> pure d
 
 decodeCbor :: String -> Maybe Validator
 decodeCbor cborHex = Validator <<< plutusV2Script <$> hexToByteArray cborHex

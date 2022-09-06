@@ -37,7 +37,7 @@ import Plutus.Types.Transaction (TransactionOutput(TransactionOutput))
 import Plutus.Types.Value (Value)
 import ToData (class ToData, toData)
 import Types.PlutusData (PlutusData(Constr, Integer))
-import Util (buildBalanceSignAndSubmitTx, waitForTx, getUtxos, decodeCbor)
+import Util (buildBalanceSignAndSubmitTx, waitForTx, getUtxos, decodeCbor,getDatum)
 
 initialize :: Int -> Int -> Contract () TransactionInput
 initialize param initialValue = do
@@ -150,10 +150,7 @@ datumLookup :: TransactionInput -> Contract () Int
 datumLookup lastOutput = do
   TransactionOutput utxo <- getUtxo lastOutput
     >>= liftContractM "couldn't find utxo"
-  oldDatum <- case utxo.datum of
-    NoOutputDatum -> liftEffect $ throw "no output datum"
-    OutputDatumHash dh -> getDatumByHash dh >>= liftContractM "Datum hash lookup failed"
-    OutputDatum d -> pure d
+  oldDatum <- getDatum utxo.datum
   asBigInt <- liftContractM "datum wasn't an integer" $ case oldDatum of
     Datum (Integer n) -> Just n
     _ -> Nothing

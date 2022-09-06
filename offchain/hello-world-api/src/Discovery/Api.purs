@@ -4,6 +4,7 @@ module HelloWorld.Discovery.Api
   , openVault
   , getAllVaults
   , getVault
+  , incrementVault
   -- testing exports
   , stealConfig -- TODO move to test module
   , seedTx
@@ -23,16 +24,22 @@ import Contract.Address (getWalletAddress)
 import Contract.Hashing (datumHash)
 import Contract.Log (logDebug', logInfo')
 import Contract.Monad (Contract, liftContractM)
-import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer))
+import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer),fromData)
 import Contract.Scripts (applyArgsM, validatorHash, mintingPolicyHash, scriptHashAddress)
 import Contract.Transaction (TransactionInput, TransactionOutput)
 import Contract.TxConstraints (TxConstraints)
-import Contract.Value (TokenName, scriptCurrencySymbol, mkTokenName, adaToken, valueOf)
+import Contract.Value (Value,TokenName, scriptCurrencySymbol, mkTokenName, adaToken, valueOf)
 import Data.Array (head)
 import Data.Map (Map, keys)
 import Data.Set (toUnfoldable)
 import Effect.Exception (throw)
-import HelloWorld.Discovery.Types (Protocol, Vault(Vault), NftRedeemer(NftRedeemer))
+import HelloWorld.Discovery.Types
+  ( Protocol
+  , Vault(Vault)
+  , NftRedeemer(NftRedeemer)
+  , HelloRedeemer(HelloRedeemer)
+  , HelloAction(Inc)
+  )
 import Plutus.Types.Address (Address(Address))
 import Plutus.Types.Credential (Credential(PubKeyCredential))
 import Plutus.Types.CurrencySymbol (CurrencySymbol, mpsSymbol)
@@ -40,19 +47,19 @@ import Plutus.Types.Value (symbols)
 import ToData (toData)
 import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
-import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getUtxos, waitForTx, maxWait)
+import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getUtxos, waitForTx, maxWait, getDatum)
 
 getAllVaults :: Protocol -> Contract () (Map TransactionInput TransactionOutput)
 getAllVaults protocol =
   getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
     <#> Map.filter (hasNft protocol)
 
-getVault :: Protocol -> TokenName -> Contract () TransactionInput
+getVault :: Protocol -> TokenName -> Contract () (TransactionInput /\ TransactionOutput)
 getVault protocol tn = do
   vaults <- getAllVaults protocol
   cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
   let valid = Map.filter (\vault -> valueOf (unwrap vault).amount cs tn > BigInt.fromInt 0) vaults
-  case toUnfoldable (Map.keys valid) of
+  case Map.toUnfoldable valid of
     [] -> liftEffect $ throw "no vaults"
     [ vault ] -> pure vault
     _ -> liftEffect $ throw "more than one vault of the same token name, this is really bad"
@@ -61,6 +68,35 @@ hasNft :: Protocol -> TransactionOutput -> Boolean
 hasNft { nftMp } out = case (mpsSymbol $ mintingPolicyHash nftMp) of
   Nothing -> false -- protocol was invalid
   Just cs -> cs `elem` (symbols $ (unwrap out).amount)
+
+incrementVault :: Protocol -> TokenName -> Contract () Unit
+incrementVault protocol vaultId = do
+  txin /\ txOut <- getVault protocol vaultId
+  (oldVault :: Vault) <- liftContractM "failed to parse old vault" <<< fromData <<< unwrap =<< getDatum (unwrap txOut).datum
+  cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
+  let
+    nft :: Value
+    nft = Value.singleton cs vaultId $ BigInt.fromInt 1
+
+    red :: Redeemer
+    red = Redeemer $ toData $ HelloRedeemer{tn:vaultId,action:Inc}
+
+    newVault :: Vault
+    newVault = Vault{owner : (unwrap oldVault).owner,count : (unwrap oldVault).count + BigInt.fromInt 1}
+
+    lookups :: Lookups.ScriptLookups PlutusData
+    lookups =
+      Lookups.mintingPolicy protocol.nftMp
+        <> Lookups.validator protocol.vaultValidator
+
+    constraints :: TxConstraints Unit Unit
+    constraints =
+      Constraints.mustSpendScriptOutput txin red
+      <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) enoughForFees
+        --(enoughForFees <> nft)
+  _txid <- buildBalanceSignAndSubmitTx lookups constraints
+  -- TODO waitForTx call
+  undefined
 
 openVault :: Protocol -> Contract () TokenName
 openVault protocol = do

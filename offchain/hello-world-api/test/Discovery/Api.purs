@@ -27,6 +27,7 @@ import HelloWorld.Discovery.Api
   , stealConfig
   , openVault
   , getVault
+  , incrementVault
   )
 import Test.HelloWorld.EnvRunner (EnvRunner)
 import Test.Spec (Spec, describe, it)
@@ -39,7 +40,8 @@ spec runner = do
   describe "HelloWorld.Discovery.Api" $ do
     describe "protocol" do
       traverse_ (_ $ runner)
-        [ findAVault
+        [ incrementAVault
+        , findAVault
         , openAVault
         , init
         , tryToStealConfig
@@ -161,6 +163,12 @@ findAVault = it "find a vault" <$> useRunnerSimple do
   protocol <- protocolInit
   vault <- openVault protocol
   getVault protocol vault
+
+incrementAVault :: EnvRunner -> Spec Unit
+incrementAVault = it "increment a vault" <$> useRunnerSimple do
+  protocol <- protocolInit
+  vault <- openVault protocol
+  incrementVault protocol vault
 
 waitTime :: Minutes
 waitTime = 5.0 # Minutes
