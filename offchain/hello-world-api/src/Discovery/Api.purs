@@ -16,7 +16,7 @@ import Contract.TxConstraints as Constraints
 import Contract.Value as Value
 import Data.BigInt as BigInt
 
-import Contract.Address (getWalletAddress)
+import Contract.Address (getWalletAddress,getNetworkId,validatorHashEnterpriseAddress)
 import Contract.Hashing(datumHash)
 import Contract.Log (logDebug', logInfo')
 import Contract.Monad (Contract, liftContractM)
@@ -74,7 +74,9 @@ protocolInit = do
   vaultValidator <- liftContractM "apply args failed" =<< applyArgsM vaultValidatorParam [ toData cs ]
   let vaultValidatorHash = validatorHash vaultValidator
   vaultAuthParam <- liftContractM "decode failed" $ decodeCborMp CBOR.vaultAuthMp
-  vaultAuthMp <- liftContractM "apply args failed" =<< applyArgsM vaultAuthParam [ toData $ vaultValidatorHash ]
+  network <- getNetworkId
+  adr <- liftContractM "failed to build address" $ validatorHashEnterpriseAddress network vaultValidatorHash
+  vaultAuthMp <- liftContractM "apply args failed" =<< applyArgsM vaultAuthParam [ toData adr ]
   vaultAuthCs <- liftContractM "mpsSymbol failed" $ mpsSymbol $ mintingPolicyHash vaultAuthMp
   let
     lookups :: Lookups.ScriptLookups PlutusData

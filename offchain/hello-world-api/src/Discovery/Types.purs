@@ -8,10 +8,11 @@ module HelloWorld.Discovery.Types
 
 import Contract.Prelude
 import Data.BigInt as BigInt
+import Data.UInt as UInt
 
 import Contract.Scripts (Validator)
 import Contract.Transaction (TransactionInput)
-import Contract.PlutusData(PlutusData(Constr))
+import Contract.PlutusData(PlutusData(..))
 import Contract.Value(TokenName)
 import Types.PubKeyHash(PubKeyHash)
 import Types.Scripts (MintingPolicy)
@@ -34,7 +35,7 @@ data NftRedeemer
 
 instance ToData Vault where
   toData (Vault {owner,count})
-    = Constr zero [toData owner,toData count]
+    = Constr zero [toData owner,Integer count]
 
 instance ToData HelloAction where
   toData Inc = Constr zero []
@@ -44,5 +45,5 @@ instance ToData HelloRedeemer where
   toData (HelloRedeemer{tn,action}) = Constr zero [toData tn,toData action]
 
 instance ToData NftRedeemer where
-  toData (NftRedeemer{tn,txId}) = Constr zero [toData tn,toData txId]
+  toData (NftRedeemer{tn,txId}) = Constr zero [toData tn,Constr zero [Constr zero [Bytes $ unwrap (unwrap txId).transactionId],Integer $ BigInt.fromInt $ UInt.toInt (unwrap txId).index]]
   toData Burning = Constr one []

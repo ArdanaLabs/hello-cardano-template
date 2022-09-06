@@ -31,9 +31,9 @@ spec runner = do
   describe "HelloWorld.Discovery.Api" $ do
     describe "protocol" do
       traverse_ (_ $ runner)
-        [ init
+        [ openAVault
+        , init
         , tryToStealConfig
-        , openAVault
         ]
     describe "nft" do
       traverse_ (_ $ runner)

@@ -13,11 +13,11 @@ import Plutarch.Api.V2 (
   PDatum (PDatum),
   PDatumHash (PDatumHash),
   PMintingPolicy,
-  POutputDatum (POutputDatum),
+  POutputDatum (..),
   PPubKeyHash,
   PScriptPurpose (PMinting, PSpending),
   PTxInInfo,
-  PTxOutRef,
+  PTxOutRef(PTxOutRef),
   PValidator,
   mkMintingPolicy,
   mkValidator,
@@ -48,6 +48,7 @@ import Plutarch.Extensions.Api (passert, passert_, pfindOwnInput, pgetContinuing
 import Plutarch.Extensions.Data (parseData, parseDatum)
 import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extra.TermCont
+import Plutarch.Extensions.Monad (ptraceShowC)
 
 configScriptCbor :: String
 configScriptCbor = validatorToHexString $ mkValidator def configScript
@@ -114,9 +115,16 @@ standardNft = phoistAcyclic $
    its datum must parse and the counter must be 0
 -}
 authTokenMP :: ClosedTerm (PData :--> PMintingPolicy)
-authTokenMP = phoistAcyclic $
+authTokenMP = phoistAcyclic $ ptrace "test trace" $
   plam $ \vaultAdrData redeemerData sc -> unTermCont $ do
-    (redeemer :: Term _ AuthRedeemer) <- parseData redeemerData
+    ptraceShowC $ pforgetData $ pdata $ pcon $ AuthRedeemer $ pdcons
+      # pdata (pcon $ PTokenName $ pconstant "aa")
+      #$ pdcons # pdata (pcon $ PTxOutRef
+                             $ pdcons # pdata (pconstant "bb")
+                            #$ pdcons # pdata 1
+                            #$ pdnil
+                        ) # pdnil
+    (redeemer :: Term _ AuthRedeemer) <- parseData (ptrace "redeemerData" $ ptraceShowId redeemerData)
     info <- pletC $ pfield @"txInfo" # sc
     let (minting' :: Term _ (PValue _ _)) = pfield @"mint" # info
     PMinting cs' <- pmatchC (pfield @"purpose" # sc)
@@ -129,7 +137,7 @@ authTokenMP = phoistAcyclic $
           AssocMap.pall # plam (#< 0) # mintedAtCs
       AuthRedeemer red -> do
         -- misc lookups
-        vaultAdr :: Term _ PAddress <- parseData vaultAdrData
+        vaultAdr :: Term _ PAddress <- parseData (ptrace "vault adr" vaultAdrData)
         tn <- pletC $ pfield @"tokenName" # red
         ref :: Term _ PTxOutRef <- pletC $ pfield @"txOutRef" # red
 
@@ -145,7 +153,13 @@ authTokenMP = phoistAcyclic $
 
         -- Exactly one vault output
         let outputs = pfield @"outputs" # info
-        vault <- pletC $ unsingleton $ pfilter # plam ((vaultAdr #==) . (pfield @"address" #)) # outputs
+        ptraceC $ "outputs:" <> pshow outputs
+        ptraceC $ "vaultAdr:" <> pshow vaultAdr
+        -- TODO for performanc this shouldn't be a plet
+        let filtered = pfilter # plam ((vaultAdr #==) . (pfield @"address" #)) # outputs
+        --ptraceC $ "filtered:" <> pshow filtered
+        vault <- pletC $ unsingleton filtered
+        ptraceC "got vault"
 
         -- NFT sent to vault
         val <- pletC $ pfield @"value" # vault
@@ -153,9 +167,18 @@ authTokenMP = phoistAcyclic $
 
         -- Counter starts at 0
         outDatum <- pletC $ pfield @"datum" # vault
-        POutputDatum datum' <- pmatchC outDatum
-        PDatum dat <- pmatchC $ pfield @"outputDatum" # datum'
-        (datum :: Term _ CounterDatum) <- parseData dat
+        datum' <- pmatchC outDatum >>= \case
+            POutputDatum d -> pure $ pfield @"outputDatum" # d
+            POutputDatumHash dh -> do
+              PJust datum <-
+                pmatchC $
+                  plookup
+                    # pfromData (pfield @"datumHash" # dh)
+                    #$ pfromData (pfield @"datums" # info)
+              pure datum
+            PNoOutputDatum _ -> fail "no data"
+        PDatum dat <- pmatchC datum'
+        (datum :: Term _ CounterDatum) <- parseData (ptrace "new vault" dat)
         passert "count wasn't 0" $ (0 :: Term _ PInteger) #== pfield @"count" # datum
 
 {- | The vault address validator
@@ -268,7 +291,7 @@ data AuthRedeemer (s :: S)
       )
   | Burning (Term s (PDataRecord '[]))
   deriving stock (Generic)
-  deriving anyclass (PlutusType, PIsData, PEq)
+  deriving anyclass (PlutusType, PIsData, PEq,PShow)
 
 instance DerivePlutusType AuthRedeemer where type DPTStrat _ = PlutusTypeData
 instance PTryFrom PData (PAsData AuthRedeemer)

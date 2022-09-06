@@ -12,7 +12,8 @@ import Data.Default (Default (def))
 import Data.List (intercalate)
 import Data.Word (Word8)
 import Numeric
-import Plutarch (TracingMode (DetTracing), compile, tracingMode)
+import Plutarch (TracingMode (..), compile, tracingMode)
+-- please forgive the (..) I don't want to change the import every time I change the tracing mode
 import Plutarch.Api.V1
 import Plutarch.Prelude
 import PlutusLedgerApi.V1.Scripts (Script, Validator)
@@ -30,7 +31,7 @@ validatorToHexString v = concatMap byteToHex $ BSL.unpack $ serialise (v :: Vali
 closedTermToHexString :: forall (p :: PType). ClosedTerm p -> Maybe String
 closedTermToHexString t = do
   -- TODO turn off tracing before production
-  case compile def {tracingMode = DetTracing} t of
+  case compile def {tracingMode = NoTracing} t of
     Left _ -> Nothing
     Right script -> Just $ concatMap byteToHex $ BSL.unpack $ serialise (script :: Script)
 

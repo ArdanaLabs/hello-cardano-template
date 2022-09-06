@@ -31,10 +31,10 @@ main = do
       case mode of
         Local -> do
           describe "pure tests" do
-            Encoding.spec
             Test.HelloWorld.Discovery.Api.spec envRunner
             Test.HelloWorld.Api.spec envRunner
             Test.HelloWorld.Api.localOnlySpec
+            Encoding.spec
         Testnet -> do
           describe "pure tests" do
             Encoding.spec
