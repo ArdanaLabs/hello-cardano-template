@@ -2,6 +2,8 @@ module HelloWorld.Discovery.Api
   ( mintNft
   , protocolInit
   , openVault
+  , getAllVaults
+  , getVault
   -- testing exports
   , stealConfig -- TODO move to test module
   , seedTx
@@ -15,31 +17,50 @@ import Contract.ScriptLookups as Lookups
 import Contract.TxConstraints as Constraints
 import Contract.Value as Value
 import Data.BigInt as BigInt
+import Data.Map as Map
 
 import Contract.Address (getWalletAddress)
 import Contract.Hashing (datumHash)
 import Contract.Log (logDebug', logInfo')
 import Contract.Monad (Contract, liftContractM)
-import Contract.Scripts (applyArgsM, validatorHash, mintingPolicyHash, scriptHashAddress)
-import Contract.Transaction (TransactionInput)
-import Contract.TxConstraints (TxConstraints)
 import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer))
-import Contract.Value (TokenName, scriptCurrencySymbol, mkTokenName, adaToken)
+import Contract.Scripts (applyArgsM, validatorHash, mintingPolicyHash, scriptHashAddress)
+import Contract.Transaction (TransactionInput, TransactionOutput)
+import Contract.TxConstraints (TxConstraints)
+import Contract.Value (TokenName, scriptCurrencySymbol, mkTokenName, adaToken, valueOf)
 import Data.Array (head)
-import Data.Map (keys)
+import Data.Map (Map, keys)
 import Data.Set (toUnfoldable)
 import Effect.Exception (throw)
 import HelloWorld.Discovery.Types (Protocol, Vault(Vault), NftRedeemer(NftRedeemer))
 import Plutus.Types.Address (Address(Address))
-import Plutus.Types.CurrencySymbol (CurrencySymbol, mpsSymbol)
 import Plutus.Types.Credential (Credential(PubKeyCredential))
+import Plutus.Types.CurrencySymbol (CurrencySymbol, mpsSymbol)
+import Plutus.Types.Value (symbols)
 import ToData (toData)
 import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
 import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getUtxos, waitForTx, maxWait)
 
 getAllVaults :: Protocol -> Contract () (Map TransactionInput TransactionOutput)
-getAllVaults protocol = getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
+getAllVaults protocol =
+  getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
+    <#> Map.filter (hasNft protocol)
+
+getVault :: Protocol -> TokenName -> Contract () TransactionInput
+getVault protocol tn = do
+  vaults <- getAllVaults protocol
+  cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
+  let valid = Map.filter (\vault -> valueOf (unwrap vault).amount cs tn > BigInt.fromInt 0) vaults
+  case toUnfoldable (Map.keys valid) of
+    [] -> liftEffect $ throw "no vaults"
+    [ vault ] -> pure vault
+    _ -> liftEffect $ throw "more than one vault of the same token name, this is really bad"
+
+hasNft :: Protocol -> TransactionOutput -> Boolean
+hasNft { nftMp } out = case (mpsSymbol $ mintingPolicyHash nftMp) of
+  Nothing -> false -- protocol was invalid
+  Just cs -> cs `elem` (symbols $ (unwrap out).amount)
 
 openVault :: Protocol -> Contract () TokenName
 openVault protocol = do

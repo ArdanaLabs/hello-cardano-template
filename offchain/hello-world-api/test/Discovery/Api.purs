@@ -19,7 +19,15 @@ import Contract.Value (adaToken, scriptCurrencySymbol)
 import Contract.Wallet (withKeyWallet)
 import Data.Time.Duration (Minutes(..))
 import Effect.Exception (throw)
-import HelloWorld.Discovery.Api (makeNftPolicy, mintNft, seedTx, protocolInit, stealConfig, openVault)
+import HelloWorld.Discovery.Api
+  ( makeNftPolicy
+  , mintNft
+  , seedTx
+  , protocolInit
+  , stealConfig
+  , openVault
+  , getVault
+  )
 import Test.HelloWorld.EnvRunner (EnvRunner)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (expectError, shouldEqual)
@@ -31,7 +39,8 @@ spec runner = do
   describe "HelloWorld.Discovery.Api" $ do
     describe "protocol" do
       traverse_ (_ $ runner)
-        [ openAVault
+        [ findAVault
+        , openAVault
         , init
         , tryToStealConfig
         ]
@@ -146,6 +155,12 @@ openAVault :: EnvRunner -> Spec Unit
 openAVault = it "init protocol and open a vault" <$> useRunnerSimple do
   protocol <- protocolInit
   openVault protocol
+
+findAVault :: EnvRunner -> Spec Unit
+findAVault = it "find a vault" <$> useRunnerSimple do
+  protocol <- protocolInit
+  vault <- openVault protocol
+  getVault protocol vault
 
 waitTime :: Minutes
 waitTime = 5.0 # Minutes
