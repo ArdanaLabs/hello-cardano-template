@@ -16,14 +16,14 @@ import Contract.TxConstraints as Constraints
 import Contract.Value as Value
 import Data.BigInt as BigInt
 
-import Contract.Address (getWalletAddress, getNetworkId, validatorHashEnterpriseAddress)
+import Contract.Address (getWalletAddress)
 import Contract.Hashing (datumHash)
 import Contract.Log (logDebug', logInfo')
 import Contract.Monad (Contract, liftContractM)
-import Contract.Scripts (Validator, applyArgsM, validatorHash, mintingPolicyHash, scriptHashAddress)
+import Contract.Scripts (applyArgsM, validatorHash, mintingPolicyHash, scriptHashAddress)
 import Contract.Transaction (TransactionInput)
 import Contract.TxConstraints (TxConstraints)
-import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer), PlutusData(Constr))
+import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer))
 import Contract.Value (TokenName, scriptCurrencySymbol, mkTokenName, adaToken)
 import Data.Array (head)
 import Data.Map (keys)
@@ -33,13 +33,15 @@ import HelloWorld.Discovery.Types (Protocol, Vault(Vault), NftRedeemer(NftRedeem
 import Plutus.Types.Address (Address(Address))
 import Plutus.Types.CurrencySymbol (CurrencySymbol, mpsSymbol)
 import Plutus.Types.Credential (Credential(PubKeyCredential))
-import Types.PubKeyHash (PubKeyHash)
 import ToData (toData)
 import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
 import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getUtxos, waitForTx, maxWait)
 
-openVault :: Protocol -> Contract () Unit
+getAllVaults :: Protocol -> Contract () (Map TransactionInput TransactionOutput)
+getAllVaults protocol = getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
+
+openVault :: Protocol -> Contract () TokenName
 openVault protocol = do
   nftCs <- liftContractM "mpsSymbol failed" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
   txOut <- seedTx
@@ -64,8 +66,9 @@ openVault protocol = do
     constraints =
       Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) (enoughForFees <> nft)
         <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) nft
-  _ <- buildBalanceSignAndSubmitTx lookups constraints
-  pure unit
+  txid <- buildBalanceSignAndSubmitTx lookups constraints
+  _ <- waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txid
+  pure nftTn
 
 -- this should later use bytestrings
 protocolInit :: Contract () Protocol
@@ -77,9 +80,7 @@ protocolInit = do
   vaultValidator <- liftContractM "apply args failed" =<< applyArgsM vaultValidatorParam [ toData cs ]
   let vaultValidatorHash = validatorHash vaultValidator
   vaultAuthParam <- liftContractM "decode failed" $ decodeCborMp CBOR.vaultAuthMp
-  network <- getNetworkId
-  adr <- liftContractM "failed to build address" $ validatorHashEnterpriseAddress network vaultValidatorHash
-  vaultAuthMp <- liftContractM "apply args failed" =<< applyArgsM vaultAuthParam [ toData adr ]
+  vaultAuthMp <- liftContractM "apply args failed" =<< applyArgsM vaultAuthParam [ toData $ scriptHashAddress vaultValidatorHash ]
   vaultAuthCs <- liftContractM "mpsSymbol failed" $ mpsSymbol $ mintingPolicyHash vaultAuthMp
   let
     lookups :: Lookups.ScriptLookups PlutusData
