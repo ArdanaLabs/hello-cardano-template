@@ -1,11 +1,11 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Plutarch.Extensions.Monad
-  (pletFieldC
-  ,pmatchFieldC
-  ,ptraceShowC
-  ) where
+module Plutarch.Extensions.Monad (
+  pletFieldC,
+  pmatchFieldC,
+  ptraceShowC,
+) where
 
 import Plutarch.Prelude
 
@@ -13,7 +13,7 @@ import GHC.TypeLits (KnownNat)
 import Plutarch.DataRepr (PDataFields (PFields))
 import Plutarch.DataRepr.Internal (PLabelIndex, PUnLabel)
 import Plutarch.DataRepr.Internal.HList (IndexList)
-import Plutarch.Extra.TermCont (pletC, pmatchC,ptraceC)
+import Plutarch.Extra.TermCont (pletC, pmatchC, ptraceC)
 
 ptraceShowC :: PShow a => Term s a -> TermCont s ()
 ptraceShowC x = ptraceC $ pshow x

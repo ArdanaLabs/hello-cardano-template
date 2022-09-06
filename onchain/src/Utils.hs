@@ -13,6 +13,7 @@ import Data.List (intercalate)
 import Data.Word (Word8)
 import Numeric
 import Plutarch (TracingMode (..), compile, tracingMode)
+
 -- please forgive the (..) I don't want to change the import every time I change the tracing mode
 import Plutarch.Api.V1
 import Plutarch.Prelude
