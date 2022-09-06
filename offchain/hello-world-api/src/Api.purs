@@ -37,7 +37,7 @@ import Plutus.Types.Transaction (TransactionOutput(TransactionOutput))
 import Plutus.Types.Value (Value)
 import ToData (class ToData, toData)
 import Types.PlutusData (PlutusData(Constr, Integer))
-import Util (buildBalanceSignAndSubmitTx, waitForTx, getUtxos, decodeCbor,getDatum)
+import Util (buildBalanceSignAndSubmitTx, waitForTx, getUtxos, decodeCbor, getDatum)
 
 initialize :: Int -> Int -> Contract () TransactionInput
 initialize param initialValue = do

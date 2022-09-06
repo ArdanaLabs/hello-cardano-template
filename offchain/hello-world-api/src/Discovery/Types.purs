@@ -11,9 +11,9 @@ import Data.BigInt as BigInt
 import Data.UInt as UInt
 
 import Contract.Scripts (Validator)
-import Control.Alternative(guard)
+import Control.Alternative (guard)
 import Contract.Transaction (TransactionInput)
-import Contract.PlutusData (PlutusData(..),class FromData,fromData)
+import Contract.PlutusData (PlutusData(..), class FromData, fromData)
 import Contract.Value (TokenName)
 import Types.PubKeyHash (PubKeyHash)
 import Types.Scripts (MintingPolicy)
@@ -40,14 +40,12 @@ instance ToData Vault where
   toData (Vault { owner, count }) = Constr zero [ toData owner, Integer count ]
 
 instance FromData Vault where
-  fromData (Constr n [owner',count']) = do
+  fromData (Constr n [ owner', count' ]) = do
     guard $ n == BigInt.fromInt 0
     owner <- fromData owner'
     count <- fromData count'
-    pure $ Vault{owner,count}
+    pure $ Vault { owner, count }
   fromData _ = Nothing
-
-
 
 instance ToData HelloAction where
   toData Inc = Constr zero []

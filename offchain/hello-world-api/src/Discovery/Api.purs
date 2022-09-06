@@ -24,11 +24,11 @@ import Contract.Address (getWalletAddress)
 import Contract.Hashing (datumHash)
 import Contract.Log (logDebug', logInfo')
 import Contract.Monad (Contract, liftContractM)
-import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer),fromData)
+import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer), fromData)
 import Contract.Scripts (applyArgsM, validatorHash, mintingPolicyHash, scriptHashAddress)
 import Contract.Transaction (TransactionInput, TransactionOutput)
 import Contract.TxConstraints (TxConstraints)
-import Contract.Value (Value,TokenName, scriptCurrencySymbol, mkTokenName, adaToken, valueOf)
+import Contract.Value (Value, TokenName, scriptCurrencySymbol, mkTokenName, adaToken, valueOf)
 import Data.Array (head)
 import Data.Map (Map, keys)
 import Data.Set (toUnfoldable)
@@ -79,10 +79,10 @@ incrementVault protocol vaultId = do
     nft = Value.singleton cs vaultId $ BigInt.fromInt 1
 
     red :: Redeemer
-    red = Redeemer $ toData $ HelloRedeemer{tn:vaultId,action:Inc}
+    red = Redeemer $ toData $ HelloRedeemer { tn: vaultId, action: Inc }
 
     newVault :: Vault
-    newVault = Vault{owner : (unwrap oldVault).owner,count : (unwrap oldVault).count + BigInt.fromInt 1}
+    newVault = Vault { owner: (unwrap oldVault).owner, count: (unwrap oldVault).count + BigInt.fromInt 1 }
 
     lookups :: Lookups.ScriptLookups PlutusData
     lookups =
@@ -92,8 +92,8 @@ incrementVault protocol vaultId = do
     constraints :: TxConstraints Unit Unit
     constraints =
       Constraints.mustSpendScriptOutput txin red
-      <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) enoughForFees
-        --(enoughForFees <> nft)
+        <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) enoughForFees
+  --(enoughForFees <> nft)
   _txid <- buildBalanceSignAndSubmitTx lookups constraints
   -- TODO waitForTx call
   undefined
