@@ -93,13 +93,12 @@ incrementVault protocol vaultId = do
     constraints =
       Constraints.mustSpendScriptOutput txin red
         <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) enoughForFees
-        -- TODO figure out what's going on with the nft
-        -- it fails to balance if you add the nft?
-        -- but looking it up by the nft works so it's sending it anyway?
+  -- TODO figure out what's going on with the nft
+  -- it fails to balance if you add the nft?
+  -- but looking it up by the nft works so it's sending it anyway?
   txid <- buildBalanceSignAndSubmitTx lookups constraints
   _ <- waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txid
   pure unit
-
 
 openVault :: Protocol -> Contract () TokenName
 openVault protocol = do
