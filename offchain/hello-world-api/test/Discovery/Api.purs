@@ -40,7 +40,8 @@ spec runner = do
   describe "HelloWorld.Discovery.Api" $ do
     describe "protocol" do
       traverse_ (_ $ runner)
-        [ incrementAVault
+        [ findAfterInc
+        , incrementAVault
         , findAVault
         , openAVault
         , init
@@ -169,6 +170,13 @@ incrementAVault = it "increment a vault" <$> useRunnerSimple do
   protocol <- protocolInit
   vault <- openVault protocol
   incrementVault protocol vault
+
+findAfterInc :: EnvRunner -> Spec Unit
+findAfterInc = it "find after inc" <$> useRunnerSimple do
+  protocol <- protocolInit
+  vault <- openVault protocol
+  incrementVault protocol vault
+  getVault protocol vault
 
 waitTime :: Minutes
 waitTime = 5.0 # Minutes

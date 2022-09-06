@@ -75,8 +75,8 @@ incrementVault protocol vaultId = do
   (oldVault :: Vault) <- liftContractM "failed to parse old vault" <<< fromData <<< unwrap =<< getDatum (unwrap txOut).datum
   cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
   let
-    nft :: Value
-    nft = Value.singleton cs vaultId $ BigInt.fromInt 1
+    _nft :: Value
+    _nft = Value.singleton cs vaultId $ BigInt.fromInt 1
 
     red :: Redeemer
     red = Redeemer $ toData $ HelloRedeemer { tn: vaultId, action: Inc }
@@ -93,10 +93,13 @@ incrementVault protocol vaultId = do
     constraints =
       Constraints.mustSpendScriptOutput txin red
         <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) enoughForFees
-  --(enoughForFees <> nft)
-  _txid <- buildBalanceSignAndSubmitTx lookups constraints
-  -- TODO waitForTx call
-  undefined
+        -- TODO figure out what's going on with the nft
+        -- it fails to balance if you add the nft?
+        -- but looking it up by the nft works so it's sending it anyway?
+  txid <- buildBalanceSignAndSubmitTx lookups constraints
+  _ <- waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txid
+  pure unit
+
 
 openVault :: Protocol -> Contract () TokenName
 openVault protocol = do
