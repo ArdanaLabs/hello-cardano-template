@@ -2,23 +2,28 @@ module ServerWallet (makeServerWallet) where
 
 import Contract.Prelude
 
-import Cardano.Types.Transaction (TransactionOutput(..), Utxos)
+import Cardano.Types.Transaction (PublicKey(..), TransactionOutput(..), Utxos)
 import Cardano.Types.TransactionUnspentOutput (TransactionUnspentOutput(TransactionUnspentOutput))
 import Cardano.Types.Value (Value(..), mkCoin, unwrapNonAdaAsset)
+import Contract.Address (PaymentPubKey(..), PaymentPubKeyHash(..), PubKeyHash(..), pubKeyHashAddress)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Ord.Min (Min(..))
-import Serialization (publicKeyHash)
-import Serialization.Address (enterpriseAddress, enterpriseAddressToAddress, keyHashCredential)
+import Effect.Exception (throw)
+import Serialization (publicKeyFromBech32, publicKeyHash)
+import Serialization.Address (addressFromBech32, enterpriseAddress, enterpriseAddressToAddress, keyHashCredential)
 import Signing (getServerPubKey, serverSignTx)
 import Unsafe.Coerce (unsafeCoerce)
 import Wallet.Key (KeyWallet(..))
 
 makeServerWallet :: Aff KeyWallet
 makeServerWallet = do
-  pubKey <- getServerPubKey
+  pubKey@(PublicKey bech32) <- getServerPubKey
+  pubKey2 <- case publicKeyFromBech32 bech32 of
+    Nothing -> liftEffect $ throw "pub key conversion error"
+    Just adr -> pure $ adr
   pure $ KeyWallet
     { address : \network -> pure $
-       unsafeCoerce pubKey # -- TODO is this right?
+          pubKey2 #
           publicKeyHash
           >>> keyHashCredential
           >>> { network, paymentCred: _ }

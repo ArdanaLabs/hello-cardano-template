@@ -11,6 +11,7 @@ import Effect.Exception (throw)
 import Node.Process (lookupEnv)
 import Test.HelloWorld.Api as Test.HelloWorld.Api
 import Test.HelloWorld.Encoding as Encoding
+import Test.HelloWorld.Signing as Test.HelloWorld.Signing
 import Test.HelloWorld.EnvRunner (Mode(..), getEnvRunner)
 import Test.Spec (describe)
 import Test.Spec.Reporter.Console (consoleReporter)
@@ -30,10 +31,12 @@ main = do
         Local -> do
           describe "pure tests" do
             Encoding.spec
+            Test.HelloWorld.Signing.spec envRunner
             Test.HelloWorld.Api.spec envRunner
             Test.HelloWorld.Api.localOnlySpec
         Testnet -> do
           describe "pure tests" do
             Encoding.spec
           describe "impure tests" do
+            Test.HelloWorld.Signing.spec envRunner
             Test.HelloWorld.Api.spec envRunner

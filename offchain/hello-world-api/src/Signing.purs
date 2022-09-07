@@ -22,6 +22,9 @@ type Signer = ByteArray -> Aff ByteArray
 
 getServerPubKey :: Aff PublicKey
 getServerPubKey = PublicKey <$> (handleAffjax =<< get string "http://localhost:3000/pubkey")
+-- FIXME I'm pretty sure this is the problem
+-- it expects a bech32 string but is getting a hex string
+-- imo it makes the most sense to fix this on the haskell side
 
 serverSignTx :: PublicKey -> Transaction -> Aff Transaction
 serverSignTx = signTx serverSigner
