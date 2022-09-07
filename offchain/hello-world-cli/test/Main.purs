@@ -10,7 +10,7 @@ import Effect.Exception (throw)
 import Effect.Aff (launchAff_)
 import Faucet (topup)
 import Node.Process (lookupEnv)
-import Node.FS.Aff (unlink)
+import Node.FS.Aff (unlink, exists)
 import Test.Spec (it, describe)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec', defaultConfig)
@@ -43,6 +43,10 @@ main = do
     let badConf = jsonDir <> "badWalletCfg.json "
     let state = " script.clistate "
     let badState = jsonDir <> "badState.json "
+    -- remove state file if it exists
+    hasOldState <- exists (trim state)
+    when hasOldState $ unlink (trim state)
+
     runSpec' defaultConfig { timeout = Nothing } [ consoleReporter ] $ do
       describe "shell sanity checks" do
         it "ls err"
