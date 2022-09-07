@@ -1,22 +1,19 @@
-module HelloWorld.Test.E2E.Helpers where
+module HelloWorld.Test.Helpers where
 
-import Prelude
+import Contract.Prelude
 
-import Contract.Test.E2E (Mode(..), RunningExample, TestOptions(..), WalletExt(..), delaySec, namiSign, withExample)
-import Data.Either (Either(..))
-import Data.Maybe (fromMaybe)
 import Data.Newtype (class Newtype, unwrap, wrap)
-import Effect.Aff (Aff, bracket, try)
+import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign (Foreign, unsafeFromForeign)
 import Foreign as Foreign
-import HelloWorld.Test.E2E.Constants as Constants
-import Mote (test)
+import HelloWorld.Test.Constants as Constants
 import Node.Express.App (listenHttp, use)
+import Node.Express.Handler (HandlerM)
 import Node.Express.Middleware.Static (static)
+import Node.Express.Response (clearCookie, setCookie)
+import Node.Express.Types (defaultCookieOptions)
 import Node.HTTP (close, Server)
-import Node.Path (FilePath)
-import TestM (TestPlanM)
 import Toppokki as T
 
 -- | A String representing a jQuery selector, e.g. "#my-id" or ".my-class"
@@ -30,57 +27,6 @@ derive instance Newtype Action _
 
 helloWorldBrowserURL :: T.URL
 helloWorldBrowserURL = T.URL $ Constants.localhost <> ":" <> show Constants.port
-
--- | Run an E2E test. Parameters are:
--- |   String: Just a name for the logs
--- |   Toppokki.URL: URL where the example is running
--- |   TestOptions: Options to start the browser with
--- |   WalletExt: An extension which should be used
--- |   RunningExample -> Aff a: A function which runs the test
-runE2ETest
-  :: forall (a :: Type)
-   . String
-  -> TestOptions
-  -> WalletExt
-  -> (RunningExample -> Aff a)
-  -> TestPlanM Unit
-runE2ETest example opts ext f = test example $ withBrowser opts ext $
-  \browser -> withExample helloWorldBrowserURL browser $ void <<< f
-
-launchWithExtension :: WalletExt -> TestOptions -> Aff T.Browser
-launchWithExtension walletExt testOptions@(TestOptions { chromeExe, chromeUserDataDir, namiDir, geroDir, noHeadless }) = do
-  result <- try $ T.launch
-    { args:
-        [ "--disable-extensions-except=" <> extDir
-        , "--load-extension=" <> extDir
-        ] <> if mode == Headless then [ "--headless=chrome" ] else []
-    , headless: mode == Headless
-    , userDataDir: chromeUserDataDir
-    , executablePath: fromMaybe "" chromeExe
-    }
-  case result of
-    Left _ -> do
-      delaySec Constants.tenSeconds
-      launchWithExtension walletExt testOptions
-    Right browser -> pure browser
-  where
-  mode :: Mode
-  mode
-    | noHeadless = Visible
-    | otherwise = Headless
-
-  extDir :: FilePath
-  extDir = case walletExt of
-    GeroExt -> geroDir
-    NamiExt -> namiDir
-
-withBrowser
-  :: forall (a :: Type)
-   . TestOptions
-  -> WalletExt
-  -> (T.Browser -> Aff a)
-  -> Aff a
-withBrowser opts ext = bracket (launchWithExtension ext opts) T.close
 
 -- | Build a primitive jQuery expression like '$("button").click()' and
 -- | out of a selector and action and evaluate it in Toppokki
@@ -110,12 +56,32 @@ injectJQuery jQuery page = do
   unless alreadyInjected $ void $ T.unsafeEvaluateStringFunction jQuery
     page
 
-namiSign' :: RunningExample -> Aff Unit
-namiSign' = namiSign Constants.namiWalletPassword
+newtype Cookie = Cookie
+  { key :: String
+  , value :: Maybe String
+  }
 
-startStaticServer :: String -> Aff Server
-startStaticServer directory =
-  liftEffect $ listenHttp (use $ static directory) Constants.port $ \_ -> pure unit
+derive instance newtypeCookie :: Newtype Cookie _
+derive instance eqCookie :: Eq Cookie
+
+mkCookies :: Maybe String -> Maybe String -> Maybe String -> Array Cookie
+mkCookies paymentKey stakeKey networkId =
+  [ Cookie { key: "paymentKey", value: paymentKey }
+  , Cookie { key: "stakeKey", value: stakeKey }
+  , Cookie { key: "networkId", value: networkId }
+  ]
+
+startStaticServer :: Array Cookie -> String -> Aff Server
+startStaticServer cookies directory = do
+  liftEffect $ listenHttp (use staticServer) Constants.port $ \_ -> pure unit
+  where
+  staticServer :: HandlerM Unit
+  staticServer = do
+    for_ cookies $ \(Cookie { key, value }) ->
+      case value of
+        Just value' -> setCookie key value' defaultCookieOptions
+        Nothing -> clearCookie key "/"
+    static directory
 
 closeStaticServer :: Server -> Aff Unit
 closeStaticServer server = liftEffect $ close server (pure unit)
