@@ -36,7 +36,7 @@ getEnvRunner Testnet = do
 plutipConfig :: PlutipConfig
 plutipConfig =
   { host: "127.0.0.1"
-  , port: UInt.fromInt 8082
+  , port: UInt.fromInt 8084
   , logLevel: Warn
   -- Server configs are used to deploy the corresponding services.
   , ogmiosConfig:

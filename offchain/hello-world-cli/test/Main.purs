@@ -8,8 +8,9 @@ import Contract.Test.Plutip (PlutipConfig)
 import Data.String (trim)
 import Effect.Exception (throw)
 import Effect.Aff (launchAff_)
+import Faucet (topup)
 import Node.Process (lookupEnv)
-import Node.FS.Aff (unlink)
+import Node.FS.Aff (unlink, exists)
 import Test.Spec (it, describe)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec', defaultConfig)
@@ -26,7 +27,9 @@ main = do
   let plutipWalletDir = "./" -- TODO get a writeable dir from nix
   usePlutip <- lookupEnv "MODE" >>= case _ of
     Just "local" -> pure true
-    Just "testnet" -> pure false
+    Just "testnet" -> do
+      topup "addr_test1qrwdtldyjseyn3k978de87renmp2kt3vcajk65nk543tw865kp7y0evgnnne7ukzhqsmdmyefhpevpepl9p7xpe8zqpsag6004"
+      pure false
     Just e -> throw $ "expected local or testnet got: " <> e
     Nothing -> throw "expected MODE to be set"
   let
@@ -40,6 +43,10 @@ main = do
     let badConf = jsonDir <> "badWalletCfg.json "
     let state = " script.clistate "
     let badState = jsonDir <> "badState.json "
+    -- remove state file if it exists
+    hasOldState <- exists (trim state)
+    when hasOldState $ unlink (trim state)
+
     runSpec' defaultConfig { timeout = Nothing } [ consoleReporter ] $ do
       describe "shell sanity checks" do
         it "ls err"
@@ -240,7 +247,7 @@ main = do
 config :: PlutipConfig
 config =
   { host: "127.0.0.1"
-  , port: UInt.fromInt 8084
+  , port: UInt.fromInt 8086
   , logLevel: Error
   -- Server configs are used to deploy the corresponding services.
   , ogmiosConfig:
