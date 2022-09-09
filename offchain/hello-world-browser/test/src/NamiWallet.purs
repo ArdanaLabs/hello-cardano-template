@@ -9,6 +9,7 @@ import Data.String (trim)
 import Effect (Effect)
 import Effect.Aff (bracket, try)
 import Effect.Exception (throw)
+import Faucet as Faucet
 import HelloWorld.Test.Constants (PaymentAddress)
 import HelloWorld.Test.Constants as Constants
 import HelloWorld.Test.Env as Env
@@ -63,9 +64,7 @@ unzipNamiExtension tmpDir = do
       void $ execSync ("unzip " <> extension <> " -d " <> tmpDir <> "/nami > /dev/zero || echo \"ignore warnings\"") defaultExecSyncOptions
 
 topup :: NamiWallet -> Effect Unit
-topup (NamiWallet { paymentAddress }) = do
-  let url = Constants.faucetUrl <> (unwrap paymentAddress) <> "?apiKey=" <> Constants.faucetApiKey
-  void $ execSync ("curl -XPOST " <> url) defaultExecSyncOptions
+topup (NamiWallet { paymentAddress }) = Faucet.topup $ unwrap paymentAddress
 
 mkTestOptions :: NamiWallet -> Effect TestOptions
 mkTestOptions testWallet = do

@@ -37,9 +37,3 @@ paymentAddressForTestWallet2 = PaymentAddress "addr_test1qp7h5urcrtq67nl2tcz473l
 
 paymentAddressForTestWallet3 :: PaymentAddress
 paymentAddressForTestWallet3 = PaymentAddress "addr_test1qpe8yzu8g9pdqq6xxyv2gm3rn39fwcp44pnx6mmng7nqhz3apa7n8svjgrag8vjn9v5juf2wgzfzh0wzxyezlachfx2san47c2"
-
-faucetUrl :: String
-faucetUrl = "https://faucet.cardano-testnet.iohkdev.io/send-money/"
-
-faucetApiKey :: String
-faucetApiKey = "r8m9YXmqCkFWDDZ2540IJaJwr1JBxqXB"
