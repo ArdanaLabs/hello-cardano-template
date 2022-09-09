@@ -4,7 +4,8 @@ module Test.HelloWorld.Signing
 
 import Contract.Prelude
 
-import Contract.Address (PaymentPubKeyHash(..), StakePubKeyHash(..), getWalletAddress)
+import Contract.Address (PaymentPubKeyHash(..), StakePubKeyHash(..), addressToBech32, getWalletAddress)
+import Contract.Config (PrivatePaymentKey(..))
 import Contract.Credential (Credential(..), StakingCredential(..))
 import Contract.Log (logError')
 import Contract.Monad (Contract, liftContractAffM, liftContractM, runContractInEnv)
@@ -12,10 +13,13 @@ import Contract.ScriptLookups as Lookups
 import Contract.Test.Plutip (withKeyWallet)
 import Contract.TxConstraints (TxConstraint(..), TxConstraints)
 import Contract.TxConstraints as Constraints
+import Contract.Value (lovelaceValueOf)
+import Data.BigInt as BigInt
+import Debug (traceM)
 import Effect.Exception (throw)
 import HelloWorld.Api (enoughForFees, initialize)
 import Plutus.Types.Address (Address(..))
-import Serialization (publicKeyHash)
+import Serialization (publicKeyFromPrivateKey, publicKeyHash)
 import ServerWallet (makeServerWallet)
 import Signing (getServerPubKey)
 import Test.HelloWorld.EnvRunner (EnvRunner, plutipConfig)
@@ -23,6 +27,7 @@ import Test.Spec (Spec, describe, it)
 import Types.PlutusData (PlutusData(Constr, Integer))
 import Types.TxConstraints (singleton)
 import Util (buildBalanceSignAndSubmitTx)
+import Wallet.Key (keyWalletPrivatePaymentKey)
 
 spec :: EnvRunner -> Spec Unit
 spec envRunner = do
@@ -34,6 +39,9 @@ spec envRunner = do
 useRunnerSimple :: forall a. Contract () a -> EnvRunner -> Aff Unit
 useRunnerSimple contract runner = do
   runner \env alice -> do
+    let PrivatePaymentKey priv = keyWalletPrivatePaymentKey alice
+    pubkey <- liftEffect $ publicKeyFromPrivateKey priv
+    traceM pubkey
     runContractInEnv env
       $ withKeyWallet alice
       $ void contract
@@ -59,7 +67,7 @@ signingTest = it "basic signing test" <$> useRunnerSimple do
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = mempty
     constraints :: TxConstraints Unit Unit
-    constraints =  singleton (MustPayToPubKeyAddress (PaymentPubKeyHash key) (StakePubKeyHash <$> skey) Nothing enoughForFees)
+    constraints =  singleton (MustPayToPubKeyAddress (PaymentPubKeyHash key) (StakePubKeyHash <$> skey) Nothing (lovelaceValueOf $ BigInt.fromInt 30_000_000))
   _ <- buildBalanceSignAndSubmitTx lookups constraints
   logError' "4"
   _ <- withKeyWallet serverWallet $ initialize 1 0

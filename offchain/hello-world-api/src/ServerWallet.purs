@@ -6,6 +6,7 @@ import Cardano.Types.Transaction (PublicKey(..), TransactionOutput(..), Utxos)
 import Cardano.Types.TransactionUnspentOutput (TransactionUnspentOutput(TransactionUnspentOutput))
 import Cardano.Types.Value (Value(..), mkCoin, unwrapNonAdaAsset)
 import Contract.Address (PaymentPubKey(..), PaymentPubKeyHash(..), PubKeyHash(..), pubKeyHashAddress)
+import Contract.Log (logError')
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Ord.Min (Min(..))
 import Effect.Exception (throw)
@@ -19,7 +20,9 @@ makeServerWallet :: Aff KeyWallet
 makeServerWallet = do
   pubKey@(PublicKey bech32) <- getServerPubKey
   pubKey2 <- case publicKeyFromBech32 bech32 of
-    Nothing -> liftEffect $ throw "pub key conversion error"
+    Nothing -> do
+      log $ "got bad string: " <> bech32
+      liftEffect $ throw "pub key conversion error"
     Just adr -> pure $ adr
   pure $ KeyWallet
     { address : \network -> pure $
