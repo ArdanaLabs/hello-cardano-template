@@ -30,7 +30,7 @@ import HelloWorld.Discovery.Api
   , incrementVault
   )
 import Test.HelloWorld.EnvRunner (EnvRunner, runEnvSpec)
-import Test.Spec (Spec, describe, it)
+import Test.Spec (Spec, describe, it,itOnly)
 import Test.Spec.Assertions (expectError, shouldEqual)
 import Types.PlutusData (PlutusData)
 import Util (buildBalanceSignAndSubmitTx, waitForTx, withOurLogger, maxWait)
@@ -137,8 +137,7 @@ spec = runEnvSpec do
       vault <- openVault protocol
       incrementVault protocol vault
 
-
-    it "find after inc" $ useRunnerSimple do
+    itOnly "find after inc" $ useRunnerSimple do
       protocol <- protocolInit
       vault <- openVault protocol
       incrementVault protocol vault

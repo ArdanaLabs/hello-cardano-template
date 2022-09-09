@@ -14,36 +14,32 @@ module HelloWorld.Discovery.Api
 import Contract.Prelude
 
 import CBOR as CBOR
-import Contract.ScriptLookups as Lookups
-import Contract.TxConstraints as Constraints
-import Contract.Value as Value
-import Data.BigInt as BigInt
-import Data.Map as Map
-
 import Contract.Address (getWalletAddress)
 import Contract.Hashing (datumHash)
-import Contract.Log (logDebug', logInfo')
+import Contract.Log (logDebug', logError', logInfo')
 import Contract.Monad (Contract, liftContractM)
-import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer), fromData)
-import Contract.Scripts (applyArgsM, validatorHash, mintingPolicyHash, scriptHashAddress)
+import Contract.PlutusData (Datum(Datum), PlutusData(..), Redeemer(Redeemer), fromData)
+import Contract.Prim.ByteArray (hexToByteArray, hexToByteArrayUnsafe)
+import Contract.ScriptLookups as Lookups
+import Contract.Scripts (Validator(..), applyArgsM, mintingPolicyHash, scriptHashAddress, validatorHash)
 import Contract.Transaction (TransactionInput, TransactionOutput)
 import Contract.TxConstraints (TxConstraints)
+import Contract.TxConstraints as Constraints
 import Contract.Value (Value, TokenName, scriptCurrencySymbol, mkTokenName, adaToken, valueOf)
+import Contract.Value as Value
 import Data.Array (head)
+import Data.BigInt as BigInt
 import Data.Map (Map, keys)
+import Data.Map as Map
 import Data.Set (toUnfoldable)
+import Debug (traceM)
 import Effect.Exception (throw)
-import HelloWorld.Discovery.Types
-  ( Protocol
-  , Vault(Vault)
-  , NftRedeemer(NftRedeemer)
-  , HelloRedeemer(HelloRedeemer)
-  , HelloAction(Inc)
-  )
+import HelloWorld.Discovery.Types (Protocol, Vault(Vault), NftRedeemer(NftRedeemer), HelloRedeemer(HelloRedeemer), HelloAction(Inc))
 import Plutus.Types.Address (Address(Address))
 import Plutus.Types.Credential (Credential(PubKeyCredential))
-import Plutus.Types.CurrencySymbol (CurrencySymbol, mpsSymbol)
+import Plutus.Types.CurrencySymbol (CurrencySymbol(..), mpsSymbol)
 import Plutus.Types.Value (symbols)
+import Test.Spec.Assertions (shouldEqual)
 import ToData (toData)
 import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
@@ -135,9 +131,14 @@ protocolInit = do
   configValidator <- liftContractM "decoding failed" $ decodeCbor CBOR.configScript
   let configVhash = validatorHash configValidator
   cs <- mintNft
-  vaultValidatorParam <- liftContractM "decoding failed" $ decodeCbor CBOR.vault
-  vaultValidator <- liftContractM "apply args failed" =<< applyArgsM vaultValidatorParam [ toData cs ]
+
+  vaultValidatorParam <- liftContractM "decoding failed" $ decodeCbor CBOR.trivialFail
+  vaultValidator <- liftContractM "apply args failed" =<< applyArgsM vaultValidatorParam [ Constr zero [ toData cs ] ]
+
+  fail <- liftContractM "apply args failed" =<< applyArgsM vaultValidatorParam [ toData cs ]
+
   let vaultValidatorHash = validatorHash vaultValidator
+
   vaultAuthParam <- liftContractM "decode failed" $ decodeCborMp CBOR.vaultAuthMp
   vaultAuthMp <- liftContractM "apply args failed" =<< applyArgsM vaultAuthParam [ toData $ scriptHashAddress vaultValidatorHash ]
   vaultAuthCs <- liftContractM "mpsSymbol failed" $ mpsSymbol $ mintingPolicyHash vaultAuthMp
@@ -153,7 +154,7 @@ protocolInit = do
         (enoughForFees <> Value.singleton cs adaToken (BigInt.fromInt 1))
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   config <- liftContractM "gave up waiting for sendDatumToScript TX" =<< waitForTx maxWait (scriptHashAddress configVhash) txId
-  pure $ { config, vaultValidator, nftMp: _ } vaultAuthMp
+  pure $ { config, vaultValidator : fail , nftMp: _ } vaultAuthMp
 
 -- This should never work
 stealConfig :: TransactionInput -> Contract () Unit
