@@ -2,10 +2,9 @@ module HelloWorld.AppM where
 
 import Contract.Prelude
 
-import HelloWorld.Api (initialize, increment, redeem)
-import Contract.Monad (liftContractAffM, liftContractM, runContract)
+import Contract.Monad (liftContractM, runContract)
 import Contract.Transaction (TransactionOutput(..))
-import Contract.Utxos (getUtxo)
+import Contract.Utxos (getUtxo, getWalletBalance)
 import Control.Alt ((<|>))
 import Control.Parallel (parallel, sequential)
 import Data.BigInt (fromInt, toNumber)
@@ -16,12 +15,12 @@ import Effect.Class (class MonadEffect)
 import Effect.Exception (error)
 import Halogen as H
 import Halogen.Store.Monad (class MonadStore, StoreT, getStore, runStoreT, updateStore)
+import HelloWorld.Api (increment, initialize, redeem)
 import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked(..), HelloWorldIncrement(..))
 import HelloWorld.Error (HelloWorldBrowserError(..), timeoutErrorMessage)
 import HelloWorld.Store as S
 import Plutus.Types.Value (getLovelace, valueToCoin)
 import Safe.Coerce (coerce)
-import Scripts (validatorHash)
 
 newtype AppM a = AppM (StoreT S.Action S.Store Aff a)
 
@@ -88,7 +87,9 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
       Nothing -> pure $ Right unit
       Just lastOutput' -> do
         result <- liftAff $ try $ timeout timeoutMilliSeconds $ ((void <<< _) <<< runContract) contractConfig $ do
+          initialBalance <- getWalletBalance'
           redeem param lastOutput'
+          checkIfSpent initialBalance
         case result of
           Left err ->
             if message err == timeoutErrorMessage then
@@ -98,3 +99,16 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
           Right _ -> do
             updateStore S.ResetLastOutput
             pure $ Right unit
+    where
+    getWalletBalance' = do
+      balance <- getWalletBalance >>= liftContractM "Get wallet balance failed"
+      pure $ getLovelace $ valueToCoin balance
+
+    checkIfSpent initialBalance = do
+      currentBalance <- getWalletBalance'
+
+      if currentBalance > initialBalance then
+        pure unit
+      else do
+        liftAff $ delay (Milliseconds 5_000.0)
+        checkIfSpent initialBalance
