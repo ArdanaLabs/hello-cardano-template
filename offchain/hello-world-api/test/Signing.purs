@@ -15,7 +15,9 @@ import Contract.TxConstraints (TxConstraint(..), TxConstraints)
 import Contract.TxConstraints as Constraints
 import Contract.Value (lovelaceValueOf)
 import Data.BigInt as BigInt
+import Data.Time.Duration (Seconds(..), fromDuration)
 import Debug (traceM)
+import Effect.Aff (delay)
 import Effect.Exception (throw)
 import HelloWorld.Api (enoughForFees, initialize)
 import Plutus.Types.Address (Address(..))
@@ -31,7 +33,7 @@ import Wallet.Key (keyWalletPrivatePaymentKey)
 
 spec :: EnvRunner -> Spec Unit
 spec envRunner = do
-  describe "HelloWorld.Api" $ do
+  describe "Signing tests" $ do
     traverse_ (_ $ envRunner)
       [ signingTest
       ]
@@ -69,7 +71,8 @@ signingTest = it "basic signing test" <$> useRunnerSimple do
     constraints :: TxConstraints Unit Unit
     constraints =  singleton (MustPayToPubKeyAddress (PaymentPubKeyHash key) (StakePubKeyHash <$> skey) Nothing (lovelaceValueOf $ BigInt.fromInt 30_000_000))
   _ <- buildBalanceSignAndSubmitTx lookups constraints
+  liftAff $ delay $ fromDuration $ Seconds 10.0
+  -- FIXME once the nft demo pr merges with the better waitForTx use that instead of this hack
   logError' "4"
   _ <- withKeyWallet serverWallet $ initialize 1 0
   logError' "5"
-  pure unit

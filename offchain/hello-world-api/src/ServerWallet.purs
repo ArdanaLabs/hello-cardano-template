@@ -9,6 +9,7 @@ import Contract.Address (PaymentPubKey(..), PaymentPubKeyHash(..), PubKeyHash(..
 import Contract.Log (logError')
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Ord.Min (Min(..))
+import Debug (traceM)
 import Effect.Exception (throw)
 import Serialization (publicKeyFromBech32, publicKeyHash)
 import Serialization.Address (addressFromBech32, enterpriseAddress, enterpriseAddressToAddress, keyHashCredential)
@@ -25,14 +26,17 @@ makeServerWallet = do
       liftEffect $ throw "pub key conversion error"
     Just adr -> pure $ adr
   pure $ KeyWallet
-    { address : \network -> pure $
-          pubKey2 #
-          publicKeyHash
-          >>> keyHashCredential
-          >>> { network, paymentCred: _ }
-          >>> enterpriseAddress
-          >>> enterpriseAddressToAddress
-    , paymentKey : undefined -- TODO better error
+    { address : \network -> do
+          log "about to sign"
+          let signed = pubKey2 #
+                publicKeyHash
+                >>> keyHashCredential
+                >>> { network, paymentCred: _ }
+                >>> enterpriseAddress
+                >>> enterpriseAddressToAddress
+          traceM signed
+          pure signed
+    , paymentKey : unsafeCoerce (throw "tried to access private key") unit
     , selectCollateral : selectCollateral
     , signTx : serverSignTx pubKey
     , stakeKey : Nothing
