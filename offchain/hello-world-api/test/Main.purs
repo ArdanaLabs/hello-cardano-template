@@ -16,6 +16,7 @@ import Test.HelloWorld.EnvRunner (Mode(..), getEnvRunner)
 import Test.Spec (describe)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec', defaultConfig)
+import Test.Volume.HelloWorld.Api as Test.Volume.HelloWorld.Api
 
 main :: Effect Unit
 main = do
@@ -32,6 +33,7 @@ main = do
       case mode of
         Local -> do
           describe "pure tests" do
+            Test.Volume.HelloWorld.Api.spec
             Encoding.spec
             Test.HelloWorld.Api.spec envRunner
             Test.HelloWorld.Api.localOnlySpec

@@ -102,12 +102,13 @@ with (removeAttrs ps-pkgs (attrNames self));
 
   cardano-transaction-lib =
     {
-      src.git =
-        {
-          repo = "https://github.com/Plutonomicon/cardano-transaction-lib.git";
-          ref = "develop";
-          rev = ctl-rev;
-        };
+      # src.git =
+      #   {
+      #     repo = "https://github.com/Plutonomicon/cardano-transaction-lib.git";
+      #     ref = "develop";
+      #     rev = ctl-rev;
+      #   };
+      src.path = "/home/marijan/workspace/platonic-systems/cardano-transaction-lib";
 
       info =
         {
@@ -179,6 +180,7 @@ with (removeAttrs ps-pkgs (attrNames self));
               spec
               spec-quickcheck
               strings
+              stringutils
               tailrec
               text-encoding
               these
