@@ -2,13 +2,13 @@ module HelloWorld.AppM where
 
 import Contract.Prelude
 
-import Contract.Monad (liftContractM, runContract)
+import Contract.Monad (Contract, liftContractM, runContract)
 import Contract.Transaction (TransactionOutput(..))
 import Contract.Utxos (getUtxo, getWalletBalance)
 import Control.Alt ((<|>))
 import Control.Parallel (parallel, sequential)
-import Data.BigInt (fromInt, toNumber)
-import Data.Time.Duration (Milliseconds(..))
+import Data.BigInt (BigInt, fromInt, toNumber)
+import Data.Time.Duration (Milliseconds(..), Seconds(..), fromDuration)
 import Effect.Aff (Aff, attempt, delay, message, throwError, try)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect)
@@ -48,6 +48,11 @@ timeout ms ma = do
     delay ms
     throwError $ error timeoutErrorMessage
 
+getWalletBalance' :: forall (r :: Row Type). Contract r BigInt
+getWalletBalance' = do
+  balance <- getWalletBalance >>= liftContractM "Get wallet balance failed"
+  pure $ getLovelace $ valueToCoin balance
+
 instance helloWorldApiAppM :: HelloWorldApi AppM where
   lock (HelloWorldIncrement param) initialValue = do
     { contractConfig } <- getStore
@@ -84,31 +89,39 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
   redeem (HelloWorldIncrement param) = do
     { contractConfig, lastOutput } <- getStore
     case lastOutput of
-      Nothing -> pure $ Right unit
+      Nothing -> pure $ Left (OtherError $ error "Last output not found")
       Just lastOutput' -> do
-        result <- liftAff $ try $ timeout timeoutMilliSeconds $ ((void <<< _) <<< runContract) contractConfig $ do
-          initialBalance <- getWalletBalance'
+        result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
+          balanceBeforeRedeem <- getWalletBalance'
           redeem param lastOutput'
-          checkIfSpent initialBalance
+          pure balanceBeforeRedeem
         case result of
           Left err ->
             if message err == timeoutErrorMessage then
               pure $ Left TimeoutError
             else
               pure $ Left (OtherError err)
-          Right _ -> do
+          Right balanceBeforeRedeem -> do
             updateStore S.ResetLastOutput
-            pure $ Right unit
+            pure $ Right balanceBeforeRedeem
+  unlock balanceBeforeRedeem = do
+    { contractConfig } <- getStore
+    result <- liftAff $ try $ timeout timeoutMilliSeconds $ ((void <<< _) <<< runContract) contractConfig $ do
+      go balanceBeforeRedeem
+    case result of
+      Left err ->
+        if message err == timeoutErrorMessage then
+          pure $ Left TimeoutError
+        else
+          pure $ Left (OtherError err)
+      Right _ -> do
+        pure $ Right unit
     where
-    getWalletBalance' = do
-      balance <- getWalletBalance >>= liftContractM "Get wallet balance failed"
-      pure $ getLovelace $ valueToCoin balance
+    go balanceBeforeRedeem' = do
+      balance <- getWalletBalance'
 
-    checkIfSpent initialBalance = do
-      currentBalance <- getWalletBalance'
-
-      if currentBalance > initialBalance then
+      if balance > balanceBeforeRedeem' then
         pure unit
       else do
-        liftAff $ delay (Milliseconds 5_000.0)
-        checkIfSpent initialBalance
+        liftAff $ delay $ fromDuration (Seconds 5.0)
+        go balanceBeforeRedeem'
