@@ -4,7 +4,6 @@ module Test.HelloWorld.Discovery.Api
 
 import Contract.Prelude
 
-
 import Contract.ScriptLookups as Lookups
 import Contract.TxConstraints as Constraints
 import Data.BigInt as BigInt
@@ -21,8 +20,8 @@ import Contract.Wallet (withKeyWallet)
 import Data.Time.Duration (Minutes(..))
 import Effect.Exception (throw)
 import HelloWorld.Discovery.Api (makeNftPolicy, mintNft, seedTx)
-import Test.HelloWorld.EnvRunner (EnvRunner,runEnvSpec)
-import Test.Spec (Spec ,describe, it)
+import Test.HelloWorld.EnvRunner (EnvRunner, runEnvSpec)
+import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (expectError, shouldEqual)
 import Types.PlutusData (PlutusData)
 import Util (buildBalanceSignAndSubmitTx, waitForTx, withOurLogger, maxWait)

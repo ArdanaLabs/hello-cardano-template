@@ -13,7 +13,7 @@ import Contract.Wallet (withKeyWallet)
 import Data.BigInt as BigInt
 import HelloWorld.Api (initialize, increment, redeem, query, helloScript, sendDatumToScript, datumLookup)
 import Plutus.Types.Value (Value, valueToCoin, getLovelace)
-import Test.HelloWorld.EnvRunner (EnvRunner,plutipConfig,runEnvSpec)
+import Test.HelloWorld.EnvRunner (EnvRunner, plutipConfig, runEnvSpec)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldReturn, expectError, shouldEqual, shouldSatisfy)
 import Util (withOurLogger)
@@ -27,87 +27,88 @@ spec = runEnvSpec do
     describe "initialize" do
       it "should set the datum to the initial value" $
         \(envRunner :: EnvRunner) -> do
-        let
-          initialDatum = 20
-          incParam = 200
-        envRunner \env alice -> do
-          initialValue <-
-            runContractInEnv (withApiLogger env) $
-              withKeyWallet alice do
-                getWalletBalance >>= liftContractM "Get initial wallet balance failed"
-          initOutput <-
-            runContractInEnv (withApiLogger env) $
-              withKeyWallet alice do
-                initialize incParam initialDatum
-          (datum /\ value) <-
-            runContractInEnv (withApiLogger env) $
-              withKeyWallet alice do
-                query initOutput
-          datum `shouldEqual` initialDatum
-          getAmount value `shouldSatisfy` (>) (getAmount initialValue)
+          let
+            initialDatum = 20
+            incParam = 200
+          envRunner \env alice -> do
+            initialValue <-
+              runContractInEnv (withApiLogger env) $
+                withKeyWallet alice do
+                  getWalletBalance >>= liftContractM "Get initial wallet balance failed"
+            initOutput <-
+              runContractInEnv (withApiLogger env) $
+                withKeyWallet alice do
+                  initialize incParam initialDatum
+            (datum /\ value) <-
+              runContractInEnv (withApiLogger env) $
+                withKeyWallet alice do
+                  query initOutput
+            datum `shouldEqual` initialDatum
+            getAmount value `shouldSatisfy` (>) (getAmount initialValue)
 
     describe "increment" do
       it "should increment the datum by the specified increment parameter" $
         \(envRunner :: EnvRunner) -> do
-        let
-          initialDatum = 10
-          incParam = 2
-        envRunner \env alice -> do
-          initOutput <-
-            runContractInEnv (withApiLogger env) $
-              withKeyWallet alice do
-                initialize incParam initialDatum
-          incOutput <-
-            runContractInEnv (withApiLogger env) $
-              withKeyWallet alice do
-                increment incParam initOutput
-          (datum /\ _) <-
-            runContractInEnv (withApiLogger env) $
-              withKeyWallet alice do
-                query incOutput
-          datum `shouldEqual` (initialDatum + incParam)
+          let
+            initialDatum = 10
+            incParam = 2
+          envRunner \env alice -> do
+            initOutput <-
+              runContractInEnv (withApiLogger env) $
+                withKeyWallet alice do
+                  initialize incParam initialDatum
+            incOutput <-
+              runContractInEnv (withApiLogger env) $
+                withKeyWallet alice do
+                  increment incParam initOutput
+            (datum /\ _) <-
+              runContractInEnv (withApiLogger env) $
+                withKeyWallet alice do
+                  query incOutput
+            datum `shouldEqual` (initialDatum + incParam)
 
     describe "redeem" do
       it "should succeed after successful initialization and increment" $
         \(envRunner :: EnvRunner) -> do
-        let
-          initialDatum = 20
-          incParam = 50
-        envRunner \env alice -> do
-          initialValue <-
+          let
+            initialDatum = 20
+            incParam = 50
+          envRunner \env alice -> do
+            initialValue <-
+              runContractInEnv (withApiLogger env) $
+                withKeyWallet alice do
+                  getWalletBalance >>= liftContractM "Get initial wallet balance failed"
+            initOutput <-
+              runContractInEnv (withApiLogger env) $
+                withKeyWallet alice do
+                  initialize incParam initialDatum
+            incOutput <-
+              runContractInEnv (withApiLogger env) $
+                withKeyWallet alice do
+                  increment incParam initOutput
             runContractInEnv (withApiLogger env) $
               withKeyWallet alice do
-                getWalletBalance >>= liftContractM "Get initial wallet balance failed"
-          initOutput <-
-            runContractInEnv (withApiLogger env) $
-              withKeyWallet alice do
-                initialize incParam initialDatum
-          incOutput <-
-            runContractInEnv (withApiLogger env) $
-              withKeyWallet alice do
-                increment incParam initOutput
-          runContractInEnv (withApiLogger env) $
-            withKeyWallet alice do
-              redeem incParam incOutput `shouldReturn` unit
-          (datum /\ value) <-
-            runContractInEnv (withApiLogger env) $
-              withKeyWallet alice do
-                query incOutput
-          datum `shouldEqual` (initialDatum + incParam)
-          getAmount value `shouldSatisfy` (>) (getAmount initialValue)
+                redeem incParam incOutput `shouldReturn` unit
+            (datum /\ value) <-
+              runContractInEnv (withApiLogger env) $
+                withKeyWallet alice do
+                  query incOutput
+            datum `shouldEqual` (initialDatum + incParam)
+            getAmount value `shouldSatisfy` (>) (getAmount initialValue)
 
-    describe "datumLookup" $
-      it "should fetch the correct datum" $
+    describe "datumLookup"
+      $ it "should fetch the correct datum"
+      $
         \(envRunner :: EnvRunner) -> do
-        let expectedDatum = 3
-        envRunner \env alice -> do
-          datum <- runContractInEnv (withApiLogger env) $
-            withKeyWallet alice do
-              validator <- helloScript 1
-              vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-              ti1 <- sendDatumToScript expectedDatum vhash
-              datumLookup ti1
-          datum `shouldEqual` expectedDatum
+          let expectedDatum = 3
+          envRunner \env alice -> do
+            datum <- runContractInEnv (withApiLogger env) $
+              withKeyWallet alice do
+                validator <- helloScript 1
+                vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+                ti1 <- sendDatumToScript expectedDatum vhash
+                datumLookup ti1
+            datum `shouldEqual` expectedDatum
 
 withApiLogger :: ContractEnv () -> ContractEnv ()
 withApiLogger = withOurLogger "apiTest.log"
