@@ -68,6 +68,7 @@ hasNft { nftMp } out = case (mpsSymbol $ mintingPolicyHash nftMp) of
 incrementVault :: Protocol -> TokenName -> Contract () Unit
 incrementVault protocol vaultId = do
   txin /\ txOut <- getVault protocol vaultId
+  utxos <- getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
   (oldVault :: Vault) <- liftContractM "failed to parse old vault" <<< fromData <<< unwrap =<< getDatum (unwrap txOut).datum
   cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
   let
@@ -81,14 +82,16 @@ incrementVault protocol vaultId = do
     newVault = Vault { owner: (unwrap oldVault).owner, count: (unwrap oldVault).count + BigInt.fromInt 1 }
 
     lookups :: Lookups.ScriptLookups PlutusData
-    lookups =
-      Lookups.mintingPolicy protocol.nftMp
-        <> Lookups.validator protocol.vaultValidator
+    lookups = Lookups.validator protocol.vaultValidator
+      <> Lookups.unspentOutputs utxos
+    -- TODO emmiting this lookup can cause eronious success
+    -- presumably the tx that gets through doesn't do much
+    -- but it needs to be looked into and ideally there
+    -- should be tests to show it's not dangerous
 
     constraints :: TxConstraints Unit Unit
-    constraints =
-      Constraints.mustSpendScriptOutput txin red
-        <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) enoughForFees
+    constraints = Constraints.mustSpendScriptOutput txin red
+      <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) enoughForFees
   -- TODO figure out what's going on with the nft
   -- it fails to balance if you add the nft?
   -- but looking it up by the nft works so it's sending it anyway?
@@ -132,10 +135,8 @@ protocolInit = do
   let configVhash = validatorHash configValidator
   cs <- mintNft
 
-  vaultValidatorParam <- liftContractM "decoding failed" $ decodeCbor CBOR.trivialFail
-  vaultValidator <- liftContractM "apply args failed" =<< applyArgsM vaultValidatorParam [ Constr zero [ toData cs ] ]
-
-  fail <- liftContractM "apply args failed" =<< applyArgsM vaultValidatorParam [ toData cs ]
+  vaultValidatorParam <- liftContractM "decoding failed" $ decodeCbor CBOR.vault
+  vaultValidator <- liftContractM "apply args failed" =<< applyArgsM vaultValidatorParam [ toData cs ]
 
   let vaultValidatorHash = validatorHash vaultValidator
 
@@ -154,7 +155,7 @@ protocolInit = do
         (enoughForFees <> Value.singleton cs adaToken (BigInt.fromInt 1))
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   config <- liftContractM "gave up waiting for sendDatumToScript TX" =<< waitForTx maxWait (scriptHashAddress configVhash) txId
-  pure $ { config, vaultValidator : fail , nftMp: _ } vaultAuthMp
+  pure $ { config, vaultValidator , nftMp: _ } vaultAuthMp
 
 -- This should never work
 stealConfig :: TransactionInput -> Contract () Unit

@@ -185,7 +185,7 @@ authTokenMP = phoistAcyclic $
  the nft must be burned
 -}
 vaultAdrValidator :: ClosedTerm (PData :--> PValidator)
-vaultAdrValidator = plam $ \configNftCsData datum' redeemer' sc -> unTermCont $ do
+vaultAdrValidator = ptrace "test" $ plam $ \configNftCsData datum' redeemer' sc -> unTermCont $ do
   datum :: Term _ CounterDatum <- parseData datum'
   info <- pletC $ pfield @"txInfo" # sc
   passert_ "owner signed tx" $
@@ -193,8 +193,18 @@ vaultAdrValidator = plam $ \configNftCsData datum' redeemer' sc -> unTermCont $ 
   redeemer :: Term _ HelloRedeemer <- parseData redeemer'
   configNftCs :: Term _ PCurrencySymbol <- parseData configNftCsData
   PJust config <- pmatchC $ pfind # (isConfigInput # configNftCs) # (pfield @"referenceInputs" # info)
-  POutputDatum configDatum <- pmatchC $ pfield @"datum" #$ pfield @"resolved" # config
-  PDatum configData <- pmatchC $ pfield @"outputDatum" # configDatum
+  configDatum <- pmatchC (pfield @"datum" #$ pfield @"resolved" # config) >>= \case
+      POutputDatum d -> pure $ pfield @"outputDatum" # d
+      POutputDatumHash dh -> do
+          pmatchC (
+            plookup
+              # pfromData (pfield @"datumHash" # dh)
+              #$ pfromData (pfield @"datums" # info)
+            ) >>= \case
+              PJust configDatum -> pure configDatum
+              PNothing -> fail "datum lookup failed"
+      PNoOutputDatum _ -> fail "no data"
+  PDatum configData <- pmatchC configDatum
   nftCs <- parseData configData
   PSpending outRef <- pmatchC $ pfield @"purpose" # sc
   PJust inInfo <- pmatchC $ pfindOwnInput # (pfield @"inputs" # info) #$ pfield @"_0" # outRef

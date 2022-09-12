@@ -32,7 +32,7 @@ validatorToHexString v = concatMap byteToHex $ BSL.unpack $ serialise (v :: Vali
 closedTermToHexString :: forall (p :: PType). ClosedTerm p -> Maybe String
 closedTermToHexString t = do
   -- TODO turn off tracing before production
-  case compile def {tracingMode = NoTracing} t of
+  case compile def {tracingMode = DoTracing} t of
     Left _ -> Nothing
     Right script -> Just $ concatMap byteToHex $ BSL.unpack $ serialise (script :: Script)
 

@@ -132,12 +132,12 @@ spec = runEnvSpec do
       vault <- openVault protocol
       getVault protocol vault
 
-    it "increment a vault" $ useRunnerSimple do
+    itOnly "increment a vault" $ useRunnerSimple do
       protocol <- protocolInit
       vault <- openVault protocol
       incrementVault protocol vault
 
-    itOnly "find after inc" $ useRunnerSimple do
+    it "find after inc" $ useRunnerSimple do
       protocol <- protocolInit
       vault <- openVault protocol
       incrementVault protocol vault
