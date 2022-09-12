@@ -150,7 +150,7 @@ with (removeAttrs ps-pkgs (attrNames self));
       src.git =
         {
           repo = "https://github.com/Plutonomicon/cardano-transaction-lib.git";
-          ref = "babbage";
+          ref = "develop";
           rev = ctl-rev;
         };
 

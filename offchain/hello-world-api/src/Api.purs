@@ -83,6 +83,7 @@ sendDatumToScript n vhash = do
             # BigInt.fromInt
             # toData
         )
+        Constraints.DatumInline
         enoughForFees
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   liftContractM "gave up waiting for sendDatumToScript TX" =<< waitForTx waitTime (scriptHashAddress vhash) txId
@@ -110,6 +111,7 @@ setDatumAtScript n vhash validator txInput = do
                   # BigInt.fromInt
                   # toData
               )
+              Constraints.DatumInline
               enoughForFees
           )
   txId <- buildBalanceSignAndSubmitTx lookups constraints

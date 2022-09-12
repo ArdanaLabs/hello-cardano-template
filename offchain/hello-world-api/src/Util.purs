@@ -20,9 +20,9 @@ import Contract.Log (logDebug', logError', logInfo', logWarn')
 import Contract.Monad (Contract, ContractEnv, liftedE, liftContractM)
 import Contract.PlutusData (Datum, getDatumByHash)
 import Contract.Scripts (MintingPolicy(..), Validator(..))
-import Contract.Transaction (OutputDatum(..), TransactionHash(TransactionHash), TransactionInput(TransactionInput), TransactionOutput, balanceAndSignTxE, plutusV2Script, submitE)
+import Contract.Transaction (OutputDatum(..), TransactionHash(TransactionHash), TransactionInput(TransactionInput), TransactionOutputWithRefScript, balanceAndSignTxE, plutusV2Script, submitE)
 import Contract.TxConstraints (TxConstraints)
-import Contract.Utxos (UtxoM(UtxoM), utxosAt, getUtxo)
+import Contract.Utxos (utxosAt, getUtxo)
 import Control.Monad.Error.Class (throwError)
 import Data.Array (toUnfoldable, fromFoldable, catMaybes)
 import Data.List (filterM, List)
@@ -50,11 +50,11 @@ waitForTx
   -> Contract () (Maybe TransactionInput)
 waitForTx d adr txid = do
   let
-    hasTransactionId :: TransactionInput /\ TransactionOutput -> Boolean
+    hasTransactionId :: TransactionInput /\ TransactionOutputWithRefScript -> Boolean
     hasTransactionId (TransactionInput tx /\ _) =
       tx.transactionId == txid
   utxos <- getUtxos adr
-  case fst <$> find hasTransactionId (Map.toUnfoldable utxos :: Array (TransactionInput /\ TransactionOutput)) of
+  case fst <$> find hasTransactionId (Map.toUnfoldable utxos :: Array (TransactionInput /\ TransactionOutputWithRefScript)) of
     Nothing ->
       if (fromDuration d <= (Milliseconds 0.0)) then do
         pure Nothing
@@ -160,9 +160,9 @@ waitForSpent' d inputs = do
   else
     pure spent
 
-getUtxos :: Address -> Contract () (Map TransactionInput TransactionOutput)
+getUtxos :: Address -> Contract () (Map TransactionInput TransactionOutputWithRefScript)
 getUtxos adr = do
-  UtxoM utxos <- fromMaybe (UtxoM Map.empty) <$> utxosAt adr
+  utxos <- fromMaybe (Map.empty) <$> utxosAt adr
   pure utxos
 
 getTxScanUrl :: NetworkId -> TransactionInput -> String

@@ -22,7 +22,7 @@ import Contract.PlutusData (Datum(Datum), PlutusData(..), Redeemer(Redeemer), fr
 import Contract.Prim.ByteArray (hexToByteArray, hexToByteArrayUnsafe)
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (Validator(..), applyArgsM, mintingPolicyHash, scriptHashAddress, validatorHash)
-import Contract.Transaction (TransactionInput, TransactionOutput)
+import Contract.Transaction (TransactionInput, TransactionOutputWithRefScript)
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
 import Contract.Value (Value, TokenName, scriptCurrencySymbol, mkTokenName, adaToken, valueOf)
@@ -45,31 +45,31 @@ import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
 import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getUtxos, waitForTx, maxWait, getDatum)
 
-getAllVaults :: Protocol -> Contract () (Map TransactionInput TransactionOutput)
+getAllVaults :: Protocol -> Contract () (Map TransactionInput TransactionOutputWithRefScript)
 getAllVaults protocol =
   getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
     <#> Map.filter (hasNft protocol)
 
-getVault :: Protocol -> TokenName -> Contract () (TransactionInput /\ TransactionOutput)
+getVault :: Protocol -> TokenName -> Contract () (TransactionInput /\ TransactionOutputWithRefScript)
 getVault protocol tn = do
   vaults <- getAllVaults protocol
   cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
-  let valid = Map.filter (\vault -> valueOf (unwrap vault).amount cs tn > BigInt.fromInt 0) vaults
+  let valid = Map.filter (\vault -> valueOf (unwrap (unwrap vault).output).amount cs tn > BigInt.fromInt 0) vaults
   case Map.toUnfoldable valid of
     [] -> liftEffect $ throw "no vaults"
     [ vault ] -> pure vault
     _ -> liftEffect $ throw "more than one vault of the same token name, this is really bad"
 
-hasNft :: Protocol -> TransactionOutput -> Boolean
+hasNft :: Protocol -> TransactionOutputWithRefScript -> Boolean
 hasNft { nftMp } out = case (mpsSymbol $ mintingPolicyHash nftMp) of
   Nothing -> false -- protocol was invalid
-  Just cs -> cs `elem` (symbols $ (unwrap out).amount)
+  Just cs -> cs `elem` (symbols $ (unwrap (unwrap out).output).amount)
 
 incrementVault :: Protocol -> TokenName -> Contract () Unit
 incrementVault protocol vaultId = do
   txin /\ txOut <- getVault protocol vaultId
   utxos <- getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
-  (oldVault :: Vault) <- liftContractM "failed to parse old vault" <<< fromData <<< unwrap =<< getDatum (unwrap txOut).datum
+  (oldVault :: Vault) <- liftContractM "failed to parse old vault" <<< fromData <<< unwrap =<< getDatum (unwrap (unwrap txOut).output).datum
   cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
   let
     _nft :: Value
@@ -91,7 +91,7 @@ incrementVault protocol vaultId = do
 
     constraints :: TxConstraints Unit Unit
     constraints = Constraints.mustSpendScriptOutput txin red
-      <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) enoughForFees
+      <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) Constraints.DatumInline enoughForFees
   -- TODO figure out what's going on with the nft
   -- it fails to balance if you add the nft?
   -- but looking it up by the nft works so it's sending it anyway?
@@ -122,7 +122,7 @@ openVault protocol = do
 
     constraints :: TxConstraints Unit Unit
     constraints =
-      Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) (enoughForFees <> nft)
+      Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline (enoughForFees <> nft)
         <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) nft
   txid <- buildBalanceSignAndSubmitTx lookups constraints
   _ <- waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txid
@@ -152,6 +152,7 @@ protocolInit = do
       Constraints.mustPayToScript
         configVhash
         (Datum $ vaultAuthCs # toData)
+        Constraints.DatumInline
         (enoughForFees <> Value.singleton cs adaToken (BigInt.fromInt 1))
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   config <- liftContractM "gave up waiting for sendDatumToScript TX" =<< waitForTx maxWait (scriptHashAddress configVhash) txId

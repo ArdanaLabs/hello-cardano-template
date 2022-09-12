@@ -132,7 +132,7 @@ spec = runEnvSpec do
       vault <- openVault protocol
       getVault protocol vault
 
-    itOnly "increment a vault" $ useRunnerSimple do
+    it "increment a vault" $ useRunnerSimple do
       protocol <- protocolInit
       vault <- openVault protocol
       incrementVault protocol vault
