@@ -34,7 +34,7 @@ import Data.Map as Map
 import Data.Set (toUnfoldable)
 import Debug (traceM)
 import Effect.Exception (throw)
-import HelloWorld.Discovery.Types (Protocol, Vault(Vault), NftRedeemer(NftRedeemer), HelloRedeemer(HelloRedeemer), HelloAction(Inc))
+import HelloWorld.Discovery.Types (Protocol, VaultId,Vault(Vault), NftRedeemer(NftRedeemer), HelloRedeemer(HelloRedeemer), HelloAction(Inc))
 import Plutus.Types.Address (Address(Address))
 import Plutus.Types.Credential (Credential(PubKeyCredential))
 import Plutus.Types.CurrencySymbol (CurrencySymbol(..), mpsSymbol)
@@ -50,11 +50,11 @@ getAllVaults protocol =
   getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
     <#> Map.filter (hasNft protocol)
 
-getVault :: Protocol -> TokenName -> Contract () (TransactionInput /\ TransactionOutputWithRefScript)
-getVault protocol tn = do
+getVault :: Protocol -> VaultId -> Contract () (TransactionInput /\ TransactionOutputWithRefScript)
+getVault protocol token = do
   vaults <- getAllVaults protocol
   cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
-  let valid = Map.filter (\vault -> valueOf (unwrap (unwrap vault).output).amount cs tn > BigInt.fromInt 0) vaults
+  let valid = Map.filter (\vault -> valueOf (unwrap (unwrap vault).output).amount cs token > BigInt.fromInt 0) vaults
   case Map.toUnfoldable valid of
     [] -> liftEffect $ throw "no vaults"
     [ vault ] -> pure vault
@@ -65,18 +65,18 @@ hasNft { nftMp } out = case (mpsSymbol $ mintingPolicyHash nftMp) of
   Nothing -> false -- protocol was invalid
   Just cs -> cs `elem` (symbols $ (unwrap (unwrap out).output).amount)
 
-incrementVault :: Protocol -> TokenName -> Contract () Unit
+incrementVault :: Protocol -> VaultId -> Contract () Unit
 incrementVault protocol vaultId = do
   txin /\ txOut <- getVault protocol vaultId
   utxos <- getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
   (oldVault :: Vault) <- liftContractM "failed to parse old vault" <<< fromData <<< unwrap =<< getDatum (unwrap (unwrap txOut).output).datum
   cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
   let
-    _nft :: Value
-    _nft = Value.singleton cs vaultId $ BigInt.fromInt 1
+    nft :: Value
+    nft = Value.singleton cs vaultId $ BigInt.fromInt 1
 
     red :: Redeemer
-    red = Redeemer $ toData $ HelloRedeemer { tn: vaultId, action: Inc }
+    red = Redeemer $ toData $ HelloRedeemer { tn: vaultId ,action: Inc }
 
     newVault :: Vault
     newVault = Vault { owner: (unwrap oldVault).owner, count: (unwrap oldVault).count + BigInt.fromInt 1 }
@@ -92,15 +92,13 @@ incrementVault protocol vaultId = do
 
     constraints :: TxConstraints Unit Unit
     constraints = Constraints.mustSpendScriptOutput txin red
-      <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) Constraints.DatumInline enoughForFees
-  -- TODO figure out what's going on with the nft
-  -- it fails to balance if you add the nft?
-  -- but looking it up by the nft works so it's sending it anyway?
+      <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) Constraints.DatumInline (enoughForFees <> nft)
+      <> Constraints.mustReferenceOutput protocol.config
   txid <- buildBalanceSignAndSubmitTx lookups constraints
   _ <- waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txid
   pure unit
 
-openVault :: Protocol -> Contract () TokenName
+openVault :: Protocol -> Contract () VaultId
 openVault protocol = do
   nftCs <- liftContractM "mpsSymbol failed" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
   txOut <- seedTx
@@ -117,9 +115,7 @@ openVault protocol = do
     vault = Vault { owner: pkh, count: BigInt.fromInt 0 }
 
     lookups :: Lookups.ScriptLookups PlutusData
-    lookups =
-      Lookups.mintingPolicy protocol.nftMp
-        <> Lookups.validator protocol.vaultValidator
+    lookups = Lookups.mintingPolicy protocol.nftMp
 
     constraints :: TxConstraints Unit Unit
     constraints =

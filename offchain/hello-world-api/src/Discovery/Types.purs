@@ -1,6 +1,7 @@
 module HelloWorld.Discovery.Types
   ( Vault(Vault)
   , Protocol
+  , VaultId
   , HelloRedeemer(HelloRedeemer)
   , HelloAction(Inc, Spend)
   , NftRedeemer(NftRedeemer, Burning)
@@ -20,6 +21,8 @@ import Types.Scripts (MintingPolicy)
 import ToData (class ToData, toData)
 
 type Protocol = { config :: TransactionInput, vaultValidator :: Validator, nftMp :: MintingPolicy }
+
+type VaultId = TokenName
 
 newtype Vault = Vault { owner :: PubKeyHash, count :: BigInt.BigInt }
 

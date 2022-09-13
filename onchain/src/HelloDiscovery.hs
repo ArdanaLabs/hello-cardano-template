@@ -10,9 +10,8 @@ import Plutarch.Prelude
 
 import Plutarch.Api.V2 (
   PAddress,
-  PDatum (PDatum),
-  PDatumHash (PDatumHash),
   PMintingPolicy,
+  PDatum(PDatum),
   POutputDatum (..),
   PPubKeyHash,
   PScriptPurpose (PMinting, PSpending),
@@ -42,12 +41,13 @@ import Plutarch.Api.V1.Value qualified as Value
 import Plutarch.Api.V1.AssocMap (plookup)
 import Plutarch.Api.V1.Value (pforgetPositive)
 
-import Plutarch.Builtin (pforgetData)
+import Plutarch.Builtin (pforgetData, pserialiseData)
 import Plutarch.DataRepr (PDataFields)
 import Plutarch.Extensions.Api (passert, passert_, pfindOwnInput, pgetContinuingOutput)
 import Plutarch.Extensions.Data (parseData, parseDatum)
 import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extra.TermCont
+import Plutarch.Crypto (pblake2b_256)
 
 configScriptCbor :: String
 configScriptCbor = validatorToHexString $ mkValidator def configScript
@@ -136,8 +136,7 @@ authTokenMP = phoistAcyclic $
         -- Token name is hash of ref
         PTokenName tn' <- pmatchC tn
         passert_ "tn was hash of ref" $
-          plookup # pcon (PDatumHash tn') # (pfield @"datums" # info)
-            #== pcon (PJust $ pcon $ PDatum $ pforgetData $ pdata ref)
+          tn' #== (pblake2b_256 #$ pserialiseData # pforgetData (pdata ref))
 
         -- mints exactly one token
         passert_ "did not mint exactly one token of this currency symbol" $
@@ -275,7 +274,7 @@ newtype CounterDatum (s :: S)
           )
       )
   deriving stock (Generic)
-  deriving anyclass (PlutusType, PIsData, PDataFields, PEq)
+  deriving anyclass (PlutusType, PIsData, PDataFields, PEq, PShow)
 
 instance DerivePlutusType CounterDatum where type DPTStrat _ = PlutusTypeData
 instance PTryFrom PData (PAsData CounterDatum)
