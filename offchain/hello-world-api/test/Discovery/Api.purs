@@ -44,8 +44,8 @@ spec = runEnvSpec do
         tx1' <- liftContractM "time out" =<< waitForTx maxWait (scriptHashAddress vhash) tx1
         utxos <- getUtxos (scriptHashAddress vhash)
         buildBalanceSignAndSubmitTx
-            (Lookups.validator val <> Lookups.unspentOutputs utxos)
-            (Constraints.mustSpendScriptOutput tx1' (Redeemer $ unit # toData))
+          (Lookups.validator val <> Lookups.unspentOutputs utxos)
+          (Constraints.mustSpendScriptOutput tx1' (Redeemer $ unit # toData))
 
     describe "nft" do
 
