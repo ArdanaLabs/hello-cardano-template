@@ -108,7 +108,7 @@ with (removeAttrs ps-pkgs (attrNames self));
       #     ref = "develop";
       #     rev = ctl-rev;
       #   };
-      src.path = "/home/marijan/workspace/platonic-systems/cardano-transaction-lib";
+      src.path = "/home/marijan/workspace/cardano-transaction-lib";
 
       info =
         {
