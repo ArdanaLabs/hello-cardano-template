@@ -72,6 +72,6 @@ plutipConfig =
       , password: "ctxlib"
       , dbname: "ctxlib"
       }
-  , customLogger : Nothing -- TODO api logger here
-  , suppressLogs : false
+  , customLogger: Nothing -- TODO api logger here
+  , suppressLogs: false
   }

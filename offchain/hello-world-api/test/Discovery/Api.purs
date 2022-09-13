@@ -30,7 +30,7 @@ import HelloWorld.Discovery.Api
   , incrementVault
   )
 import Test.HelloWorld.EnvRunner (EnvRunner, runEnvSpec)
-import Test.Spec (Spec, describe, it,itOnly)
+import Test.Spec (Spec, describe, it, itOnly)
 import Test.Spec.Assertions (expectError, shouldEqual)
 import Types.PlutusData (PlutusData)
 import Util (buildBalanceSignAndSubmitTx, waitForTx, withOurLogger, maxWait)
@@ -53,8 +53,8 @@ spec = runEnvSpec do
 
           constraints :: TxConstraints Unit Unit
           constraints = Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
-            -- TODO same as mintNft talk to ctl about this
-            -- <> Constraints.mustSpendPubKeyOutput txOut
+        -- TODO same as mintNft talk to ctl about this
+        -- <> Constraints.mustSpendPubKeyOutput txOut
         txId <- buildBalanceSignAndSubmitTx lookups constraints
         adr <- liftContractM "no wallet" =<< getWalletAddress
         _ <- waitForTx maxWait adr txId
@@ -71,8 +71,8 @@ spec = runEnvSpec do
 
           constraints :: TxConstraints Unit Unit
           constraints = Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
-            -- TODO talk to ctl about this too
-            -- <> Constraints.mustSpendPubKeyOutput txOut
+        -- TODO talk to ctl about this too
+        -- <> Constraints.mustSpendPubKeyOutput txOut
         txId <- buildBalanceSignAndSubmitTx lookups constraints
         adr <- liftContractM "no Address" =<< getWalletAddress
         _ <- liftContractM "wait timed out" =<< waitForTx waitTime adr txId
@@ -97,8 +97,8 @@ spec = runEnvSpec do
 
           mintConstraints :: TxConstraints Unit Unit
           mintConstraints = Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
-            -- TODO this one too
-            -- <> Constraints.mustSpendPubKeyOutput txOut
+        -- TODO this one too
+        -- <> Constraints.mustSpendPubKeyOutput txOut
         txid <- buildBalanceSignAndSubmitTx mintLookups mintConstraints
         adr <- liftContractM "no wallet" =<< getWalletAddress
         _ <- waitForTx waitTime adr txid
@@ -142,7 +142,6 @@ spec = runEnvSpec do
       vault <- openVault protocol
       incrementVault protocol vault
       getVault protocol vault
-
 
 useRunnerSimple :: forall a. Contract () a -> EnvRunner -> Aff Unit
 useRunnerSimple contract runner = do

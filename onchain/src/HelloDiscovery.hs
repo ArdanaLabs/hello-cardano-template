@@ -185,42 +185,45 @@ authTokenMP = phoistAcyclic $
  the nft must be burned
 -}
 vaultAdrValidator :: ClosedTerm (PData :--> PValidator)
-vaultAdrValidator = ptrace "test" $ plam $ \configNftCsData datum' redeemer' sc -> unTermCont $ do
-  datum :: Term _ CounterDatum <- parseData datum'
-  info <- pletC $ pfield @"txInfo" # sc
-  passert_ "owner signed tx" $
-    pelem # (pfield @"owner" # datum) #$ pfield @"signatories" # info
-  redeemer :: Term _ HelloRedeemer <- parseData redeemer'
-  configNftCs :: Term _ PCurrencySymbol <- parseData configNftCsData
-  PJust config <- pmatchC $ pfind # (isConfigInput # configNftCs) # (pfield @"referenceInputs" # info)
-  configDatum <- pmatchC (pfield @"datum" #$ pfield @"resolved" # config) >>= \case
-      POutputDatum d -> pure $ pfield @"outputDatum" # d
-      POutputDatumHash dh -> do
-          pmatchC (
-            plookup
-              # pfromData (pfield @"datumHash" # dh)
-              #$ pfromData (pfield @"datums" # info)
-            ) >>= \case
+vaultAdrValidator = ptrace "test" $
+  plam $ \configNftCsData datum' redeemer' sc -> unTermCont $ do
+    datum :: Term _ CounterDatum <- parseData datum'
+    info <- pletC $ pfield @"txInfo" # sc
+    passert_ "owner signed tx" $
+      pelem # (pfield @"owner" # datum) #$ pfield @"signatories" # info
+    redeemer :: Term _ HelloRedeemer <- parseData redeemer'
+    configNftCs :: Term _ PCurrencySymbol <- parseData configNftCsData
+    PJust config <- pmatchC $ pfind # (isConfigInput # configNftCs) # (pfield @"referenceInputs" # info)
+    configDatum <-
+      pmatchC (pfield @"datum" #$ pfield @"resolved" # config) >>= \case
+        POutputDatum d -> pure $ pfield @"outputDatum" # d
+        POutputDatumHash dh -> do
+          pmatchC
+            ( plookup
+                # pfromData (pfield @"datumHash" # dh)
+                #$ pfromData (pfield @"datums" # info)
+            )
+            >>= \case
               PJust configDatum -> pure configDatum
               PNothing -> fail "datum lookup failed"
-      PNoOutputDatum _ -> fail "no data"
-  PDatum configData <- pmatchC configDatum
-  nftCs <- parseData configData
-  PSpending outRef <- pmatchC $ pfield @"purpose" # sc
-  PJust inInfo <- pmatchC $ pfindOwnInput # (pfield @"inputs" # info) #$ pfield @"_0" # outRef
-  nftTn :: Term _ PTokenName <- pletC $ pfield @"tokenName" # redeemer
-  passert_ "has nft" $ 0 #< (Value.pvalueOf # (pfield @"value" #$ pfield @"resolved" # inInfo) # nftCs # nftTn)
-  pmatchC (pfield @"action" # redeemer) >>= \case
-    Inc _ -> do
-      out <- pgetContinuingOutput sc
-      POutputDatum outDatum <- pmatchC $ pfield @"datum" # out
-      datum2 :: Term _ CounterDatum <- parseDatum (pfield @"outputDatum" # outDatum)
-      passert_ "owner is the same" $ pfield @"owner" # datum2 #== pfield @"owner" # datum
-      passert_ "count is 1 more" $ pfield @"count" # datum2 #== pfield @"count" # datum + (1 :: Term _ PInteger)
-      passert "kept nft" $ 0 #< Value.pvalueOf # (pfield @"value" # out) # nftCs # nftTn
-    Spend _ -> do
-      let minting = pfield @"mint" # info
-      passert "burned nft" $ Value.pvalueOf # minting # nftCs # nftTn #< 0
+        PNoOutputDatum _ -> fail "no data"
+    PDatum configData <- pmatchC configDatum
+    nftCs <- parseData configData
+    PSpending outRef <- pmatchC $ pfield @"purpose" # sc
+    PJust inInfo <- pmatchC $ pfindOwnInput # (pfield @"inputs" # info) #$ pfield @"_0" # outRef
+    nftTn :: Term _ PTokenName <- pletC $ pfield @"tokenName" # redeemer
+    passert_ "has nft" $ 0 #< (Value.pvalueOf # (pfield @"value" #$ pfield @"resolved" # inInfo) # nftCs # nftTn)
+    pmatchC (pfield @"action" # redeemer) >>= \case
+      Inc _ -> do
+        out <- pgetContinuingOutput sc
+        POutputDatum outDatum <- pmatchC $ pfield @"datum" # out
+        datum2 :: Term _ CounterDatum <- parseDatum (pfield @"outputDatum" # outDatum)
+        passert_ "owner is the same" $ pfield @"owner" # datum2 #== pfield @"owner" # datum
+        passert_ "count is 1 more" $ pfield @"count" # datum2 #== pfield @"count" # datum + (1 :: Term _ PInteger)
+        passert "kept nft" $ 0 #< Value.pvalueOf # (pfield @"value" # out) # nftCs # nftTn
+      Spend _ -> do
+        let minting = pfield @"mint" # info
+        passert "burned nft" $ Value.pvalueOf # minting # nftCs # nftTn #< 0
 
 isConfigInput :: ClosedTerm (PCurrencySymbol :--> PTxInInfo :--> PBool)
 isConfigInput = phoistAcyclic $

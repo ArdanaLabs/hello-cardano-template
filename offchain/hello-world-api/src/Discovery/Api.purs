@@ -84,6 +84,7 @@ incrementVault protocol vaultId = do
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.validator protocol.vaultValidator
       <> Lookups.unspentOutputs utxos
+
     -- TODO emmiting this lookup can cause eronious success
     -- presumably the tx that gets through doesn't do much
     -- but it needs to be looked into and ideally there
@@ -156,7 +157,7 @@ protocolInit = do
         (enoughForFees <> Value.singleton cs adaToken (BigInt.fromInt 1))
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   config <- liftContractM "gave up waiting for sendDatumToScript TX" =<< waitForTx maxWait (scriptHashAddress configVhash) txId
-  pure $ { config, vaultValidator , nftMp: _ } vaultAuthMp
+  pure $ { config, vaultValidator, nftMp: _ } vaultAuthMp
 
 -- This should never work
 stealConfig :: TransactionInput -> Contract () Unit
@@ -187,8 +188,8 @@ mintNft = do
 
     constraints :: TxConstraints Unit Unit
     constraints = Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
-      -- TODO talk to ctl about this again
-      -- <> Constraints.mustSpendPubKeyOutput txOut
+  -- TODO talk to ctl about this again
+  -- <> Constraints.mustSpendPubKeyOutput txOut
   logDebug' "about to submit"
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   logDebug' "submited"
