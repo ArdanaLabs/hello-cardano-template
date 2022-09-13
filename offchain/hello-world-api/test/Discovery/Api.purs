@@ -52,9 +52,9 @@ spec = runEnvSpec do
           lookups = Lookups.mintingPolicy nftPolicy
 
           constraints :: TxConstraints Unit Unit
-          constraints =
-            Constraints.mustSpendPubKeyOutput txOut
-              <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+          constraints = Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+            -- TODO same as mintNft talk to ctl about this
+            -- <> Constraints.mustSpendPubKeyOutput txOut
         txId <- buildBalanceSignAndSubmitTx lookups constraints
         adr <- liftContractM "no wallet" =<< getWalletAddress
         _ <- waitForTx maxWait adr txId
@@ -70,9 +70,9 @@ spec = runEnvSpec do
           lookups = Lookups.mintingPolicy nftPolicy
 
           constraints :: TxConstraints Unit Unit
-          constraints =
-            Constraints.mustSpendPubKeyOutput txOut
-              <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+          constraints = Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+            -- TODO talk to ctl about this too
+            -- <> Constraints.mustSpendPubKeyOutput txOut
         txId <- buildBalanceSignAndSubmitTx lookups constraints
         adr <- liftContractM "no Address" =<< getWalletAddress
         _ <- liftContractM "wait timed out" =<< waitForTx waitTime adr txId
@@ -96,9 +96,9 @@ spec = runEnvSpec do
           mintLookups = Lookups.mintingPolicy nftPolicy
 
           mintConstraints :: TxConstraints Unit Unit
-          mintConstraints =
-            Constraints.mustSpendPubKeyOutput txOut
-              <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+          mintConstraints = Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+            -- TODO this one too
+            -- <> Constraints.mustSpendPubKeyOutput txOut
         txid <- buildBalanceSignAndSubmitTx mintLookups mintConstraints
         adr <- liftContractM "no wallet" =<< getWalletAddress
         _ <- waitForTx waitTime adr txid

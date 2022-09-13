@@ -14,7 +14,7 @@ module HelloWorld.Discovery.Api
 import Contract.Prelude
 
 import CBOR as CBOR
-import Contract.Address (getWalletAddress)
+import Contract.Address (getWalletAddress, getWalletCollateral)
 import Contract.Hashing (datumHash)
 import Contract.Log (logDebug', logError', logInfo')
 import Contract.Monad (Contract, liftContractM)
@@ -43,7 +43,7 @@ import Test.Spec.Assertions (shouldEqual)
 import ToData (toData)
 import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
-import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getUtxos, waitForTx, maxWait, getDatum)
+import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getDatum, getUtxos, maxWait, waitForTx)
 
 getAllVaults :: Protocol -> Contract () (Map TransactionInput TransactionOutputWithRefScript)
 getAllVaults protocol =
@@ -186,9 +186,9 @@ mintNft = do
     lookups = Lookups.mintingPolicy nftPolicy
 
     constraints :: TxConstraints Unit Unit
-    constraints =
-      Constraints.mustSpendPubKeyOutput txOut
-        <> Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+    constraints = Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+      -- TODO talk to ctl about this again
+      -- <> Constraints.mustSpendPubKeyOutput txOut
   logDebug' "about to submit"
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   logDebug' "submited"
@@ -207,6 +207,9 @@ seedTx :: Contract () TransactionInput
 seedTx = do
   adr <- liftContractM "no wallet" =<< getWalletAddress
   utxos <- getUtxos adr
+  logInfo' $ "utxos: " <> show utxos
+  col <- liftContractM "no collateral" =<< getWalletCollateral
+  logInfo' $ "col: " <> show col
   liftContractM "no utxos" $ head $ toUnfoldable $ keys utxos
 
 enoughForFees :: Value.Value
