@@ -9,6 +9,7 @@ module Hello (
   paramHelloCbor,
   trivialCbor,
   trivialFailCbor,
+  trivialSerialise,
   HelloRedemer (..),
 ) where
 
@@ -23,7 +24,7 @@ import PlutusLedgerApi.V1.Credential (Credential (..))
 import Plutarch.Prelude
 
 import Plutarch.Api.V2 (PScriptContext, PValidator, mkValidator, validatorHash)
-import Plutarch.Builtin (pforgetData)
+import Plutarch.Builtin (pforgetData, pserialiseData)
 import Plutarch.Extensions.Api (passert, pgetContinuingDatum)
 import Plutarch.Unsafe (punsafeCoerce)
 
@@ -49,6 +50,9 @@ trivialCbor = closedTermToHexString trivial
 
 trivialFailCbor :: Maybe String
 trivialFailCbor = closedTermToHexString trivialFail
+
+trivialSerialise :: Maybe String
+trivialSerialise = closedTermToHexString $ plam $ \a _ _ -> pserialiseData # a
 
 helloValidator :: Validator
 helloValidator = mkValidator def {tracingMode = DetTracing} (paramValidator #$ pforgetData (pdata (1 :: Term _ PInteger)))

@@ -4,40 +4,49 @@ module Test.HelloWorld.Discovery.Api
 
 import Contract.Prelude
 
-import Contract.ScriptLookups as Lookups
-import Contract.TxConstraints as Constraints
-import Data.BigInt as BigInt
-import Plutus.Types.Value as Value
-
-import Contract.Address (getWalletAddress)
+import CBOR as CBOR
+import Contract.Address (getWalletAddress, scriptHashAddress)
 import Contract.Log (logInfo')
 import Contract.Monad (Contract, liftContractM)
+import Contract.PlutusData (Datum(..), Redeemer(Redeemer), toData)
+import Contract.ScriptLookups as Lookups
+import Contract.Scripts (validatorHash)
 import Contract.Test.Plutip (runContractInEnv)
 import Contract.TxConstraints (TxConstraints)
+import Contract.TxConstraints as Constraints
 import Contract.Utxos (getUtxo, getWalletBalance)
 import Contract.Value (adaToken, scriptCurrencySymbol)
 import Contract.Wallet (withKeyWallet)
+import Data.BigInt as BigInt
 import Data.Time.Duration (Minutes(..))
 import Effect.Exception (throw)
-import HelloWorld.Discovery.Api
-  ( makeNftPolicy
-  , mintNft
-  , seedTx
-  , protocolInit
-  , stealConfig
-  , openVault
-  , getVault
-  , incrementVault
-  )
+import HelloWorld.Api (enoughForFees)
+import HelloWorld.Discovery.Api (makeNftPolicy, mintNft, seedTx, protocolInit, stealConfig, openVault, getVault, incrementVault)
+import Plutus.Types.Value as Value
 import Test.HelloWorld.EnvRunner (EnvRunner, runEnvSpec)
 import Test.Spec (Spec, describe, it, itOnly)
 import Test.Spec.Assertions (expectError, shouldEqual)
 import Types.PlutusData (PlutusData)
-import Util (buildBalanceSignAndSubmitTx, waitForTx, withOurLogger, maxWait)
+import Util (buildBalanceSignAndSubmitTx, decodeCbor, getUtxos, maxWait, waitForTx, withOurLogger)
 
 spec :: EnvRunner -> Spec Unit
 spec = runEnvSpec do
   describe "HelloWorld.Discovery.Api" do
+
+    describe "misc" do
+
+      it "script with serialise works" $ useRunnerSimple do
+        val <- liftContractM "failed to decode" $ decodeCbor CBOR.trivialSerialise
+        let vhash = validatorHash val
+        tx1 <- buildBalanceSignAndSubmitTx
+          mempty
+          (Constraints.mustPayToScript vhash (Datum $ unit # toData) Constraints.DatumInline enoughForFees)
+        tx1' <- liftContractM "time out" =<< waitForTx maxWait (scriptHashAddress vhash) tx1
+        utxos <- getUtxos (scriptHashAddress vhash)
+        buildBalanceSignAndSubmitTx
+            (Lookups.validator val <> Lookups.unspentOutputs utxos)
+            (Constraints.mustSpendScriptOutput tx1' (Redeemer $ unit # toData))
+
     describe "nft" do
 
       it "mint runs" $ useRunnerSimple do
