@@ -34,7 +34,7 @@ import Data.Map as Map
 import Data.Set (toUnfoldable)
 import Debug (traceM)
 import Effect.Exception (throw)
-import HelloWorld.Discovery.Types (Protocol, VaultId,Vault(Vault), NftRedeemer(NftRedeemer), HelloRedeemer(HelloRedeemer), HelloAction(Inc))
+import HelloWorld.Discovery.Types (Protocol, VaultId, Vault(Vault), NftRedeemer(NftRedeemer), HelloRedeemer(HelloRedeemer), HelloAction(Inc))
 import Plutus.Types.Address (Address(Address))
 import Plutus.Types.Credential (Credential(PubKeyCredential))
 import Plutus.Types.CurrencySymbol (CurrencySymbol(..), mpsSymbol)
@@ -76,7 +76,7 @@ incrementVault protocol vaultId = do
     nft = Value.singleton cs vaultId $ BigInt.fromInt 1
 
     red :: Redeemer
-    red = Redeemer $ toData $ HelloRedeemer { tn: vaultId ,action: Inc }
+    red = Redeemer $ toData $ HelloRedeemer { tn: vaultId, action: Inc }
 
     newVault :: Vault
     newVault = Vault { owner: (unwrap oldVault).owner, count: (unwrap oldVault).count + BigInt.fromInt 1 }

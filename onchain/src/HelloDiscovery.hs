@@ -10,8 +10,8 @@ import Plutarch.Prelude
 
 import Plutarch.Api.V2 (
   PAddress,
+  PDatum (PDatum),
   PMintingPolicy,
-  PDatum(PDatum),
   POutputDatum (..),
   PPubKeyHash,
   PScriptPurpose (PMinting, PSpending),
@@ -42,12 +42,12 @@ import Plutarch.Api.V1.AssocMap (plookup)
 import Plutarch.Api.V1.Value (pforgetPositive)
 
 import Plutarch.Builtin (pforgetData, pserialiseData)
+import Plutarch.Crypto (pblake2b_256)
 import Plutarch.DataRepr (PDataFields)
 import Plutarch.Extensions.Api (passert, passert_, pfindOwnInput, pgetContinuingOutput)
 import Plutarch.Extensions.Data (parseData, parseDatum)
 import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extra.TermCont
-import Plutarch.Crypto (pblake2b_256)
 
 configScriptCbor :: String
 configScriptCbor = validatorToHexString $ mkValidator def configScript

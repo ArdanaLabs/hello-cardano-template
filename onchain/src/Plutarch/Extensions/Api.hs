@@ -23,7 +23,7 @@ import Plutarch.Api.V2 (
 import Plutarch.Extensions.Data (parseData)
 import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extensions.Monad (pmatchFieldC)
-import Plutarch.Extra.TermCont (pmatchC, pletC)
+import Plutarch.Extra.TermCont (pletC, pmatchC)
 
 {- | enfroces that there is a unique continuing output gets it's Datum
  - and converts it to the desired type via pfromData
