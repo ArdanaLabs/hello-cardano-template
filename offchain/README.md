@@ -1,5 +1,17 @@
 # How to build and run
 
+## Test-bundles
+
+To run all offchain tests with plutip use
+```
+nix run .#offchain:test:local
+```
+to run all offchain tests with testnet run
+```
+nix run .#offchain:test:testnet
+```
+(this requires ctl-runtime)
+
 ## Ctl-runtime
 
 In order for some tests and apps to work you need to be running the Ctl-runtime.
@@ -20,11 +32,18 @@ The cli and api tests use plutip.
 ## The API
 
 The api also has a dev shell which can be entered with `nix develop .#offchain:hello-world-api`.
-From the dev shell you can run tests with `purs-nix test` obtain a repl with `purs-nix repl` or compile the api with `purs-nix compile`.
+From the dev shell you can:
+- run tests with `purs-nix test` (after setting the mode `export MODE=local` or `export MODE=testnet`)
+- obtain a repl with `purs-nix repl`
+- compile the api with `purs-nix compile` This will not compile tests
 
-To run the api tests without the devshell run:
+To run the api tests with plutip run:
 ```
-nix run .#offchain:hello-world-api:test
+nix run .#offchain:hello-world-api:test:local
+```
+or with testnet run:
+```
+nix run .#offchain:hello-world-api:test:testnet
 ```
 
 ## The Browser-app
@@ -43,7 +62,7 @@ To run the browser tests with testnet use:
 nix run .#offchain:hello-world-browser:test:testnet
 ```
 
-To run the browser tests with local use:
+To run the browser tests with plutip use:
 ```
 nix run .#offchain:hello-world-browser:test:local
 ```
@@ -73,14 +92,19 @@ nix build .#hello-world-cli
 ./result/bin/hello-world-cli <args>
 ```
 
-To run the CLI tests, run:
+To run the CLI tests, with plutip run:
 ```
-nix run .#offchain:hello-world-cli:test
+nix run .#offchain:hello-world-cli:test:local
+```
+or with testnet run
+```
+nix run .#offchain:hello-world-cli:test:testnet
 ```
 or in the dev shell run
 ```
 nix build .#offchain:hello-world-cli
 export PATH=$PATH:./result/bin
+export MODE=local # or testnet if you want testnet
 purs-nix test
 ```
 
@@ -99,12 +123,3 @@ Here's an example config:
 , "network" : "Testnet"
 }
 ```
-
-# Test-wallet
-
-Many of our tests use a keywallet on testnet.
-The test-wallet address is:
-`addr_test1qqevfdhu80jsmjhzkf8lkkv5rza9h6k0u6hmwwr0r7vyjt9j3f374a2all0hc6vzxa6v7sax7du2lk5fu5q592d5fhqswar4hc`.
-Here's a link to faucet: https://testnets.cardano.org/en/testnets/cardano/tools/faucet/ .
-If the wallet runs out tests can fail.
-
