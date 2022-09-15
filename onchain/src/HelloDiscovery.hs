@@ -115,63 +115,64 @@ standardNft = phoistAcyclic $
    its datum must parse and the counter must be 0
 -}
 authTokenMP :: ClosedTerm (PData :--> PMintingPolicy)
-authTokenMP = ptrace "vault auth mp" $ phoistAcyclic $
-  plam $ \vaultAdrData redeemerData sc -> unTermCont $ do
-    (redeemer :: Term _ AuthRedeemer) <- parseData redeemerData
-    info <- pletC $ pfield @"txInfo" # sc
-    let (minting' :: Term _ (PValue _ _)) = pfield @"mint" # info
-    PMinting cs' <- pmatchC (pfield @"purpose" # sc)
-    cs :: Term _ PCurrencySymbol <- pletC $ pfield @"_0" # cs'
-    PValue minting <- pmatchC minting'
-    PJust mintedAtCs <- pmatchC $ AssocMap.plookup # cs # minting
-    pmatchC redeemer >>= \case
-      Burning _ -> do
-        passert "was just burning" $
-          AssocMap.pall # plam (#< 0) # mintedAtCs
-      AuthRedeemer red -> do
-        -- misc lookups
-        vaultAdr :: Term _ PAddress <- parseData vaultAdrData
-        tn <- pletC $ pfield @"tokenName" # red
-        ref :: Term _ PTxOutRef <- pletC $ pfield @"txOutRef" # red
+authTokenMP = ptrace "vault auth mp" $
+  phoistAcyclic $
+    plam $ \vaultAdrData redeemerData sc -> unTermCont $ do
+      (redeemer :: Term _ AuthRedeemer) <- parseData redeemerData
+      info <- pletC $ pfield @"txInfo" # sc
+      let (minting' :: Term _ (PValue _ _)) = pfield @"mint" # info
+      PMinting cs' <- pmatchC (pfield @"purpose" # sc)
+      cs :: Term _ PCurrencySymbol <- pletC $ pfield @"_0" # cs'
+      PValue minting <- pmatchC minting'
+      PJust mintedAtCs <- pmatchC $ AssocMap.plookup # cs # minting
+      pmatchC redeemer >>= \case
+        Burning _ -> do
+          passert "was just burning" $
+            AssocMap.pall # plam (#< 0) # mintedAtCs
+        AuthRedeemer red -> do
+          -- misc lookups
+          vaultAdr :: Term _ PAddress <- parseData vaultAdrData
+          tn <- pletC $ pfield @"tokenName" # red
+          ref :: Term _ PTxOutRef <- pletC $ pfield @"txOutRef" # red
 
-        -- Token name is hash of ref
-        PTokenName tn' <- pmatchC tn
-        passert_ "tn was hash of ref" $
-          -- FIXME replace punsafeCoerce with pserialiseData once it doesn't cause an error
-          -- and remove the True ||
-          -- related to https://github.com/Plutonomicon/cardano-transaction-lib/issues/103
-          pcon PTrue #||
-          tn' #== (pblake2b_256 #$ punsafeCoerce $ pforgetData (pdata ref))
+          -- Token name is hash of ref
+          PTokenName tn' <- pmatchC tn
+          passert_ "tn was hash of ref" $
+            -- FIXME replace punsafeCoerce with pserialiseData once it doesn't cause an error
+            -- and remove the True ||
+            -- related to https://github.com/Plutonomicon/cardano-transaction-lib/issues/103
+            pcon PTrue
+              #|| tn' #== (pblake2b_256 #$ punsafeCoerce $ pforgetData (pdata ref))
 
-        -- mints exactly one token
-        passert_ "did not mint exactly one token of this currency symbol" $
-          mintedAtCs #== (AssocMap.psingleton # tn # 1)
+          -- mints exactly one token
+          passert_ "did not mint exactly one token of this currency symbol" $
+            mintedAtCs #== (AssocMap.psingleton # tn # 1)
 
-        -- Exactly one vault output
-        let outputs = pfield @"outputs" # info
-        let filtered = pfilter # plam ((vaultAdr #==) . (pfield @"address" #)) # outputs
-        vault <- pletC $ unsingleton filtered
+          -- Exactly one vault output
+          let outputs = pfield @"outputs" # info
+          let filtered = pfilter # plam ((vaultAdr #==) . (pfield @"address" #)) # outputs
+          vault <- pletC $ unsingleton filtered
 
-        -- NFT sent to vault
-        val <- pletC $ pfield @"value" # vault
-        passert_ "nft went to vault" $ (Value.psingleton # cs # tn # 1) #<= pforgetPositive val
+          -- NFT sent to vault
+          val <- pletC $ pfield @"value" # vault
+          passert_ "nft went to vault" $ (Value.psingleton # cs # tn # 1) #<= pforgetPositive val
 
-        -- Counter starts at 0
-        outDatum <- pletC $ pfield @"datum" # vault
-        datum' <-
-          pmatchC outDatum >>= \case
-            POutputDatum d -> pure $ pfield @"outputDatum" # d
-            POutputDatumHash dh -> do
-              PJust datum <-
-                pmatchC $
-                  plookup
-                    # pfromData (pfield @"datumHash" # dh)
-                    #$ pfromData (pfield @"datums" # info)
-              pure datum
-            PNoOutputDatum _ -> fail "no data"
-        PDatum dat <- pmatchC datum'
-        (datum :: Term _ CounterDatum) <- parseData dat
-        passert "count wasn't 0" $ (0 :: Term _ PInteger) #== pfield @"count" # datum
+          -- Counter starts at 0
+          outDatum <- pletC $ pfield @"datum" # vault
+          datum' <-
+            pmatchC outDatum >>= \case
+              POutputDatum d -> pure $ pfield @"outputDatum" # d
+              POutputDatumHash dh -> do
+                PJust datum <-
+                  pmatchC $
+                    plookup
+                      # pfromData (pfield @"datumHash" # dh)
+                      #$ pfromData (pfield @"datums" # info)
+                pure datum
+              PNoOutputDatum _ -> fail "no data"
+          PDatum dat <- pmatchC datum'
+          (datum :: Term _ CounterDatum) <- parseData dat
+          passert "count wasn't 0" $ (0 :: Term _ PInteger) #== pfield @"count" # datum
 
 {- | The vault address validator
  paremetized by an asset class
@@ -219,15 +220,15 @@ vaultAdrValidator = ptrace "vaultAdrValidator" $
     passert_ "has nft" $ 0 #< (Value.pvalueOf # (pfield @"value" #$ pfield @"resolved" # inInfo) # nftCs # nftTn)
     pmatchC (pfield @"action" # redeemer) >>= \case
       Inc _ -> do
-          out <- pgetContinuingOutput sc
-          POutputDatum outDatum <- pmatchC $ pfield @"datum" # out
-          datum2 :: Term _ CounterDatum <- parseDatum (pfield @"outputDatum" # outDatum)
-          passert_ "owner is the same" $ pfield @"owner" # datum2 #== pfield @"owner" # datum
-          passert_ "count is 1 more" $ pfield @"count" # datum2 #== pfield @"count" # datum + (1 :: Term _ PInteger)
-          passert "kept nft" $ 0 #< Value.pvalueOf # (pfield @"value" # out) # nftCs # nftTn
+        out <- pgetContinuingOutput sc
+        POutputDatum outDatum <- pmatchC $ pfield @"datum" # out
+        datum2 :: Term _ CounterDatum <- parseDatum (pfield @"outputDatum" # outDatum)
+        passert_ "owner is the same" $ pfield @"owner" # datum2 #== pfield @"owner" # datum
+        passert_ "count is 1 more" $ pfield @"count" # datum2 #== pfield @"count" # datum + (1 :: Term _ PInteger)
+        passert "kept nft" $ 0 #< Value.pvalueOf # (pfield @"value" # out) # nftCs # nftTn
       Spend _ -> do
-          let minting = pfield @"mint" # info
-          passert "burned nft" $ Value.pvalueOf # minting # nftCs # nftTn #< 0
+        let minting = pfield @"mint" # info
+        passert "burned nft" $ Value.pvalueOf # minting # nftCs # nftTn #< 0
 
 isConfigInput :: ClosedTerm (PCurrencySymbol :--> PTxInInfo :--> PBool)
 isConfigInput = phoistAcyclic $
