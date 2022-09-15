@@ -6,7 +6,7 @@ import Contract.Prelude
 
 import CBOR as CBOR
 import Contract.Address (getWalletAddress, scriptHashAddress)
-import Contract.Log (logError', logInfo')
+import Contract.Log (logInfo')
 import Contract.Monad (Contract, liftContractM)
 import Contract.PlutusData (Datum(..), Redeemer(Redeemer), toData)
 import Contract.ScriptLookups as Lookups
@@ -21,10 +21,19 @@ import Data.BigInt as BigInt
 import Data.Time.Duration (Minutes(..))
 import Effect.Exception (throw)
 import HelloWorld.Api (enoughForFees)
-import HelloWorld.Discovery.Api (getVault, incrementVault, makeNftPolicy, mintNft, openVault, protocolInit, seedTx, stealConfig, closeVault)
+import HelloWorld.Discovery.Api
+  ( getVault
+  , incrementVault
+  , makeNftPolicy
+  , mintNft
+  , openVault
+  , protocolInit
+  , seedTx
+  , closeVault
+  )
 import Plutus.Types.Value as Value
 import Test.HelloWorld.EnvRunner (EnvRunner, runEnvSpec)
-import Test.Spec (Spec, describe, it, itOnly)
+import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (expectError, shouldEqual)
 import Types.PlutusData (PlutusData)
 import Util (buildBalanceSignAndSubmitTx, decodeCbor, getUtxos, maxWait, waitForTx, withOurLogger)
@@ -130,7 +139,16 @@ spec = runEnvSpec do
 
     it "initialize protocol but fail to steal the utxo" $ useRunnerSimple do
       txin <- _.config <$> protocolInit
-      expectError $ stealConfig txin
+      validator <- liftContractM "decoding failed" $ decodeCbor CBOR.configScript
+      let vhash = validatorHash validator
+      utxos <- getUtxos (scriptHashAddress vhash)
+      let
+        lookups :: Lookups.ScriptLookups PlutusData
+        lookups = Lookups.validator validator <> Lookups.unspentOutputs utxos
+
+        constraints :: TxConstraints Unit Unit
+        constraints = Constraints.mustSpendScriptOutput txin (Redeemer (toData unit))
+      expectError $ buildBalanceSignAndSubmitTx lookups constraints
 
     it "init protocol and open a vault" $ useRunnerSimple do
       protocol <- protocolInit
