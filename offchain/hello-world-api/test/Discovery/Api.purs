@@ -6,7 +6,7 @@ import Contract.Prelude
 
 import CBOR as CBOR
 import Contract.Address (getWalletAddress, scriptHashAddress)
-import Contract.Log (logInfo')
+import Contract.Log (logError', logInfo')
 import Contract.Monad (Contract, liftContractM)
 import Contract.PlutusData (Datum(..), Redeemer(Redeemer), toData)
 import Contract.ScriptLookups as Lookups
@@ -21,7 +21,7 @@ import Data.BigInt as BigInt
 import Data.Time.Duration (Minutes(..))
 import Effect.Exception (throw)
 import HelloWorld.Api (enoughForFees)
-import HelloWorld.Discovery.Api (makeNftPolicy, mintNft, seedTx, protocolInit, stealConfig, openVault, getVault, incrementVault)
+import HelloWorld.Discovery.Api (getVault, incrementVault, makeNftPolicy, mintNft, openVault, protocolInit, seedTx, stealConfig, closeVault)
 import Plutus.Types.Value as Value
 import Test.HelloWorld.EnvRunner (EnvRunner, runEnvSpec)
 import Test.Spec (Spec, describe, it, itOnly)
@@ -151,6 +151,11 @@ spec = runEnvSpec do
       vault <- openVault protocol
       incrementVault protocol vault
       getVault protocol vault
+
+    it "close a vault" $ useRunnerSimple do
+      protocol <- protocolInit
+      vault <- openVault protocol
+      closeVault protocol vault
 
 useRunnerSimple :: forall a. Contract () a -> EnvRunner -> Aff Unit
 useRunnerSimple contract runner = do

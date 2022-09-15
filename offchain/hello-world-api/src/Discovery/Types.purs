@@ -52,7 +52,7 @@ instance FromData Vault where
 
 instance ToData HelloAction where
   toData Inc = Constr zero []
-  toData Spend = Constr zero []
+  toData Spend = Constr one []
 
 instance ToData HelloRedeemer where
   toData (HelloRedeemer { tn, action }) = Constr zero [ toData tn, toData action ]

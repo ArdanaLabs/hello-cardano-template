@@ -5,6 +5,7 @@ module HelloWorld.Discovery.Api
   , getAllVaults
   , getVault
   , incrementVault
+  , closeVault
   -- testing exports
   , stealConfig -- TODO move to test module
   , seedTx
@@ -34,7 +35,7 @@ import Data.Map as Map
 import Data.Set (toUnfoldable)
 import Debug (traceM)
 import Effect.Exception (throw)
-import HelloWorld.Discovery.Types (Protocol, VaultId, Vault(Vault), NftRedeemer(NftRedeemer), HelloRedeemer(HelloRedeemer), HelloAction(Inc))
+import HelloWorld.Discovery.Types (HelloAction(..), HelloRedeemer(HelloRedeemer), NftRedeemer(..), Protocol, Vault(Vault), VaultId)
 import Plutus.Types.Address (Address(Address))
 import Plutus.Types.Credential (Credential(PubKeyCredential))
 import Plutus.Types.CurrencySymbol (CurrencySymbol(..), mpsSymbol)
@@ -65,6 +66,37 @@ hasNft { nftMp } out = case (mpsSymbol $ mintingPolicyHash nftMp) of
   Nothing -> false -- protocol was invalid
   Just cs -> cs `elem` (symbols $ (unwrap (unwrap out).output).amount)
 
+closeVault :: Protocol -> VaultId -> Contract () Unit
+closeVault protocol vaultId = do
+  txin <- fst <$> getVault protocol vaultId
+  utxos <- getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
+  cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
+  key <- liftContractM "no wallet" =<< ownPaymentPubKeyHash
+  adr <- liftContractM "no wallet" =<< getWalletAddress
+  let
+    nft :: Value
+    nft = Value.singleton cs vaultId $ BigInt.fromInt 1
+
+    nftRed :: NftRedeemer
+    nftRed = Burning
+
+    red :: Redeemer
+    red = Redeemer $ toData $ HelloRedeemer { tn: vaultId, action: Spend }
+
+    lookups :: Lookups.ScriptLookups PlutusData
+    lookups = Lookups.validator protocol.vaultValidator
+      <> Lookups.unspentOutputs utxos
+      <> Lookups.mintingPolicy protocol.nftMp
+
+    constraints :: TxConstraints Unit Unit
+    constraints = Constraints.mustSpendScriptOutput txin red
+      <> Constraints.mustReferenceOutput protocol.config
+      <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) (Value.negation nft)
+      <> Constraints.mustBeSignedBy key
+  txid <- buildBalanceSignAndSubmitTx lookups constraints
+  _ <- waitForTx maxWait adr txid
+  pure unit
+
 incrementVault :: Protocol -> VaultId -> Contract () Unit
 incrementVault protocol vaultId = do
   txin /\ txOut <- getVault protocol vaultId
@@ -85,11 +117,6 @@ incrementVault protocol vaultId = do
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.validator protocol.vaultValidator
       <> Lookups.unspentOutputs utxos
-
-    -- TODO emmiting this lookup can cause eronious success
-    -- presumably the tx that gets through doesn't do much
-    -- but it needs to be looked into and ideally there
-    -- should be tests to show it's not dangerous
 
     constraints :: TxConstraints Unit Unit
     constraints = Constraints.mustSpendScriptOutput txin red
