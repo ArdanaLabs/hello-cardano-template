@@ -22,9 +22,7 @@ import Data.BigInt as BigInt
 import Data.Time.Duration (Minutes(..))
 import Effect.Exception (throw)
 import HelloWorld.Api (enoughForFees)
-import HelloWorld.Discovery.Api (closeVault, getVault, incrementVault, makeNftPolicy, mintNft, openVault, protocolInit, seedTx)
-import HelloWorld.Discovery.Types (VaultId, Protocol)
-import Node.HTTP.Client (protocol)
+import HelloWorld.Discovery.Api (closeVault, getVault, incrementVault, incrementVault', makeNftPolicy, mintNft, openVault, openVault', protocolInit, seedTx)
 import Plutus.Types.Value as Value
 import Test.HelloWorld.EnvRunner (EnvRunner, plutipConfig, runEnvSpec)
 import Test.Spec (Spec, describe, it)
@@ -181,10 +179,20 @@ spec = runEnvSpec do
       closeVault protocol vault
       expectError $ getVault protocol vault
 
+    describe "attacks" do
+      it "can't open vault at 1" $ useRunnerSimple do
+        protocol <- protocolInit
+        expectError $ openVault' 1 protocol
+
+      it "can't inc vault by 2" $ useRunnerSimple do
+        protocol <- protocolInit
+        vault <- openVault protocol
+        expectError $ incrementVault' 2 protocol vault
+
 localOnlySpec :: Spec Unit
-localOnlySpec = do
-  describe "attacks" $
-    it "can't inc alices vault" $ useRunnerAttack $ \asAlice asBob -> do
+localOnlySpec = describe "HelloWorld.Discovery.Api" do
+  describe "attacks" $ do
+    it "bob can't inc alices vault" $ useRunnerAttack $ \asAlice asBob -> do
       (protocol /\ aliceVault) <- asAlice do
         protocol <- protocolInit
         vault <- openVault protocol
@@ -192,19 +200,29 @@ localOnlySpec = do
       asBob do
         expectError $ incrementVault protocol aliceVault
 
-useRunnerAttack :: forall a.
-  (  (forall b. Contract () b -> Contract () b)
-  -> (forall b. Contract () b -> Contract () b)
-  -> Contract () a
-  ) -> Aff Unit
+    it "bob can't close alices vault" $ useRunnerAttack $ \asAlice asBob -> do
+      (protocol /\ aliceVault) <- asAlice do
+        protocol <- protocolInit
+        vault <- openVault protocol
+        pure $ protocol /\ vault
+      asBob do
+        expectError $ closeVault protocol aliceVault
+
+useRunnerAttack
+  :: forall a
+   . ( (forall b. Contract () b -> Contract () b)
+       -> (forall b. Contract () b -> Contract () b)
+       -> Contract () a
+     )
+  -> Aff Unit
 useRunnerAttack contract = do
-  withPlutipContractEnv plutipConfig ([ BigInt.fromInt 40_000_000]  /\ [ BigInt.fromInt 40_000_000 ]) \env (alice /\ bob) -> do
-    runContractInEnv (withOurLogger "apiTest.log" env)
-      $ void $ contract (withKeyWallet alice) (withKeyWallet bob)
+  withPlutipContractEnv plutipConfig ([ BigInt.fromInt 40_000_000 ] /\ [ BigInt.fromInt 40_000_000 ]) \env (alice /\ bob) ->
+    runContractInEnv (withOurLogger "apiTest.log" env) $ void
+      $ contract (withKeyWallet alice) (withKeyWallet bob)
 
 useRunnerSimple :: forall a. Contract () a -> EnvRunner -> Aff Unit
 useRunnerSimple contract runner = do
-  runner \env alice -> do
+  runner \env alice ->
     runContractInEnv (withOurLogger "apiTest.log" env)
       $ withKeyWallet alice
       $ void contract

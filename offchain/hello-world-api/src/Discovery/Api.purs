@@ -9,6 +9,8 @@ module HelloWorld.Discovery.Api
   -- testing exports
   , seedTx
   , makeNftPolicy
+  , openVault'
+  , incrementVault'
   ) where
 
 import Contract.Prelude
@@ -94,7 +96,10 @@ closeVault protocol vaultId = do
   pure unit
 
 incrementVault :: Protocol -> VaultId -> Contract () Unit
-incrementVault protocol vaultId = do
+incrementVault = incrementVault' 1
+
+incrementVault' :: Int -> Protocol -> VaultId -> Contract () Unit
+incrementVault' step protocol vaultId = do
   txin /\ txOut <- getVault protocol vaultId
   utxos <- getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
   (oldVault :: Vault) <- liftContractM "failed to parse old vault" <<< fromData <<< unwrap =<< getDatum (unwrap (unwrap txOut).output).datum
@@ -108,7 +113,7 @@ incrementVault protocol vaultId = do
     red = Redeemer $ toData $ HelloRedeemer { tn: vaultId, action: Inc }
 
     newVault :: Vault
-    newVault = Vault { owner: (unwrap oldVault).owner, count: (unwrap oldVault).count + BigInt.fromInt 1 }
+    newVault = Vault { owner: (unwrap oldVault).owner, count: (unwrap oldVault).count + BigInt.fromInt step }
 
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.validator protocol.vaultValidator
@@ -124,7 +129,10 @@ incrementVault protocol vaultId = do
   pure unit
 
 openVault :: Protocol -> Contract () VaultId
-openVault protocol = do
+openVault = openVault' 0
+
+openVault' :: Int -> Protocol -> Contract () VaultId
+openVault' start protocol = do
   nftCs <- liftContractM "mpsSymbol failed" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
   txOut <- seedTx
   nftTn <- liftContractM "failed to make nft token name" $ datumHash (Datum (toData txOut)) <#> unwrap >>= mkTokenName
@@ -137,7 +145,7 @@ openVault protocol = do
     nft = Value.singleton nftCs nftTn $ BigInt.fromInt 1
 
     vault :: Vault
-    vault = Vault { owner: pkh, count: BigInt.fromInt 0 }
+    vault = Vault { owner: pkh, count: BigInt.fromInt start }
 
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.mintingPolicy protocol.nftMp
