@@ -1,5 +1,6 @@
 module Test.HelloWorld.Discovery.Api
   ( spec
+  , localOnlySpec
   ) where
 
 import Contract.Prelude
@@ -11,7 +12,7 @@ import Contract.Monad (Contract, liftContractM)
 import Contract.PlutusData (Datum(..), Redeemer(Redeemer), toData)
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (validatorHash)
-import Contract.Test.Plutip (runContractInEnv)
+import Contract.Test.Plutip (runContractInEnv, withPlutipContractEnv)
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
 import Contract.Utxos (getUtxo, getWalletBalance)
@@ -21,18 +22,11 @@ import Data.BigInt as BigInt
 import Data.Time.Duration (Minutes(..))
 import Effect.Exception (throw)
 import HelloWorld.Api (enoughForFees)
-import HelloWorld.Discovery.Api
-  ( getVault
-  , incrementVault
-  , makeNftPolicy
-  , mintNft
-  , openVault
-  , protocolInit
-  , seedTx
-  , closeVault
-  )
+import HelloWorld.Discovery.Api (closeVault, getVault, incrementVault, makeNftPolicy, mintNft, openVault, protocolInit, seedTx)
+import HelloWorld.Discovery.Types (VaultId, Protocol)
+import Node.HTTP.Client (protocol)
 import Plutus.Types.Value as Value
-import Test.HelloWorld.EnvRunner (EnvRunner, runEnvSpec)
+import Test.HelloWorld.EnvRunner (EnvRunner, plutipConfig, runEnvSpec)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (expectError, shouldEqual)
 import Types.PlutusData (PlutusData)
@@ -174,6 +168,39 @@ spec = runEnvSpec do
       protocol <- protocolInit
       vault <- openVault protocol
       closeVault protocol vault
+
+    it "close after inc" $ useRunnerSimple do
+      protocol <- protocolInit
+      vault <- openVault protocol
+      incrementVault protocol vault
+      closeVault protocol vault
+
+    it "vault gone after close" $ useRunnerSimple do
+      protocol <- protocolInit
+      vault <- openVault protocol
+      closeVault protocol vault
+      expectError $ getVault protocol vault
+
+localOnlySpec :: Spec Unit
+localOnlySpec = do
+  describe "attacks" $
+    it "can't inc alices vault" $ useRunnerAttack $ \asAlice asBob -> do
+      (protocol /\ aliceVault) <- asAlice do
+        protocol <- protocolInit
+        vault <- openVault protocol
+        pure $ protocol /\ vault
+      asBob do
+        expectError $ incrementVault protocol aliceVault
+
+useRunnerAttack :: forall a.
+  (  (forall b. Contract () b -> Contract () b)
+  -> (forall b. Contract () b -> Contract () b)
+  -> Contract () a
+  ) -> Aff Unit
+useRunnerAttack contract = do
+  withPlutipContractEnv plutipConfig ([ BigInt.fromInt 40_000_000]  /\ [ BigInt.fromInt 40_000_000 ]) \env (alice /\ bob) -> do
+    runContractInEnv (withOurLogger "apiTest.log" env)
+      $ void $ contract (withKeyWallet alice) (withKeyWallet bob)
 
 useRunnerSimple :: forall a. Contract () a -> EnvRunner -> Aff Unit
 useRunnerSimple contract runner = do

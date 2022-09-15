@@ -35,6 +35,7 @@ main = do
         Local -> do
           describe "pure tests" do
             Test.HelloWorld.Discovery.Api.spec envRunner
+            Test.HelloWorld.Discovery.Api.localOnlySpec
             Test.HelloWorld.Api.spec envRunner
             Test.HelloWorld.Api.localOnlySpec
             Encoding.spec
