@@ -14,7 +14,7 @@ module HelloWorld.Discovery.Api
 import Contract.Prelude
 
 import CBOR as CBOR
-import Contract.Address (getWalletAddress, getWalletCollateral)
+import Contract.Address (PaymentPubKey(..), getWalletAddress, getWalletCollateral, ownPaymentPubKeyHash)
 import Contract.Hashing (datumHash)
 import Contract.Log (logDebug', logError', logInfo')
 import Contract.Monad (Contract, liftContractM)
@@ -71,6 +71,7 @@ incrementVault protocol vaultId = do
   utxos <- getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
   (oldVault :: Vault) <- liftContractM "failed to parse old vault" <<< fromData <<< unwrap =<< getDatum (unwrap (unwrap txOut).output).datum
   cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
+  key <- liftContractM "no wallet" =<< ownPaymentPubKeyHash
   let
     nft :: Value
     nft = Value.singleton cs vaultId $ BigInt.fromInt 1
@@ -94,6 +95,7 @@ incrementVault protocol vaultId = do
     constraints = Constraints.mustSpendScriptOutput txin red
       <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) Constraints.DatumInline (enoughForFees <> nft)
       <> Constraints.mustReferenceOutput protocol.config
+      <> Constraints.mustBeSignedBy key
   txid <- buildBalanceSignAndSubmitTx lookups constraints
   _ <- waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txid
   pure unit

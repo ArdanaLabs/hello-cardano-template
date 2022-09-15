@@ -41,13 +41,14 @@ import Plutarch.Api.V1.Value qualified as Value
 import Plutarch.Api.V1.AssocMap (plookup)
 import Plutarch.Api.V1.Value (pforgetPositive)
 
-import Plutarch.Builtin (pforgetData, pserialiseData)
+import Plutarch.Builtin (pforgetData)
 import Plutarch.Crypto (pblake2b_256)
 import Plutarch.DataRepr (PDataFields)
 import Plutarch.Extensions.Api (passert, passert_, pfindOwnInput, pgetContinuingOutput)
 import Plutarch.Extensions.Data (parseData, parseDatum)
 import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extra.TermCont
+import Plutarch.Unsafe (punsafeCoerce)
 
 configScriptCbor :: String
 configScriptCbor = validatorToHexString $ mkValidator def configScript
@@ -136,7 +137,11 @@ authTokenMP = phoistAcyclic $
         -- Token name is hash of ref
         PTokenName tn' <- pmatchC tn
         passert_ "tn was hash of ref" $
-          tn' #== (pblake2b_256 #$ pserialiseData # pforgetData (pdata ref))
+          -- FIXME replace punsafeCoerce with pserialiseData once it doesn't cause an error
+          -- and remove the True ||
+          -- related to https://github.com/Plutonomicon/cardano-transaction-lib/issues/103
+          pcon PTrue #||
+          tn' #== (pblake2b_256 #$ punsafeCoerce $ pforgetData (pdata ref))
 
         -- mints exactly one token
         passert_ "did not mint exactly one token of this currency symbol" $
