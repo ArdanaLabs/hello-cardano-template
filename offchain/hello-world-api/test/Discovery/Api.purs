@@ -22,13 +22,15 @@ import Data.BigInt as BigInt
 import Data.Time.Duration (Minutes(..))
 import Effect.Exception (throw)
 import HelloWorld.Api (enoughForFees)
-import HelloWorld.Discovery.Api (closeVault, getVault, incrementVault, incrementVault', makeNftPolicy, mintNft, openVault, openVault', protocolInit, seedTx)
+import HelloWorld.Discovery.Api (closeVault, getMyVaults, getVault, incrementVault, incrementVault', makeNftPolicy, mintNft, openVault, openVault', protocolInit, seedTx)
+import Node.HTTP.Client (protocol)
 import Plutus.Types.Value as Value
 import Test.HelloWorld.EnvRunner (EnvRunner, defaultWallet, plutipConfig, runEnvSpec)
 import Test.Spec (Spec, describe, it, itOnly)
-import Test.Spec.Assertions (expectError, shouldEqual)
+import Test.Spec.Assertions (expectError, shouldEqual, shouldReturn)
 import Types.PlutusData (PlutusData)
 import Util (buildBalanceSignAndSubmitTx, decodeCbor, getUtxos, maxWait, waitForTx, withOurLogger)
+import Data.Map as Map
 
 spec :: EnvRunner -> Spec Unit
 spec = runEnvSpec do
@@ -194,31 +196,42 @@ spec = runEnvSpec do
 
 localOnlySpec :: Spec Unit
 localOnlySpec = describe "HelloWorld.Discovery.Api" do
-  describe "attacks" $ do
-    it "bob can't inc alices vault" $ useRunnerAttack $ \asAlice asBob -> do
-      (protocol /\ aliceVault) <- asAlice do
-        protocol <- protocolInit
-        vault <- openVault protocol
-        pure $ protocol /\ vault
-      asBob do
-        expectError $ incrementVault protocol aliceVault
+  describe "two wallet tests" $ do
 
-    it "bob can't close alices vault" $ useRunnerAttack $ \asAlice asBob -> do
-      (protocol /\ aliceVault) <- asAlice do
-        protocol <- protocolInit
-        vault <- openVault protocol
-        pure $ protocol /\ vault
-      asBob do
-        expectError $ closeVault protocol aliceVault
+    it "getMyVaults gets my vaults" $ useTwoWalletRunner $ \asAlice asBob -> do
+      protocol <- asAlice protocolInit
+      aliceVault <- asAlice $ openVault protocol
+      bobVault <- asBob $ openVault protocol
+      aliceVaultTx <- getVault protocol aliceVault
+      (asAlice $ getMyVaults protocol) `shouldReturn` (uncurry Map.singleton aliceVaultTx)
+      bobVaultTx <- getVault protocol bobVault
+      (asBob $ getMyVaults protocol) `shouldReturn` (uncurry Map.singleton bobVaultTx)
 
-useRunnerAttack
+    describe "attacks" $ do
+      it "bob can't inc alices vault" $ useTwoWalletRunner $ \asAlice asBob -> do
+        (protocol /\ aliceVault) <- asAlice do
+          protocol <- protocolInit
+          vault <- openVault protocol
+          pure $ protocol /\ vault
+        asBob do
+          expectError $ incrementVault protocol aliceVault
+
+      it "bob can't close alices vault" $ useTwoWalletRunner $ \asAlice asBob -> do
+        (protocol /\ aliceVault) <- asAlice do
+          protocol <- protocolInit
+          vault <- openVault protocol
+          pure $ protocol /\ vault
+        asBob do
+          expectError $ closeVault protocol aliceVault
+
+useTwoWalletRunner
   :: forall a
    . ( (forall b. Contract () b -> Contract () b)
        -> (forall b. Contract () b -> Contract () b)
        -> Contract () a
      )
   -> Aff Unit
-useRunnerAttack contract = do
+useTwoWalletRunner contract = do
   withPlutipContractEnv plutipConfig (defaultWallet /\ defaultWallet) \env (alice /\ bob) ->
     runContractInEnv (withOurLogger "apiTest.log" env) $ void
       $ contract (withKeyWallet alice) (withKeyWallet bob)

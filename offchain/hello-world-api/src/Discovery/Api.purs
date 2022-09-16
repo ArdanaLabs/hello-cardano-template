@@ -4,6 +4,7 @@ module HelloWorld.Discovery.Api
   , openVault
   , getAllVaults
   , getVault
+  , getMyVaults
   , incrementVault
   , closeVault
   -- testing exports
@@ -16,9 +17,9 @@ module HelloWorld.Discovery.Api
 import Contract.Prelude
 
 import CBOR as CBOR
-import Contract.Address (getWalletAddress, getWalletCollateral, ownPaymentPubKeyHash)
+import Contract.Address (getWalletAddress, getWalletCollateral, ownPaymentPubKeyHash, ownPubKeyHash)
 import Contract.Hashing (datumHash)
-import Contract.Log (logDebug', logInfo', logWarn')
+import Contract.Log (logDebug', logInfo')
 import Contract.Monad (Contract, liftContractM)
 import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer), fromData)
 import Contract.ScriptLookups as Lookups
@@ -29,13 +30,15 @@ import Contract.TxConstraints as Constraints
 import Contract.Utxos (getUtxo)
 import Contract.Value (Value, scriptCurrencySymbol, mkTokenName, adaToken, valueOf)
 import Contract.Value as Value
+import Control.Alternative (guard)
 import Data.Array (head)
 import Data.BigInt as BigInt
-import Data.Map (Map, keys)
+import Data.Map (Map, catMaybes, keys)
 import Data.Map as Map
 import Data.Set (toUnfoldable)
 import Effect.Exception (throw)
 import HelloWorld.Discovery.Types (HelloAction(..), HelloRedeemer(HelloRedeemer), NftRedeemer(..), Protocol, Vault(Vault), VaultId)
+import Node.HTTP.Client (protocol)
 import Plutus.Types.Address (Address(Address))
 import Plutus.Types.Credential (Credential(PubKeyCredential))
 import Plutus.Types.CurrencySymbol (CurrencySymbol, mpsSymbol)
@@ -64,6 +67,24 @@ hasNft :: Protocol -> TransactionOutputWithRefScript -> Boolean
 hasNft { nftMp } out = case (mpsSymbol $ mintingPolicyHash nftMp) of
   Nothing -> false -- protocol was invalid
   Just cs -> cs `elem` (symbols $ (unwrap (unwrap out).output).amount)
+
+getMyVaults :: Protocol -> Contract () (Map TransactionInput TransactionOutputWithRefScript)
+getMyVaults protocol = do
+  all <- getAllVaults protocol
+  catMaybes <$> traverse keepMyVaults all
+
+keepMyVaults :: TransactionOutputWithRefScript -> Contract () (Maybe TransactionOutputWithRefScript)
+keepMyVaults ref = do
+  isMine <- isMyVault ref
+  pure $
+    if isMine then Just ref
+    else Nothing
+
+isMyVault :: TransactionOutputWithRefScript -> Contract () Boolean
+isMyVault ref = do
+  (vault :: Vault) <- liftContractM "failed to parse vault" <<< fromData <<< unwrap =<< getDatum (unwrap (unwrap ref).output).datum
+  pkh <- liftContractM "no wallet" =<< ownPubKeyHash
+  pure $ (unwrap vault).owner == pkh
 
 closeVault :: Protocol -> VaultId -> Contract () Unit
 closeVault protocol vaultId = do
