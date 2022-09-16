@@ -24,8 +24,8 @@ import Effect.Exception (throw)
 import HelloWorld.Api (enoughForFees)
 import HelloWorld.Discovery.Api (closeVault, getVault, incrementVault, incrementVault', makeNftPolicy, mintNft, openVault, openVault', protocolInit, seedTx)
 import Plutus.Types.Value as Value
-import Test.HelloWorld.EnvRunner (EnvRunner, plutipConfig, runEnvSpec)
-import Test.Spec (Spec, describe, it)
+import Test.HelloWorld.EnvRunner (EnvRunner, defaultWallet, plutipConfig, runEnvSpec)
+import Test.Spec (Spec, describe, it, itOnly)
 import Test.Spec.Assertions (expectError, shouldEqual)
 import Types.PlutusData (PlutusData)
 import Util (buildBalanceSignAndSubmitTx, decodeCbor, getUtxos, maxWait, waitForTx, withOurLogger)
@@ -55,37 +55,39 @@ spec = runEnvSpec do
 
       it "double minting fails on second mint" $ useRunnerSimple do
         txOut <- seedTx
+        adr <- liftContractM "no wallet" =<< getWalletAddress
+        utxos <- getUtxos adr
         nftPolicy <- makeNftPolicy txOut
-        cs <- liftContractM "hash failed" $ scriptCurrencySymbol nftPolicy
+        cs <- liftContractM "failed to hash MintingPolicy into CurrencySymbol" $ scriptCurrencySymbol nftPolicy
         let
           lookups :: Lookups.ScriptLookups PlutusData
           lookups = Lookups.mintingPolicy nftPolicy
+            <> Lookups.unspentOutputs utxos
 
           constraints :: TxConstraints Unit Unit
           constraints = Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
-        -- TODO same as mintNft talk to ctl about this
-        -- <> Constraints.mustSpendPubKeyOutput txOut
+            <> Constraints.mustSpendPubKeyOutput txOut
         txId <- buildBalanceSignAndSubmitTx lookups constraints
-        adr <- liftContractM "no wallet" =<< getWalletAddress
         _ <- waitForTx maxWait adr txId
         expectError $ buildBalanceSignAndSubmitTx lookups constraints
 
       it "seedTx is spent after mint" $ useRunnerSimple do
         txOut <- seedTx
+        adr <- liftContractM "no wallet" =<< getWalletAddress
+        utxos <- getUtxos adr
         nftPolicy <- makeNftPolicy txOut
-        cs <- liftContractM "hash failed" $ scriptCurrencySymbol nftPolicy
+        cs <- liftContractM "failed to hash MintingPolicy into CurrencySymbol" $ scriptCurrencySymbol nftPolicy
         logInfo' $ "NFT cs: " <> show cs
         let
           lookups :: Lookups.ScriptLookups PlutusData
           lookups = Lookups.mintingPolicy nftPolicy
+            <> Lookups.unspentOutputs utxos
 
           constraints :: TxConstraints Unit Unit
           constraints = Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
-        -- TODO talk to ctl about this too
-        -- <> Constraints.mustSpendPubKeyOutput txOut
+            <> Constraints.mustSpendPubKeyOutput txOut
         txId <- buildBalanceSignAndSubmitTx lookups constraints
-        adr <- liftContractM "no Address" =<< getWalletAddress
-        _ <- liftContractM "wait timed out" =<< waitForTx waitTime adr txId
+        _ <- waitForTx maxWait adr txId
         getUtxo txOut >>= case _ of
           Nothing -> pure unit
           Just _ -> liftEffect $ throw "seed tx still existed"
@@ -100,21 +102,22 @@ spec = runEnvSpec do
         txOut <- seedTx
         nftPolicy <- makeNftPolicy txOut
         cs <- liftContractM "hash failed" $ scriptCurrencySymbol nftPolicy
-        logInfo' $ "NFT cs: " <> show cs
+        adr <- liftContractM "no wallet" =<< getWalletAddress
+        utxos <- getUtxos adr
         let
           mintLookups :: Lookups.ScriptLookups PlutusData
           mintLookups = Lookups.mintingPolicy nftPolicy
+            <> Lookups.unspentOutputs utxos
 
           mintConstraints :: TxConstraints Unit Unit
           mintConstraints = Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
-        -- TODO this one too
-        -- <> Constraints.mustSpendPubKeyOutput txOut
+            <> Constraints.mustSpendPubKeyOutput txOut
         txid <- buildBalanceSignAndSubmitTx mintLookups mintConstraints
-        adr <- liftContractM "no wallet" =<< getWalletAddress
         _ <- waitForTx waitTime adr txid
         let
           burnLookups :: Lookups.ScriptLookups PlutusData
           burnLookups = Lookups.mintingPolicy nftPolicy
+            <> Lookups.unspentOutputs utxos
 
           burnConstraints :: TxConstraints Unit Unit
           burnConstraints =
@@ -216,7 +219,7 @@ useRunnerAttack
      )
   -> Aff Unit
 useRunnerAttack contract = do
-  withPlutipContractEnv plutipConfig ([ BigInt.fromInt 40_000_000 ] /\ [ BigInt.fromInt 40_000_000 ]) \env (alice /\ bob) ->
+  withPlutipContractEnv plutipConfig (defaultWallet /\ defaultWallet) \env (alice /\ bob) ->
     runContractInEnv (withOurLogger "apiTest.log" env) $ void
       $ contract (withKeyWallet alice) (withKeyWallet bob)
 

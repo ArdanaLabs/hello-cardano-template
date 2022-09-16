@@ -18,7 +18,7 @@ import Contract.Prelude
 import CBOR as CBOR
 import Contract.Address (getWalletAddress, getWalletCollateral, ownPaymentPubKeyHash)
 import Contract.Hashing (datumHash)
-import Contract.Log (logDebug', logInfo')
+import Contract.Log (logDebug', logInfo', logWarn')
 import Contract.Monad (Contract, liftContractM)
 import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer), fromData)
 import Contract.ScriptLookups as Lookups
@@ -26,6 +26,7 @@ import Contract.Scripts (applyArgsM, mintingPolicyHash, scriptHashAddress, valid
 import Contract.Transaction (TransactionInput, TransactionOutputWithRefScript)
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
+import Contract.Utxos (getUtxo)
 import Contract.Value (Value, scriptCurrencySymbol, mkTokenName, adaToken, valueOf)
 import Contract.Value as Value
 import Data.Array (head)
@@ -192,6 +193,8 @@ mintNft :: Contract () CurrencySymbol
 mintNft = do
   logInfo' "starting mint"
   txOut <- seedTx
+  adr <- liftContractM "no wallet" =<< getWalletAddress
+  utxos <- getUtxos adr
   logDebug' $ "seed tx id was:" <> show txOut
   nftPolicy <- makeNftPolicy txOut
   cs <- liftContractM "failed to hash MintingPolicy into CurrencySymbol" $ scriptCurrencySymbol nftPolicy
@@ -199,15 +202,14 @@ mintNft = do
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.mintingPolicy nftPolicy
+      <> Lookups.unspentOutputs utxos
 
     constraints :: TxConstraints Unit Unit
     constraints = Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
-  -- TODO talk to ctl about this again
-  -- <> Constraints.mustSpendPubKeyOutput txOut
+      <> Constraints.mustSpendPubKeyOutput txOut
   logDebug' "about to submit"
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   logDebug' "submited"
-  adr <- liftContractM "no wallet" =<< getWalletAddress
   _ <- waitForTx maxWait adr txId
   pure $ cs
 
@@ -225,7 +227,19 @@ seedTx = do
   logInfo' $ "utxos: " <> show utxos
   col <- liftContractM "no collateral" =<< getWalletCollateral
   logInfo' $ "col: " <> show col
-  liftContractM "no utxos" $ head $ toUnfoldable $ keys utxos
+  let colIns = (unwrap >>> _.input) <$> col
+  logInfo' $ "colIns: " <> show colIns
+  let nonColateralUtxOs = Map.filterKeys (\utxo -> utxo `notElem` colIns) utxos
+  logInfo' $ "nonColUtxos: " <> show nonColateralUtxOs
+  case head $ toUnfoldable $ keys nonColateralUtxOs of
+    Just sending -> do
+      logInfo' $ "sending: " <> show sending
+      out <- liftContractM "no output" =<< getUtxo sending
+      logInfo' $ "out: " <> show out
+      pure sending
+    Nothing -> do
+      logInfo' "all utxos were collateral using collateral utxo"
+      liftContractM "no utxos at all" $ head $ toUnfoldable $ keys utxos
 
 enoughForFees :: Value.Value
 enoughForFees = Value.lovelaceValueOf $ BigInt.fromInt 10_000_000

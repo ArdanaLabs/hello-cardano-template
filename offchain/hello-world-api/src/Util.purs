@@ -161,9 +161,7 @@ waitForSpent' d inputs = do
     pure spent
 
 getUtxos :: Address -> Contract () (Map TransactionInput TransactionOutputWithRefScript)
-getUtxos adr = do
-  utxos <- fromMaybe (Map.empty) <$> utxosAt adr
-  pure utxos
+getUtxos adr = fromMaybe (Map.empty) <$> utxosAt adr
 
 getTxScanUrl :: NetworkId -> TransactionInput -> String
 getTxScanUrl TestnetId (TransactionInput { transactionId: TransactionHash hash }) = "https://testnet.cardanoscan.io/transaction/" <> byteArrayToHex hash
