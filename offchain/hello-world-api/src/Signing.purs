@@ -20,7 +20,7 @@ import Serialization as Serialization
 import Types.ByteArray (ByteArray)
 import Untagged.Union (asOneOf)
 
-type Signer = ByteArray -> Aff ByteArray
+type Signer = ByteArray -> Aff String
 
 getServerPubKey :: Aff PublicKey
 getServerPubKey = PublicKey <$> (handleAffjax =<< get string "http://localhost:3000/pubkey")
@@ -31,12 +31,9 @@ getServerPubKey = PublicKey <$> (handleAffjax =<< get string "http://localhost:3
 serverSignTx :: PublicKey -> Transaction -> Aff TransactionWitnessSet
 serverSignTx = signTx serverSigner
 
-serverSigner :: ByteArray -> Aff ByteArray
+serverSigner :: ByteArray -> Aff String
 serverSigner a = do
-  string <- handleAffjax =<< post string "http://localhost:3000/sign" (Just $ String $ byteArrayToHex a)
-  case hexToByteArray string of
-    Nothing -> liftEffect $ throw "got a bad hex string from the signing server"
-    Just bytes -> pure bytes
+  handleAffjax =<< post string "http://localhost:3000/sign" (Just $ String $ byteArrayToHex a)
 
 handleAffjax :: Either Error (Response String) -> Aff String
 handleAffjax = case _ of
@@ -54,7 +51,7 @@ signTx signer pubKey (Transaction tx) = do
   traceM hash
   sig <-  signer $ toBytes $ asOneOf hash
   log $ "sig: " <> show sig
-  let wit = Just [ wrap $ (Vkey pubKey) /\ (Ed25519Signature $ byteArrayToHex sig)  ]
+  let wit = Just [ wrap $ (Vkey pubKey) /\ (Ed25519Signature sig)  ]
   log $ "wit: " <> show wit
   let witnessSet' = set _vkeys wit mempty
   log $ "witnessSet: " <> show witnessSet'
