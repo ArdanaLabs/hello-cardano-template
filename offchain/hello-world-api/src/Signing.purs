@@ -10,10 +10,9 @@ import Affjax (Error, Response, get, post, printError)
 import Affjax.RequestBody (RequestBody(..))
 import Affjax.ResponseFormat (string)
 import Cardano.Types.Transaction (Ed25519Signature(Ed25519Signature), PublicKey(..), Vkey(Vkey), _vkeys)
-import Contract.Prim.ByteArray (byteArrayToHex, hexToByteArray)
-import Contract.Transaction (Transaction(Transaction), TransactionWitnessSet(..))
+import Contract.Prim.ByteArray (byteArrayToHex)
+import Contract.Transaction (Transaction(Transaction), TransactionWitnessSet)
 import Data.Lens (set)
-import Debug (traceM)
 import Effect.Exception (throw)
 import Serialization (toBytes)
 import Serialization as Serialization
@@ -42,21 +41,8 @@ handleAffjax = case _ of
 
 signTx :: Signer -> PublicKey -> Transaction -> Aff TransactionWitnessSet
 signTx signer pubKey (Transaction tx) = do
-  log "starting signTx"
   txBody <- liftEffect $ Serialization.convertTxBody tx.body
-  log $ "txBody: "
-  traceM txBody
   hash <- liftEffect $ Serialization.hashTransaction txBody
-  log $ "hash: "
-  traceM hash
   sig <-  signer $ toBytes $ asOneOf hash
-  log $ "sig: " <> show sig
   let wit = Just [ wrap $ (Vkey pubKey) /\ (Ed25519Signature sig)  ]
-  log $ "wit: " <> show wit
-  let witnessSet' = set _vkeys wit mempty
-  log $ "witnessSet: " <> show witnessSet'
-  pure witnessSet'
-  --let finalTx =  Transaction $ tx { witnessSet = witnessSet' <> tx.witnessSet }
-  --log $ "finalTx: " <> show finalTx
-  --log "finished signTx"
-  --pure $ finalTx
+  pure $ set _vkeys wit mempty

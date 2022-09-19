@@ -47,11 +47,8 @@ useRunnerSimple contract runner = do
 
 signingTest :: EnvRunner -> Spec Unit
 signingTest = it "basic signing test" <$> useRunnerSimple do
-  logError' "0"
   serverWallet <- liftAff $ makeServerWallet
-  logError' "1"
   adr <- withKeyWallet serverWallet getWalletAddress >>= liftContractM "no wallet"
-  logError' "2"
   (key /\ skey) <- liftContractM "bad adr" =<< case adr of
     Address{ addressCredential : PubKeyCredential key , addressStakingCredential : mskey } -> do
       skey <- case mskey of
@@ -61,7 +58,6 @@ signingTest = it "basic signing test" <$> useRunnerSimple do
       pure $ Just $ key /\ skey
     _ -> pure Nothing
 
-  logError' "3"
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = mempty
@@ -69,6 +65,4 @@ signingTest = it "basic signing test" <$> useRunnerSimple do
     constraints =  singleton (MustPayToPubKeyAddress (PaymentPubKeyHash key) (StakePubKeyHash <$> skey) Nothing Nothing (lovelaceValueOf $ BigInt.fromInt 30_000_000))
   txid <- buildBalanceSignAndSubmitTx lookups constraints
   _ <- waitForTx maxWait adr txid
-  logError' "4"
-  _ <- withKeyWallet serverWallet $ initialize 1 0
-  logError' "5"
+  withKeyWallet serverWallet $ initialize 1 0
