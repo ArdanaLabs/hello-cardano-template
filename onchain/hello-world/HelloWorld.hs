@@ -1,6 +1,7 @@
 module Main (main) where
 
 import Hello
+import HelloDiscovery
 
 import Control.Monad (unless)
 import System.Directory (doesDirectoryExist)
@@ -31,4 +32,5 @@ cbors =
   [ Cbor "paramHello" paramHelloCbor
   , Cbor "hello" $ pure helloWorldCbor
   , Cbor "trivial" trivialCbor
+  , Cbor "nft" nftCbor
   ]
