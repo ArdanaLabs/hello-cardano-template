@@ -1,8 +1,7 @@
 module Signing
   ( getServerPubKey
   , serverSignTx
-  )
-  where
+  ) where
 
 import Contract.Prelude
 
@@ -23,6 +22,7 @@ type Signer = ByteArray -> Aff String
 
 getServerPubKey :: Aff PublicKey
 getServerPubKey = PublicKey <$> (handleAffjax =<< get string "http://localhost:3000/pubkey")
+
 -- FIXME I'm pretty sure this is the problem
 -- it expects a bech32 string but is getting a hex string
 -- imo it makes the most sense to fix this on the haskell side
@@ -43,6 +43,6 @@ signTx :: Signer -> PublicKey -> Transaction -> Aff TransactionWitnessSet
 signTx signer pubKey (Transaction tx) = do
   txBody <- liftEffect $ Serialization.convertTxBody tx.body
   hash <- liftEffect $ Serialization.hashTransaction txBody
-  sig <-  signer $ toBytes $ asOneOf hash
-  let wit = Just [ wrap $ (Vkey pubKey) /\ (Ed25519Signature sig)  ]
+  sig <- signer $ toBytes $ asOneOf hash
+  let wit = Just [ wrap $ (Vkey pubKey) /\ (Ed25519Signature sig) ]
   pure $ set _vkeys wit mempty

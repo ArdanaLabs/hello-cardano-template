@@ -36,10 +36,10 @@ makeServerWallet = do
   let
     address :: NetworkId -> Aff Address
     address network = pure $ pubKey2 # publicKeyHash
-          >>> keyHashCredential
-          >>> { network, paymentCred: _ }
-          >>> enterpriseAddress
-          >>> enterpriseAddressToAddress
+      >>> keyHashCredential
+      >>> { network, paymentCred: _ }
+      >>> enterpriseAddress
+      >>> enterpriseAddressToAddress
 
     selectCollateral
       :: CoinsPerUtxoUnit

@@ -1,5 +1,5 @@
 module Test.HelloWorld.Signing
-  (spec
+  ( spec
   ) where
 
 import Contract.Prelude
@@ -50,19 +50,20 @@ signingTest = it "basic signing test" <$> useRunnerSimple do
   serverWallet <- liftAff $ makeServerWallet
   adr <- withKeyWallet serverWallet getWalletAddress >>= liftContractM "no wallet"
   (key /\ skey) <- liftContractM "bad adr" =<< case adr of
-    Address{ addressCredential : PubKeyCredential key , addressStakingCredential : mskey } -> do
+    Address { addressCredential: PubKeyCredential key, addressStakingCredential: mskey } -> do
       skey <- case mskey of
-                    Nothing -> pure Nothing
-                    Just (StakingHash (PubKeyCredential skey)) -> pure $ Just skey
-                    _ -> liftEffect $ throw "bad staking credential"
+        Nothing -> pure Nothing
+        Just (StakingHash (PubKeyCredential skey)) -> pure $ Just skey
+        _ -> liftEffect $ throw "bad staking credential"
       pure $ Just $ key /\ skey
     _ -> pure Nothing
 
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = mempty
+
     constraints :: TxConstraints Unit Unit
-    constraints =  singleton (MustPayToPubKeyAddress (PaymentPubKeyHash key) (StakePubKeyHash <$> skey) Nothing Nothing (lovelaceValueOf $ BigInt.fromInt 30_000_000))
+    constraints = singleton (MustPayToPubKeyAddress (PaymentPubKeyHash key) (StakePubKeyHash <$> skey) Nothing Nothing (lovelaceValueOf $ BigInt.fromInt 30_000_000))
   txid <- buildBalanceSignAndSubmitTx lookups constraints
   _ <- waitForTx maxWait adr txid
   withKeyWallet serverWallet $ initialize 1 0
