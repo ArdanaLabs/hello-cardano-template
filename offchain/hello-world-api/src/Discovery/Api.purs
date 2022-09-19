@@ -3,7 +3,7 @@ module HelloWorld.Discovery.Api
   , protocolInit
   , openVault
   , getAllVaults
-  , getVault
+  , getVaultById
   , getMyVaults
   , incrementVault
   , closeVault
@@ -30,7 +30,6 @@ import Contract.TxConstraints as Constraints
 import Contract.Utxos (getUtxo)
 import Contract.Value (Value, scriptCurrencySymbol, mkTokenName, adaToken, valueOf)
 import Contract.Value as Value
-import Control.Alternative (guard)
 import Data.Array (head)
 import Data.BigInt as BigInt
 import Data.Map (Map, catMaybes, keys)
@@ -38,7 +37,6 @@ import Data.Map as Map
 import Data.Set (toUnfoldable)
 import Effect.Exception (throw)
 import HelloWorld.Discovery.Types (HelloAction(..), HelloRedeemer(HelloRedeemer), NftRedeemer(..), Protocol, Vault(Vault), VaultId)
-import Node.HTTP.Client (protocol)
 import Plutus.Types.Address (Address(Address))
 import Plutus.Types.Credential (Credential(PubKeyCredential))
 import Plutus.Types.CurrencySymbol (CurrencySymbol, mpsSymbol)
@@ -53,8 +51,13 @@ getAllVaults protocol =
   getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
     <#> Map.filter (hasNft protocol)
 
-getVault :: Protocol -> VaultId -> Contract () (TransactionInput /\ TransactionOutputWithRefScript)
-getVault protocol token = do
+getMyVaults :: Protocol -> Contract () (Map TransactionInput TransactionOutputWithRefScript)
+getMyVaults protocol = do
+  all <- getAllVaults protocol
+  catMaybes <$> traverse keepMyVaults all
+
+getVaultById :: Protocol -> VaultId -> Contract () (TransactionInput /\ TransactionOutputWithRefScript)
+getVaultById protocol token = do
   vaults <- getAllVaults protocol
   cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
   let valid = Map.filter (\vault -> valueOf (unwrap (unwrap vault).output).amount cs token > BigInt.fromInt 0) vaults
@@ -67,11 +70,6 @@ hasNft :: Protocol -> TransactionOutputWithRefScript -> Boolean
 hasNft { nftMp } out = case (mpsSymbol $ mintingPolicyHash nftMp) of
   Nothing -> false -- protocol was invalid
   Just cs -> cs `elem` (symbols $ (unwrap (unwrap out).output).amount)
-
-getMyVaults :: Protocol -> Contract () (Map TransactionInput TransactionOutputWithRefScript)
-getMyVaults protocol = do
-  all <- getAllVaults protocol
-  catMaybes <$> traverse keepMyVaults all
 
 keepMyVaults :: TransactionOutputWithRefScript -> Contract () (Maybe TransactionOutputWithRefScript)
 keepMyVaults ref = do
@@ -88,7 +86,7 @@ isMyVault ref = do
 
 closeVault :: Protocol -> VaultId -> Contract () Unit
 closeVault protocol vaultId = do
-  txin <- fst <$> getVault protocol vaultId
+  txin <- fst <$> getVaultById protocol vaultId
   utxos <- getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
   cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
   key <- liftContractM "no wallet" =<< ownPaymentPubKeyHash
@@ -122,7 +120,7 @@ incrementVault = incrementVault' 1
 
 incrementVault' :: Int -> Protocol -> VaultId -> Contract () Unit
 incrementVault' step protocol vaultId = do
-  txin /\ txOut <- getVault protocol vaultId
+  txin /\ txOut <- getVaultById protocol vaultId
   utxos <- getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
   (oldVault :: Vault) <- liftContractM "failed to parse old vault" <<< fromData <<< unwrap =<< getDatum (unwrap (unwrap txOut).output).datum
   cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
