@@ -28,7 +28,7 @@ import Test.HelloWorld.EnvRunner (EnvRunner, plutipConfig)
 import Test.Spec (Spec, describe, it)
 import Types.PlutusData (PlutusData(Constr, Integer))
 import Types.TxConstraints (singleton)
-import Util (buildBalanceSignAndSubmitTx)
+import Util (buildBalanceSignAndSubmitTx, maxWait, waitForTx, withOurLogger)
 import Wallet.Key (keyWalletPrivatePaymentKey)
 
 spec :: EnvRunner -> Spec Unit
@@ -40,11 +40,8 @@ spec envRunner = do
 
 useRunnerSimple :: forall a. Contract () a -> EnvRunner -> Aff Unit
 useRunnerSimple contract runner = do
-  runner \env alice -> do
-    let PrivatePaymentKey priv = keyWalletPrivatePaymentKey alice
-    pubkey <- liftEffect $ publicKeyFromPrivateKey priv
-    traceM pubkey
-    runContractInEnv env
+  runner \env alice ->
+    runContractInEnv (withOurLogger "apiTest.log" env)
       $ withKeyWallet alice
       $ void contract
 
@@ -69,10 +66,9 @@ signingTest = it "basic signing test" <$> useRunnerSimple do
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = mempty
     constraints :: TxConstraints Unit Unit
-    constraints =  singleton (MustPayToPubKeyAddress (PaymentPubKeyHash key) (StakePubKeyHash <$> skey) Nothing (lovelaceValueOf $ BigInt.fromInt 30_000_000))
-  _ <- buildBalanceSignAndSubmitTx lookups constraints
-  liftAff $ delay $ fromDuration $ Seconds 10.0
-  -- FIXME once the nft demo pr merges with the better waitForTx use that instead of this hack
+    constraints =  singleton (MustPayToPubKeyAddress (PaymentPubKeyHash key) (StakePubKeyHash <$> skey) Nothing Nothing (lovelaceValueOf $ BigInt.fromInt 30_000_000))
+  txid <- buildBalanceSignAndSubmitTx lookups constraints
+  _ <- waitForTx maxWait adr txid
   logError' "4"
   _ <- withKeyWallet serverWallet $ initialize 1 0
   logError' "5"

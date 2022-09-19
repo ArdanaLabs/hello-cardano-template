@@ -11,14 +11,13 @@ import Affjax.RequestBody (RequestBody(..))
 import Affjax.ResponseFormat (string)
 import Cardano.Types.Transaction (Ed25519Signature(Ed25519Signature), PublicKey(..), Vkey(Vkey), _vkeys)
 import Contract.Prim.ByteArray (byteArrayToHex, hexToByteArray)
-import Contract.Transaction (Transaction(Transaction))
+import Contract.Transaction (Transaction(Transaction), TransactionWitnessSet(..))
 import Data.Lens (set)
 import Debug (traceM)
 import Effect.Exception (throw)
 import Serialization (toBytes)
 import Serialization as Serialization
 import Types.ByteArray (ByteArray)
-import Unsafe.Coerce (unsafeCoerce)
 import Untagged.Union (asOneOf)
 
 type Signer = ByteArray -> Aff ByteArray
@@ -29,7 +28,7 @@ getServerPubKey = PublicKey <$> (handleAffjax =<< get string "http://localhost:3
 -- it expects a bech32 string but is getting a hex string
 -- imo it makes the most sense to fix this on the haskell side
 
-serverSignTx :: PublicKey -> Transaction -> Aff Transaction
+serverSignTx :: PublicKey -> Transaction -> Aff TransactionWitnessSet
 serverSignTx = signTx serverSigner
 
 serverSigner :: ByteArray -> Aff ByteArray
@@ -44,7 +43,7 @@ handleAffjax = case _ of
   Right resp -> pure resp.body
   Left err -> liftEffect $ throw $ printError err
 
-signTx :: Signer -> PublicKey -> Transaction -> Aff Transaction
+signTx :: Signer -> PublicKey -> Transaction -> Aff TransactionWitnessSet
 signTx signer pubKey (Transaction tx) = do
   log "starting signTx"
   txBody <- liftEffect $ Serialization.convertTxBody tx.body
@@ -59,7 +58,8 @@ signTx signer pubKey (Transaction tx) = do
   log $ "wit: " <> show wit
   let witnessSet' = set _vkeys wit mempty
   log $ "witnessSet: " <> show witnessSet'
-  let finalTx =  Transaction $ tx { witnessSet = witnessSet' <> tx.witnessSet }
-  log $ "finalTx: " <> show finalTx
-  log "finished signTx"
-  pure $ finalTx
+  pure witnessSet'
+  --let finalTx =  Transaction $ tx { witnessSet = witnessSet' <> tx.witnessSet }
+  --log $ "finalTx: " <> show finalTx
+  --log "finished signTx"
+  --pure $ finalTx
