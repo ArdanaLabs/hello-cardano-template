@@ -14,6 +14,7 @@ import Contract.PlutusData (Datum(..), Redeemer(Redeemer), fromData, toData)
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (mintingPolicyHash, validatorHash)
 import Contract.Test.Plutip (runContractInEnv, withPlutipContractEnv)
+import Contract.Transaction (TransactionInput(..))
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
 import Contract.Utxos (getUtxo, getWalletBalance)
@@ -24,9 +25,8 @@ import Data.Map as Map
 import Data.Time.Duration (Minutes(..))
 import Effect.Exception (throw)
 import HelloWorld.Api (enoughForFees)
-import HelloWorld.Discovery.Api (closeVault, getMyVaults, getVaultById, incrementVault, incrementVault', makeNftPolicy, mintNft, openVault, openVault', protocolInit, seedTx)
-import HelloWorld.Discovery.Types (HelloAction(..), HelloRedeemer(..), NftRedeemer(..), Vault(..))
-import Node.HTTP.Client (protocol)
+import HelloWorld.Discovery.Api (closeVault, getAllVaults, getMyVaults, getVaultById, incrementVault, incrementVault', makeNftPolicy, mintNft, openVault, openVault', protocolInit, seedTx)
+import HelloWorld.Discovery.Types (HelloAction(..), HelloRedeemer(..), NftRedeemer(..), Vault(..), Protocol)
 import Plutus.Types.Address (Address(..))
 import Plutus.Types.Credential (Credential(..))
 import Plutus.Types.Value as Value
@@ -151,7 +151,7 @@ spec = runEnvSpec do
         constraints = Constraints.mustSpendScriptOutput txin (Redeemer (toData unit))
       expectError $ buildBalanceSignAndSubmitTx lookups constraints
 
-    it "init protocol and open a vault" $ useRunnerSimple do
+    it "initialize protocol and open a vault" $ useRunnerSimple do
       protocol <- protocolInit
       openVault protocol
 
@@ -197,6 +197,39 @@ spec = runEnvSpec do
         protocol <- protocolInit
         vault <- openVault protocol
         expectError $ incrementVault' 2 protocol vault
+
+      describe "invalid vaults" $ do
+        it "invalid vaults don't show up in getAllVaults" $ useRunnerSimple do
+          protocol <- protocolInit
+          _ <- openInvalidVault protocol
+          getAllVaults protocol `shouldReturn` Map.empty
+
+        it "invalid vaults can't be incremented" $ useRunnerSimple do
+          protocol <- protocolInit
+          txin <- openInvalidVault protocol
+          utxos <- getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
+          key <- liftContractM "no wallet" =<< ownPaymentPubKeyHash
+          pkh <- getWalletAddress
+            >>= case _ of
+              Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
+              _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+          let
+            red :: Redeemer
+            red = Redeemer $ toData $ HelloRedeemer { tn: adaToken, action: Inc }
+
+            newVault :: Vault
+            newVault = Vault { owner: pkh, count: BigInt.fromInt 2 }
+
+            lookups :: Lookups.ScriptLookups PlutusData
+            lookups = Lookups.validator protocol.vaultValidator
+              <> Lookups.unspentOutputs utxos
+
+            constraints :: TxConstraints Unit Unit
+            constraints = Constraints.mustSpendScriptOutput txin red
+              <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) Constraints.DatumInline enoughForFees
+              <> Constraints.mustReferenceOutput protocol.config
+              <> Constraints.mustBeSignedBy key
+          expectError $ buildBalanceSignAndSubmitTx lookups constraints
 
       describe "steal nft" $ do
         it "on open" $ useRunnerSimple do
@@ -346,3 +379,22 @@ useRunnerSimple contract runner = do
 
 waitTime :: Minutes
 waitTime = 5.0 # Minutes
+
+openInvalidVault :: Protocol -> Contract () TransactionInput
+openInvalidVault protocol = do
+  pkh <- getWalletAddress
+    >>= case _ of
+      Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
+      _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+  let
+    vault :: Vault
+    vault = Vault { owner: pkh, count: BigInt.fromInt 1 }
+
+    lookups :: Lookups.ScriptLookups PlutusData
+    lookups = mempty
+
+    constraints :: TxConstraints Unit Unit
+    constraints =
+      Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline enoughForFees
+  txout <- buildBalanceSignAndSubmitTx lookups constraints
+  liftContractM "time out" =<< waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txout
