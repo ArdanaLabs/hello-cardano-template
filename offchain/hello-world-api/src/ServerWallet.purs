@@ -2,7 +2,7 @@ module ServerWallet (makeServerWallet) where
 
 import Contract.Prelude
 
-import Cardano.Types.Transaction (PublicKey(..), TransactionOutput(..), Utxos)
+import Cardano.Types.Transaction (PublicKey(..), TransactionOutput(..))
 import Cardano.Types.TransactionUnspentOutput (TransactionUnspentOutput(TransactionUnspentOutput))
 import Cardano.Types.Value (Value(..), mkCoin, unwrapNonAdaAsset)
 import Contract.Address (PaymentPubKey(..), PaymentPubKeyHash(..), PubKeyHash(..), pubKeyHashAddress)

@@ -73,6 +73,7 @@
                   ctl-pkgs.toppokki
                   node-child-process
                   parallel
+                  self'.packages."offchain:hello-world-api"
                 ];
               dir = ./.;
               srcs = [ "test/src" ];

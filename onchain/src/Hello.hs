@@ -8,23 +8,27 @@ module Hello (
   helloWorldCbor,
   paramHelloCbor,
   trivialCbor,
+  trivialFailCbor,
+  trivialSerialise,
   HelloRedemer (..),
 ) where
 
 import Data.Default (Default (def))
 import Utils (closedTermToHexString, validatorToHexString)
 
+import PlutusLedgerApi.V2 (Validator, ValidatorHash)
+
 import PlutusLedgerApi.V1.Address (Address (..))
 import PlutusLedgerApi.V1.Credential (Credential (..))
-import PlutusLedgerApi.V1.Scripts (Validator, ValidatorHash)
 
 import Plutarch.Prelude
 
-import Plutarch.Api.V1 (PScriptContext, PValidator, mkValidator, validatorHash)
-import Plutarch.Builtin (pforgetData)
+import Plutarch.Api.V2 (PScriptContext, PValidator, mkValidator, validatorHash)
+import Plutarch.Builtin (pforgetData, pserialiseData)
 import Plutarch.Extensions.Api (passert, pgetContinuingDatum)
 import Plutarch.Unsafe (punsafeCoerce)
 
+import Plutarch (Config (tracingMode), TracingMode (DetTracing))
 import Plutarch.Extra.TermCont (pmatchC)
 
 data HelloRedemer (s :: S)
@@ -44,14 +48,23 @@ paramHelloCbor = closedTermToHexString paramValidator
 trivialCbor :: Maybe String
 trivialCbor = closedTermToHexString trivial
 
+trivialFailCbor :: Maybe String
+trivialFailCbor = closedTermToHexString trivialFail
+
+trivialSerialise :: Maybe String
+trivialSerialise = closedTermToHexString $ plam $ \a _ _ -> pserialiseData # a
+
 helloValidator :: Validator
-helloValidator = mkValidator def (paramValidator #$ pforgetData (pdata (1 :: Term _ PInteger)))
+helloValidator = mkValidator def {tracingMode = DetTracing} (paramValidator #$ pforgetData (pdata (1 :: Term _ PInteger)))
 
 helloValidatorHash :: ValidatorHash
 helloValidatorHash = validatorHash helloValidator
 
 helloAddress :: Address
 helloAddress = Address (ScriptCredential helloValidatorHash) Nothing
+
+trivialFail :: ClosedTerm PValidator
+trivialFail = perror
 
 trivial :: ClosedTerm (PData :--> PValidator)
 trivial = plam $ \_ _ _ _ -> popaque $ pcon PUnit
@@ -61,18 +74,18 @@ paramValidator = plam $ \dCountBy dn dunit dsc -> do
   let n = pfromData (punsafeCoerce dn)
       u = pfromData (punsafeCoerce dunit)
       res cb = paramValidator' # cb # n # u # dsc
-   in ptryFrom @(PAsData PInteger) dCountBy $ \(_, i) -> popaque $ res i
+   in ptryFrom @(PAsData PInteger) dCountBy $ \(_, i) -> res i
 
 -- TODO Try wrapping the counter in a newtype to
 -- test shareing newtypes/datatypes with apps
 
-paramValidator' :: ClosedTerm (PInteger :--> PInteger :--> HelloRedemer :--> PScriptContext :--> PUnit)
+paramValidator' :: ClosedTerm (PInteger :--> PInteger :--> HelloRedemer :--> PScriptContext :--> POpaque)
 paramValidator' = plam $ \countBy n r sc -> unTermCont $ do
   pmatchC r >>= \case
     Inc _ -> do
       datum <- pgetContinuingDatum @PInteger sc
-      pure $ helloLogic # countBy # n # pfromData datum
-    Spend _ -> pure $ pcon PUnit
+      pure $ helloLogic # countBy # n # datum
+    Spend _ -> pure $ popaque $ pcon PUnit
 
-helloLogic :: ClosedTerm (PInteger :--> PInteger :--> PInteger :--> PUnit)
+helloLogic :: ClosedTerm (PInteger :--> PInteger :--> PInteger :--> POpaque)
 helloLogic = plam $ \countBy n m -> unTermCont $ passert "int was not correct" $ n + countBy #== m

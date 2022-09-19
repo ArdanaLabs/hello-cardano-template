@@ -1,12 +1,14 @@
 module Main (main) where
 
 import Apropos.Plutus.HelloValidator qualified as HelloValidator
+import Apropos.Plutus.SimpleNFT qualified as SimpleNFT
 import Goldens.Cbor qualified as Cbor
+
+import Test.Syd
 
 import Control.Monad (when)
 import Data.Maybe (fromMaybe, isNothing)
 import System.Environment (lookupEnv)
-import Test.Syd
 
 -- TODO use sydtest-discover once nix stabalizes a bit more
 -- TODO figure out why sydtest breaks the histograms and fix it
@@ -20,5 +22,6 @@ main = do
   sydTest $ do
     describe "plutus" $ do
       HelloValidator.spec
+      SimpleNFT.spec
     describe "goldens" $ do
       Cbor.spec goldenDir
