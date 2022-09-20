@@ -350,6 +350,43 @@ localOnlySpec = describe "HelloWorld.Discovery.Api" do
         asBob do
           expectError $ incrementVault protocol aliceVault
 
+      -- "attack" is a strong word but it's a thing you're not supposed to be able to do in the protocol
+      it "alice can't gitf bob a vault" $ useTwoWalletRunner $ \asAlice asBob -> do
+        (protocol /\ aliceVault) <- asAlice do
+          protocol <- protocolInit
+          vault <- openVault protocol
+          pure $ protocol /\ vault
+        bobKey <- asBob $
+          getWalletAddress >>= case _ of
+              Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
+              _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+        asAlice $ do
+          let vaultId = aliceVault
+          txin <- fst <$> getVaultById protocol vaultId
+          utxos <- getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
+          cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
+          key <- liftContractM "no wallet" =<< ownPaymentPubKeyHash
+          let
+            nft :: Value
+            nft = Value.singleton cs vaultId $ BigInt.fromInt 1
+
+            red :: Redeemer
+            red = Redeemer $ toData $ HelloRedeemer { tn: vaultId, action: Inc }
+
+            newVault :: Vault
+            newVault = Vault { owner: bobKey, count: BigInt.fromInt 1}
+
+            lookups :: Lookups.ScriptLookups PlutusData
+            lookups = Lookups.validator protocol.vaultValidator
+              <> Lookups.unspentOutputs utxos
+
+            constraints :: TxConstraints Unit Unit
+            constraints = Constraints.mustSpendScriptOutput txin red
+              <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) Constraints.DatumInline (enoughForFees <> nft)
+              <> Constraints.mustReferenceOutput protocol.config
+              <> Constraints.mustBeSignedBy key
+          expectError $ buildBalanceSignAndSubmitTx lookups constraints
+
       it "bob can't close alices vault" $ useTwoWalletRunner $ \asAlice asBob -> do
         (protocol /\ aliceVault) <- asAlice do
           protocol <- protocolInit
