@@ -31,6 +31,27 @@ testPlan testOptions = group "When redeem button is clicked" do
     content <- T.content page
     Assert.assert "Redeeming" (contains (Pattern "Redeeming 10.0 ADA ...") content)
 
+  runE2ETest "It shows unlocking funds dialog" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
+    injectJQuery jQuery page
+
+    clickButton "Initialize" page
+
+    namiConfirmAccess example
+
+    delaySec Constants.threeSeconds
+
+    namiSign' example
+
+    void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: Constants.timeoutMs } page
+    clickButton "Redeem" page
+
+    namiSign' example
+
+    void $ T.pageWaitForSelector (T.Selector "#unlocking") { timeout: Constants.timeoutMs } page
+
+    content <- T.content page
+    Assert.assert "Unlocking funds" (contains (Pattern "Unlocking funds ...") content)
+
   runE2ETest "It goes to initial page" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
     injectJQuery jQuery page
 
