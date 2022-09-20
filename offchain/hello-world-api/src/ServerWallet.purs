@@ -3,35 +3,26 @@ module ServerWallet (makeServerWallet) where
 import Contract.Prelude
 
 import BalanceTx.Collateral.Select (selectCollateral) as Collateral
-import Cardano.Types.Transaction (PublicKey(..), TransactionOutput(..), UtxoMap)
-import Cardano.Types.TransactionUnspentOutput (TransactionUnspentOutput(TransactionUnspentOutput))
-import Cardano.Types.Value (Value(..), mkCoin, unwrapNonAdaAsset)
-import Contract.Address (NetworkId, PaymentPubKey(..), PaymentPubKeyHash(..), PubKeyHash(..), pubKeyHashAddress)
+import Cardano.Types.Transaction (PublicKey(..), UtxoMap)
+import Cardano.Types.TransactionUnspentOutput (TransactionUnspentOutput)
+import Contract.Address (NetworkId)
 import Contract.Config (PrivatePaymentKey(..))
-import Contract.Log (logError')
-import Contract.Transaction (Transaction(..), TransactionWitnessSet(..))
-import Control.Monad.Error.Class (throwError)
 import Data.Array (fromFoldable)
-import Data.FoldableWithIndex (foldMapWithIndex)
-import Data.Ord.Min (Min(..))
-import Debug (traceM)
-import Deserialization.WitnessSet as Deserialization.WitnessSet
 import Effect.Exception (throw)
 import QueryM.Ogmios (CoinsPerUtxoUnit)
-import Serialization (publicKeyFromBech32, publicKeyFromPrivateKey, publicKeyHash)
-import Serialization as Serialization
-import Serialization.Address (Address, addressFromBech32, enterpriseAddress, enterpriseAddressToAddress, keyHashCredential)
-import Signing (getServerPubKey, serverSignTx)
+import Serialization (publicKeyFromBech32, publicKeyHash)
+import Serialization.Address (Address, enterpriseAddress, enterpriseAddressToAddress, keyHashCredential)
+import Signing (getServerCmd, getServerPubKey, serverSignTx)
 import Unsafe.Coerce (unsafeCoerce)
 import Wallet.Key (KeyWallet(..))
 
 makeServerWallet :: Aff KeyWallet
 makeServerWallet = do
-  pubKey@(PublicKey bech32) <- getServerPubKey
+  serverCmd <- getServerCmd
+  pubKey@(PublicKey bech32) <- getServerPubKey serverCmd
   pubKey2 <- case publicKeyFromBech32 bech32 of
     Nothing -> do
-      log $ "got bad string: " <> bech32
-      liftEffect $ throw "pub key conversion error"
+      liftEffect $ throw $ "pub key conversion error on string: " <> bech32
     Just adr -> pure $ adr
   let
     address :: NetworkId -> Aff Address
@@ -52,8 +43,8 @@ makeServerWallet = do
   pure $ KeyWallet
     { address
     , selectCollateral
-    , signTx: serverSignTx pubKey
-    , paymentKey: PrivatePaymentKey $ unsafeCoerce ""
+    , signTx: serverSignTx serverCmd pubKey
+    , paymentKey: PrivatePaymentKey $ unsafeCoerce "tried to use a the private key of a yubikey"
     , stakeKey: Nothing
     }
 

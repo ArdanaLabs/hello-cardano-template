@@ -1,18 +1,22 @@
 module Signing
   ( getServerPubKey
   , serverSignTx
+  , getServerCmd
   ) where
 
 import Contract.Prelude
 
-import Affjax (Error, Response, get, post, printError)
-import Affjax.RequestBody (RequestBody(..))
-import Affjax.ResponseFormat (string)
 import Cardano.Types.Transaction (Ed25519Signature(Ed25519Signature), PublicKey(..), Vkey(Vkey), _vkeys)
 import Contract.Prim.ByteArray (byteArrayToHex)
 import Contract.Transaction (Transaction(Transaction), TransactionWitnessSet)
 import Data.Lens (set)
+import Data.String (trim)
+import Effect.Aff (makeAff)
 import Effect.Exception (throw)
+import Node.Buffer.Class (toString)
+import Node.ChildProcess (ExecResult, defaultExecOptions, execFile)
+import Node.Encoding (Encoding(UTF8))
+import Node.Process (lookupEnv)
 import Serialization (toBytes)
 import Serialization as Serialization
 import Types.ByteArray (ByteArray)
@@ -20,24 +24,30 @@ import Untagged.Union (asOneOf)
 
 type Signer = ByteArray -> Aff String
 
-getServerPubKey :: Aff PublicKey
-getServerPubKey = PublicKey <$> (handleAffjax =<< get string "http://localhost:3000/pubkey")
+getServerCmd :: Aff String
+getServerCmd = liftEffect $ do
+  lookupEnv "SIGNING_SERVER_CMD" >>= case _ of
+    Just cmd -> pure cmd
+    Nothing -> throw "expected SIGNING_SERVER_CMD to be set"
 
--- FIXME I'm pretty sure this is the problem
--- it expects a bech32 string but is getting a hex string
--- imo it makes the most sense to fix this on the haskell side
+getServerPubKey :: String -> Aff PublicKey
+getServerPubKey serverCmd = do
+  (res :: ExecResult) <- execAff serverCmd ["getpubkey"]
+  PublicKey <<< trim <$> (liftEffect $ toString UTF8 res.stdout)
 
-serverSignTx :: PublicKey -> Transaction -> Aff TransactionWitnessSet
-serverSignTx = signTx serverSigner
+serverSignTx :: String -> PublicKey -> Transaction -> Aff TransactionWitnessSet
+serverSignTx serverCmd = signTx (serverSigner serverCmd)
 
-serverSigner :: ByteArray -> Aff String
-serverSigner a = do
-  handleAffjax =<< post string "http://localhost:3000/sign" (Just $ String $ byteArrayToHex a)
+serverSigner :: String -> ByteArray -> Aff String
+serverSigner serverCmd a = do
+  let args = ["sign",byteArrayToHex a]
+  (res :: ExecResult) <- execAff serverCmd args
+  liftEffect $ trim <$> toString UTF8 res.stdout
 
-handleAffjax :: Either Error (Response String) -> Aff String
-handleAffjax = case _ of
-  Right resp -> pure resp.body
-  Left err -> liftEffect $ throw $ printError err
+execAff :: String -> Array String -> Aff ExecResult
+execAff file args = makeAff $ \callBack -> do
+  _child <- execFile file args defaultExecOptions (callBack <<< Right)
+  pure mempty
 
 signTx :: Signer -> PublicKey -> Transaction -> Aff TransactionWitnessSet
 signTx signer pubKey (Transaction tx) = do
