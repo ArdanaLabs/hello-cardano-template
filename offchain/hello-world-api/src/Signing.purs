@@ -32,7 +32,7 @@ getServerCmd = liftEffect $ do
 
 getServerPubKey :: String -> Aff PublicKey
 getServerPubKey serverCmd = do
-  (res :: ExecResult) <- execAff serverCmd ["getpubkey"]
+  (res :: ExecResult) <- execAff serverCmd [ "getpubkey" ]
   PublicKey <<< trim <$> (liftEffect $ toString UTF8 res.stdout)
 
 serverSignTx :: String -> PublicKey -> Transaction -> Aff TransactionWitnessSet
@@ -40,7 +40,7 @@ serverSignTx serverCmd = signTx (serverSigner serverCmd)
 
 serverSigner :: String -> ByteArray -> Aff String
 serverSigner serverCmd a = do
-  let args = ["sign",byteArrayToHex a]
+  let args = [ "sign", byteArrayToHex a ]
   (res :: ExecResult) <- execAff serverCmd args
   liftEffect $ trim <$> toString UTF8 res.stdout
 
