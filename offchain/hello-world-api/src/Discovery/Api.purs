@@ -18,6 +18,7 @@ import Contract.Prelude
 
 import CBOR as CBOR
 import Contract.Address (getWalletAddress, getWalletCollateral, ownPaymentPubKeyHash, ownPubKeyHash)
+import Contract.Config (NetworkId(..))
 import Contract.Hashing (datumHash)
 import Contract.Log (logDebug', logInfo')
 import Contract.Monad (Contract, liftContractM)
@@ -44,7 +45,7 @@ import Plutus.Types.Value (symbols)
 import ToData (toData)
 import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
-import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getDatum, getUtxos, maxWait, waitForTx)
+import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getDatum, getTxScanUrl, getUtxos, maxWait, waitForTx)
 
 getAllVaults :: Protocol -> Contract () (Map TransactionInput TransactionOutputWithRefScript)
 getAllVaults protocol =
@@ -243,8 +244,9 @@ seedTx :: Contract () TransactionInput
 seedTx = do
   adr <- liftContractM "no wallet" =<< getWalletAddress
   utxos <- getUtxos adr
+  logInfo' $ show adr
   logInfo' $ "utxos: " <> show utxos
-  col <- liftContractM "no collateral" =<< getWalletCollateral
+  col <- fromMaybe [] <$> getWalletCollateral
   logInfo' $ "col: " <> show col
   let colIns = (unwrap >>> _.input) <$> col
   logInfo' $ "colIns: " <> show colIns
