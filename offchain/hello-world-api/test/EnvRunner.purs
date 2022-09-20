@@ -1,8 +1,10 @@
 module Test.HelloWorld.EnvRunner
   ( getEnvRunner
   , EnvRunner
+  , EnvSpec
   , Mode(..)
   , plutipConfig
+  , runEnvSpec
   ) where
 
 import Prelude
@@ -11,17 +13,23 @@ import Contract.Config (testnetConfig)
 import Contract.Monad (ContractEnv, withContractEnv)
 import Contract.Test.Plutip (PlutipConfig, withPlutipContractEnv)
 import Data.BigInt as BigInt
+import Data.Identity (Identity)
 import Data.Log.Level (LogLevel(Warn))
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.UInt as UInt
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Node.Process (lookupEnv)
+import Test.Spec (Spec, SpecT, before)
 import Wallet.Key (KeyWallet, privateKeysToKeyWallet)
 import Wallet.KeyFile (privatePaymentKeyFromFile, privateStakeKeyFromFile)
 
 data Mode = Local | Testnet
 type EnvRunner = (ContractEnv () -> KeyWallet -> Aff Unit) -> Aff Unit
+type EnvSpec = SpecT Aff EnvRunner Identity Unit
+
+runEnvSpec :: EnvSpec -> EnvRunner -> Spec Unit
+runEnvSpec s r = before (pure r) s
 
 getEnvRunner :: Mode -> Aff EnvRunner
 getEnvRunner Local = pure $ withPlutipContractEnv plutipConfig [ BigInt.fromInt 20_000_000 ]

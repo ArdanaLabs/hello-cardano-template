@@ -191,6 +191,7 @@ with (removeAttrs ps-pkgs (attrNames self));
               unfoldable
               untagged-union
               variant
+              stringutils
             ];
         };
     };

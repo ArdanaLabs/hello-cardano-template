@@ -10,12 +10,14 @@ import Effect.Aff (launchAff_)
 import Effect.Exception (throw)
 import Faucet (topup)
 import Node.Process (lookupEnv)
-import Test.HelloWorld.Api as Test.HelloWorld.Api
-import Test.HelloWorld.Encoding as Encoding
 import Test.HelloWorld.EnvRunner (Mode(..), getEnvRunner)
 import Test.Spec (describe)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec', defaultConfig)
+
+import Test.HelloWorld.Encoding as Encoding
+import Test.HelloWorld.Api as Test.HelloWorld.Api
+import Test.HelloWorld.Discovery.Api as Test.HelloWorld.Discovery.Api
 
 main :: Effect Unit
 main = do
@@ -33,10 +35,12 @@ main = do
         Local -> do
           describe "pure tests" do
             Encoding.spec
+            Test.HelloWorld.Discovery.Api.spec envRunner
             Test.HelloWorld.Api.spec envRunner
             Test.HelloWorld.Api.localOnlySpec
         Testnet -> do
           describe "pure tests" do
             Encoding.spec
           describe "impure tests" do
+            Test.HelloWorld.Discovery.Api.spec envRunner
             Test.HelloWorld.Api.spec envRunner
