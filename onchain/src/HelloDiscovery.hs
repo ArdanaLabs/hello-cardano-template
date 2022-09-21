@@ -48,6 +48,7 @@ import Plutarch.Extensions.Api (passert, passert_, pfindOwnInput, pgetContinuing
 import Plutarch.Extensions.Data (parseData, parseDatum)
 import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extra.TermCont
+import Plutarch.Api.V1 (PMap)
 
 configScriptCbor :: String
 configScriptCbor = validatorToHexString $ mkValidator def configScript
@@ -220,7 +221,9 @@ vaultAdrValidator = ptrace "vaultAdrValidator" $
         datum2 :: Term _ CounterDatum <- parseDatum (pfield @"outputDatum" # outDatum)
         passert_ "owner is the same" $ pfield @"owner" # datum2 #== pfield @"owner" # datum
         passert_ "count is 1 more" $ pfield @"count" # datum2 #== pfield @"count" # datum + (1 :: Term _ PInteger)
-        passert "kept nft" $ 0 #< Value.pvalueOf # (pfield @"value" # out) # nftCs # nftTn
+        PValue outVal <- pmatchC $ pfield @"value" # out
+        PJust (outputNfts :: Term _ (PMap _ PTokenName PInteger)) <- pmatchC $ AssocMap.plookup # nftCs # outVal
+        passert "kept nft" $ outputNfts #== AssocMap.psingleton # nftTn # 1
       Spend _ -> do
         let minting = pfield @"mint" # info
         passert "burned nft" $ Value.pvalueOf # minting # nftCs # nftTn #< 0

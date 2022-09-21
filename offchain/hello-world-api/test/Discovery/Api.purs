@@ -8,7 +8,7 @@ import Contract.Prelude
 import CBOR as CBOR
 import Contract.Address (getWalletAddress, ownPaymentPubKeyHash, scriptHashAddress)
 import Contract.Hashing (datumHash)
-import Contract.Log (logInfo')
+import Contract.Log (logError', logInfo')
 import Contract.Monad (Contract, liftContractM)
 import Contract.PlutusData (Datum(..), Redeemer(Redeemer), fromData, toData)
 import Contract.ScriptLookups as Lookups
@@ -225,7 +225,7 @@ spec = runEnvSpec do
         txid <- buildBalanceSignAndSubmitTx lookups constraints
         expectError $ waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txid
 
-      itOnly "can't merge vaults" $ useRunnerSimple do
+      it "can't merge vaults" $ useRunnerSimple do
         protocol <- protocolInit
         v1 <- openVault protocol
         v2 <- openVault protocol
@@ -264,8 +264,7 @@ spec = runEnvSpec do
             <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) Constraints.DatumInline (enoughForFees <> nft1 <> nft2)
             <> Constraints.mustReferenceOutput protocol.config
             <> Constraints.mustBeSignedBy key
-        txid <- buildBalanceSignAndSubmitTx lookups constraints
-        expectError $ waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txid
+        expectError $ buildBalanceSignAndSubmitTx lookups constraints
 
 
       describe "invalid vaults" $ do
