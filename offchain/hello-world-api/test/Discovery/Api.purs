@@ -42,7 +42,7 @@ spec = runEnvSpec do
 
     describe "misc" do
 
-      when false $ it "script with serialise works" $ useRunnerSimple do
+      it "script with serialise works" $ useRunnerSimple do
         val <- liftContractM "failed to decode" $ decodeCbor CBOR.trivialSerialise
         let vhash = validatorHash val
         tx1 <- buildBalanceSignAndSubmitTx
