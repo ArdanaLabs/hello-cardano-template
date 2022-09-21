@@ -135,6 +135,10 @@ authTokenMP = ptrace "vault auth mp" $
           tn <- pletC $ pfield @"tokenName" # red
           ref :: Term _ PTxOutRef <- pletC $ pfield @"txOutRef" # red
 
+          -- Ref is spent
+          passert_ "ref is spent" $
+            pelem # ref #$ pmap # (pfield @"outRef") #$ pfromData $ pfield @"inputs" # info
+
           -- Token name is hash of ref
           PTokenName tn' <- pmatchC tn
           passert_ "tn was hash of ref" $

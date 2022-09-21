@@ -20,7 +20,7 @@ import CBOR as CBOR
 import Contract.Address (getWalletAddress, getWalletCollateral, ownPaymentPubKeyHash, ownPubKeyHash)
 import Contract.Config (NetworkId(..))
 import Contract.Hashing (datumHash)
-import Contract.Log (logDebug', logInfo')
+import Contract.Log (logDebug', logError', logInfo')
 import Contract.Monad (Contract, liftContractM)
 import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer), fromData)
 import Contract.ScriptLookups as Lookups
@@ -156,7 +156,11 @@ openVault' :: Int -> Protocol -> Contract () VaultId
 openVault' start protocol = do
   nftCs <- liftContractM "mpsSymbol failed" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
   txOut <- seedTx
+  logInfo' $ "seedTx:" <> show txOut
   nftTn <- liftContractM "failed to make nft token name" $ datumHash (Datum (toData txOut)) <#> unwrap >>= mkTokenName
+  logInfo' $ "nftTn:" <> show nftTn
+  adr <- liftContractM "no wallet" =<< getWalletAddress
+  utxos <- getUtxos adr
   let nftRed = NftRedeemer { tn: nftTn, txId: txOut }
   pkh <- getWalletAddress >>= case _ of
     Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
@@ -170,10 +174,12 @@ openVault' start protocol = do
 
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.mintingPolicy protocol.nftMp
+      <> Lookups.unspentOutputs utxos
 
     constraints :: TxConstraints Unit Unit
     constraints =
-      Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline (enoughForFees <> nft)
+        Constraints.mustSpendPubKeyOutput txOut
+        <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline (enoughForFees <> nft)
         <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) nft
   txid <- buildBalanceSignAndSubmitTx lookups constraints
   _ <- waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txid
@@ -260,7 +266,11 @@ seedTx = do
       pure sending
     Nothing -> do
       logInfo' "all utxos were collateral using collateral utxo"
-      liftContractM "no utxos at all" $ head $ toUnfoldable $ keys utxos
+      sending <- liftContractM "no utxos at all" $ head $ toUnfoldable $ keys utxos
+      logInfo' $ "sending: " <> show sending
+      out <- liftContractM "no output" =<< getUtxo sending
+      logInfo' $ "out: " <> show out
+      pure sending
 
 enoughForFees :: Value.Value
 enoughForFees = Value.lovelaceValueOf $ BigInt.fromInt 10_000_000
