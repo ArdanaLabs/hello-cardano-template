@@ -27,11 +27,12 @@ import Effect.Exception (throw)
 import HelloWorld.Api (enoughForFees)
 import HelloWorld.Discovery.Api (closeVault, getAllVaults, getMyVaults, getVaultById, incrementVault, incrementVault', makeNftPolicy, mintNft, openVault, openVault', protocolInit, seedTx)
 import HelloWorld.Discovery.Types (HelloAction(..), HelloRedeemer(..), NftRedeemer(..), Vault(..), Protocol)
+import Node.HTTP.Client (protocol)
 import Plutus.Types.Address (Address(..))
 import Plutus.Types.Credential (Credential(..))
 import Plutus.Types.Value as Value
 import Test.HelloWorld.EnvRunner (EnvRunner, defaultWallet, plutipConfig, runEnvSpec)
-import Test.Spec (Spec, describe, it)
+import Test.Spec (Spec, describe, it, itOnly)
 import Test.Spec.Assertions (expectError, shouldEqual, shouldReturn)
 import Types.PlutusData (PlutusData)
 import Util (buildBalanceSignAndSubmitTx, decodeCbor, getDatum, getUtxos, maxWait, waitForTx, withOurLogger)
@@ -223,6 +224,49 @@ spec = runEnvSpec do
               <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) nft
         txid <- buildBalanceSignAndSubmitTx lookups constraints
         expectError $ waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txid
+
+      itOnly "can't merge vaults" $ useRunnerSimple do
+        protocol <- protocolInit
+        v1 <- openVault protocol
+        v2 <- openVault protocol
+        txinV1 /\ txOut <- getVaultById protocol v1
+        txinV2 <- fst <$> getVaultById protocol v2
+        (oldVault :: Vault) <- liftContractM "failed to parse old vault"
+            <<< fromData <<< unwrap
+            =<< getDatum (unwrap (unwrap txOut).output).datum
+        utxos <- getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
+        cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
+        key <- liftContractM "no wallet" =<< ownPaymentPubKeyHash
+        let
+          nft1 :: Value
+          nft1 = Value.singleton cs v1 $ BigInt.fromInt 1
+
+          nft2 :: Value
+          nft2 = Value.singleton cs v2 $ BigInt.fromInt 1
+
+          red1 :: Redeemer
+          red1 = Redeemer $ toData $ HelloRedeemer { tn: v1, action: Inc }
+
+          red2 :: Redeemer
+          red2 = Redeemer $ toData $ HelloRedeemer { tn: v2, action: Inc }
+
+          newVault :: Vault
+          newVault = Vault { owner: (unwrap oldVault).owner, count: BigInt.fromInt 1}
+
+          lookups :: Lookups.ScriptLookups PlutusData
+          lookups = Lookups.validator protocol.vaultValidator
+            <> Lookups.unspentOutputs utxos
+
+          constraints :: TxConstraints Unit Unit
+          constraints =
+            Constraints.mustSpendScriptOutput txinV1 red1
+            <> Constraints.mustSpendScriptOutput txinV2 red2
+            <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) Constraints.DatumInline (enoughForFees <> nft1 <> nft2)
+            <> Constraints.mustReferenceOutput protocol.config
+            <> Constraints.mustBeSignedBy key
+        txid <- buildBalanceSignAndSubmitTx lookups constraints
+        expectError $ waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txid
+
 
       describe "invalid vaults" $ do
         it "invalid vaults don't show up in getAllVaults" $ useRunnerSimple do
