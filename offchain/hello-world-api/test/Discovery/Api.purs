@@ -31,7 +31,7 @@ import Plutus.Types.Address (Address(..))
 import Plutus.Types.Credential (Credential(..))
 import Plutus.Types.Value as Value
 import Test.HelloWorld.EnvRunner (EnvRunner, defaultWallet, plutipConfig, runEnvSpec)
-import Test.Spec (Spec, describe, it, itOnly)
+import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (expectError, shouldEqual, shouldReturn)
 import Types.PlutusData (PlutusData)
 import Util (buildBalanceSignAndSubmitTx, decodeCbor, getDatum, getUtxos, maxWait, waitForTx, withOurLogger)
@@ -197,6 +197,32 @@ spec = runEnvSpec do
         protocol <- protocolInit
         vault <- openVault protocol
         expectError $ incrementVault' 2 protocol vault
+
+      it "can't open vault with bad id" $ useRunnerSimple do
+        protocol <- protocolInit
+        nftCs <- liftContractM "mpsSymbol failed" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
+        txOut <- seedTx
+        let nftTn = adaToken
+        let nftRed = NftRedeemer { tn: nftTn, txId: txOut }
+        pkh <- getWalletAddress >>= case _ of
+          Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
+          _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+        let
+          nft :: Value.Value
+          nft = Value.singleton nftCs nftTn $ BigInt.fromInt 1
+
+          vault :: Vault
+          vault = Vault { owner: pkh, count: BigInt.fromInt 0 }
+
+          lookups :: Lookups.ScriptLookups PlutusData
+          lookups = Lookups.mintingPolicy protocol.nftMp
+
+          constraints :: TxConstraints Unit Unit
+          constraints =
+            Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline (enoughForFees <> nft)
+              <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) nft
+        txid <- buildBalanceSignAndSubmitTx lookups constraints
+        expectError $ waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txid
 
       describe "invalid vaults" $ do
         it "invalid vaults don't show up in getAllVaults" $ useRunnerSimple do
