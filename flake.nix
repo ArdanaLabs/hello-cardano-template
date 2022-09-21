@@ -9,6 +9,7 @@
 
 
 
+    # CTL with cardano-wallet fix
     cardano-transaction-lib.url = "github:Plutonomicon/cardano-transaction-lib?rev=296563fa1a9a7494393bb4a74ea0464054fe9b4b";
     cardano-transaction-lib.inputs.plutip.follows="plutip";
     cardano-transaction-lib.inputs.haskell-nix.follows="plutip/haskell-nix";
