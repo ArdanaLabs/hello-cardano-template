@@ -61,6 +61,22 @@ spec = runEnvSpec do
       it "mint runs" $ useRunnerSimple do
         mintNft
 
+      it "can't use refference input to mint" $ useRunnerSimple do
+        txOut <- seedTx
+        adr <- liftContractM "no wallet" =<< getWalletAddress
+        utxos <- getUtxos adr
+        nftPolicy <- makeNftPolicy txOut
+        cs <- liftContractM "failed to hash MintingPolicy into CurrencySymbol" $ scriptCurrencySymbol nftPolicy
+        let
+          lookups :: Lookups.ScriptLookups PlutusData
+          lookups = Lookups.mintingPolicy nftPolicy
+            <> Lookups.unspentOutputs utxos
+
+          constraints :: TxConstraints Unit Unit
+          constraints = Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+            <> Constraints.mustReferenceOutput txOut
+        expectError $ buildBalanceSignAndSubmitTx lookups constraints
+
       it "double minting fails on second mint" $ useRunnerSimple do
         txOut <- seedTx
         adr <- liftContractM "no wallet" =<< getWalletAddress
