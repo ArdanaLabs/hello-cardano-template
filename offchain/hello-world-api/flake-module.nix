@@ -60,11 +60,11 @@
             ];
             text =
               pkgs.lib.optionalString runVolumeTests "export RUN_VOLUME_TESTS=1" + ''
-              export MODE=${mode}
-              export TEST_RESOURCES=${./fixtures}
-              export NODE_PATH=${config.ctl.nodeModules}/node_modules
-              ${hello-world-api.ps.test.run { }}
-            '';
+                export MODE=${mode}
+                export TEST_RESOURCES=${./fixtures}
+                export NODE_PATH=${config.ctl.nodeModules}/node_modules
+                ${hello-world-api.ps.test.run { }}
+              '';
           };
     in
     {
@@ -74,11 +74,11 @@
       };
       checks = {
         run-hello-world-api-tests =
-          let test = hello-world-api-tests { mode = "local";}; in
+          let test = hello-world-api-tests { mode = "local"; }; in
           pkgs.runCommand test.name { }
             "${test}/bin/${test.meta.mainProgram} | tee $out";
         run-hello-world-api-volume-tests =
-          let test = hello-world-api-tests { mode = "local"; runVolumeTests = true;}; in
+          let test = hello-world-api-tests { mode = "local"; runVolumeTests = true; }; in
           pkgs.runCommand test.name { }
             "${test}/bin/${test.meta.mainProgram} | tee $out";
       };

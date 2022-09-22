@@ -36,13 +36,12 @@ main = do
     runSpec' defaultConfig { timeout = Nothing } [ consoleReporter ] $
       case mode of
         Local ->
-          if runVolumeTests
-            then Test.Volume.HelloWorld.Api.spec
-            else do
-              describe "pure tests" do
-                Encoding.spec
-                Test.HelloWorld.Api.spec envRunner
-                Test.HelloWorld.Api.localOnlySpec
+          if runVolumeTests then Test.Volume.HelloWorld.Api.spec
+          else do
+            describe "pure tests" do
+              Encoding.spec
+              Test.HelloWorld.Api.spec envRunner
+              Test.HelloWorld.Api.localOnlySpec
         Testnet -> do
           describe "pure tests" do
             Encoding.spec
