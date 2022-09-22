@@ -41,6 +41,7 @@ import Plutarch.Api.V1.Value qualified as Value
 import Plutarch.Api.V1.AssocMap (plookup)
 import Plutarch.Api.V1.Value (pforgetPositive)
 
+import Plutarch.Api.V1 (PMap)
 import Plutarch.Builtin (pforgetData, pserialiseData)
 import Plutarch.Crypto (pblake2b_256)
 import Plutarch.DataRepr (PDataFields)
@@ -48,7 +49,6 @@ import Plutarch.Extensions.Api (passert, passert_, pfindOwnInput, pgetContinuing
 import Plutarch.Extensions.Data (parseData, parseDatum)
 import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extra.TermCont
-import Plutarch.Api.V1 (PMap)
 
 configScriptCbor :: String
 configScriptCbor = validatorToHexString $ mkValidator def configScript

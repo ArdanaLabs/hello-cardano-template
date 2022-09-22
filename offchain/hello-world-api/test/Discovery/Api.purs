@@ -225,8 +225,8 @@ spec = runEnvSpec do
           constraints :: TxConstraints Unit Unit
           constraints =
             Constraints.mustSpendPubKeyOutput txOut
-            <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline (enoughForFees <> nft)
-            <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) nft
+              <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline (enoughForFees <> nft)
+              <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) nft
         expectError $ buildBalanceSignAndSubmitTx lookups constraints
 
       it "vault ids are never the same" $ useRunnerSimple do
@@ -260,14 +260,14 @@ spec = runEnvSpec do
           lookups :: Lookups.ScriptLookups PlutusData
           lookups = Lookups.mintingPolicy protocol.nftMp
             <> Lookups.unspentOutputs (Map.filterKeys (_ /= txOut) utxos)
-            -- the filter is to prevent the ref from being incidentally spent
+
+          -- the filter is to prevent the ref from being incidentally spent
 
           constraints :: TxConstraints Unit Unit
           constraints =
-              Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline (enoughForFees <> nft)
+            Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline (enoughForFees <> nft)
               <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) nft
         expectError $ buildBalanceSignAndSubmitTx lookups constraints
-
 
       it "can't merge vaults" $ useRunnerSimple do
         protocol <- protocolInit
@@ -276,8 +276,9 @@ spec = runEnvSpec do
         txinV1 /\ txOut <- getVaultById protocol v1
         txinV2 <- fst <$> getVaultById protocol v2
         (oldVault :: Vault) <- liftContractM "failed to parse old vault"
-            <<< fromData <<< unwrap
-            =<< getDatum (unwrap (unwrap txOut).output).datum
+          <<< fromData
+          <<< unwrap
+          =<< getDatum (unwrap (unwrap txOut).output).datum
         utxos <- getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
         cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
         key <- liftContractM "no wallet" =<< ownPaymentPubKeyHash
@@ -295,7 +296,7 @@ spec = runEnvSpec do
           red2 = Redeemer $ toData $ HelloRedeemer { tn: v2, action: Inc }
 
           newVault :: Vault
-          newVault = Vault { owner: (unwrap oldVault).owner, count: BigInt.fromInt 1}
+          newVault = Vault { owner: (unwrap oldVault).owner, count: BigInt.fromInt 1 }
 
           lookups :: Lookups.ScriptLookups PlutusData
           lookups = Lookups.validator protocol.vaultValidator
@@ -304,12 +305,11 @@ spec = runEnvSpec do
           constraints :: TxConstraints Unit Unit
           constraints =
             Constraints.mustSpendScriptOutput txinV1 red1
-            <> Constraints.mustSpendScriptOutput txinV2 red2
-            <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) Constraints.DatumInline (enoughForFees <> nft1 <> nft2)
-            <> Constraints.mustReferenceOutput protocol.config
-            <> Constraints.mustBeSignedBy key
+              <> Constraints.mustSpendScriptOutput txinV2 red2
+              <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) Constraints.DatumInline (enoughForFees <> nft1 <> nft2)
+              <> Constraints.mustReferenceOutput protocol.config
+              <> Constraints.mustBeSignedBy key
         expectError $ buildBalanceSignAndSubmitTx lookups constraints
-
 
       describe "invalid vaults" $ do
         it "invalid vaults don't show up in getAllVaults" $ useRunnerSimple do
@@ -369,7 +369,7 @@ spec = runEnvSpec do
 
             constraints :: TxConstraints Unit Unit
             constraints =
-                Constraints.mustSpendPubKeyOutput txOut
+              Constraints.mustSpendPubKeyOutput txOut
                 <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline enoughForFees
                 <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) nft
           expectError $ buildBalanceSignAndSubmitTx lookups constraints
@@ -399,8 +399,8 @@ spec = runEnvSpec do
             constraints :: TxConstraints Unit Unit
             constraints =
               Constraints.mustSpendPubKeyOutput txOut
-              <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline (enoughForFees <> nft)
-              <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) (nft <> nft)
+                <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline (enoughForFees <> nft)
+                <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) (nft <> nft)
           expectError $ buildBalanceSignAndSubmitTx lookups constraints
 
         it "on inc" $ useRunnerSimple do
@@ -477,10 +477,11 @@ localOnlySpec = describe "HelloWorld.Discovery.Api" do
           protocol <- protocolInit
           vault <- openVault protocol
           pure $ protocol /\ vault
-        bobKey <- asBob $
-          getWalletAddress >>= case _ of
-              Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
-              _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+        bobKey <- asBob
+          $ getWalletAddress
+          >>= case _ of
+            Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
+            _ -> liftEffect $ throw "failed to get wallet pubkey hash"
         asAlice $ do
           let vaultId = aliceVault
           txin <- fst <$> getVaultById protocol vaultId
@@ -495,7 +496,7 @@ localOnlySpec = describe "HelloWorld.Discovery.Api" do
             red = Redeemer $ toData $ HelloRedeemer { tn: vaultId, action: Inc }
 
             newVault :: Vault
-            newVault = Vault { owner: bobKey, count: BigInt.fromInt 1}
+            newVault = Vault { owner: bobKey, count: BigInt.fromInt 1 }
 
             lookups :: Lookups.ScriptLookups PlutusData
             lookups = Lookups.validator protocol.vaultValidator

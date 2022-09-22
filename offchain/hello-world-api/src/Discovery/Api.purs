@@ -178,7 +178,7 @@ openVault' start protocol = do
 
     constraints :: TxConstraints Unit Unit
     constraints =
-        Constraints.mustSpendPubKeyOutput txOut
+      Constraints.mustSpendPubKeyOutput txOut
         <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline (enoughForFees <> nft)
         <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) nft
   txid <- buildBalanceSignAndSubmitTx lookups constraints
