@@ -26,6 +26,7 @@ import Plutarch.Api.V2 (
 import Plutarch.Api.V1 (
   PCredential (PScriptCredential),
   PCurrencySymbol,
+  PMap,
   PTokenName (PTokenName),
   PValue (PValue),
  )
@@ -40,8 +41,6 @@ import Plutarch.Api.V1.Value qualified as Value
 
 import Plutarch.Api.V1.AssocMap (plookup)
 import Plutarch.Api.V1.Value (pforgetPositive)
-
-import Plutarch.Api.V1 (PMap)
 import Plutarch.Builtin (pforgetData, pserialiseData)
 import Plutarch.Crypto (pblake2b_256)
 import Plutarch.DataRepr (PDataFields)
