@@ -1,42 +1,40 @@
-module Test.Volume.HelloWorld.Api where
+module Test.Volume.HelloWorld.Api
+  ( spec
+  , withTimesLogged
+  ) where
 
 import Prelude
 
 import Contract.Monad (runContractInEnv)
 import Contract.Wallet (withKeyWallet)
-import Control.Parallel (parTraverse_, sequential)
-import Data.Array (replicate)
+import Control.Parallel (parTraverse_)
+import Data.Array (replicate, zip, (..))
+import Data.Tuple (Tuple(Tuple))
 import Data.BigInt as BigInt
-import Data.Foldable (traverse_, fold)
-import Data.Tuple (Tuple, fst)
-import Data.Tuple.Nested ((/\))
-import Data.Typelevel.Undefined (undefined)
-import HelloWorld.Api (initialize)
+import Effect.Aff (Aff)
+import HelloWorld.Api (initialize, increment, redeem)
 import Plutip.Server (withPlutipContractEnv)
 import Test.HelloWorld.EnvRunner (plutipConfig)
 import Test.Spec (Spec, describe, it)
-import Test.Spec.Assertions (shouldEqual)
-import Wallet.Key (KeyWallet(..))
+import Test.Spec.Assertions (shouldReturn)
 
 spec :: Spec Unit
 spec = do
   describe "Volume Test" do
-    simpleVolumeTest
+    basicVolumeTest
 
-simpleVolumeTest :: Spec Unit
-simpleVolumeTest = do
+basicVolumeTest :: Spec Unit
+basicVolumeTest = do
   describe "HelloWorld.Api" do
-    it "should not fail" $ do
-      let distributions = replicate 20 [BigInt.fromInt 20_000_000 ]
+    let numWallets = 10
+    it ("should not fail for " <> show numWallets) do
+      let distributions = replicate numWallets [ BigInt.fromInt 20_000_000 ]
       withPlutipContractEnv plutipConfig distributions \env wallets -> do
-        parTraverse_ ( \wallet ->
-                          runContractInEnv env $ withKeyWallet wallet do
-                            void $ initialize 2 2
-                     )
-                     wallets
- 
-      -- withPlutipContractEnv plutipConfig [ BigInt.fromInt 20, BigInt.fromInt 20] \env (alice /\ bob) -> do
-        -- runContractInEnv env $ withKeyWallet (alice) do void $ initialize 2 2
-        
-    
-      
+        parTraverse_
+          ( \(Tuple wallet param) -> do
+              runContractInEnv env $ withKeyWallet wallet do
+                res <- initialize param 2
+                res2 <- increment param res
+                redeem param res2 `shouldReturn` unit
+          )
+          $ zip wallets (1 .. numWallets)
