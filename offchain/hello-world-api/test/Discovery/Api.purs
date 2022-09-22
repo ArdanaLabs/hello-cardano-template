@@ -399,7 +399,7 @@ spec = runEnvSpec do
 
             constraints :: TxConstraints Unit Unit
             constraints =
-              Constrainst.mustSpendPubKeyOutput txOut
+              Constraints.mustSpendPubKeyOutput txOut
               <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline (enoughForFees <> nft)
               <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) (nft <> nft)
           expectError $ buildBalanceSignAndSubmitTx lookups constraints
