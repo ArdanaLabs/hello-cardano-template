@@ -33,7 +33,7 @@ import Plutus.Types.Address (Address(..))
 import Plutus.Types.Credential (Credential(..))
 import Plutus.Types.Value as Value
 import Test.HelloWorld.EnvRunner (EnvRunner, defaultWallet, plutipConfig, runEnvSpec)
-import Test.Spec (Spec, describe, it, itOnly)
+import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (expectError, shouldEqual, shouldReturn, shouldSatisfy)
 import Types.PlutusData (PlutusData)
 import Util (buildBalanceSignAndSubmitTx, decodeCbor, getDatum, getUtxos, maxWait, waitForTx, withOurLogger)
@@ -227,15 +227,14 @@ spec = runEnvSpec do
             Constraints.mustSpendPubKeyOutput txOut
             <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline (enoughForFees <> nft)
             <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) nft
-        txid <- buildBalanceSignAndSubmitTx lookups constraints
-        expectError $ waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txid
+        expectError $ buildBalanceSignAndSubmitTx lookups constraints
 
       it "vault ids are never the same" $ useRunnerSimple do
         protocol <- protocolInit
         vaults <- replicateM 5 (openVault protocol)
         vaults `shouldSatisfy` (toUnfoldable >>> sort >>> group >>> map length >>> maximum >>> (_ == Just 1))
 
-      itOnly "open vault fails when ref not spent" $ useRunnerSimple do
+      it "open vault fails when ref not spent" $ useRunnerSimple do
         protocol <- protocolInit
         nftCs <- liftContractM "mpsSymbol failed" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
         txOut <- seedTx
