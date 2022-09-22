@@ -31,8 +31,7 @@ import Plutarch.Api.V1 (
   PValue (PValue),
  )
 
-import Data.Default (Default (def))
-import Utils (closedTermToHexString, validatorToHexString)
+import Utils (closedTermToHexString, globalConfig, validatorToHexString)
 
 import PlutusLedgerApi.V2 (MintingPolicy, TxOutRef, adaToken)
 
@@ -49,7 +48,7 @@ import Plutarch.Extensions.List (unsingleton)
 import Plutarch.Extra.TermCont
 
 configScriptCbor :: String
-configScriptCbor = validatorToHexString $ mkValidator def configScript
+configScriptCbor = validatorToHexString $ mkValidator globalConfig configScript
 
 nftCbor :: Maybe String
 nftCbor = closedTermToHexString standardNft
@@ -85,7 +84,7 @@ configScript = phoistAcyclic $
 -}
 standardNftMp :: TxOutRef -> MintingPolicy
 standardNftMp outRef =
-  mkMintingPolicy def $
+  mkMintingPolicy globalConfig $
     standardNft # pforgetData (pdata (pconstant outRef))
 
 standardNft :: ClosedTerm (PData :--> PMintingPolicy)
@@ -220,7 +219,7 @@ isConfigInput :: ClosedTerm (PCurrencySymbol :--> PTxInInfo :--> PBool)
 isConfigInput = phoistAcyclic $
   plam $ \cs inInfo -> unTermCont $ do
     out <- pletC $ pfield @"resolved" # inInfo
-    configAdr <- pletC $ pcon (PScriptCredential $ pdcons # pdata (pconstant (validatorHash $ mkValidator def configScript)) # pdnil)
+    configAdr <- pletC $ pcon (PScriptCredential $ pdcons # pdata (pconstant (validatorHash $ mkValidator globalConfig configScript)) # pdnil)
     let isAtConfigAdr = (pfield @"credential" #$ pfield @"address" # out) #== configAdr
     let hasConfigNft = 0 #< Value.pvalueOf # (pfield @"value" # out) # cs # pconstant adaToken
     pure $ isAtConfigAdr #&& hasConfigNft

@@ -257,19 +257,15 @@ seedTx = do
   logInfo' $ "colIns: " <> show colIns
   let nonColateralUtxOs = Map.filterKeys (\utxo -> utxo `notElem` colIns) utxos
   logInfo' $ "nonColUtxos: " <> show nonColateralUtxOs
-  case head $ toUnfoldable $ keys nonColateralUtxOs of
-    Just sending -> do
-      logInfo' $ "sending: " <> show sending
-      out <- liftContractM "no output" =<< getUtxo sending
-      logInfo' $ "out: " <> show out
-      pure sending
+  sending <- case head $ toUnfoldable $ keys nonColateralUtxOs of
+    Just sending -> pure sending
     Nothing -> do
       logInfo' "all utxos were collateral using collateral utxo"
-      sending <- liftContractM "no utxos at all" $ head $ toUnfoldable $ keys utxos
-      logInfo' $ "sending: " <> show sending
-      out <- liftContractM "no output" =<< getUtxo sending
-      logInfo' $ "out: " <> show out
-      pure sending
+      liftContractM "no utxos at all" $ head $ toUnfoldable $ keys utxos
+  logInfo' $ "sending: " <> show sending
+  out <- liftContractM "no output" =<< getUtxo sending
+  logInfo' $ "out: " <> show out
+  pure sending
 
 enoughForFees :: Value.Value
 enoughForFees = Value.lovelaceValueOf $ BigInt.fromInt 10_000_000

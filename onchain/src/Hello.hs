@@ -13,8 +13,7 @@ module Hello (
   HelloRedemer (..),
 ) where
 
-import Data.Default (Default (def))
-import Utils (closedTermToHexString, validatorToHexString)
+import Utils (closedTermToHexString, globalConfig, validatorToHexString)
 
 import PlutusLedgerApi.V2 (Validator, ValidatorHash)
 
@@ -28,7 +27,6 @@ import Plutarch.Builtin (pforgetData, pserialiseData)
 import Plutarch.Extensions.Api (passert, pgetContinuingDatum)
 import Plutarch.Unsafe (punsafeCoerce)
 
-import Plutarch (Config (tracingMode), TracingMode (DetTracing))
 import Plutarch.Extra.TermCont (pmatchC)
 
 data HelloRedemer (s :: S)
@@ -55,7 +53,7 @@ trivialSerialise :: Maybe String
 trivialSerialise = closedTermToHexString $ plam $ \a _ _ -> pserialiseData # a
 
 helloValidator :: Validator
-helloValidator = mkValidator def {tracingMode = DetTracing} (paramValidator #$ pforgetData (pdata (1 :: Term _ PInteger)))
+helloValidator = mkValidator globalConfig (paramValidator #$ pforgetData (pdata (1 :: Term _ PInteger)))
 
 helloValidatorHash :: ValidatorHash
 helloValidatorHash = validatorHash helloValidator

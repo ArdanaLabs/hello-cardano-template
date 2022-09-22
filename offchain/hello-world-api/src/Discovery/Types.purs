@@ -44,7 +44,7 @@ instance ToData Vault where
 
 instance FromData Vault where
   fromData (Constr n [ owner', count' ]) = do
-    guard $ n == BigInt.fromInt 0
+    guard $ n == zero
     owner <- fromData owner'
     count <- fromData count'
     pure $ Vault { owner, count }
