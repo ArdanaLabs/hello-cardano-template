@@ -18,9 +18,8 @@ import Contract.Prelude
 
 import CBOR as CBOR
 import Contract.Address (getWalletAddress, getWalletCollateral, ownPaymentPubKeyHash, ownPubKeyHash)
-import Contract.Config (NetworkId(..))
 import Contract.Hashing (datumHash)
-import Contract.Log (logDebug', logError', logInfo')
+import Contract.Log (logDebug', logInfo')
 import Contract.Monad (Contract, liftContractM)
 import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer), fromData)
 import Contract.ScriptLookups as Lookups
@@ -45,7 +44,7 @@ import Plutus.Types.Value (symbols)
 import ToData (toData)
 import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
-import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getDatum, getTxScanUrl, getUtxos, maxWait, waitForTx)
+import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getDatum, getUtxos, maxWait, waitForTx)
 
 getAllVaults :: Protocol -> Contract () (Map TransactionInput TransactionOutputWithRefScript)
 getAllVaults protocol =

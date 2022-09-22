@@ -13,11 +13,9 @@ import Contract.Wallet (withKeyWallet)
 import Data.BigInt as BigInt
 import HelloWorld.Api (initialize, increment, redeem, query, helloScript, sendDatumToScript, datumLookup)
 import Plutus.Types.Value (Value, valueToCoin, getLovelace)
-import Test.QuickCheck ((===))
 import Test.HelloWorld.EnvRunner (EnvRunner, plutipConfig, runEnvSpec)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldReturn, expectError, shouldEqual, shouldSatisfy)
-import Test.Spec.QuickCheck (quickCheck)
 import Util (withOurLogger)
 
 getAmount :: Value -> BigInt.BigInt

@@ -9,7 +9,6 @@ module Plutarch.Extensions.Api (
 import Plutarch.Prelude
 
 import Control.Monad (void)
-import Plutarch.Api.V1.AssocMap (plookup)
 import Plutarch.Api.V2 (
   PAddress,
   PDatum (PDatum),
@@ -35,13 +34,7 @@ pgetContinuingDatum ctx = do
     pmatchFieldC @"datum" out >>= \case
       PNoOutputDatum _ -> fail "no data"
       POutputDatum datum -> pure $ pfield @"outputDatum" # datum
-      POutputDatumHash dh -> do
-        PJust datum <-
-          pmatchC $
-            plookup
-              # pfromData (pfield @"datumHash" # dh)
-              #$ pfromData (pfield @"datums" #$ pfield @"txInfo" # ctx)
-        pure datum
+      POutputDatumHash _ -> fail "datum hash not supported"
   PDatum d <- pmatchC datum
   parseData d
 

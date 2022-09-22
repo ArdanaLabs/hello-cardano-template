@@ -39,7 +39,6 @@ import PlutusLedgerApi.V2 (MintingPolicy, TxOutRef, adaToken)
 import Plutarch.Api.V1.AssocMap qualified as AssocMap
 import Plutarch.Api.V1.Value qualified as Value
 
-import Plutarch.Api.V1.AssocMap (plookup)
 import Plutarch.Api.V1.Value (pforgetPositive)
 import Plutarch.Builtin (pforgetData, pserialiseData)
 import Plutarch.Crypto (pblake2b_256)
@@ -161,13 +160,7 @@ authTokenMP = ptrace "vault auth mp" $
           datum' <-
             pmatchC outDatum >>= \case
               POutputDatum d -> pure $ pfield @"outputDatum" # d
-              POutputDatumHash dh -> do
-                PJust datum <-
-                  pmatchC $
-                    plookup
-                      # pfromData (pfield @"datumHash" # dh)
-                      #$ pfromData (pfield @"datums" # info)
-                pure datum
+              POutputDatumHash _ -> fail "datum hash not supported"
               PNoOutputDatum _ -> fail "no data"
           PDatum dat <- pmatchC datum'
           (datum :: Term _ CounterDatum) <- parseData dat
@@ -201,15 +194,7 @@ vaultAdrValidator = ptrace "vaultAdrValidator" $
     configDatum <-
       pmatchC (pfield @"datum" #$ pfield @"resolved" # config) >>= \case
         POutputDatum d -> pure $ pfield @"outputDatum" # d
-        POutputDatumHash dh -> do
-          pmatchC
-            ( plookup
-                # pfromData (pfield @"datumHash" # dh)
-                #$ pfromData (pfield @"datums" # info)
-            )
-            >>= \case
-              PJust configDatum -> pure configDatum
-              PNothing -> fail "datum lookup failed"
+        POutputDatumHash _ -> fail "datum hash not supported"
         PNoOutputDatum _ -> fail "no data"
     PDatum configData <- pmatchC configDatum
     nftCs <- parseData configData

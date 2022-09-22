@@ -18,10 +18,10 @@ import CBOR as CBOR
 import Contract.Address (scriptHashAddress)
 import Contract.Log (logInfo', logError')
 import Contract.Monad (Contract, liftContractM)
-import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer), getDatumByHash)
+import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer))
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (Validator, ValidatorHash, applyArgs, validatorHash)
-import Contract.Transaction (OutputDatum(..), TransactionInput)
+import Contract.Transaction (TransactionInput)
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
 import Contract.Utxos (getUtxo, getWalletBalance)
