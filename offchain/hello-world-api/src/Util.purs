@@ -4,7 +4,10 @@ module Util
   , getUtxos
   , getTxScanUrl
   , withOurLogger
+  , decodeCbor
+  , decodeCborMp
   , maxWait
+  , getDatum
   ) where
 
 import Contract.Prelude
@@ -14,10 +17,12 @@ import Contract.ScriptLookups as Lookups
 
 import Aeson (Aeson, getField, toArray, toObject)
 import Contract.Log (logDebug', logError', logInfo', logWarn')
-import Contract.Monad (Contract, ContractEnv, liftedE)
-import Contract.Transaction (TransactionHash(TransactionHash), TransactionOutput, TransactionInput(TransactionInput), balanceAndSignTxE, submitE)
+import Contract.Monad (Contract, ContractEnv, liftedE, liftContractM)
+import Contract.PlutusData (Datum, getDatumByHash)
+import Contract.Scripts (MintingPolicy(..), Validator(..))
+import Contract.Transaction (OutputDatum(..), TransactionHash(TransactionHash), TransactionInput(TransactionInput), TransactionOutputWithRefScript, balanceAndSignTxE, plutusV2Script, submitE)
 import Contract.TxConstraints (TxConstraints)
-import Contract.Utxos (UtxoM(UtxoM), utxosAt, getUtxo)
+import Contract.Utxos (utxosAt, getUtxo)
 import Control.Monad.Error.Class (throwError)
 import Data.Array (toUnfoldable, fromFoldable, catMaybes)
 import Data.List (filterM, List)
@@ -27,7 +32,7 @@ import Data.Map (Map)
 import Data.Time.Duration (Milliseconds(..), Seconds(..), Minutes(..), class Duration, fromDuration, convertDuration, negateDuration)
 import Effect.Aff (delay)
 import Effect.Aff.Retry (retrying, limitRetries, RetryStatus(RetryStatus))
-import Effect.Exception (error)
+import Effect.Exception (throw, error)
 import Node.Encoding (Encoding(UTF8))
 import Node.FS.Aff (appendTextFile)
 import Plutus.Types.Address (Address)
@@ -45,11 +50,11 @@ waitForTx
   -> Contract () (Maybe TransactionInput)
 waitForTx d adr txid = do
   let
-    hasTransactionId :: TransactionInput /\ TransactionOutput -> Boolean
+    hasTransactionId :: TransactionInput /\ TransactionOutputWithRefScript -> Boolean
     hasTransactionId (TransactionInput tx /\ _) =
       tx.transactionId == txid
   utxos <- getUtxos adr
-  case fst <$> find hasTransactionId (Map.toUnfoldable utxos :: Array (TransactionInput /\ TransactionOutput)) of
+  case fst <$> find hasTransactionId (Map.toUnfoldable utxos :: Array (TransactionInput /\ TransactionOutputWithRefScript)) of
     Nothing ->
       if (fromDuration d <= (Milliseconds 0.0)) then do
         pure Nothing
@@ -155,10 +160,8 @@ waitForSpent' d inputs = do
   else
     pure spent
 
-getUtxos :: Address -> Contract () (Map TransactionInput TransactionOutput)
-getUtxos adr = do
-  UtxoM utxos <- fromMaybe (UtxoM Map.empty) <$> utxosAt adr
-  pure utxos
+getUtxos :: Address -> Contract () (Map TransactionInput TransactionOutputWithRefScript)
+getUtxos adr = fromMaybe (Map.empty) <$> utxosAt adr
 
 getTxScanUrl :: NetworkId -> TransactionInput -> String
 getTxScanUrl TestnetId (TransactionInput { transactionId: TransactionHash hash }) = "https://testnet.cardanoscan.io/transaction/" <> byteArrayToHex hash
@@ -178,6 +181,18 @@ withOurLogger path env = wrap $ (unwrap env)
       }
   }
 
+getDatum :: OutputDatum -> Contract () Datum
+getDatum = case _ of
+  NoOutputDatum -> liftEffect $ throw "no output datum"
+  OutputDatumHash dh -> getDatumByHash dh >>= liftContractM "Datum hash lookup failed"
+  OutputDatum d -> pure d
+
+decodeCbor :: String -> Maybe Validator
+decodeCbor cborHex = Validator <<< plutusV2Script <$> hexToByteArray cborHex
+
+decodeCborMp :: String -> Maybe MintingPolicy
+decodeCborMp cborHex = MintingPolicy <<< plutusV2Script <$> hexToByteArray cborHex
+
 ourLogger :: String -> Message -> Aff Unit
 ourLogger path msg = do
   pretty <- prettyFormatter msg
@@ -187,3 +202,4 @@ ourLogger path msg = do
 -- The time to wait between ogmios querries when retrying
 waitTime :: Seconds
 waitTime = Seconds 1.0
+

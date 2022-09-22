@@ -5,7 +5,7 @@ module Test.HelloWorld.Api
 
 import Contract.Prelude
 
-import Contract.Monad (ContractEnv, liftContractAffM, liftContractM)
+import Contract.Monad (ContractEnv, liftContractM)
 import Contract.Scripts (validatorHash)
 import Contract.Test.Plutip (runPlutipContract, withPlutipContractEnv, runContractInEnv)
 import Contract.Utxos (getWalletBalance)
@@ -13,9 +13,11 @@ import Contract.Wallet (withKeyWallet)
 import Data.BigInt as BigInt
 import HelloWorld.Api (initialize, increment, redeem, query, helloScript, sendDatumToScript, datumLookup)
 import Plutus.Types.Value (Value, valueToCoin, getLovelace)
+import Test.QuickCheck ((===))
 import Test.HelloWorld.EnvRunner (EnvRunner, plutipConfig, runEnvSpec)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldReturn, expectError, shouldEqual, shouldSatisfy)
+import Test.Spec.QuickCheck (quickCheck)
 import Util (withOurLogger)
 
 getAmount :: Value -> BigInt.BigInt
@@ -105,7 +107,7 @@ spec = runEnvSpec do
             datum <- runContractInEnv (withApiLogger env) $
               withKeyWallet alice do
                 validator <- helloScript 1
-                vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+                let vhash = validatorHash validator
                 ti1 <- sendDatumToScript expectedDatum vhash
                 datumLookup ti1
             datum `shouldEqual` expectedDatum

@@ -98,7 +98,11 @@ runCmd (Options { conf, statePath, command, ctlPort, ogmiosPort, odcPort }) = do
   -- update ports from config
   let
     cfg = cfg'
-      { ctlServerConfig { port = fromMaybe cfg'.ctlServerConfig.port ctlPort }
+      { ctlServerConfig = case cfg'.ctlServerConfig of
+          Nothing -> Nothing
+          Just serverConfig -> case ctlPort of
+            Nothing -> Just serverConfig
+            Just port -> Just $ serverConfig { port = port }
       , ogmiosConfig { port = fromMaybe cfg'.ogmiosConfig.port ogmiosPort }
       , datumCacheConfig { port = fromMaybe cfg'.datumCacheConfig.port odcPort }
       }
