@@ -20,7 +20,7 @@
       inputs.nixpkgs.follows = "bot-plutus-interface/haskell-nix/nixpkgs";
     };
     bot-plutus-interface = {
-      url = "github:mlabs-haskell/bot-plutus-interface?rev=7ac4f6fe11ae32edc5d5894077fedcd552e180b8";
+      url = "github:mlabs-haskell/bot-plutus-interface?rev=7235aa6fba12b0cf368d9976e1e1b21ba642c038";
       inputs.cardano-wallet.follows = "cardano-wallet";
     };
     cardano-wallet.url = "github:Geometer1729/cardano-wallet?rev=21e41f47e4d25db585f25caddb9b2a188adcf93d";
