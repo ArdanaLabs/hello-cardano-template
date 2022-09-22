@@ -20,6 +20,10 @@ import Test.Volume.HelloWorld.Api as Test.Volume.HelloWorld.Api
 
 main :: Effect Unit
 main = do
+  runVolumeTests <- lookupEnv "RUN_VOLUME_TESTS" >>= case _ of
+    Nothing -> pure false
+    Just "0" -> pure false
+    Just _ -> pure true
   mode <- lookupEnv "MODE" >>= case _ of
     Just "local" -> pure Local
     Just "testnet" -> do
@@ -31,12 +35,14 @@ main = do
     envRunner <- getEnvRunner mode
     runSpec' defaultConfig { timeout = Nothing } [ consoleReporter ] $
       case mode of
-        Local -> do
-          describe "pure tests" do
-            Test.Volume.HelloWorld.Api.spec
-            Encoding.spec
-            Test.HelloWorld.Api.spec envRunner
-            Test.HelloWorld.Api.localOnlySpec
+        Local ->
+          if runVolumeTests
+            then Test.Volume.HelloWorld.Api.spec
+            else do
+              describe "pure tests" do
+                Encoding.spec
+                Test.HelloWorld.Api.spec envRunner
+                Test.HelloWorld.Api.localOnlySpec
         Testnet -> do
           describe "pure tests" do
             Encoding.spec

@@ -45,7 +45,7 @@
             };
       };
 
-      hello-world-api-tests = mode:
+      hello-world-api-tests = { mode, runVolumeTests ? false }:
         pkgs.writeShellApplication
           {
             name = "hello-world-api-tests";
@@ -58,7 +58,8 @@
               self.inputs.mlabs-ogmios.defaultPackage.${pkgs.system}
               self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system}
             ];
-            text = ''
+            text =
+              pkgs.lib.optionalString runVolumeTests "export RUN_VOLUME_TESTS=1" + ''
               export MODE=${mode}
               export TEST_RESOURCES=${./fixtures}
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
@@ -68,13 +69,19 @@
     in
     {
       apps = {
-        "offchain:hello-world-api:test:testnet" = dusd-lib.mkApp (hello-world-api-tests "testnet");
-        "offchain:hello-world-api:test:local" = dusd-lib.mkApp (hello-world-api-tests "local");
+        "offchain:hello-world-api:test:testnet" = dusd-lib.mkApp (hello-world-api-tests { mode = "testnet"; });
+        "offchain:hello-world-api:test:local" = dusd-lib.mkApp (hello-world-api-tests { mode = "local"; });
       };
-      checks.run-hello-world-api-tests =
-        let test = hello-world-api-tests "local"; in
-        pkgs.runCommand test.name { }
-          "${test}/bin/${test.meta.mainProgram} | tee $out";
+      checks = {
+        run-hello-world-api-tests =
+          let test = hello-world-api-tests { mode = "local";}; in
+          pkgs.runCommand test.name { }
+            "${test}/bin/${test.meta.mainProgram} | tee $out";
+        run-hello-world-api-volume-tests =
+          let test = hello-world-api-tests { mode = "local"; runVolumeTests = true;}; in
+          pkgs.runCommand test.name { }
+            "${test}/bin/${test.meta.mainProgram} | tee $out";
+      };
       devShells."offchain:hello-world-api" =
         offchain-lib.makeProjectShell hello-world-api { };
       packages = {
