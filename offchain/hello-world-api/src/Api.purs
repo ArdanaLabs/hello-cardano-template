@@ -21,7 +21,7 @@ import Data.BigInt as BigInt
 import Data.Time.Duration (Minutes(..))
 
 import Contract.Aeson (decodeAeson, fromString)
-import Contract.Log (logInfo', logError')
+import Contract.Log (logDebug', logError')
 import Contract.Monad (Contract, liftContractM, liftContractAffM)
 import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer), getDatumByHash)
 import Contract.ScriptLookups as Lookups
@@ -43,23 +43,31 @@ import Data.List ((..), List)
 
 initialize :: Int -> Int -> Contract () TransactionInput
 initialize param initialValue = do
+  logDebug' $ "initialize hello-world: param: " <> show param <> " initialValue: " <> show initialValue
   validator <- helloScript param
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-  sendDatumToScript initialValue vhash
+  txIn <- sendDatumToScript initialValue vhash
+  logDebug' $ "initialized hello-world: param: " <> show param <> " initialValue: " <> show initialValue
+  pure txIn
 
 increment :: Int -> TransactionInput -> Contract () TransactionInput
 increment param lastOutput = do
+  logDebug' $ "increment hello-world: param: " <> show param
   validator <- helloScript param
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
   oldDatum <- datumLookup lastOutput
   let newDatum = oldDatum + param
-  setDatumAtScript newDatum vhash validator lastOutput
+  txIn <- setDatumAtScript newDatum vhash validator lastOutput
+  logDebug' $ "incremented hello-world: param: " <> show param <> " newDatum: " <> show newDatum
+  pure txIn
 
 redeem :: Int -> TransactionInput -> Contract () Unit
 redeem param lastOutput = do
+  logDebug' $ "redeeming hello-world: param: " <> show param
   validator <- helloScript param
   vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
   redeemFromScript vhash validator lastOutput
+  logDebug' $ "redeemed hello-world: param: " <> show param
 
 query :: TransactionInput -> Contract () (Int /\ Value)
 query lastOutput = do
@@ -87,7 +95,7 @@ sendDatumToScript n vhash = do
         )
         enoughForFees
   txId <- buildBalanceSignAndSubmitTx lookups constraints
-  liftContractM "gave up waiting for sendDatumToScript TX" =<< waitForTx waitTime vhash txId
+  liftContractM "sendDatumToScript: operation timed out" =<< waitForTx waitTime vhash txId
 
 setDatumAtScript
   :: Int
@@ -115,7 +123,7 @@ setDatumAtScript n vhash validator txInput = do
               enoughForFees
           )
   txId <- buildBalanceSignAndSubmitTx lookups constraints
-  liftContractM "failed waiting for increment" =<< waitForTx waitTime vhash txId
+  liftContractM "setDatumAtScript: operation timed out" =<< waitForTx waitTime vhash txId
 
 redeemFromScript
   :: ValidatorHash
@@ -131,8 +139,7 @@ redeemFromScript vhash validator txInput = do
 
     constraints :: TxConstraints Unit Unit
     constraints = Constraints.mustSpendScriptOutput txInput spendRedeemer
-  _ <- buildBalanceSignAndSubmitTx lookups constraints
-  logInfo' "finished"
+  void $ buildBalanceSignAndSubmitTx lookups constraints
 
 helloScript :: Int -> Contract () Validator
 helloScript n = do
@@ -144,12 +151,12 @@ helloScript n = do
         # decodeAeson
         # hush
         # map wrap
-  paramValidator <- liftContractM "decoding failed" maybeParamValidator
+  paramValidator <- liftContractM "Failed to decode the hello-world validator" maybeParamValidator
   -- TODO It'd be cool if this could be an Integer not Data
   applyArgs paramValidator [ Integer $ BigInt.fromInt n ]
     >>= case _ of
       Left err -> do
-        logError' $ show paramValidator
+        logError' $ show err
         liftEffect $ throw $ show err
       Right val -> pure val
 
@@ -188,9 +195,9 @@ grabFreeAdaSingleParam n = do
       (\input -> Constraints.mustSpendScriptOutput input spendRedeemer)
         <$>
           (Set.toUnfoldable $ keys utxos)
-  logInfo' $ "starting balance" <> show n
+  logDebug' $ "Starting balancing of " <> show n
   traverse_ (buildBalanceSignAndSubmitTx lookups) constraintsList
-  logInfo' $ "finished: " <> show n
+  logDebug' $ "Finished balancing of " <> show n
 
 data HelloRedemer = Inc | Spend
 
