@@ -3,6 +3,7 @@ module Faucet (topup) where
 import Contract.Prelude
 import Node.ChildProcess (defaultExecSyncOptions, execSync)
 
+-- | Given a address as a string use curl the faucet to top up the wallet
 topup :: String -> Effect Unit
 topup addr = do
   let url = faucetUrl <> addr <> "?apiKey=" <> faucetApiKey

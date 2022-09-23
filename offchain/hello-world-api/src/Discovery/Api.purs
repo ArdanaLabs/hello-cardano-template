@@ -46,16 +46,19 @@ import Types.PlutusData (PlutusData)
 import Types.Scripts (MintingPolicy)
 import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getDatum, getUtxos, maxWait, waitForTx)
 
+-- | Given a protocol get a Map of all transaction inputs and outputs coresponding to valid vaults
 getAllVaults :: Protocol -> Contract () (Map TransactionInput TransactionOutputWithRefScript)
 getAllVaults protocol =
   getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
     <#> Map.filter (hasNft protocol)
 
+-- | As get all vaults but only vaults owned by the current wallet
 getMyVaults :: Protocol -> Contract () (Map TransactionInput TransactionOutputWithRefScript)
 getMyVaults protocol = do
   all <- getAllVaults protocol
   catMaybes <$> traverse keepMyVaults all
 
+-- | Given a protocol and a vault's UUID get the transaction input and output coresponding to that vault
 getVaultById :: Protocol -> VaultId -> Contract () (TransactionInput /\ TransactionOutputWithRefScript)
 getVaultById protocol token = do
   vaults <- getAllVaults protocol
@@ -84,6 +87,8 @@ isMyVault ref = do
   pkh <- liftContractM "no wallet" =<< ownPubKeyHash
   pure $ (unwrap vault).owner == pkh
 
+-- | Given a protocol and a vaultId close that vault
+-- this fails if the vault is not owned by the current wallet of course
 closeVault :: Protocol -> VaultId -> Contract () Unit
 closeVault protocol vaultId = do
   txin <- fst <$> getVaultById protocol vaultId
@@ -114,9 +119,13 @@ closeVault protocol vaultId = do
   txid <- buildBalanceSignAndSubmitTx lookups constraints
   void $ waitForTx maxWait adr txid
 
+-- | Given a protocol and a vault id increment the count in that vault
 incrementVault :: Protocol -> VaultId -> Contract () Unit
 incrementVault = incrementVault' 1
 
+-- | as incrementVault but the amount to increment by is taken as a parameter
+-- this will fail if the parameter is not 1
+-- this function is intended to simplify test code
 incrementVault' :: Int -> Protocol -> VaultId -> Contract () Unit
 incrementVault' step protocol vaultId = do
   txin /\ txOut <- getVaultById protocol vaultId
@@ -146,9 +155,13 @@ incrementVault' step protocol vaultId = do
   txid <- buildBalanceSignAndSubmitTx lookups constraints
   void $ waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txid
 
+-- | Given a protocol open and new vault and return it UUID
 openVault :: Protocol -> Contract () VaultId
 openVault = openVault' 0
 
+-- | as openVault but the starting count is taken as a paremeter
+-- this wil fail for any value other than 0
+-- this function is intended to simplify test code
 openVault' :: Int -> Protocol -> Contract () VaultId
 openVault' start protocol = do
   nftCs <- liftContractM "mpsSymbol failed" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
@@ -182,7 +195,9 @@ openVault' start protocol = do
   _ <- waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txid
   pure nftTn
 
--- this should later use bytestrings
+-- | Initialise the protocol and return a protocol object
+-- this object contains the data that varries between protocol initialisations
+-- and is required by most functions that interact with the protocol
 protocolInit :: Contract () Protocol
 protocolInit = do
   configValidator <- liftContractM "decoding failed" $ decodeCbor CBOR.configScript
@@ -212,6 +227,7 @@ protocolInit = do
   config <- liftContractM "gave up waiting for sendDatumToScript TX" =<< waitForTx maxWait (scriptHashAddress configVhash) txId
   pure $ { config, vaultValidator, nftMp: _ } vaultAuthMp
 
+-- | mints an nft where the txid is a parameter of the contract and returns the currency symbol
 mintNft :: Contract () CurrencySymbol
 mintNft = do
   logInfo' "starting mint"
@@ -243,6 +259,7 @@ makeNftPolicy txOut = do
   logInfo' "got cbor"
   liftContractM "apply args failed" =<< applyArgsM paramNft [ toData txOut ]
 
+-- | selects a utxo owned by the current wallet usefull for minting nfts
 seedTx :: Contract () TransactionInput
 seedTx = do
   adr <- liftContractM "no wallet" =<< getWalletAddress
