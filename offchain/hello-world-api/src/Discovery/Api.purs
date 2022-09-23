@@ -112,8 +112,7 @@ closeVault protocol vaultId = do
       <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) (Value.negation nft)
       <> Constraints.mustBeSignedBy key
   txid <- buildBalanceSignAndSubmitTx lookups constraints
-  _ <- waitForTx maxWait adr txid
-  pure unit
+  void $ waitForTx maxWait adr txid
 
 incrementVault :: Protocol -> VaultId -> Contract () Unit
 incrementVault = incrementVault' 1
