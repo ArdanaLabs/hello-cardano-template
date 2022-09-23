@@ -144,8 +144,7 @@ incrementVault' step protocol vaultId = do
       <> Constraints.mustReferenceOutput protocol.config
       <> Constraints.mustBeSignedBy key
   txid <- buildBalanceSignAndSubmitTx lookups constraints
-  _ <- waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txid
-  pure unit
+  void $ waitForTx maxWait (scriptHashAddress $ validatorHash protocol.vaultValidator) txid
 
 openVault :: Protocol -> Contract () VaultId
 openVault = openVault' 0
