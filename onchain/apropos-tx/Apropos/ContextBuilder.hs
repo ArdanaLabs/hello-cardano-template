@@ -111,8 +111,8 @@ instance Monad m => TxInfoBuilder (StateT TxInfo) m where
   buildTxInfo = runTxInfoBuilder emptyTxInfo
   addInput r a v d =
     let i = TxInInfo r (TxOut a v (maybe NoOutputDatum OutputDatum d) Nothing)
-      -- The Nothing indicates no refference script
-     in modify
+     in -- The Nothing indicates no refference script
+        modify
           ( \txi ->
               txi
                 { txInfoInputs = txInfoInputs txi <> [i]

@@ -45,8 +45,8 @@ import Plutarch.DataRepr (PDataFields)
 import Plutarch.Extensions.Api (passert, passert_, pfindOwnInput, pgetContinuingOutput)
 import Plutarch.Extensions.Data (parseData, parseDatum)
 import Plutarch.Extensions.List (unsingleton)
-import Plutarch.Extra.TermCont
 import Plutarch.Extensions.Monad (pmatchFieldC)
+import Plutarch.Extra.TermCont
 
 configScriptCbor :: String
 configScriptCbor = validatorToHexString $ mkValidator globalConfig configScript
@@ -181,7 +181,7 @@ vaultAdrValidator = ptrace "vaultAdrValidator" $
     configNftCs :: Term _ PCurrencySymbol <- parseData configNftCsData
     PJust config <- pmatchC $ pfind # (isConfigInput # configNftCs) # (pfield @"referenceInputs" # info)
     POutputDatum configDatum <- pmatchC (pfield @"datum" #$ pfield @"resolved" # config)
-    PDatum configData <- pmatchFieldC @"outputDatum"  configDatum
+    PDatum configData <- pmatchFieldC @"outputDatum" configDatum
     nftCs <- parseData configData
     PSpending outRef <- pmatchC $ pfield @"purpose" # sc
     PJust inInfo <- pmatchC $ pfindOwnInput # (pfield @"inputs" # info) #$ pfield @"_0" # outRef
@@ -194,7 +194,7 @@ vaultAdrValidator = ptrace "vaultAdrValidator" $
         datum2 :: Term _ CounterDatum <- parseDatum (pfield @"outputDatum" # outDatum)
         passert_ "owner is the same" $ pfield @"owner" # datum2 #== pfield @"owner" # datum
         passert_ "count is 1 more" $ pfield @"count" # datum2 #== pfield @"count" # datum + (1 :: Term _ PInteger)
-        passert "kept nft" $ hasExactlyThisNft # nftCs # nftTn # (pfield @"value" #out)
+        passert "kept nft" $ hasExactlyThisNft # nftCs # nftTn #$ pfield @"value" #out
       Spend _ -> do
         let minting = pfield @"mint" # info
         passert "burned nft" $ Value.pvalueOf # minting # nftCs # nftTn #< 0
@@ -218,7 +218,7 @@ atCS :: ClosedTerm (PValue s a :--> PCurrencySymbol :--> PMap s PTokenName PInte
 atCS = phoistAcyclic $
   plam $ \val cs -> unTermCont $ do
     PValue valMap <- pmatchC val
-    PJust subMap <-pmatchC $ AssocMap.plookup # cs # valMap
+    PJust subMap <- pmatchC $ AssocMap.plookup # cs # valMap
     pure subMap
 
 -- Types
