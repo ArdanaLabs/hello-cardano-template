@@ -35,7 +35,6 @@ globalConfig = def {tracingMode = NoTracing}
 
 closedTermToHexString :: forall (p :: PType). ClosedTerm p -> Maybe String
 closedTermToHexString t = do
-  -- TODO turn off tracing before production
   case compile globalConfig t of
     Left _ -> Nothing
     Right script -> Just $ concatMap byteToHex $ BSL.unpack $ serialise (script :: Script)

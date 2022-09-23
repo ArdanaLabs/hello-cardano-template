@@ -61,22 +61,12 @@ vaultScriptCbor :: Maybe String
 vaultScriptCbor = closedTermToHexString vaultAdrValidator
 
 {- | The config validator
- the config validator
- th tx being spent must be read only
- TODO does a read only spend even invoke a validator?
- if not we can just do const False or something
+ since read only spends don't trigger the validator
+ and we don't allow config updates
+ this script can just error
 -}
 configScript :: ClosedTerm PValidator
-configScript = phoistAcyclic $
-  plam $ \_datum _redemer sc -> unTermCont $ do
-    PSpending outRef' <- pmatchC (pfield @"purpose" # sc)
-    let (outRef :: Term _ PTxOutRef) =
-          pfield @"_0" # outRef'
-        (refrenceInputOutRefs :: Term _ (PBuiltinList PTxOutRef)) =
-          pmap # pfield @"outRef"
-            #$ pfield @"referenceInputs"
-            #$ pfield @"txInfo" # sc
-    passert "wasn't a refrence input" $ pelem # outRef # refrenceInputOutRefs
+configScript = perror
 
 {- | The standard NFT minting policy
  parametized by a txid
@@ -101,7 +91,7 @@ standardNft = phoistAcyclic $
 {- | The authorisation+discovery token minting policy
  parametized by the vault address
  to mint:
- redeemer must be of the form Buron | AuthRedeemer tokenName txid
+ redeemer must be of the form Burn | AuthRedeemer tokenName txid
  when it's burn
    no tokens may be minted
  when it's AuthRedeemer tokenName txid
@@ -194,7 +184,6 @@ vaultAdrValidator = ptrace "vaultAdrValidator" $
     PDatum configData <- pmatchFieldC @"outputDatum"  configDatum
     nftCs <- parseData configData
     PSpending outRef <- pmatchC $ pfield @"purpose" # sc
-    -- TODO enforce that this is also the only input of that address
     PJust inInfo <- pmatchC $ pfindOwnInput # (pfield @"inputs" # info) #$ pfield @"_0" # outRef
     nftTn :: Term _ PTokenName <- pletC $ pfield @"tokenName" # redeemer
     passert_ "has nft" $ hasExactlyThisNft # nftCs # nftTn # (pfield @"value" #$ pfield @"resolved" # inInfo)
@@ -250,7 +239,6 @@ newtype HelloRedeemer (s :: S)
 instance DerivePlutusType HelloRedeemer where type DPTStrat _ = PlutusTypeData
 instance PTryFrom PData (PAsData HelloRedeemer)
 
--- TODO is this how you're meant to do this?
 instance PTryFrom PData HelloAction
 
 data HelloAction (s :: S)

@@ -110,7 +110,8 @@ instance Monad m => TxInfoBuilder (StateT TxInfo) m where
   runTxInfoBuilder = flip execStateT
   buildTxInfo = runTxInfoBuilder emptyTxInfo
   addInput r a v d =
-    let i = TxInInfo r (TxOut a v (maybe NoOutputDatum OutputDatum d) Nothing) -- TODO what's with the maybe script hash now?
+    let i = TxInInfo r (TxOut a v (maybe NoOutputDatum OutputDatum d) Nothing)
+      -- The Nothing indicates no refference script
      in modify
           ( \txi ->
               txi
@@ -118,7 +119,7 @@ instance Monad m => TxInfoBuilder (StateT TxInfo) m where
                 }
           )
   addOutput a v d =
-    let i = TxOut a v (maybe NoOutputDatum OutputDatum d) Nothing -- TODO here too
+    let i = TxOut a v (maybe NoOutputDatum OutputDatum d) Nothing
      in modify
           ( \txi ->
               txi
