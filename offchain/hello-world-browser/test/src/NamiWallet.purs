@@ -121,7 +121,7 @@ mkTestOptions testWallet = do
     { chromeExe
     , wallets
     , chromeUserDataDir
-    , noHeadless: true
+    , noHeadless: false
     }
   where
   mkConfig
