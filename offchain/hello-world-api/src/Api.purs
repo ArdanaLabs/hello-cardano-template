@@ -15,7 +15,7 @@ module HelloWorld.Api
 import Contract.Prelude
 
 import CBOR as CBOR
-import Contract.Address (scriptHashAddress)
+import Contract.Address (getWalletAddress, ownPaymentPubKeyHash, scriptHashAddress)
 import Contract.Log (logInfo', logError')
 import Contract.Monad (Contract, liftContractM)
 import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer))
@@ -25,6 +25,7 @@ import Contract.Transaction (TransactionInput)
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
 import Contract.Utxos (getUtxo, getWalletBalance)
+import Contract.Value (lovelaceValueOf, negation)
 import Contract.Value as Value
 import Data.BigInt as BigInt
 import Data.Foldable (for_)
@@ -124,6 +125,7 @@ redeemFromScript
   -> Contract () Unit
 redeemFromScript vhash validator txInput = do
   utxos <- getUtxos (scriptHashAddress vhash)
+  key <- liftContractM "no wallet" =<< ownPaymentPubKeyHash
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.validator validator
@@ -131,7 +133,10 @@ redeemFromScript vhash validator txInput = do
 
     constraints :: TxConstraints Unit Unit
     constraints = Constraints.mustSpendScriptOutput txInput spendRedeemer
-  _ <- buildBalanceSignAndSubmitTx lookups constraints
+      <> Constraints.mustBeSignedBy key
+  txId <- buildBalanceSignAndSubmitTx lookups constraints
+  adr <- liftContractM "no wallet" =<< getWalletAddress
+  void $ waitForTx waitTime adr txId
   logInfo' "finished"
 
 helloScript :: Int -> Contract () Validator

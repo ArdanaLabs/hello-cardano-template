@@ -14,21 +14,21 @@ import Utils as Utils
 
 runTestPlans :: Aff Unit
 runTestPlans = do
-  -- wallet1 <- liftEffect testWallet1
-  -- wallet2 <- liftEffect testWallet2
+  wallet1 <- liftEffect testWallet1
+  wallet2 <- liftEffect testWallet2
   wallet3 <- liftEffect testWallet3
 
-  -- parTraverse_ (liftEffect <<< topup) [ wallet1, wallet2, wallet3 ]
+  parTraverse_ (liftEffect <<< topup) [ wallet1, wallet2, wallet3 ]
 
-  -- testOptions1 <- liftEffect $ mkTestOptions wallet1
-  -- testOptions2 <- liftEffect $ mkTestOptions wallet2
+  testOptions1 <- liftEffect $ mkTestOptions wallet1
+  testOptions2 <- liftEffect $ mkTestOptions wallet2
   testOptions3 <- liftEffect $ mkTestOptions wallet3
 
   Utils.interpret'
     (SpecRunner.defaultConfig { timeout = pure $ wrap Constants.specRunnerTimeoutMs })
     ( group "Nami wallet" do
-        -- TestPlanInitialize.testPlan testOptions1
-        -- TestPlanIncrement.testPlan testOptions2
+        TestPlanInitialize.testPlan testOptions1
+        TestPlanIncrement.testPlan testOptions2
         TestPlanRedeem.testPlan testOptions3
     )
     Utils.InParallel
