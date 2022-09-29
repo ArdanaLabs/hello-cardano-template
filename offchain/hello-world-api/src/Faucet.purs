@@ -12,7 +12,7 @@ topup addr = do
   void $ execSync cmd defaultExecSyncOptions
 
 faucetUrl :: String
-faucetUrl = "https://faucet.cardano-testnet.iohkdev.io/send-money/"
+faucetUrl = "https://faucet.preview.world.dev.cardano.org/send-money/"
 
 faucetApiKey :: String
 faucetApiKey = "r8m9YXmqCkFWDDZ2540IJaJwr1JBxqXB"
