@@ -25,7 +25,6 @@ import Contract.Transaction (TransactionInput)
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
 import Contract.Utxos (getUtxo, getWalletBalance)
-import Contract.Value (lovelaceValueOf, negation)
 import Contract.Value as Value
 import Data.BigInt as BigInt
 import Data.Foldable (for_)
