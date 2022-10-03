@@ -14,13 +14,15 @@ import Contract.PlutusData (Datum(..), Redeemer(Redeemer), fromData, toData)
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (mintingPolicyHash, validatorHash)
 import Contract.Test.Plutip (runContractInEnv, withPlutipContractEnv)
-import Contract.Transaction (TransactionInput(..))
+import Contract.Transaction (TransactionInput)
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
 import Contract.Utxos (getUtxo, getWalletBalance)
 import Contract.Value (Value, adaToken, mkTokenName, mpsSymbol, scriptCurrencySymbol)
 import Contract.Wallet (withKeyWallet)
+import Data.Array (group, sort)
 import Data.BigInt as BigInt
+import Data.List.Lazy (replicateM, toUnfoldable)
 import Data.Map as Map
 import Data.Time.Duration (Minutes(..))
 import Effect.Exception (throw)
@@ -31,8 +33,8 @@ import Plutus.Types.Address (Address(..))
 import Plutus.Types.Credential (Credential(..))
 import Plutus.Types.Value as Value
 import Test.HelloWorld.EnvRunner (EnvRunner, defaultWallet, plutipConfig, runEnvSpec)
-import Test.Spec (Spec, describe, it, itOnly)
-import Test.Spec.Assertions (expectError, shouldEqual, shouldReturn)
+import Test.Spec (Spec, describe, it)
+import Test.Spec.Assertions (expectError, shouldEqual, shouldReturn, shouldSatisfy)
 import Types.PlutusData (PlutusData)
 import Util (buildBalanceSignAndSubmitTx, decodeCbor, getDatum, getUtxos, maxWait, waitForTx, withOurLogger)
 
@@ -42,7 +44,7 @@ spec = runEnvSpec do
 
     describe "misc" do
 
-      when false $ it "script with serialise works" $ useRunnerSimple do
+      it "script with serialise works" $ useRunnerSimple do
         val <- liftContractM "failed to decode" $ decodeCbor CBOR.trivialSerialise
         let vhash = validatorHash val
         tx1 <- buildBalanceSignAndSubmitTx
@@ -58,6 +60,22 @@ spec = runEnvSpec do
 
       it "mint runs" $ useRunnerSimple do
         mintNft
+
+      it "can't use refference input to mint" $ useRunnerSimple do
+        txOut <- seedTx
+        adr <- liftContractM "no wallet" =<< getWalletAddress
+        utxos <- getUtxos adr
+        nftPolicy <- makeNftPolicy txOut
+        cs <- liftContractM "failed to hash MintingPolicy into CurrencySymbol" $ scriptCurrencySymbol nftPolicy
+        let
+          lookups :: Lookups.ScriptLookups PlutusData
+          lookups = Lookups.mintingPolicy nftPolicy
+            <> Lookups.unspentOutputs utxos
+
+          constraints :: TxConstraints Unit Unit
+          constraints = Constraints.mustMintValue (Value.singleton cs adaToken (BigInt.fromInt 1))
+            <> Constraints.mustReferenceOutput txOut
+        expectError $ buildBalanceSignAndSubmitTx lookups constraints
 
       it "double minting fails on second mint" $ useRunnerSimple do
         txOut <- seedTx
@@ -198,6 +216,117 @@ spec = runEnvSpec do
         vault <- openVault protocol
         expectError $ incrementVault' 2 protocol vault
 
+      it "can't open vault with bad id" $ useRunnerSimple do
+        protocol <- protocolInit
+        nftCs <- liftContractM "mpsSymbol failed" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
+        txOut <- seedTx
+        let nftTn = adaToken
+        let nftRed = NftRedeemer { tn: nftTn, txId: txOut }
+        adr <- liftContractM "no wallet" =<< getWalletAddress
+        utxos <- getUtxos adr
+        pkh <- getWalletAddress >>= case _ of
+          Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
+          _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+        let
+          nft :: Value.Value
+          nft = Value.singleton nftCs nftTn $ BigInt.fromInt 1
+
+          vault :: Vault
+          vault = Vault { owner: pkh, count: BigInt.fromInt 0 }
+
+          lookups :: Lookups.ScriptLookups PlutusData
+          lookups = Lookups.mintingPolicy protocol.nftMp
+            <> Lookups.unspentOutputs utxos
+
+          constraints :: TxConstraints Unit Unit
+          constraints =
+            Constraints.mustSpendPubKeyOutput txOut
+              <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline (enoughForFees <> nft)
+              <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) nft
+        expectError $ buildBalanceSignAndSubmitTx lookups constraints
+
+      it "vault ids are never the same" $ useRunnerSimple do
+        protocol <- protocolInit
+        vaults <- replicateM 5 (openVault protocol)
+        vaults `shouldSatisfy` (toUnfoldable >>> sort >>> group >>> map length >>> maximum >>> (_ == Just 1))
+
+      it "open vault fails when ref not spent" $ useRunnerSimple do
+        protocol <- protocolInit
+        nftCs <- liftContractM "mpsSymbol failed" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
+        txOut <- seedTx
+        logInfo' $ "seedTx:" <> show txOut
+        nftTn <- liftContractM "failed to make nft token name" $ datumHash (Datum (toData txOut)) <#> unwrap >>= mkTokenName
+        logInfo' $ "nftTn:" <> show nftTn
+        adr <- liftContractM "no wallet" =<< getWalletAddress
+        utxos <- getUtxos adr
+        let nftRed = NftRedeemer { tn: nftTn, txId: txOut }
+        pkh <- getWalletAddress >>= case _ of
+          Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
+          _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+        -- I don't love this but I'm not sure of another way to make sure the tx isn't spent in the minting transaction
+        void $ waitForTx maxWait adr
+          =<< buildBalanceSignAndSubmitTx (Lookups.unspentOutputs utxos) (Constraints.mustSpendPubKeyOutput txOut)
+        let
+          nft :: Value.Value
+          nft = Value.singleton nftCs nftTn $ BigInt.fromInt 1
+
+          vault :: Vault
+          vault = Vault { owner: pkh, count: BigInt.fromInt 0 }
+
+          lookups :: Lookups.ScriptLookups PlutusData
+          lookups = Lookups.mintingPolicy protocol.nftMp
+            <> Lookups.unspentOutputs (Map.filterKeys (_ /= txOut) utxos)
+
+          -- the filter is to prevent the ref from being incidentally spent
+
+          constraints :: TxConstraints Unit Unit
+          constraints =
+            Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline (enoughForFees <> nft)
+              <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) nft
+        expectError $ buildBalanceSignAndSubmitTx lookups constraints
+
+      it "can't merge vaults" $ useRunnerSimple do
+        protocol <- protocolInit
+        v1 <- openVault protocol
+        v2 <- openVault protocol
+        txinV1 /\ txOut <- getVaultById protocol v1
+        txinV2 <- fst <$> getVaultById protocol v2
+        (oldVault :: Vault) <- liftContractM "failed to parse old vault"
+          <<< fromData
+          <<< unwrap
+          =<< getDatum (unwrap (unwrap txOut).output).datum
+        utxos <- getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
+        cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
+        key <- liftContractM "no wallet" =<< ownPaymentPubKeyHash
+        let
+          nft1 :: Value
+          nft1 = Value.singleton cs v1 $ BigInt.fromInt 1
+
+          nft2 :: Value
+          nft2 = Value.singleton cs v2 $ BigInt.fromInt 1
+
+          red1 :: Redeemer
+          red1 = Redeemer $ toData $ HelloRedeemer { tn: v1, action: Inc }
+
+          red2 :: Redeemer
+          red2 = Redeemer $ toData $ HelloRedeemer { tn: v2, action: Inc }
+
+          newVault :: Vault
+          newVault = Vault { owner: (unwrap oldVault).owner, count: BigInt.fromInt 1 }
+
+          lookups :: Lookups.ScriptLookups PlutusData
+          lookups = Lookups.validator protocol.vaultValidator
+            <> Lookups.unspentOutputs utxos
+
+          constraints :: TxConstraints Unit Unit
+          constraints =
+            Constraints.mustSpendScriptOutput txinV1 red1
+              <> Constraints.mustSpendScriptOutput txinV2 red2
+              <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) Constraints.DatumInline (enoughForFees <> nft1 <> nft2)
+              <> Constraints.mustReferenceOutput protocol.config
+              <> Constraints.mustBeSignedBy key
+        expectError $ buildBalanceSignAndSubmitTx lookups constraints
+
       describe "invalid vaults" $ do
         it "invalid vaults don't show up in getAllVaults" $ useRunnerSimple do
           protocol <- protocolInit
@@ -237,6 +366,8 @@ spec = runEnvSpec do
           nftCs <- liftContractM "mpsSymbol failed" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
           txOut <- seedTx
           nftTn <- liftContractM "failed to make nft token name" $ datumHash (Datum (toData txOut)) <#> unwrap >>= mkTokenName
+          adr <- liftContractM "no wallet" =<< getWalletAddress
+          utxos <- getUtxos adr
           let nftRed = NftRedeemer { tn: nftTn, txId: txOut }
           pkh <- getWalletAddress >>= case _ of
             Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
@@ -250,10 +381,12 @@ spec = runEnvSpec do
 
             lookups :: Lookups.ScriptLookups PlutusData
             lookups = Lookups.mintingPolicy protocol.nftMp
+              <> Lookups.unspentOutputs utxos
 
             constraints :: TxConstraints Unit Unit
             constraints =
-              Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline enoughForFees
+              Constraints.mustSpendPubKeyOutput txOut
+                <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline enoughForFees
                 <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) nft
           expectError $ buildBalanceSignAndSubmitTx lookups constraints
 
@@ -262,6 +395,8 @@ spec = runEnvSpec do
           nftCs <- liftContractM "mpsSymbol failed" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
           txOut <- seedTx
           nftTn <- liftContractM "failed to make nft token name" $ datumHash (Datum (toData txOut)) <#> unwrap >>= mkTokenName
+          adr <- liftContractM "no wallet" =<< getWalletAddress
+          utxos <- getUtxos adr
           let nftRed = NftRedeemer { tn: nftTn, txId: txOut }
           pkh <- getWalletAddress >>= case _ of
             Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
@@ -275,10 +410,12 @@ spec = runEnvSpec do
 
             lookups :: Lookups.ScriptLookups PlutusData
             lookups = Lookups.mintingPolicy protocol.nftMp
+              <> Lookups.unspentOutputs utxos
 
             constraints :: TxConstraints Unit Unit
             constraints =
-              Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline (enoughForFees <> nft)
+              Constraints.mustSpendPubKeyOutput txOut
+                <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ vault # toData) Constraints.DatumInline (enoughForFees <> nft)
                 <> Constraints.mustMintValueWithRedeemer (Redeemer $ nftRed # toData) (nft <> nft)
           expectError $ buildBalanceSignAndSubmitTx lookups constraints
 
@@ -349,6 +486,44 @@ localOnlySpec = describe "HelloWorld.Discovery.Api" do
           pure $ protocol /\ vault
         asBob do
           expectError $ incrementVault protocol aliceVault
+
+      -- "attack" is a strong word but it's a thing you're not supposed to be able to do in the protocol
+      it "alice can't gitf bob a vault" $ useTwoWalletRunner $ \asAlice asBob -> do
+        (protocol /\ aliceVault) <- asAlice do
+          protocol <- protocolInit
+          vault <- openVault protocol
+          pure $ protocol /\ vault
+        bobKey <- asBob
+          $ getWalletAddress
+          >>= case _ of
+            Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
+            _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+        asAlice $ do
+          let vaultId = aliceVault
+          txin <- fst <$> getVaultById protocol vaultId
+          utxos <- getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
+          cs <- liftContractM "invalid protocol" $ mpsSymbol $ mintingPolicyHash protocol.nftMp
+          key <- liftContractM "no wallet" =<< ownPaymentPubKeyHash
+          let
+            nft :: Value
+            nft = Value.singleton cs vaultId $ BigInt.fromInt 1
+
+            red :: Redeemer
+            red = Redeemer $ toData $ HelloRedeemer { tn: vaultId, action: Inc }
+
+            newVault :: Vault
+            newVault = Vault { owner: bobKey, count: BigInt.fromInt 1 }
+
+            lookups :: Lookups.ScriptLookups PlutusData
+            lookups = Lookups.validator protocol.vaultValidator
+              <> Lookups.unspentOutputs utxos
+
+            constraints :: TxConstraints Unit Unit
+            constraints = Constraints.mustSpendScriptOutput txin red
+              <> Constraints.mustPayToScript (validatorHash protocol.vaultValidator) (Datum $ newVault # toData) Constraints.DatumInline (enoughForFees <> nft)
+              <> Constraints.mustReferenceOutput protocol.config
+              <> Constraints.mustBeSignedBy key
+          expectError $ buildBalanceSignAndSubmitTx lookups constraints
 
       it "bob can't close alices vault" $ useTwoWalletRunner $ \asAlice asBob -> do
         (protocol /\ aliceVault) <- asAlice do

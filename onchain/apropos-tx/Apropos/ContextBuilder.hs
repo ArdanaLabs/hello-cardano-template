@@ -93,10 +93,7 @@ class (MonadTrans t, Monad m) => TxInfoBuilder t m where
   addTxInfoOutput :: TxOut -> t m ()
   addTxInfoDCert :: DCert -> t m ()
 
-  --addTxInfoWdrl :: (StakingCredential, Integer) -> t m ()
   addTxInfoSignatory :: PubKeyHash -> t m ()
-
-  --addTxInfoData :: (DatumHash, Datum) -> t m ()
 
   setTxInfoInputs :: [TxInInfo] -> t m ()
   setTxInfoOutputs :: [TxOut] -> t m ()
@@ -104,26 +101,25 @@ class (MonadTrans t, Monad m) => TxInfoBuilder t m where
   setTxInfoMint :: Value -> t m ()
   setTxInfoDCert :: [DCert] -> t m ()
 
-  --setTxInfoWdrl :: [(StakingCredential, Integer)] -> t m ()
   setTxInfoValidRange :: POSIXTimeRange -> t m ()
   setTxInfoSignatories :: [PubKeyHash] -> t m ()
 
-  --setTxInfoData :: [(DatumHash, Datum)] -> t m ()
   setTxInfoId :: BuiltinByteString -> t m ()
 
 instance Monad m => TxInfoBuilder (StateT TxInfo) m where
   runTxInfoBuilder = flip execStateT
   buildTxInfo = runTxInfoBuilder emptyTxInfo
   addInput r a v d =
-    let i = TxInInfo r (TxOut a v (maybe NoOutputDatum OutputDatum d) Nothing) -- TODO what's with the maybe script hash now?
-     in modify
+    let i = TxInInfo r (TxOut a v (maybe NoOutputDatum OutputDatum d) Nothing)
+     in -- The Nothing indicates no refference script
+        modify
           ( \txi ->
               txi
                 { txInfoInputs = txInfoInputs txi <> [i]
                 }
           )
   addOutput a v d =
-    let i = TxOut a v (maybe NoOutputDatum OutputDatum d) Nothing -- TODO here too
+    let i = TxOut a v (maybe NoOutputDatum OutputDatum d) Nothing
      in modify
           ( \txi ->
               txi
@@ -137,10 +133,7 @@ instance Monad m => TxInfoBuilder (StateT TxInfo) m where
   addTxInfoOutput o = modify (\txi -> txi {txInfoOutputs = txInfoOutputs txi <> [o]})
   addTxInfoDCert d = modify (\txi -> txi {txInfoDCert = txInfoDCert txi <> [d]})
 
-  --addTxInfoWdrl w = modify (\txi -> txi {txInfoWdrl = txInfoWdrl txi <> fromList [w]})
   addTxInfoSignatory s = modify (\txi -> txi {txInfoSignatories = txInfoSignatories txi <> [s]})
-
-  --addTxInfoData d = modify (\txi -> txi {txInfoData = txInfoData txi <> [d]})
 
   setTxInfoInputs i = modify (\txi -> txi {txInfoInputs = i})
   setTxInfoOutputs o = modify (\txi -> txi {txInfoOutputs = o})
@@ -148,9 +141,7 @@ instance Monad m => TxInfoBuilder (StateT TxInfo) m where
   setTxInfoMint m = modify (\txi -> txi {txInfoMint = m})
   setTxInfoDCert d = modify (\txi -> txi {txInfoDCert = d})
 
-  --setTxInfoWdrl w = modify (\txi -> txi {txInfoWdrl = fromList w})
   setTxInfoValidRange r = modify (\txi -> txi {txInfoValidRange = r})
   setTxInfoSignatories s = modify (\txi -> txi {txInfoSignatories = s})
 
-  --setTxInfoData d = modify (\txi -> txi {txInfoData = fromList d})
   setTxInfoId b = modify (\txi -> txi {txInfoId = TxId b})

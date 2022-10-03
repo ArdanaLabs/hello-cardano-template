@@ -6,7 +6,26 @@
     };
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     cardano-node.url = "github:input-output-hk/cardano-node?rev=73f9a746362695dc2cb63ba757fbcabb81733d23";
-    cardano-transaction-lib.url = "github:Plutonomicon/cardano-transaction-lib?rev=296563fa1a9a7494393bb4a74ea0464054fe9b4b";
+    # CTL with cardano-wallet fix
+    cardano-transaction-lib = {
+      url = "github:Plutonomicon/cardano-transaction-lib?rev=296563fa1a9a7494393bb4a74ea0464054fe9b4b";
+      inputs.plutip.follows = "plutip";
+      inputs.haskell-nix.follows = "plutip/haskell-nix";
+      inputs.nixpkgs.follows = "plutip/nixpkgs";
+    };
+    plutip = {
+      url = "github:mlabs-haskell/plutip/8364c43ac6bc9ea140412af9a23c691adf67a18b";
+      inputs.bot-plutus-interface.follows = "bot-plutus-interface";
+      inputs.haskell-nix.follows = "bot-plutus-interface/haskell-nix";
+      inputs.iohk-nix.follows = "bot-plutus-interface/iohk-nix";
+      inputs.nixpkgs.follows = "bot-plutus-interface/haskell-nix/nixpkgs";
+    };
+    bot-plutus-interface = {
+      url = "github:mlabs-haskell/bot-plutus-interface?rev=7235aa6fba12b0cf368d9976e1e1b21ba642c038";
+      inputs.cardano-wallet.follows = "cardano-wallet";
+    };
+    cardano-wallet.url = "github:Geometer1729/cardano-wallet?rev=21e41f47e4d25db585f25caddb9b2a188adcf93d";
+
     cardano-ogmios.url = "github:input-output-hk/cardano-ogmios";
     mlabs-ogmios.follows = "cardano-transaction-lib/ogmios";
     ogmios-datum-cache.follows = "cardano-transaction-lib/ogmios-datum-cache";

@@ -7,7 +7,6 @@ import Contract.Prelude
 import CBOR as CBOR
 import Test.Spec (Spec, it, describe)
 import Test.Spec.Assertions (shouldNotEqual, shouldEqual)
-import Contract.Scripts (Validator)
 import Util (decodeCbor)
 
 spec :: Spec Unit
