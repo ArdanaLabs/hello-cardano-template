@@ -64,6 +64,7 @@
               export MODE=${mode}
               export TEST_RESOURCES=${./fixtures}
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
+              export SIGNING_CMD=${self.inputs.yubihsm.packages.${pkgs.system}.default}/bin/signing-server
               ${hello-world-api.ps.test.run { }}
             '';
           };

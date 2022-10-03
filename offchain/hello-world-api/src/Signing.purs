@@ -26,7 +26,7 @@ type Signer = ByteArray -> Aff String
 
 getServerCmd :: Aff String
 getServerCmd = liftEffect $ do
-  lookupEnv "SIGNING_SERVER_CMD" >>= case _ of
+  lookupEnv "SIGNING_CMD" >>= case _ of
     Just cmd -> pure cmd
     Nothing -> throw "expected SIGNING_SERVER_CMD to be set"
 
