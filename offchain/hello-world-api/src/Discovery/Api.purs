@@ -123,7 +123,7 @@ closeVault protocol vaultId = do
 incrementVault :: Protocol -> VaultId -> Contract () Unit
 incrementVault = incrementVault' 1
 
--- | as incrementVault but the amount to increment by is taken as a parameter
+-- | As incrementVault but the amount to increment by is taken as a parameter
 -- this will fail if the parameter is not 1
 -- this function is intended to simplify test code
 incrementVault' :: Int -> Protocol -> VaultId -> Contract () Unit
@@ -159,7 +159,7 @@ incrementVault' step protocol vaultId = do
 openVault :: Protocol -> Contract () VaultId
 openVault = openVault' 0
 
--- | as openVault but the starting count is taken as a paremeter
+-- | As openVault but the starting count is taken as a paremeter
 -- this wil fail for any value other than 0
 -- this function is intended to simplify test code
 openVault' :: Int -> Protocol -> Contract () VaultId
@@ -227,7 +227,7 @@ protocolInit = do
   config <- liftContractM "gave up waiting for sendDatumToScript TX" =<< waitForTx maxWait (scriptHashAddress configVhash) txId
   pure $ { config, vaultValidator, nftMp: _ } vaultAuthMp
 
--- | mints an nft where the txid is a parameter of the contract and returns the currency symbol
+-- | Mints an nft where the txid is a parameter of the contract and returns the currency symbol
 mintNft :: Contract () CurrencySymbol
 mintNft = do
   logInfo' "starting mint"
@@ -259,7 +259,7 @@ makeNftPolicy txOut = do
   logInfo' "got cbor"
   liftContractM "apply args failed" =<< applyArgsM paramNft [ toData txOut ]
 
--- | selects a utxo owned by the current wallet usefull for minting nfts
+-- | Selects a utxo owned by the current wallet usefull for minting nfts
 seedTx :: Contract () TransactionInput
 seedTx = do
   adr <- liftContractM "no wallet" =<< getWalletAddress
