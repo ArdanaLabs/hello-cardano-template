@@ -5,7 +5,7 @@ module Test.HelloWorld.Api
 
 import Contract.Prelude
 
-import Contract.Monad (ContractEnv, liftContractAffM, liftContractM)
+import Contract.Monad (ContractEnv, liftContractM)
 import Contract.Scripts (validatorHash)
 import Contract.Test.Plutip (runPlutipContract, withPlutipContractEnv, runContractInEnv)
 import Contract.Utxos (getWalletBalance)
@@ -89,11 +89,10 @@ spec = runEnvSpec do
             runContractInEnv (withApiLogger env) $
               withKeyWallet alice do
                 redeem incParam incOutput `shouldReturn` unit
-            (datum /\ value) <-
-              runContractInEnv (withApiLogger env) $
-                withKeyWallet alice do
-                  query incOutput
-            datum `shouldEqual` (initialDatum + incParam)
+            value <- runContractInEnv (withApiLogger env)
+              $ withKeyWallet alice
+              $ getWalletBalance
+              >>= liftContractM "get wallet ballance failed"
             getAmount value `shouldSatisfy` (>) (getAmount initialValue)
 
     describe "datumLookup"
@@ -105,7 +104,7 @@ spec = runEnvSpec do
             datum <- runContractInEnv (withApiLogger env) $
               withKeyWallet alice do
                 validator <- helloScript 1
-                vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+                let vhash = validatorHash validator
                 ti1 <- sendDatumToScript expectedDatum vhash
                 datumLookup ti1
             datum `shouldEqual` expectedDatum
@@ -158,9 +157,11 @@ localOnlySpec = do
           runContractInEnv (withApiLogger env) $
             withKeyWallet bob do
               redeem incParam lastOutput `shouldReturn` unit
-          (_ /\ value) <-
-            runContractInEnv (withApiLogger env) $
-              withKeyWallet bob do
-                query lastOutput
+          value <-
+            runContractInEnv (withApiLogger env)
+              $ withKeyWallet bob
+              $ getWalletBalance
+              >>= liftContractM "get wallet balance failed"
+
           -- Bob should have more than at the beginning after redeeming
-          getAmount value `shouldSatisfy` (==) initialAdaAmountBob
+          getAmount value `shouldSatisfy` (_ >= initialAdaAmountBob)

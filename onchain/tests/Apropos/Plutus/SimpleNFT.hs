@@ -9,15 +9,19 @@ import Test.Syd.Hedgehog
 
 import HelloDiscovery (standardNftMp)
 
-import PlutusLedgerApi.V1 (
+import PlutusLedgerApi.V2 (
   Address,
   BuiltinData (BuiltinData),
+  MintingPolicy (..),
   Redeemer (..),
+  Script,
+  ScriptContext,
   TxOutRef,
   Value (..),
   toData,
  )
-import PlutusLedgerApi.V1.Scripts (Context (..), Datum (..), applyMintingPolicyScript)
+
+import PlutusLedgerApi.V1.Scripts (Datum (..), applyArguments)
 
 import Control.Monad (forM_)
 import Gen (address, datum, maybeOf, txOutRef, value)
@@ -65,7 +69,7 @@ instance HasPermutationGenerator NFTProp NFTModel where
 instance HasParameterisedGenerator NFTProp NFTModel where
   parameterisedGenerator = buildGen
 
-mkCtx :: NFTModel -> Context
+mkCtx :: NFTModel -> ScriptContext
 mkCtx NFTModel {..} =
   buildContext $ do
     withTxInfo $ do
@@ -75,7 +79,7 @@ instance ScriptModel NFTProp NFTModel where
   expect = Var HasParam
   script hm@NFTModel {param} =
     let redeemer = toData ()
-     in applyMintingPolicyScript (mkCtx hm) (standardNftMp param) (Redeemer $ BuiltinData redeemer)
+     in applyMintingPolicy (mkCtx hm) (standardNftMp param) (Redeemer $ BuiltinData redeemer)
 
 spec :: Spec
 spec = do
@@ -88,3 +92,6 @@ spec = do
       fromHedgehogGroup
       [ runScriptTestsWhere @NFTProp "validation" Yes
       ]
+
+applyMintingPolicy :: ScriptContext -> MintingPolicy -> Redeemer -> Script
+applyMintingPolicy sc (MintingPolicy s) r = applyArguments s [toData r, toData sc]

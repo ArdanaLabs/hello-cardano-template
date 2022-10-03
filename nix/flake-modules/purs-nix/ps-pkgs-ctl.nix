@@ -17,43 +17,88 @@ with (removeAttrs ps-pkgs (attrNames self));
 
           dependencies =
             [
+              self.aeson
+              self.aeson-helpers
               aff
-              argonaut
-              argonaut-codecs
-              argonaut-core
+              aff-promise
+              aff-retry
+              affjax
+              arraybuffer-types
               arrays
               bifunctors
               bigints
+              checked-exceptions
+              console
               const
+              contravariant
               control
+              datetime
+              debug
               effect
               either
+              encoding
+              enums
               exceptions
               foldable-traversable
+              foreign
               foreign-object
-              gen
+              http-methods
               identity
               integers
+              js-date
+              self.lattice
+              lists
               maybe
+              self.medea
+              media-types
+              monad-logger
+              self.mote
               newtype
               node-buffer
+              node-child-process
+              node-fs
               node-fs-aff
               node-path
+              node-process
+              node-streams
               nonempty
+              now
               numbers
+              optparse
+              ordered-collections
+              orders
+              parallel
               partial
+              posix-types
               prelude
+              profunctor
+              profunctor-lenses
+              self.toppokki
               quickcheck
+              quickcheck-combinators
+              quickcheck-laws
+              rationals
               record
+              refs
+              safe-coerce
               self.sequences
               spec
+              spec-quickcheck
               strings
+              stringutils
+              tailrec
+              text-encoding
+              these
               transformers
               tuples
               typelevel
               typelevel-prelude
               uint
+              undefined
+              unfoldable
               untagged-union
+              variant
+              heterogeneous
             ];
         };
     };
