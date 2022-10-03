@@ -7154,17 +7154,17 @@
         "nixpkgs": "nixpkgs_28"
       },
       "locked": {
-        "lastModified": 1664822772,
-        "narHash": "sha256-EUE61LnJyD9awyrSbUt7pp0ot6/nylud+8E9Vi6xppA=",
+        "lastModified": 1664824653,
+        "narHash": "sha256-lFLjX2oD7cv3iu7t/3tOmjcyeygPW2122tZy1BKqFHI=",
         "owner": "ArdanaLabs",
         "repo": "yubihsm-ed-sign",
-        "rev": "43b45902d0e01ab26633d672be9143e7b3a640f3",
+        "rev": "cf5cd810f5d7f41a95f9cb3662b2f3bec254fc7f",
         "type": "github"
       },
       "original": {
         "owner": "ArdanaLabs",
         "repo": "yubihsm-ed-sign",
-        "rev": "43b45902d0e01ab26633d672be9143e7b3a640f3",
+        "rev": "cf5cd810f5d7f41a95f9cb3662b2f3bec254fc7f",
         "type": "github"
       }
     }
