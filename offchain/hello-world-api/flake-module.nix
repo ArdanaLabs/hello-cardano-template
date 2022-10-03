@@ -18,7 +18,6 @@
             ctl-pkgs.cardano-transaction-lib
             node-fs-aff
             ordered-collections
-            affjax
             spec
             aff-retry
             self'.packages."offchain:hello-world-cbor"
@@ -64,7 +63,7 @@
               export MODE=${mode}
               export TEST_RESOURCES=${./fixtures}
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
-              export SIGNING_CMD=${self.inputs.yubihsm.packages.${pkgs.system}.default}/bin/signer
+              export SIGNING_CMD=${self.inputs.yubihsm.packages.${pkgs.system}.default}/bin/signer # TODO get this workin for the devshell too
               ${hello-world-api.ps.test.run { }}
             '';
           };
