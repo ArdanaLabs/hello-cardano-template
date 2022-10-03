@@ -132,6 +132,10 @@ redeemFromScript vhash validator txInput = do
 
     constraints :: TxConstraints Unit Unit
     constraints = Constraints.mustSpendScriptOutput txInput spendRedeemer
+      -- TODO
+      -- The mustBeSignedBy constraint is a workaround for
+      -- https://github.com/Plutonomicon/cardano-transaction-lib/issues/1079
+      -- once it's fixed we should remove this
       <> Constraints.mustBeSignedBy key
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   adr <- liftContractM "no wallet" =<< getWalletAddress
