@@ -51,7 +51,9 @@ nix run .#offchain:hello-world-api:test:testnet
 To enter the browser app's dev shell run `nix develop .#offchain:hello-world-browser`.
 
 If you want to use the browser app make sure you with a current testnet version of the Nami wallet
-browser extension which can be found [here](https://github.com/berry-pool/nami).
+browser extension which can be found
+in the chrom webstore [here](https://chrome.google.com/webstore/detail/nami/lpfcbjknijpeeillifnkikgncikgfhdo)
+or from their github [here](https://github.com/berry-pool/nami).
 Currently this requires a browser that can run Chrome extensions.
 
 Once you are in the dev shell you can obtain a repl with: `purs-nix repl`, or compile the browser app with `purs-nix compile`.
