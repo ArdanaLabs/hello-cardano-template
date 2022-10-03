@@ -18,7 +18,7 @@ runTestPlans = do
   wallet2 <- liftEffect testWallet2
   wallet3 <- liftEffect testWallet3
 
-  parTraverse_ (liftEffect <<< topup) [ wallet1, wallet2, wallet3 ]
+  -- parTraverse_ (liftEffect <<< topup) [ wallet1, wallet2, wallet3 ]
 
   testOptions1 <- liftEffect $ mkTestOptions wallet1
   testOptions2 <- liftEffect $ mkTestOptions wallet2
