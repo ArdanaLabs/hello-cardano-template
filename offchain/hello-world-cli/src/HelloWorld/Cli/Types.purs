@@ -10,7 +10,7 @@ module HelloWorld.Cli.Types
 
 import Prelude
 import Contract.Transaction (TransactionInput)
-import Serialization.Address (NetworkId)
+import Ctl.Internal.Serialization.Address (NetworkId)
 import Data.Generic.Rep (class Generic)
 import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe)

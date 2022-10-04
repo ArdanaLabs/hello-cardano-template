@@ -24,11 +24,11 @@ import Data.BigInt as Big
 import Data.String.CodeUnits (lastIndexOf, take)
 import Data.String.Pattern (Pattern(Pattern))
 import Data.Tuple.Nested ((/\))
-import Types.ByteArray (byteArrayToHex, hexToByteArrayUnsafe)
-import Types.Transaction (TransactionInput(TransactionInput), TransactionHash(TransactionHash))
-import Plutus.Types.Value (flattenValue)
-import Serialization.Address (NetworkId(TestnetId, MainnetId))
-import Wallet.Spec
+import Ctl.Internal.Types.ByteArray (byteArrayToHex, hexToByteArrayUnsafe)
+import Ctl.Internal.Types.Transaction (TransactionInput(TransactionInput), TransactionHash(TransactionHash))
+import Ctl.Internal.Plutus.Types.Value (flattenValue)
+import Ctl.Internal.Serialization.Address (NetworkId(TestnetId, MainnetId))
+import Ctl.Internal.Wallet.Spec
   ( WalletSpec(UseKeys)
   , PrivatePaymentKeySource(PrivatePaymentKeyFile)
   , PrivateStakeKeySource(PrivateStakeKeyFile)
