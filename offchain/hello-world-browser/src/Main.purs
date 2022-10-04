@@ -4,8 +4,9 @@ module Main
 
 import Contract.Prelude
 
-import Cardano.TextEnvelope (TextEnvelopeType(..), textEnvelopeBytes)
+import Cardano.TextEnvelope (TextEnvelopeType(..), printTextEnvelopeDecodeError, textEnvelopeBytes)
 import Contract.Config (NetworkId(..), PrivatePaymentKey(..), PrivatePaymentKeySource(..), PrivateStakeKey(..), PrivateStakeKeySource(..), privateKeyFromBytes, testnetConfig, testnetNamiConfig)
+import Data.Bifunctor (lmap)
 import Effect (Effect)
 import Effect.Exception (error, throw)
 import Halogen.Aff as HA
@@ -42,7 +43,8 @@ loadWalletSpec :: Aff WalletSpec
 loadWalletSpec = do
   mPaymentKeyStr <- getCookie "paymentKey"
   paymentKeyStr <- liftM (error "payment key not found in the cookie") mPaymentKeyStr
-  paymentKeyBytes <- textEnvelopeBytes paymentKeyStr PaymentSigningKeyShelleyed25519
+  paymentKeyBytes <- liftEither $ lmap (error <<< printTextEnvelopeDecodeError) $
+    textEnvelopeBytes paymentKeyStr PaymentSigningKeyShelleyed25519
   paymentKey <- liftM (error "Unable to decode private payment key")
     $ PrivatePaymentKey
     <$> privateKeyFromBytes (wrap paymentKeyBytes)
@@ -50,7 +52,8 @@ loadWalletSpec = do
   getCookie "stakeKey" >>= case _ of
     Nothing -> pure $ UseKeys (PrivatePaymentKeyValue paymentKey) Nothing
     Just stakeKeyStr -> do
-      stakeKeyBytes <- textEnvelopeBytes stakeKeyStr StakeSigningKeyShelleyed25519
+      stakeKeyBytes <- liftEither $ lmap (error <<< printTextEnvelopeDecodeError) $
+        textEnvelopeBytes stakeKeyStr StakeSigningKeyShelleyed25519
       let stakeKey = PrivateStakeKey <$> privateKeyFromBytes (wrap stakeKeyBytes)
       pure $ UseKeys (PrivatePaymentKeyValue paymentKey) (PrivateStakeKeyValue <$> stakeKey)
 

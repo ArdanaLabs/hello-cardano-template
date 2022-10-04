@@ -10,7 +10,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked, HelloWorldIncrement(..), increment, lock, redeem)
+import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked, HelloWorldIncrement(..), increment, lock, redeem, unlock)
 import HelloWorld.Error (HelloWorldBrowserError(..), timeoutErrorMessage)
 
 data Action
@@ -27,6 +27,7 @@ data State
   | IncrementFailed Int FundsLocked Error
   | Redeeming FundsLocked
   | RedeemFailed Int FundsLocked Error
+  | Unlocking
   | TransactionTimeout
 
 helloWorldIncrement :: HelloWorldIncrement
@@ -59,10 +60,17 @@ _doRedeem datum fundsLocked = do
   H.modify_ $ const (Redeeming fundsLocked)
   result <- redeem helloWorldIncrement
   case result of
-    Left err -> case err of
-      TimeoutError -> H.modify_ $ const TransactionTimeout
-      OtherError err' -> H.modify_ $ const (RedeemFailed datum fundsLocked err')
-    Right _ -> H.modify_ $ const Unlocked
+    Left err -> handleError err
+    Right balanceBeforeRedeem -> do
+      H.modify_ $ const Unlocking
+      result' <- unlock balanceBeforeRedeem
+      case result' of
+        Left err -> handleError err
+        Right _ -> H.modify_ $ const Unlocked
+  where
+  handleError = case _ of
+    TimeoutError -> H.modify_ $ const TransactionTimeout
+    OtherError err -> H.modify_ $ const (RedeemFailed datum fundsLocked err)
 
 component
   :: forall q o m
@@ -141,6 +149,12 @@ component =
         [ HH.text $ "Redeeming " <> show funds <> " ADA ..." ]
     RedeemFailed datum fundsLocked err ->
       lockedView datum fundsLocked (Just err)
+    Unlocking ->
+      HH.main_
+        [ HH.div
+            [ HP.id "unlocking" ]
+            [ HH.text $ "Unlocking funds ..." ]
+        ]
     where
     lockedView datum fundsLocked _ =
       HH.main_

@@ -15,15 +15,10 @@ module HelloWorld.Api
 import Contract.Prelude
 
 import CBOR as CBOR
-import Util (buildBalanceSignAndSubmitTx, waitForTx, getUtxos)
-
-import Data.BigInt as BigInt
-import Data.Time.Duration (Minutes(..))
-
-import Contract.Aeson (decodeAeson, fromString)
-import Contract.Log (logDebug', logError')
-import Contract.Monad (Contract, liftContractM, liftContractAffM)
-import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer), getDatumByHash)
+import Contract.Address (getWalletAddress, ownPaymentPubKeyHash, scriptHashAddress)
+import Contract.Log (logInfo', logError', logDebug')
+import Contract.Monad (Contract, liftContractM)
+import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer))
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (Validator, ValidatorHash, applyArgs, validatorHash)
 import Contract.Transaction (TransactionInput)
@@ -31,21 +26,24 @@ import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
 import Contract.Utxos (getUtxo, getWalletBalance)
 import Contract.Value as Value
+import Data.BigInt as BigInt
+import Data.Foldable (for_)
+import Data.List ((..), List)
+import Data.Map (keys)
+import Data.Set as Set
+import Data.Time.Duration (Minutes(..))
 import Effect.Exception (throw)
 import Plutus.Types.Transaction (TransactionOutput(TransactionOutput))
 import Plutus.Types.Value (Value)
 import ToData (class ToData, toData)
 import Types.PlutusData (PlutusData(Constr, Integer))
-import Data.Map (keys)
-import Data.Set as Set
-import Data.Foldable (for_)
-import Data.List ((..), List)
+import Util (buildBalanceSignAndSubmitTx, waitForTx, getUtxos, decodeCbor, getDatum)
 
 initialize :: Int -> Int -> Contract () TransactionInput
 initialize param initialValue = do
   logDebug' $ "initialize hello-world: param: " <> show param <> " initialValue: " <> show initialValue
   validator <- helloScript param
-  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  let vhash = validatorHash validator
   txIn <- sendDatumToScript initialValue vhash
   logDebug' $ "initialized hello-world: param: " <> show param <> " initialValue: " <> show initialValue
   pure txIn
@@ -54,7 +52,7 @@ increment :: Int -> TransactionInput -> Contract () TransactionInput
 increment param lastOutput = do
   logDebug' $ "increment hello-world: param: " <> show param
   validator <- helloScript param
-  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  let vhash = validatorHash validator
   oldDatum <- datumLookup lastOutput
   let newDatum = oldDatum + param
   txIn <- setDatumAtScript newDatum vhash validator lastOutput
@@ -65,7 +63,7 @@ redeem :: Int -> TransactionInput -> Contract () Unit
 redeem param lastOutput = do
   logDebug' $ "redeeming hello-world: param: " <> show param
   validator <- helloScript param
-  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
+  let vhash = validatorHash validator
   redeemFromScript vhash validator lastOutput
   logDebug' $ "redeemed hello-world: param: " <> show param
 
@@ -93,9 +91,10 @@ sendDatumToScript n vhash = do
             # BigInt.fromInt
             # toData
         )
+        Constraints.DatumInline
         enoughForFees
   txId <- buildBalanceSignAndSubmitTx lookups constraints
-  liftContractM "sendDatumToScript: operation timed out" =<< waitForTx waitTime vhash txId
+  liftContractM "sendDatumToScript: operation timed out" =<< waitForTx waitTime (scriptHashAddress vhash) txId
 
 setDatumAtScript
   :: Int
@@ -104,7 +103,7 @@ setDatumAtScript
   -> TransactionInput
   -> Contract () TransactionInput
 setDatumAtScript n vhash validator txInput = do
-  utxos <- getUtxos vhash
+  utxos <- getUtxos (scriptHashAddress vhash)
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.validator validator
@@ -120,10 +119,11 @@ setDatumAtScript n vhash validator txInput = do
                   # BigInt.fromInt
                   # toData
               )
+              Constraints.DatumInline
               enoughForFees
           )
   txId <- buildBalanceSignAndSubmitTx lookups constraints
-  liftContractM "setDatumAtScript: operation timed out" =<< waitForTx waitTime vhash txId
+  liftContractM "setDatumAtScript: operation timed out" =<< waitForTx waitTime (scriptHashAddress vhash) txId
 
 redeemFromScript
   :: ValidatorHash
@@ -131,7 +131,8 @@ redeemFromScript
   -> TransactionInput
   -> Contract () Unit
 redeemFromScript vhash validator txInput = do
-  utxos <- getUtxos vhash
+  utxos <- getUtxos (scriptHashAddress vhash)
+  key <- liftContractM "no wallet" =<< ownPaymentPubKeyHash
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.validator validator
@@ -139,18 +140,21 @@ redeemFromScript vhash validator txInput = do
 
     constraints :: TxConstraints Unit Unit
     constraints = Constraints.mustSpendScriptOutput txInput spendRedeemer
-  void $ buildBalanceSignAndSubmitTx lookups constraints
+      -- TODO
+      -- The mustBeSignedBy constraint is a workaround for
+      -- https://github.com/Plutonomicon/cardano-transaction-lib/issues/1079
+      -- once it's fixed we should remove this
+      <> Constraints.mustBeSignedBy key
+  txId <- buildBalanceSignAndSubmitTx lookups constraints
+  adr <- liftContractM "no wallet" =<< getWalletAddress
+  void $ waitForTx waitTime adr txId
+  logInfo' "finished"
 
 helloScript :: Int -> Contract () Validator
 helloScript n = do
   let
     maybeParamValidator :: Maybe Validator
-    maybeParamValidator =
-      CBOR.paramHello
-        # fromString
-        # decodeAeson
-        # hush
-        # map wrap
+    maybeParamValidator = decodeCbor CBOR.paramHello
   paramValidator <- liftContractM "Failed to decode the hello-world validator" maybeParamValidator
   -- TODO It'd be cool if this could be an Integer not Data
   applyArgs paramValidator [ Integer $ BigInt.fromInt n ]
@@ -164,11 +168,7 @@ datumLookup :: TransactionInput -> Contract () Int
 datumLookup lastOutput = do
   TransactionOutput utxo <- getUtxo lastOutput
     >>= liftContractM "couldn't find utxo"
-  oldDatum <-
-    utxo.dataHash
-      # liftContractM "UTxO had no datum hash"
-      >>= getDatumByHash
-      >>= liftContractM "Couldn't find datum by hash"
+  oldDatum <- getDatum utxo.datum
   asBigInt <- liftContractM "datum wasn't an integer" $ case oldDatum of
     Datum (Integer n) -> Just n
     _ -> Nothing
@@ -183,8 +183,8 @@ grabFreeAda = for_ (0 .. 10) grabFreeAdaSingleParam
 grabFreeAdaSingleParam :: Int -> Contract () Unit
 grabFreeAdaSingleParam n = do
   validator <- helloScript n
-  vhash <- liftContractAffM "Couldn't hash validator" $ validatorHash validator
-  utxos <- getUtxos vhash
+  let vhash = validatorHash validator
+  utxos <- getUtxos (scriptHashAddress vhash)
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.validator validator

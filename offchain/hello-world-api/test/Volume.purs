@@ -1,6 +1,5 @@
 module Test.Volume.HelloWorld.Api
   ( spec
-  , withTimesLogged
   ) where
 
 import Prelude
