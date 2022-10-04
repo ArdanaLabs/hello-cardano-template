@@ -72,6 +72,7 @@
                   test-unit
                   ctl-pkgs.toppokki
                   node-child-process
+                  ordered-collections
                   parallel
                   self'.packages."offchain:hello-world-api"
                 ];
@@ -134,7 +135,7 @@
               export CHROME_EXE="${pkgs.chromium}/bin/chromium"
               export HELLO_WORLD_BROWSER_INDEX=${self'.packages."offchain:hello-world-browser"}
 
-              export NAMI_EXTENSION="${self.inputs.cardano-transaction-lib}/test-data/chrome-extensions/nami_3.2.5_1.crx"
+              export NAMI_EXTENSION=${./test/Nami.crx}
 
               export NAMI_TEST_WALLET_1=${./test/NamiWallets/nami-test-wallet-1.tar.gz}
               export NAMI_TEST_WALLET_2=${./test/NamiWallets/nami-test-wallet-2.tar.gz}

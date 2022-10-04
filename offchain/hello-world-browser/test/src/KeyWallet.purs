@@ -8,6 +8,7 @@ module HelloWorld.Test.KeyWallet
 import Contract.Prelude
 
 import Contract.Test.E2E (Mode(..), TestOptions(..))
+import Data.Map as Map
 import Data.Maybe (fromMaybe)
 import Data.String (trim)
 import Effect (Effect)
@@ -52,8 +53,7 @@ mkTestOptions = do
 
   pure $ TestOptions
     { chromeExe
-    , namiDir: ""
-    , geroDir: ""
+    , wallets: Map.empty
     , chromeUserDataDir
     , noHeadless: false
     }

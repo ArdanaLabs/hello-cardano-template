@@ -21,9 +21,13 @@
 
       # use more recent slot to avoid long sync time
       ctlRuntimeConfig = {
+        network = {
+          name = "preview";
+          magic = 2;
+        };
         datumCache.blockFetcher.firstBlock = {
-          slot = 62153233;
-          id = "631c621b7372445acf82110282ba72f4b52dafa09c53864ddc2e58be24955b2a";
+          slot = 3162738;
+          id = "fed1bf7331a8f5dade0a6087b31218bb4552bdb722db450e4ecf66740395a93b";
         };
       };
 

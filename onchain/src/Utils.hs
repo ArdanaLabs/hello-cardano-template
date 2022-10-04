@@ -2,6 +2,7 @@ module Utils (
   validatorToHexString,
   trivialHexString,
   closedTermToHexString,
+  globalConfig,
   Cbor (..),
   toPureScript,
 ) where
@@ -12,7 +13,9 @@ import Data.Default (Default (def))
 import Data.List (intercalate)
 import Data.Word (Word8)
 import Numeric
-import Plutarch (TracingMode (DetTracing), compile, tracingMode)
+import Plutarch (Config, TracingMode (..), compile, tracingMode)
+
+-- please forgive the (..) I don't want to change the import every time I change the tracing mode
 import Plutarch.Api.V1
 import Plutarch.Prelude
 import PlutusLedgerApi.V1.Scripts (Script, Validator)
@@ -27,10 +30,12 @@ import System.Exit (die)
 validatorToHexString :: Validator -> String
 validatorToHexString v = concatMap byteToHex $ BSL.unpack $ serialise (v :: Validator)
 
+globalConfig :: Config
+globalConfig = def {tracingMode = NoTracing}
+
 closedTermToHexString :: forall (p :: PType). ClosedTerm p -> Maybe String
 closedTermToHexString t = do
-  -- TODO turn off tracing before production
-  case compile def {tracingMode = DetTracing} t of
+  case compile globalConfig t of
     Left _ -> Nothing
     Right script -> Just $ concatMap byteToHex $ BSL.unpack $ serialise (script :: Script)
 
@@ -41,7 +46,7 @@ padToLen :: Int -> Char -> String -> String
 padToLen len c w = replicate (len - length w) c <> w
 
 trivialHexString :: String
-trivialHexString = validatorToHexString $ mkValidator def trivialValidator
+trivialHexString = validatorToHexString $ mkValidator globalConfig trivialValidator
 
 trivialValidator :: ClosedTerm PValidator
 trivialValidator = plam $ \_ _ _ -> popaque $ pcon PUnit

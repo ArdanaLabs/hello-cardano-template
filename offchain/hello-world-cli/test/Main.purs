@@ -262,7 +262,7 @@ config =
       , secure: false
       , path: Nothing
       }
-  , ctlServerConfig:
+  , ctlServerConfig: Just
       { port: UInt.fromInt 8085
       , host: "127.0.0.1"
       , secure: false
@@ -275,4 +275,6 @@ config =
       , password: "ctxlib"
       , dbname: "ctxlib"
       }
+  , customLogger: Nothing
+  , suppressLogs: false
   }

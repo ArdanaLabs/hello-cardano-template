@@ -10,34 +10,29 @@ module Apropos.ContextBuilder (
 import Control.Monad.Trans.Class (MonadTrans, lift)
 import Control.Monad.Trans.State (StateT, execStateT, get, modify)
 import Data.Functor.Identity (Identity, runIdentity)
-import Plutarch.Api.V1 (datumHash)
-import PlutusLedgerApi.V1 (
+import PlutusLedgerApi.V1.Interval (Extended (..), Interval (..), LowerBound (..), UpperBound (..))
+import PlutusLedgerApi.V1.Scripts (Datum)
+import PlutusLedgerApi.V2 (
   Address,
   BuiltinByteString,
   DCert,
-  DatumHash (..),
+  OutputDatum (NoOutputDatum, OutputDatum),
   POSIXTimeRange,
   PubKeyHash,
   ScriptContext (..),
   ScriptPurpose (..),
-  StakingCredential,
   TxId (..),
   TxInInfo (..),
   TxInfo (..),
   TxOut (..),
   TxOutRef (..),
   Value (..),
-  toBuiltinData,
+  fromList,
  )
-import PlutusLedgerApi.V1.Interval (Extended (..), Interval (..), LowerBound (..), UpperBound (..))
-import PlutusLedgerApi.V1.Scripts (Context (..), Datum)
-import PlutusLedgerApi.V2 (fromList)
 
 -- with concrete types and extra packaging for convenience
-buildContext :: StateT ScriptContext Identity () -> Context
-buildContext builder = Context $ toBuiltinData sc
-  where
-    sc = runIdentity $ buildScriptContext @(StateT ScriptContext) @Identity builder
+buildContext :: StateT ScriptContext Identity () -> ScriptContext
+buildContext builder = runIdentity $ buildScriptContext @(StateT ScriptContext) @Identity builder
 
 -- with concrete types for convenience
 withTxInfo :: StateT TxInfo Identity () -> StateT ScriptContext Identity ()
@@ -72,15 +67,17 @@ emptyTxInfo :: TxInfo
 emptyTxInfo =
   TxInfo
     { txInfoInputs = []
+    , txInfoReferenceInputs = []
     , txInfoOutputs = []
     , txInfoFee = Value (fromList [])
     , txInfoMint = Value (fromList [])
     , txInfoDCert = []
-    , txInfoWdrl = []
+    , txInfoWdrl = fromList []
     , txInfoValidRange = Interval (LowerBound NegInf True) (UpperBound PosInf True)
     , txInfoSignatories = []
-    , txInfoData = []
+    , txInfoData = fromList []
     , txInfoId = nullTxId
+    , txInfoRedeemers = fromList []
     }
 
 class (MonadTrans t, Monad m) => TxInfoBuilder t m where
@@ -95,46 +92,38 @@ class (MonadTrans t, Monad m) => TxInfoBuilder t m where
   addTxInfoInput :: TxInInfo -> t m ()
   addTxInfoOutput :: TxOut -> t m ()
   addTxInfoDCert :: DCert -> t m ()
-  addTxInfoWdrl :: (StakingCredential, Integer) -> t m ()
+
   addTxInfoSignatory :: PubKeyHash -> t m ()
-  addTxInfoData :: (DatumHash, Datum) -> t m ()
 
   setTxInfoInputs :: [TxInInfo] -> t m ()
   setTxInfoOutputs :: [TxOut] -> t m ()
   setTxInfoFee :: Value -> t m ()
   setTxInfoMint :: Value -> t m ()
   setTxInfoDCert :: [DCert] -> t m ()
-  setTxInfoWdrl :: [(StakingCredential, Integer)] -> t m ()
+
   setTxInfoValidRange :: POSIXTimeRange -> t m ()
   setTxInfoSignatories :: [PubKeyHash] -> t m ()
-  setTxInfoData :: [(DatumHash, Datum)] -> t m ()
+
   setTxInfoId :: BuiltinByteString -> t m ()
 
 instance Monad m => TxInfoBuilder (StateT TxInfo) m where
   runTxInfoBuilder = flip execStateT
   buildTxInfo = runTxInfoBuilder emptyTxInfo
   addInput r a v d =
-    let i = TxInInfo r (TxOut a v (datumHash <$> d))
-        addDatum = case d of
-          Nothing -> id
-          Just so -> (<> [(datumHash so, so)])
-     in modify
+    let i = TxInInfo r (TxOut a v (maybe NoOutputDatum OutputDatum d) Nothing)
+     in -- The Nothing indicates no refference script
+        modify
           ( \txi ->
               txi
                 { txInfoInputs = txInfoInputs txi <> [i]
-                , txInfoData = addDatum (txInfoData txi)
                 }
           )
   addOutput a v d =
-    let i = TxOut a v (datumHash <$> d)
-        addDatum = case d of
-          Nothing -> id
-          Just so -> (<> [(datumHash so, so)])
+    let i = TxOut a v (maybe NoOutputDatum OutputDatum d) Nothing
      in modify
           ( \txi ->
               txi
                 { txInfoOutputs = txInfoOutputs txi <> [i]
-                , txInfoData = addDatum (txInfoData txi)
                 }
           )
 
@@ -143,17 +132,16 @@ instance Monad m => TxInfoBuilder (StateT TxInfo) m where
   addTxInfoInput i = modify (\txi -> txi {txInfoInputs = txInfoInputs txi <> [i]})
   addTxInfoOutput o = modify (\txi -> txi {txInfoOutputs = txInfoOutputs txi <> [o]})
   addTxInfoDCert d = modify (\txi -> txi {txInfoDCert = txInfoDCert txi <> [d]})
-  addTxInfoWdrl w = modify (\txi -> txi {txInfoWdrl = txInfoWdrl txi <> [w]})
+
   addTxInfoSignatory s = modify (\txi -> txi {txInfoSignatories = txInfoSignatories txi <> [s]})
-  addTxInfoData d = modify (\txi -> txi {txInfoData = txInfoData txi <> [d]})
 
   setTxInfoInputs i = modify (\txi -> txi {txInfoInputs = i})
   setTxInfoOutputs o = modify (\txi -> txi {txInfoOutputs = o})
   setTxInfoFee f = modify (\txi -> txi {txInfoFee = f})
   setTxInfoMint m = modify (\txi -> txi {txInfoMint = m})
   setTxInfoDCert d = modify (\txi -> txi {txInfoDCert = d})
-  setTxInfoWdrl w = modify (\txi -> txi {txInfoWdrl = w})
+
   setTxInfoValidRange r = modify (\txi -> txi {txInfoValidRange = r})
   setTxInfoSignatories s = modify (\txi -> txi {txInfoSignatories = s})
-  setTxInfoData d = modify (\txi -> txi {txInfoData = d})
+
   setTxInfoId b = modify (\txi -> txi {txInfoId = TxId b})

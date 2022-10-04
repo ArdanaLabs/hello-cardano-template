@@ -2,11 +2,11 @@ module HelloWorld.Test.TestPlans.NamiWallet.Initialize where
 
 import Contract.Prelude
 
-import Contract.Test.E2E (RunningExample(..), TestOptions, WalletExt(..), delaySec, namiConfirmAccess)
+import Contract.Test.E2E (TestOptions, WalletExt(..), delaySec)
 import Data.String (Pattern(..), contains)
 import HelloWorld.Test.Constants as Constants
 import HelloWorld.Test.Helpers (clickButton, getCurrentValueBody, getCurrentValueHeader, getFundsLockedBody, getFundsLockedHeader, injectJQuery, readString)
-import HelloWorld.Test.NamiWallet (namiSign', runE2ETest)
+import HelloWorld.Test.NamiWallet (namiConfirmAccess', namiSign', runE2ETest)
 import Mote (group)
 import Test.Unit.Assert as Assert
 import TestM (TestPlanM)
@@ -14,19 +14,25 @@ import Toppokki as T
 
 testPlan :: TestOptions -> TestPlanM Unit
 testPlan testOptions = group "When initialize button is clicked" do
-  runE2ETest "It shows loading dialog" testOptions NamiExt $ \(RunningExample { jQuery, main: page }) -> do
-    injectJQuery jQuery page
+  runE2ETest "It shows loading dialog" testOptions NamiExt $ \example -> do
+    let
+      page = example.main
+
+    injectJQuery example.jQuery page
 
     clickButton "Initialize" page
     content <- T.content page
     Assert.assert "Initializing" (contains (Pattern "Initializing ...") content)
 
-  runE2ETest "It locks ADA at contract address" testOptions NamiExt $ \example@(RunningExample { jQuery, main: page }) -> do
-    injectJQuery jQuery page
+  runE2ETest "It locks ADA at contract address" testOptions NamiExt $ \example -> do
+    let
+      page = example.main
+
+    injectJQuery example.jQuery page
 
     clickButton "Initialize" page
 
-    namiConfirmAccess example
+    namiConfirmAccess' example
 
     delaySec Constants.threeSeconds
 
