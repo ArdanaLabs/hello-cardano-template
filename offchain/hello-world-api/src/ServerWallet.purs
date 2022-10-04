@@ -16,9 +16,9 @@ import Signing (getServerCmd, getServerPubKey, serverSignTx)
 import Unsafe.Coerce (unsafeCoerce)
 import Wallet.Key (KeyWallet(..))
 
-makeServerWallet :: Aff KeyWallet
-makeServerWallet = do
-  serverCmd <- getServerCmd
+makeServerWallet :: String -> Aff KeyWallet
+makeServerWallet varName = do
+  serverCmd <- getServerCmd varName
   pubKey@(PublicKey bech32) <- getServerPubKey serverCmd
   pubKey2 <- case publicKeyFromBech32 bech32 of
     Nothing -> do

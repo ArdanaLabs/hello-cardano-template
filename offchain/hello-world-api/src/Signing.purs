@@ -24,12 +24,11 @@ import Untagged.Union (asOneOf)
 
 type Signer = ByteArray -> Aff String
 
-getServerCmd :: Aff String
-getServerCmd = liftEffect $ do
-  let name = "SIGNING_CMD"
-  lookupEnv name >>= case _ of
+getServerCmd :: String -> Aff String
+getServerCmd varName = liftEffect $ do
+  lookupEnv varName >>= case _ of
     Just cmd -> pure cmd
-    Nothing -> throw $ "expected " <> name <> " to be set"
+    Nothing -> throw $ "expected " <> varName <> " to be set"
 
 getServerPubKey :: String -> Aff PublicKey
 getServerPubKey serverCmd = do
