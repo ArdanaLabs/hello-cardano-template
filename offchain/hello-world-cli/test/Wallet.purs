@@ -8,13 +8,13 @@ import Contract.Prelude
 import Aeson (decodeAeson, parseJsonStringToAeson, encodeAeson)
 import Contract.Address (PaymentPubKeyHash(..), StakePubKeyHash(..))
 import Contract.Credential (StakingCredential(..))
-import Contract.Log (logError', logInfo')
+import Contract.Log (logInfo')
 import Contract.Monad (liftContractM, runContractInEnv)
 import Contract.PlutusData (PlutusData)
 import Contract.ScriptLookups as Lookups
 import Contract.Test.Plutip (PlutipConfig, withPlutipContractEnv)
 import Contract.TxConstraints (TxConstraint(..), TxConstraints, singleton)
-import Contract.Utxos (getWalletBalance)
+import Contract.Utxos (getWalletBalance, getWalletUtxos)
 import Contract.Value (lovelaceValueOf)
 import Contract.Wallet (getWalletAddress, withKeyWallet)
 import Contract.Wallet.KeyFile (privatePaymentKeyToFile, privateStakeKeyToFile)
@@ -55,11 +55,14 @@ withFundedServerWalletFile config vals fixturesDir f = withPlutipContractEnv con
       constraints :: TxConstraints Unit Unit
       constraints = singleton (MustPayToPubKeyAddress (PaymentPubKeyHash key) (StakePubKeyHash <$> skey) Nothing Nothing (lovelaceValueOf $ BigInt.fromInt 30_000_000))
     txid <-withKeyWallet wallet $ buildBalanceSignAndSubmitTx lookups constraints
-    void $ waitForTx maxWait adr txid
     logInfo' "wallet funding finished"
-    bal <- withKeyWallet serverWallet $ getWalletBalance
-    logInfo' $ "post funding bal: " <> show bal
+    res <- waitForTx maxWait adr txid >>= liftContractM "time out"
+    logInfo' $ "res: " <> show res
     logInfo' $ "server wallet adr: " <> show adr
+    bal <- withKeyWallet serverWallet $ getWalletBalance >>= liftContractM "no wallet"
+    logInfo' $ "post funding bal: " <> show bal
+    txs <- withKeyWallet serverWallet $ getWalletUtxos >>= liftContractM "no wallet"
+    logInfo' $ "server wallet txs: " <> show txs
   let
     portArgs =
       fromMaybe "" ((" --ctl-port " <> _) <<< show <<< UInt.toInt <$> ((unwrap env).config.ctlServerConfig <#> _.port))
