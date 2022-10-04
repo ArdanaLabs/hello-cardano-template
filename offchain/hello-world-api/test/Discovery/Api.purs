@@ -29,13 +29,13 @@ import Effect.Exception (throw)
 import HelloWorld.Api (enoughForFees)
 import HelloWorld.Discovery.Api (closeVault, getAllVaults, getMyVaults, getVaultById, incrementVault, incrementVault', makeNftPolicy, mintNft, openVault, openVault', protocolInit, seedTx)
 import HelloWorld.Discovery.Types (HelloAction(..), HelloRedeemer(..), NftRedeemer(..), Vault(..), Protocol)
-import Plutus.Types.Address (Address(..))
-import Plutus.Types.Credential (Credential(..))
-import Plutus.Types.Value as Value
+import Ctl.Internal.Plutus.Types.Address (Address(..))
+import Ctl.Internal.Plutus.Types.Credential (Credential(..))
+import Ctl.Internal.Plutus.Types.Value as Value
 import Test.HelloWorld.EnvRunner (EnvRunner, defaultWallet, plutipConfig, runEnvSpec)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (expectError, shouldEqual, shouldReturn, shouldSatisfy)
-import Types.PlutusData (PlutusData)
+import Ctl.Internal.Types.PlutusData (PlutusData)
 import Util (buildBalanceSignAndSubmitTx, decodeCbor, getDatum, getUtxos, maxWait, waitForTx, withOurLogger)
 
 spec :: EnvRunner -> Spec Unit

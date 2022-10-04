@@ -22,8 +22,8 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Node.Process (lookupEnv)
 import Test.Spec (Spec, SpecT, before)
-import Wallet.Key (KeyWallet, privateKeysToKeyWallet)
-import Wallet.KeyFile (privatePaymentKeyFromFile, privateStakeKeyFromFile)
+import Ctl.Internal.Wallet.Key (KeyWallet, privateKeysToKeyWallet)
+import Ctl.Internal.Wallet.KeyFile (privatePaymentKeyFromFile, privateStakeKeyFromFile)
 
 data Mode = Local | Testnet
 type EnvRunner = (ContractEnv () -> KeyWallet -> Aff Unit) -> Aff Unit
