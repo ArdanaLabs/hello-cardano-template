@@ -33,10 +33,10 @@ import Data.Map (keys)
 import Data.Set as Set
 import Data.Time.Duration (Minutes(..))
 import Effect.Exception (throw)
-import Plutus.Types.Transaction (TransactionOutput(TransactionOutput))
-import Plutus.Types.Value (Value)
-import ToData (class ToData, toData)
-import Types.PlutusData (PlutusData(Constr, Integer))
+import Ctl.Internal.Plutus.Types.Transaction (TransactionOutput(TransactionOutput))
+import Ctl.Internal.Plutus.Types.Value (Value)
+import Ctl.Internal.ToData (class ToData, toData)
+import Ctl.Internal.Types.PlutusData (PlutusData(Constr, Integer))
 import Util (buildBalanceSignAndSubmitTx, waitForTx, getUtxos, decodeCbor, getDatum)
 
 initialize :: Int -> Int -> Contract () TransactionInput
@@ -124,7 +124,7 @@ redeemFromScript
   -> Contract () Unit
 redeemFromScript vhash validator txInput = do
   utxos <- getUtxos (scriptHashAddress vhash)
-  key <- liftContractM "no wallet" =<< ownPaymentPubKeyHash
+  _key <- liftContractM "no wallet" =<< ownPaymentPubKeyHash
   let
     lookups :: Lookups.ScriptLookups PlutusData
     lookups = Lookups.validator validator
@@ -136,7 +136,7 @@ redeemFromScript vhash validator txInput = do
       -- The mustBeSignedBy constraint is a workaround for
       -- https://github.com/Plutonomicon/cardano-transaction-lib/issues/1079
       -- once it's fixed we should remove this
-      <> Constraints.mustBeSignedBy key
+      -- <> Constraints.mustBeSignedBy key
   txId <- buildBalanceSignAndSubmitTx lookups constraints
   adr <- liftContractM "no wallet" =<< getWalletAddress
   void $ waitForTx waitTime adr txId

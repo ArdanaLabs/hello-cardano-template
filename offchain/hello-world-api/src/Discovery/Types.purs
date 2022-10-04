@@ -16,9 +16,9 @@ import Control.Alternative (guard)
 import Contract.Transaction (TransactionInput)
 import Contract.PlutusData (PlutusData(..), class FromData, fromData)
 import Contract.Value (TokenName)
-import Types.PubKeyHash (PubKeyHash)
-import Types.Scripts (MintingPolicy)
-import ToData (class ToData, toData)
+import Ctl.Internal.Types.PubKeyHash (PubKeyHash)
+import Ctl.Internal.Types.Scripts (MintingPolicy)
+import Ctl.Internal.ToData (class ToData, toData)
 
 type Protocol = { config :: TransactionInput, vaultValidator :: Validator, nftMp :: MintingPolicy }
 

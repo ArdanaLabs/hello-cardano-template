@@ -12,34 +12,34 @@ module Util
 
 import Contract.Prelude
 
-import Data.Map as Map
-import Contract.ScriptLookups as Lookups
-
 import Aeson (Aeson, getField, toArray, toObject)
+import Contract.Address (Address, NetworkId(..))
 import Contract.Log (logDebug', logError', logInfo', logWarn')
 import Contract.Monad (Contract, ContractEnv, liftedE, liftContractM)
 import Contract.PlutusData (Datum, getDatumByHash)
+import Contract.ScriptLookups as Lookups
 import Contract.Scripts (MintingPolicy(..), Validator(..))
 import Contract.Transaction (OutputDatum(..), TransactionHash(TransactionHash), TransactionInput(TransactionInput), TransactionOutputWithRefScript, balanceAndSignTxE, plutusV2Script, submitE)
 import Contract.TxConstraints (TxConstraints)
 import Contract.Utxos (utxosAt, getUtxo)
 import Control.Monad.Error.Class (throwError)
+import Ctl.Internal.Types.ByteArray (byteArrayToHex, hexToByteArray)
+import Ctl.Internal.Types.PlutusData (PlutusData)
+import Ctl.Internal.Types.Transaction (TransactionInput, TransactionHash)
 import Data.Array (toUnfoldable, fromFoldable, catMaybes)
 import Data.List (filterM, List)
 import Data.Log.Formatter.Pretty (prettyFormatter)
 import Data.Log.Message (Message)
 import Data.Map (Map)
+import Data.Map as Map
 import Data.Time.Duration (Milliseconds(..), Seconds(..), Minutes(..), class Duration, fromDuration, convertDuration, negateDuration)
 import Effect.Aff (delay)
 import Effect.Aff.Retry (retrying, limitRetries, RetryStatus(RetryStatus))
 import Effect.Exception (throw, error)
 import Node.Encoding (Encoding(UTF8))
 import Node.FS.Aff (appendTextFile)
-import Plutus.Types.Address (Address)
-import Serialization.Address (NetworkId(TestnetId, MainnetId))
-import Types.ByteArray (byteArrayToHex, hexToByteArray)
-import Types.PlutusData (PlutusData)
-import Types.Transaction (TransactionInput, TransactionHash)
+
+--import Types.ByteArray (byteArrayToHex, hexToByteArray)
 
 waitForTx
   :: forall a

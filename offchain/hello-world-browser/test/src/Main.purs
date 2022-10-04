@@ -12,10 +12,10 @@ import HelloWorld.Test.Helpers (closeStaticServer, mkCookies, startStaticServer)
 import HelloWorld.Test.TestPlans.KeyWallet as Key
 import HelloWorld.Test.TestPlans.NamiWallet as Nami
 import Node.Process (lookupEnv)
-import Plutip.Server (withPlutipContractEnv)
-import Plutip.Types (PlutipConfig)
-import Wallet.Key (keyWalletPrivatePaymentKey, keyWalletPrivateStakeKey)
-import Wallet.KeyFile (formatPaymentKey, formatStakeKey)
+import Ctl.Internal.Plutip.Server (withPlutipContractEnv)
+import Ctl.Internal.Plutip.Types (PlutipConfig)
+import Ctl.Internal.Wallet.Key (keyWalletPrivatePaymentKey, keyWalletPrivateStakeKey)
+import Ctl.Internal.Wallet.KeyFile (formatPaymentKey, formatStakeKey)
 
 main ∷ Effect Unit
 main =

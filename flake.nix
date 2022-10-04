@@ -8,7 +8,7 @@
     cardano-node.url = "github:input-output-hk/cardano-node?rev=73f9a746362695dc2cb63ba757fbcabb81733d23";
     # CTL with cardano-wallet fix
     cardano-transaction-lib = {
-      url = "github:Plutonomicon/cardano-transaction-lib?rev=296563fa1a9a7494393bb4a74ea0464054fe9b4b";
+      url = "github:Plutonomicon/cardano-transaction-lib?rev=681719cf54b28126231ecdc6560375f0040d7b0d";
       inputs.plutip.follows = "plutip";
       inputs.haskell-nix.follows = "plutip/haskell-nix";
       inputs.nixpkgs.follows = "plutip/nixpkgs";

@@ -19,7 +19,7 @@ import HelloWorld.Api (increment, initialize, redeem)
 import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked(..), HelloWorldIncrement(..))
 import HelloWorld.Error (HelloWorldBrowserError(..), timeoutErrorMessage)
 import HelloWorld.Store as S
-import Plutus.Types.Value (getLovelace, valueToCoin)
+import Ctl.Internal.Plutus.Types.Value (getLovelace, valueToCoin)
 import Safe.Coerce (coerce)
 
 newtype AppM a = AppM (StoreT S.Action S.Store Aff a)
