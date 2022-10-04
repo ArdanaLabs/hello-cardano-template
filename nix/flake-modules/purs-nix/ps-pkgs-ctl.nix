@@ -224,7 +224,6 @@ with (removeAttrs ps-pkgs (attrNames self));
               spec
               spec-quickcheck
               strings
-              stringutils
               tailrec
               text-encoding
               these
