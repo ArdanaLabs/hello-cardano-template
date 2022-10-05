@@ -72,9 +72,9 @@ common lang
 library
   import:          lang
   exposed-modules:
-    Onchain
     Hello
     HelloDiscovery
+    Onchain
     Plutarch.Extensions.Api
     Plutarch.Extensions.Data
     Plutarch.Extensions.List
@@ -167,10 +167,10 @@ test-suite tests
     , bytestring
     , containers
     , cryptonite
-    , onchain
     , hedgehog
     , lens
     , memory
+    , onchain
     , plutarch
     , plutus-ledger-api
     , plutus-tx
