@@ -7,13 +7,11 @@ import Contract.Prelude
 import Aeson (decodeAeson, parseJsonStringToAeson, encodeAeson)
 import Contract.Address (NetworkId(..))
 import Contract.Config (testnetConfig)
-import Contract.Log (logError')
-import Contract.Monad (ConfigParams, liftContractM, runContract)
+import Contract.Monad (ConfigParams, runContract)
 import Contract.Prim.ByteArray (byteArrayToHex, hexToByteArrayUnsafe)
 import Contract.Transaction (TransactionHash(..), TransactionInput(..))
-import Contract.Utxos (getWalletBalance, getWalletUtxos)
 import Contract.Value (flattenValue)
-import Contract.Wallet (getWalletAddress, privateKeysToKeyWallet, withKeyWallet)
+import Contract.Wallet (privateKeysToKeyWallet, withKeyWallet)
 import Contract.Wallet.KeyFile (privatePaymentKeyFromFile, privateStakeKeyFromFile)
 import Data.BigInt as Big
 import Data.String.CodeUnits (lastIndexOf, take)
@@ -90,20 +88,11 @@ runCmd (Options { conf, statePath, command, ctlPort, ogmiosPort, odcPort }) = do
       stateExists <- liftEffect $ exists statePath
       when stateExists $ do
         liftEffect $ throw "Can't use lock when state file already exists"
-      lastOutput <- runContract cfg $ withKeyWallet wallet $ do
-        adr <- getWalletAddress >>= liftContractM "no wallet"
-        bal <- getWalletBalance >>= liftContractM "no wallet"
-        txs <- getWalletUtxos >>= liftContractM "no wallet"
-        logError' $ "ard: " <> show adr
-        logError' $ "bal: " <> show bal
-        logError' $ "utxos: " <> show txs
-        initialize param init
+      lastOutput <- runContract cfg $ withKeyWallet wallet $ initialize param init
       writeState statePath $ State { param, lastOutput }
     Increment -> do
       (State state) <- readState statePath
       lastOutput <- runContract cfg $ withKeyWallet wallet $ do
-        adr <- getWalletAddress >>= liftContractM "no wallet"
-        logError' $ "adr: " <> show adr
         increment state.param state.lastOutput
       writeState statePath $ State { param: state.param, lastOutput }
     Unlock -> do

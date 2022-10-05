@@ -83,7 +83,7 @@ withFundedHsmWalletFile config vals walletDir f = withPlutipContractEnv config v
         MainnetId -> "Mainnet"
         TestnetId -> "Testnet"
     }
-  f portArgs (" " <> walletPath <> " ") <* unlink walletPath
+  f portArgs (" " <> walletPath <> " ") <* rmWallet walletPath
 
 -- TODO if it becomes usefull this could be made to work with optionally many wallets
 -- but that's non-trivial and we don't need it yet
