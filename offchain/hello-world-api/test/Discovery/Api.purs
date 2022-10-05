@@ -41,7 +41,6 @@ import Util (buildBalanceSignAndSubmitTx, decodeCbor, getDatum, getUtxos, maxWai
 spec :: EnvRunner -> Spec Unit
 spec = runEnvSpec do
   describe "HelloWorld.Discovery.Api" do
-
     describe "misc" do
 
       it "script with serialise works" $ useRunnerSimple do
@@ -151,60 +150,60 @@ spec = runEnvSpec do
           $ void
           $ buildBalanceSignAndSubmitTx burnLookups burnConstraints
 
-  describe "protocol" do
+    describe "protocol" do
 
-    it "initialize protocol" $ useRunnerSimple do
-      protocolInit
+      it "initialize protocol" $ useRunnerSimple do
+        protocolInit
 
-    it "initialize protocol but fail to steal the utxo" $ useRunnerSimple do
-      txin <- _.config <$> protocolInit
-      validator <- liftContractM "decoding failed" $ decodeCbor CBOR.configScript
-      let vhash = validatorHash validator
-      utxos <- getUtxos (scriptHashAddress vhash)
-      let
-        lookups :: Lookups.ScriptLookups PlutusData
-        lookups = Lookups.validator validator <> Lookups.unspentOutputs utxos
+      it "initialize protocol but fail to steal the utxo" $ useRunnerSimple do
+        txin <- _.config <$> protocolInit
+        validator <- liftContractM "decoding failed" $ decodeCbor CBOR.configScript
+        let vhash = validatorHash validator
+        utxos <- getUtxos (scriptHashAddress vhash)
+        let
+          lookups :: Lookups.ScriptLookups PlutusData
+          lookups = Lookups.validator validator <> Lookups.unspentOutputs utxos
 
-        constraints :: TxConstraints Unit Unit
-        constraints = Constraints.mustSpendScriptOutput txin (Redeemer (toData unit))
-      expectError $ buildBalanceSignAndSubmitTx lookups constraints
+          constraints :: TxConstraints Unit Unit
+          constraints = Constraints.mustSpendScriptOutput txin (Redeemer (toData unit))
+        expectError $ buildBalanceSignAndSubmitTx lookups constraints
 
-    it "initialize protocol and open a vault" $ useRunnerSimple do
-      protocol <- protocolInit
-      openVault protocol
+      it "initialize protocol and open a vault" $ useRunnerSimple do
+        protocol <- protocolInit
+        openVault protocol
 
-    it "find a vault" $ useRunnerSimple do
-      protocol <- protocolInit
-      vault <- openVault protocol
-      getVaultById protocol vault
+      it "find a vault" $ useRunnerSimple do
+        protocol <- protocolInit
+        vault <- openVault protocol
+        getVaultById protocol vault
 
-    it "increment a vault" $ useRunnerSimple do
-      protocol <- protocolInit
-      vault <- openVault protocol
-      incrementVault protocol vault
+      it "increment a vault" $ useRunnerSimple do
+        protocol <- protocolInit
+        vault <- openVault protocol
+        incrementVault protocol vault
 
-    it "find after inc" $ useRunnerSimple do
-      protocol <- protocolInit
-      vault <- openVault protocol
-      incrementVault protocol vault
-      getVaultById protocol vault
+      it "find after inc" $ useRunnerSimple do
+        protocol <- protocolInit
+        vault <- openVault protocol
+        incrementVault protocol vault
+        getVaultById protocol vault
 
-    it "close a vault" $ useRunnerSimple do
-      protocol <- protocolInit
-      vault <- openVault protocol
-      closeVault protocol vault
+      it "close a vault" $ useRunnerSimple do
+        protocol <- protocolInit
+        vault <- openVault protocol
+        closeVault protocol vault
 
-    it "close after inc" $ useRunnerSimple do
-      protocol <- protocolInit
-      vault <- openVault protocol
-      incrementVault protocol vault
-      closeVault protocol vault
+      it "close after inc" $ useRunnerSimple do
+        protocol <- protocolInit
+        vault <- openVault protocol
+        incrementVault protocol vault
+        closeVault protocol vault
 
-    it "vault gone after close" $ useRunnerSimple do
-      protocol <- protocolInit
-      vault <- openVault protocol
-      closeVault protocol vault
-      expectError $ getVaultById protocol vault
+      it "vault gone after close" $ useRunnerSimple do
+        protocol <- protocolInit
+        vault <- openVault protocol
+        closeVault protocol vault
+        expectError $ getVaultById protocol vault
 
     describe "attacks" do
       it "can't open vault at 1" $ useRunnerSimple do
