@@ -20,7 +20,7 @@ import Data.Maybe (Maybe)
 import Data.Show.Generic (genericShow)
 import Data.UInt (UInt)
 import Serialization.Address (NetworkId)
-import Data.Newtype(class Newtype)
+import Data.Newtype (class Newtype)
 
 data Options = Options
   { command :: Command
@@ -64,7 +64,7 @@ type ParsedConf =
   }
 
 data WalletConf
-  = Files { walletPath :: String , stakingPath :: Maybe String}
+  = Files { walletPath :: String, stakingPath :: Maybe String }
   | Cmd { cmdEnv :: String }
 
 -- same as Command but the config hasn't been read from a file

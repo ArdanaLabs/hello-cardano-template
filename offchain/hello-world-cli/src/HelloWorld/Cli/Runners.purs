@@ -57,17 +57,17 @@ readConfig (ParsedOptions o) = do
 lookupConf :: FilePath -> ParsedConf -> Aff Conf
 lookupConf dir p = do
   network <- case p.network of
-        "Testnet" -> pure TestnetId
-        "Mainnet" -> pure MainnetId
-        n -> liftEffect $ throw $ "unknown network:" <> show n
+    "Testnet" -> pure TestnetId
+    "Mainnet" -> pure MainnetId
+    n -> liftEffect $ throw $ "unknown network:" <> show n
   wallet <- case p.wallet of
-      Files {walletPath,stakingPath} -> do
-        key <- privatePaymentKeyFromFile $ dir <> walletPath
-        mstake <- traverse privateStakeKeyFromFile $ (dir <> _) <$>  stakingPath
-        pure $ privateKeysToKeyWallet key mstake
-      Cmd {cmdEnv} -> do
-        makeServerWallet cmdEnv
-  pure $ Conf { wallet ,  network }
+    Files { walletPath, stakingPath } -> do
+      key <- privatePaymentKeyFromFile $ dir <> walletPath
+      mstake <- traverse privateStakeKeyFromFile $ (dir <> _) <$> stakingPath
+      pure $ privateKeysToKeyWallet key mstake
+    Cmd { cmdEnv } -> do
+      makeServerWallet cmdEnv
+  pure $ Conf { wallet, network }
 
 throwE :: forall a b. Show a => Either a b -> Aff b
 throwE (Left a) = liftEffect $ throw $ show a
@@ -150,8 +150,7 @@ logState :: CliState -> FileState
 logState (State { param, lastOutput }) = { param, lastOutput: logTxId lastOutput }
 
 logTxId :: TransactionInput -> { index :: Int, transactionId :: String }
-logTxId (TransactionInput { index, transactionId: TransactionHash bytes })
-  = { index: U.toInt index, transactionId: byteArrayToHex bytes }
+logTxId (TransactionInput { index, transactionId: TransactionHash bytes }) = { index: U.toInt index, transactionId: byteArrayToHex bytes }
 
 parseTxId :: { index :: Int, transactionId :: String } -> TransactionInput
 parseTxId { index, transactionId } = TransactionInput
@@ -163,5 +162,5 @@ clearState = unlink
 toConfigParams :: Conf -> ConfigParams ()
 toConfigParams
   (Conf { network }) =
-    testnetConfig { walletSpec = Nothing , networkId = network }
+  testnetConfig { walletSpec = Nothing, networkId = network }
 

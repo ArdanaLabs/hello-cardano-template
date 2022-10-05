@@ -54,7 +54,7 @@ withFundedServerWalletFile config vals walletDir f = withPlutipContractEnv confi
 
       constraints :: TxConstraints Unit Unit
       constraints = singleton (MustPayToPubKeyAddress (PaymentPubKeyHash key) (StakePubKeyHash <$> skey) Nothing Nothing (lovelaceValueOf $ BigInt.fromInt 30_000_000))
-    txid <-withKeyWallet wallet $ buildBalanceSignAndSubmitTx lookups constraints
+    txid <- withKeyWallet wallet $ buildBalanceSignAndSubmitTx lookups constraints
     logInfo' "wallet funding finished"
     res <- waitForTx maxWait adr txid >>= liftContractM "time out"
     logInfo' $ "res: " <> show res
@@ -73,8 +73,8 @@ withFundedServerWalletFile config vals walletDir f = withPlutipContractEnv confi
         <> " "
   let walletPath = walletDir <> "/serverWalletCfg.json"
   writeTextFile UTF8 walletPath $ encodeAeson >>> show $
-    { wallet : { cmdEnv : "SIGNING_CMD" }
-    , network : case (unwrap env).config.networkId of
+    { wallet: { cmdEnv: "SIGNING_CMD" }
+    , network: case (unwrap env).config.networkId of
         MainnetId -> "Mainnet"
         TestnetId -> "Testnet"
     }
@@ -93,8 +93,9 @@ withPlutipWalletFile config vals walletDir f = withPlutipContractEnv config vals
         <> " --odc-port "
         <> show (UInt.toInt (unwrap env).config.datumCacheConfig.port)
         <> " "
-  f portArgs (" " <> w <> " ")  <* rmWallet res
-  -- spaces are convenient for passing it as an argument
+  f portArgs (" " <> w <> " ") <* rmWallet w
+
+-- spaces are convenient for passing it as an argument
 
 makeWallet :: NetworkId -> String -> String -> KeyWallet -> Aff String
 makeWallet network dir name wallet = do
@@ -102,10 +103,10 @@ makeWallet network dir name wallet = do
   let walletName = name <> "-wallet.skey"
   let stakeName = name <> "-staking.skey"
   writeTextFile UTF8 cfgName $ encodeAeson >>> show $
-    { wallet :
-      { walletPath: walletName
-      , stakingPath: stakeName <$ keyWalletPrivateStakeKey wallet
-      }
+    { wallet:
+        { walletPath: walletName
+        , stakingPath: stakeName <$ keyWalletPrivateStakeKey wallet
+        }
     , network: case network of
         MainnetId -> "Mainnet"
         TestnetId -> "Testnet"
@@ -124,7 +125,7 @@ rmWallet path = do
   (conf :: ParsedConf) <- throwE =<< decodeAeson <$> throwE (parseJsonStringToAeson confTxt)
   unlink path
   case conf.wallet of
-    Files {walletPath,stakingPath} -> do
+    Files { walletPath, stakingPath } -> do
       unlink $ dir <> walletPath
       void $ traverse unlink ((dir <> _) <$> stakingPath)
     _ -> pure unit
