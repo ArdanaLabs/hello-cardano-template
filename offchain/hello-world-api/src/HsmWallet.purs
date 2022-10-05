@@ -1,4 +1,4 @@
-module ServerWallet (makeServerWallet) where
+module HsmWallet (makeHsmWallet) where
 
 import Contract.Prelude
 
@@ -12,14 +12,19 @@ import Effect.Exception (throw)
 import QueryM.Ogmios (CoinsPerUtxoUnit)
 import Serialization (publicKeyFromBech32, publicKeyHash)
 import Serialization.Address (Address, enterpriseAddress, enterpriseAddressToAddress, keyHashCredential)
-import Signing (getServerCmd, getServerPubKey, serverSignTx)
+import Signing (getCmd, getPubKey, hsmSignTx)
 import Unsafe.Coerce (unsafeCoerce)
 import Wallet.Key (KeyWallet(..))
 
-makeServerWallet :: String -> Aff KeyWallet
-makeServerWallet varName = do
-  serverCmd <- getServerCmd varName
-  pubKey@(PublicKey bech32) <- getServerPubKey serverCmd
+-- | Returns a KeyWallet which
+-- internally interfaces with the
+-- signing cli
+-- since the private key can't be read
+-- the paymentKey method has to throw an error
+makeHsmWallet :: String -> Aff KeyWallet
+makeHsmWallet varName = do
+  cmd <- getCmd varName
+  pubKey@(PublicKey bech32) <- getPubKey cmd
   pubKey2 <- case publicKeyFromBech32 bech32 of
     Nothing -> do
       liftEffect $ throw $ "pub key conversion error on string: " <> bech32
@@ -43,8 +48,8 @@ makeServerWallet varName = do
   pure $ KeyWallet
     { address
     , selectCollateral
-    , signTx: serverSignTx serverCmd pubKey
-    , paymentKey: PrivatePaymentKey $ unsafeCoerce "tried to use a the private key of a yubikey"
+    , signTx: hsmSignTx cmd pubKey
+    , paymentKey: PrivatePaymentKey $ unsafeCoerce "tried to use the private key of a yubikey"
     , stakeKey: Nothing
     }
 

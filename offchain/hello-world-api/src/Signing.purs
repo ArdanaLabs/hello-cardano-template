@@ -1,7 +1,7 @@
 module Signing
-  ( getServerPubKey
-  , serverSignTx
-  , getServerCmd
+  ( getPubKey
+  , hsmSignTx
+  , getCmd
   ) where
 
 import Contract.Prelude
@@ -24,24 +24,24 @@ import Untagged.Union (asOneOf)
 
 type Signer = ByteArray -> Aff String
 
-getServerCmd :: String -> Aff String
-getServerCmd varName = liftEffect $ do
+getCmd :: String -> Aff String
+getCmd varName = liftEffect $ do
   lookupEnv varName >>= case _ of
     Just cmd -> pure cmd
     Nothing -> throw $ "expected " <> varName <> " to be set"
 
-getServerPubKey :: String -> Aff PublicKey
-getServerPubKey serverCmd = do
-  (res :: ExecResult) <- execAff serverCmd [ "getPubKey" ]
+getPubKey :: String -> Aff PublicKey
+getPubKey cmd = do
+  (res :: ExecResult) <- execAff cmd [ "getPubKey" ]
   PublicKey <<< trim <$> (liftEffect $ toString UTF8 res.stdout)
 
-serverSignTx :: String -> PublicKey -> Transaction -> Aff TransactionWitnessSet
-serverSignTx serverCmd = signTx (serverSigner serverCmd)
+hsmSignTx :: String -> PublicKey -> Transaction -> Aff TransactionWitnessSet
+hsmSignTx cmd = signTx (cmdSigner cmd)
 
-serverSigner :: String -> ByteArray -> Aff String
-serverSigner serverCmd a = do
+cmdSigner :: String -> Signer
+cmdSigner cmd a = do
   let args = [ "sign", byteArrayToHex a ]
-  (res :: ExecResult) <- execAff serverCmd args
+  (res :: ExecResult) <- execAff cmd args
   liftEffect $ trim <$> toString UTF8 res.stdout
 
 execAff :: String -> Array String -> Aff ExecResult

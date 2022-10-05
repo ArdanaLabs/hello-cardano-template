@@ -17,7 +17,7 @@ import Node.Process (lookupEnv)
 import Test.Spec (describe, it)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec', defaultConfig)
-import Test.Wallet (withFundedServerWalletFile, withPlutipWalletFile)
+import Test.Wallet (withFundedHsmWalletFile, withPlutipWalletFile)
 
 main :: Effect Unit
 main = do
@@ -143,7 +143,7 @@ main = do
               "[Error: ENOENT: no such file or directory, open 'bad_path']"
       describe "integration test" do
         when usePlutip $ it "server wallet works"
-          $ withFundedServerWalletFile config [ initialAdaAmount ] plutipWalletDir
+          $ withFundedHsmWalletFile config [ initialAdaAmount ] plutipWalletDir
           $ \ports wallet -> do
               passesSaying
                 (cli <> ports <> "-c" <> wallet <> "-s" <> state <> "lock -i 0 -p 1")

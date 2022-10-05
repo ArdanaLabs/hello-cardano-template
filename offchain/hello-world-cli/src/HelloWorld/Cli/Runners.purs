@@ -26,7 +26,7 @@ import Node.Path (FilePath)
 import Node.Process (lookupEnv)
 import Plutus.Types.Value (flattenValue)
 import Serialization.Address (NetworkId(TestnetId, MainnetId))
-import ServerWallet (makeServerWallet)
+import HsmWallet (makeHsmWallet)
 import Types.ByteArray (byteArrayToHex, hexToByteArrayUnsafe)
 import Types.Transaction (TransactionInput(TransactionInput), TransactionHash(TransactionHash))
 import Util (getTxScanUrl)
@@ -66,7 +66,7 @@ lookupConf dir p = do
       mstake <- traverse privateStakeKeyFromFile $ (dir <> _) <$> stakingPath
       pure $ privateKeysToKeyWallet key mstake
     Cmd { cmdEnv } -> do
-      makeServerWallet cmdEnv
+      makeHsmWallet cmdEnv
   pure $ Conf { wallet, network }
 
 throwE :: forall a b. Show a => Either a b -> Aff b

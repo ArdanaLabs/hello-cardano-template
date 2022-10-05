@@ -1,6 +1,6 @@
 module Test.Wallet
   ( withPlutipWalletFile
-  , withFundedServerWalletFile
+  , withFundedHsmWalletFile
   ) where
 
 import Contract.Prelude
@@ -29,16 +29,16 @@ import Node.FS.Aff (readTextFile, writeTextFile, unlink)
 import Plutus.Types.Address (Address(..))
 import Plutus.Types.Credential (Credential(..))
 import Serialization.Address (NetworkId(TestnetId, MainnetId))
-import ServerWallet (makeServerWallet)
+import HsmWallet (makeHsmWallet)
 import Util (buildBalanceSignAndSubmitTx, maxWait, waitForTx)
 import Wallet.Key (KeyWallet, keyWalletPrivatePaymentKey, keyWalletPrivateStakeKey)
 
-withFundedServerWalletFile :: forall a. PlutipConfig -> Array BigInt -> String -> (String -> String -> Aff a) -> Aff a
-withFundedServerWalletFile config vals walletDir f = withPlutipContractEnv config vals \env wallet -> do
+withFundedHsmWalletFile :: forall a. PlutipConfig -> Array BigInt -> String -> (String -> String -> Aff a) -> Aff a
+withFundedHsmWalletFile config vals walletDir f = withPlutipContractEnv config vals \env wallet -> do
   runContractInEnv env $ do
     logInfo' "starting wallet funding phas"
-    serverWallet <- liftAff $ makeServerWallet "SIGNING_CMD"
-    adr <- withKeyWallet serverWallet getWalletAddress >>= liftContractM "no wallet"
+    hsmWallet <- liftAff $ makeHsmWallet "SIGNING_CMD"
+    adr <- withKeyWallet hsmWallet getWalletAddress >>= liftContractM "no wallet"
     (key /\ skey) <- liftContractM "bad adr" =<< case adr of
       Address { addressCredential: PubKeyCredential key, addressStakingCredential: mskey } -> do
         skey <- case mskey of
@@ -58,11 +58,11 @@ withFundedServerWalletFile config vals walletDir f = withPlutipContractEnv confi
     logInfo' "wallet funding finished"
     res <- waitForTx maxWait adr txid >>= liftContractM "time out"
     logInfo' $ "res: " <> show res
-    logInfo' $ "server wallet adr: " <> show adr
-    bal <- withKeyWallet serverWallet $ getWalletBalance >>= liftContractM "no wallet"
+    logInfo' $ "hsm wallet adr: " <> show adr
+    bal <- withKeyWallet hsmWallet $ getWalletBalance >>= liftContractM "no wallet"
     logInfo' $ "post funding bal: " <> show bal
-    txs <- withKeyWallet serverWallet $ getWalletUtxos >>= liftContractM "no wallet"
-    logInfo' $ "server wallet txs: " <> show txs
+    txs <- withKeyWallet hsmWallet $ getWalletUtxos >>= liftContractM "no wallet"
+    logInfo' $ "hsm wallet txs: " <> show txs
   let
     portArgs =
       fromMaybe "" ((" --ctl-port " <> _) <<< show <<< UInt.toInt <$> ((unwrap env).config.ctlServerConfig <#> _.port))
@@ -71,7 +71,7 @@ withFundedServerWalletFile config vals walletDir f = withPlutipContractEnv confi
         <> " --odc-port "
         <> show (UInt.toInt (unwrap env).config.datumCacheConfig.port)
         <> " "
-  let walletPath = walletDir <> "/serverWalletCfg.json"
+  let walletPath = walletDir <> "/hsmWalletCfg.json"
   writeTextFile UTF8 walletPath $ encodeAeson >>> show $
     { wallet: { cmdEnv: "SIGNING_CMD" }
     , network: case (unwrap env).config.networkId of
