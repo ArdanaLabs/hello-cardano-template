@@ -18,13 +18,14 @@ import CBOR as CBOR
 import Contract.Address (getWalletAddress, ownPaymentPubKeyHash, scriptHashAddress)
 import Contract.Log (logInfo', logError', logDebug')
 import Contract.Monad (Contract, liftContractM)
-import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer))
+import Contract.PlutusData (class ToData, Datum(Datum), PlutusData(..), Redeemer(Redeemer), toData)
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (Validator, ValidatorHash, applyArgs, validatorHash)
-import Contract.Transaction (TransactionInput)
+import Contract.Transaction (TransactionInput, TransactionOutput(..))
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
 import Contract.Utxos (getUtxo, getWalletBalance)
+import Contract.Value (Value)
 import Contract.Value as Value
 import Data.BigInt as BigInt
 import Data.Foldable (for_)
@@ -33,10 +34,6 @@ import Data.Map (keys)
 import Data.Set as Set
 import Data.Time.Duration (Minutes(..))
 import Effect.Exception (throw)
-import Ctl.Internal.Plutus.Types.Transaction (TransactionOutput(TransactionOutput))
-import Ctl.Internal.Plutus.Types.Value (Value)
-import Ctl.Internal.ToData (class ToData, toData)
-import Ctl.Internal.Types.PlutusData (PlutusData(Constr, Integer))
 import Util (buildBalanceSignAndSubmitTx, waitForTx, getUtxos, decodeCbor, getDatum)
 
 initialize :: Int -> Int -> Contract () TransactionInput
