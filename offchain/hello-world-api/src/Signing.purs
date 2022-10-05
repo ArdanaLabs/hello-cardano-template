@@ -32,7 +32,7 @@ getServerCmd varName = liftEffect $ do
 
 getServerPubKey :: String -> Aff PublicKey
 getServerPubKey serverCmd = do
-  (res :: ExecResult) <- execAff serverCmd [ "getpubkey" ]
+  (res :: ExecResult) <- execAff serverCmd [ "getPubKey" ]
   PublicKey <<< trim <$> (liftEffect $ toString UTF8 res.stdout)
 
 serverSignTx :: String -> PublicKey -> Transaction -> Aff TransactionWitnessSet

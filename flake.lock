@@ -6299,16 +6299,18 @@
     },
     "nixpkgs_34": {
       "locked": {
-        "lastModified": 1655481042,
-        "narHash": "sha256-XHbcywq2vIQ5CeH1OK3TN793jkiNAAZsSctS1PFgseo=",
-        "owner": "NixOS",
+        "lastModified": 1664780719,
+        "narHash": "sha256-Oxe6la5dSqRfJogjtY4sRzJjDDqvroJIVkcGEOT87MA=",
+        "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "103a4c0ae46afa9cf008c30744175315ca38e9f9",
+        "rev": "fd54651f5ffb4a36e8463e0c327a78442b26cbe7",
         "type": "github"
       },
       "original": {
-        "id": "nixpkgs",
-        "type": "indirect"
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
       }
     },
     "nixpkgs_4": {
@@ -7884,17 +7886,17 @@
         "nixpkgs": "nixpkgs_34"
       },
       "locked": {
-        "lastModified": 1664824653,
-        "narHash": "sha256-lFLjX2oD7cv3iu7t/3tOmjcyeygPW2122tZy1BKqFHI=",
+        "lastModified": 1664982889,
+        "narHash": "sha256-HrgHczAek0SJV/lzWSQLpnayLeGAiNcCV6XYDjgSXVU=",
         "owner": "ArdanaLabs",
         "repo": "yubihsm-ed-sign",
-        "rev": "cf5cd810f5d7f41a95f9cb3662b2f3bec254fc7f",
+        "rev": "c4a7c4a44f3104f0cb688d9bc90d1c6c694510b4",
         "type": "github"
       },
       "original": {
         "owner": "ArdanaLabs",
         "repo": "yubihsm-ed-sign",
-        "rev": "cf5cd810f5d7f41a95f9cb3662b2f3bec254fc7f",
+        "rev": "c4a7c4a44f3104f0cb688d9bc90d1c6c694510b4",
         "type": "github"
       }
     }
