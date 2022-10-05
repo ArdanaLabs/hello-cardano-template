@@ -1,7 +1,7 @@
 # Hello world + Discovery + Validation
 
 The goal of this protocol is to implement the solutions for vault discovery and vault validation into the hello world protocol.
-To do this we will add some of the features of dUSD vaults to the hello world counter utxos here after referred to as vaults.
+To do this we will add some of the features of stablecoin vaults to the hello world counter utxos here after referred to as vaults.
 
 ## The Discovery problem
 
