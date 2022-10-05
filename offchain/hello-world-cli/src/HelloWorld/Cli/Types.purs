@@ -89,11 +89,5 @@ instance DecodeAeson WalletConf where
   decodeAeson a =
     (Files <$> decodeAeson a) <|> (Cmd <$> decodeAeson a)
 
---derive instance Generic Options _
---instance Show Options where
---  show = genericShow
-
 derive instance Generic Conf _
 derive instance Newtype Conf _
---instance Show Conf where
---  show = genericShow
