@@ -2,6 +2,10 @@ module HelloWorld.Test.Main where
 
 import Contract.Prelude
 
+import Contract.Test.Plutip (PlutipConfig)
+import Contract.Test.Plutip (withPlutipContractEnv)
+import Ctl.Internal.Wallet.Key (keyWalletPrivatePaymentKey, keyWalletPrivateStakeKey)
+import Ctl.Internal.Wallet.KeyFile (formatPaymentKey, formatStakeKey)
 import Data.BigInt as BigInt
 import Data.Maybe (Maybe(..))
 import Data.UInt as UInt
@@ -12,10 +16,6 @@ import HelloWorld.Test.Helpers (closeStaticServer, mkCookies, startStaticServer)
 import HelloWorld.Test.TestPlans.KeyWallet as Key
 import HelloWorld.Test.TestPlans.NamiWallet as Nami
 import Node.Process (lookupEnv)
-import Ctl.Internal.Plutip.Server (withPlutipContractEnv)
-import Ctl.Internal.Plutip.Types (PlutipConfig)
-import Ctl.Internal.Wallet.Key (keyWalletPrivatePaymentKey, keyWalletPrivateStakeKey)
-import Ctl.Internal.Wallet.KeyFile (formatPaymentKey, formatStakeKey)
 
 main ∷ Effect Unit
 main =
