@@ -39,8 +39,6 @@ import Effect.Exception (throw, error)
 import Node.Encoding (Encoding(UTF8))
 import Node.FS.Aff (appendTextFile)
 
---import Types.ByteArray (byteArrayToHex, hexToByteArray)
-
 waitForTx
   :: forall a
    . Duration a
