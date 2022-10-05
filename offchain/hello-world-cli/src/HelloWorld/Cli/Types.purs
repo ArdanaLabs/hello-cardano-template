@@ -12,6 +12,7 @@ module HelloWorld.Cli.Types
 import Prelude
 
 import Aeson (class DecodeAeson, decodeAeson)
+import Contract.Address (NetworkId)
 import Contract.Transaction (TransactionInput)
 import Contract.Wallet (KeyWallet)
 import Control.Alt ((<|>))
@@ -19,7 +20,6 @@ import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe)
 import Data.Show.Generic (genericShow)
 import Data.UInt (UInt)
-import Serialization.Address (NetworkId)
 import Data.Newtype (class Newtype)
 
 data Options = Options

@@ -6,7 +6,7 @@ module Test.Wallet
 import Contract.Prelude
 
 import Aeson (decodeAeson, parseJsonStringToAeson, encodeAeson)
-import Contract.Address (PaymentPubKeyHash(..), StakePubKeyHash(..))
+import Contract.Address (NetworkId(..), PaymentPubKeyHash(..), StakePubKeyHash(..))
 import Contract.Credential (StakingCredential(..))
 import Contract.Log (logInfo')
 import Contract.Monad (liftContractM, runContractInEnv)
@@ -16,22 +16,23 @@ import Contract.Test.Plutip (PlutipConfig, withPlutipContractEnv)
 import Contract.TxConstraints (TxConstraint(..), TxConstraints, singleton)
 import Contract.Utxos (getWalletBalance, getWalletUtxos)
 import Contract.Value (lovelaceValueOf)
-import Contract.Wallet (getWalletAddress, withKeyWallet)
+import Contract.Wallet (KeyWallet, getWalletAddress, withKeyWallet)
 import Contract.Wallet.KeyFile (privatePaymentKeyToFile, privateStakeKeyToFile)
+import Ctl.Internal.Plutus.Types.Address (Address(..))
+import Ctl.Internal.Plutus.Types.Credential (Credential(..))
+import Ctl.Internal.Wallet.Key (keyWalletPrivatePaymentKey, keyWalletPrivateStakeKey)
 import Data.BigInt (BigInt)
 import Data.BigInt as BigInt
 import Data.String (take, lastIndexOf, Pattern(Pattern))
 import Data.UInt as UInt
 import Effect.Exception (throw)
 import HelloWorld.Cli.Types (ParsedConf, WalletConf(..))
+import HsmWallet (makeHsmWallet)
 import Node.Encoding (Encoding(UTF8))
 import Node.FS.Aff (readTextFile, writeTextFile, unlink)
-import Plutus.Types.Address (Address(..))
-import Plutus.Types.Credential (Credential(..))
-import Serialization.Address (NetworkId(TestnetId, MainnetId))
-import HsmWallet (makeHsmWallet)
 import Util (buildBalanceSignAndSubmitTx, maxWait, waitForTx)
-import Wallet.Key (KeyWallet, keyWalletPrivatePaymentKey, keyWalletPrivateStakeKey)
+
+-- TODO: The Ctl.Internal.Wallet.Key seems unavoidable
 
 withFundedHsmWalletFile :: forall a. PlutipConfig -> Array BigInt -> String -> (String -> String -> Aff a) -> Aff a
 withFundedHsmWalletFile config vals walletDir f = withPlutipContractEnv config vals \env wallet -> do
@@ -53,7 +54,13 @@ withFundedHsmWalletFile config vals walletDir f = withPlutipContractEnv config v
       lookups = mempty
 
       constraints :: TxConstraints Unit Unit
-      constraints = singleton (MustPayToPubKeyAddress (PaymentPubKeyHash key) (StakePubKeyHash <$> skey) Nothing Nothing (lovelaceValueOf $ BigInt.fromInt 30_000_000))
+      constraints = singleton $
+        MustPayToPubKeyAddress
+        (PaymentPubKeyHash key)
+        (StakePubKeyHash <$> skey)
+        Nothing
+        Nothing
+        (lovelaceValueOf $ BigInt.fromInt 30_000_000)
     txid <- withKeyWallet wallet $ buildBalanceSignAndSubmitTx lookups constraints
     logInfo' "wallet funding finished"
     res <- waitForTx maxWait adr txid >>= liftContractM "time out"

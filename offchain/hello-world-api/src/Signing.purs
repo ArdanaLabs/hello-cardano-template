@@ -6,7 +6,7 @@ module Signing
 
 import Contract.Prelude
 
-import Cardano.Types.Transaction (Ed25519Signature(Ed25519Signature), PublicKey(..), Vkey(Vkey), _vkeys)
+import Ctl.Internal.Cardano.Types.Transaction (Ed25519Signature(Ed25519Signature), PublicKey(..), Vkey(Vkey), _vkeys)
 import Contract.Prim.ByteArray (byteArrayToHex)
 import Contract.Transaction (Transaction(Transaction), TransactionWitnessSet)
 import Data.Lens (set)
@@ -17,9 +17,9 @@ import Node.Buffer.Class (toString)
 import Node.ChildProcess (ExecResult, defaultExecOptions, execFile)
 import Node.Encoding (Encoding(UTF8))
 import Node.Process (lookupEnv)
-import Serialization (toBytes)
-import Serialization as Serialization
-import Types.ByteArray (ByteArray)
+import Ctl.Internal.Serialization (toBytes)
+import Ctl.Internal.Serialization as Serialization
+import Ctl.Internal.Types.ByteArray (ByteArray)
 import Untagged.Union (asOneOf)
 
 type Signer = ByteArray -> Aff String

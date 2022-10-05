@@ -14,12 +14,12 @@ import Contract.Value (lovelaceValueOf)
 import Data.BigInt as BigInt
 import Effect.Exception (throw)
 import HelloWorld.Api (initialize)
-import Plutus.Types.Address (Address(..))
+import Ctl.Internal.Plutus.Types.Address (Address(..))
 import HsmWallet (makeHsmWallet)
 import Test.HelloWorld.EnvRunner (EnvRunner)
 import Test.Spec (Spec, describe, it)
-import Types.PlutusData (PlutusData)
-import Types.TxConstraints (singleton)
+import Ctl.Internal.Types.PlutusData (PlutusData)
+import Ctl.Internal.Types.TxConstraints (singleton)
 import Util (buildBalanceSignAndSubmitTx, maxWait, waitForTx, withOurLogger)
 
 spec :: EnvRunner -> Spec Unit
