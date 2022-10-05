@@ -1,3 +1,3 @@
 { "wallet" : { "cmdEnv" : "SIGNING_CMD" }
-, "network" : "Testnet"
+, "network" : "Mainnet"
 }

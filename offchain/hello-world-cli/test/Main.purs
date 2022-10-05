@@ -14,7 +14,7 @@ import Effect.Exception (throw)
 import Faucet (topup)
 import Node.FS.Aff (unlink, exists)
 import Node.Process (lookupEnv)
-import Test.Spec (describe, it, itOnly)
+import Test.Spec (describe, it)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec', defaultConfig)
 import Test.Wallet (withFundedServerWalletFile, withPlutipWalletFile)
@@ -142,7 +142,7 @@ main = do
               (cli <> "-c bad_path -s" <> state <> "query")
               "[Error: ENOENT: no such file or directory, open 'bad_path']"
       describe "integration test" do
-        when usePlutip $ itOnly "server wallet works"
+        when usePlutip $ it "server wallet works"
           $ withFundedServerWalletFile config [ initialAdaAmount ] jsonDir
           $ \ports wallet -> do
               passesSaying
