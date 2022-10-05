@@ -1,5 +1,5 @@
 cabal-version:      3.0
-name:               dUSD-onchain
+name:               onchain
 version:            1.0
 extra-source-files: CHANGELOG.md
 
@@ -72,9 +72,9 @@ common lang
 library
   import:          lang
   exposed-modules:
-    DUSD
     Hello
     HelloDiscovery
+    Onchain
     Plutarch.Extensions.Api
     Plutarch.Extensions.Data
     Plutarch.Extensions.List
@@ -130,7 +130,7 @@ executable hello-world
     , base
     , bytestring
     , directory
-    , dUSD-onchain
+    , onchain
     , plutus-ledger-api
     , serialise
 
@@ -143,7 +143,7 @@ executable scripts
   build-depends:
     , base
     , bytestring
-    , dUSD-onchain
+    , onchain
     , plutus-ledger-api
     , serialise
 
@@ -167,10 +167,10 @@ test-suite tests
     , bytestring
     , containers
     , cryptonite
-    , dUSD-onchain
     , hedgehog
     , lens
     , memory
+    , onchain
     , plutarch
     , plutus-ledger-api
     , plutus-tx

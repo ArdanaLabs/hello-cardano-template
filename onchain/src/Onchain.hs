@@ -1,4 +1,4 @@
-module DUSD (main) where
+module Onchain (main) where
 
 import Hello (helloValidator)
 import Plutarch (printScript)
