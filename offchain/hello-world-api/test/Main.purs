@@ -18,9 +18,14 @@ import Test.HelloWorld.Signing as Test.HelloWorld.Signing
 import Test.Spec (describe)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec', defaultConfig)
+import Test.Volume.HelloWorld.Api as Test.Volume.HelloWorld.Api
 
 main :: Effect Unit
 main = do
+  runVolumeTests <- lookupEnv "RUN_VOLUME_TESTS" >>= case _ of
+    Nothing -> pure false
+    Just "0" -> pure false
+    Just _ -> pure true
   mode <- lookupEnv "MODE" >>= case _ of
     Just "local" -> pure Local
     Just "testnet" -> do
@@ -33,13 +38,15 @@ main = do
     runSpec' defaultConfig { timeout = Nothing } [ consoleReporter ] $
       case mode of
         Local -> do
-          describe "pure tests" do
-            Test.HelloWorld.Signing.spec envRunner
-            Test.HelloWorld.Discovery.Api.spec envRunner
-            Test.HelloWorld.Discovery.Api.localOnlySpec
-            Test.HelloWorld.Api.spec envRunner
-            Test.HelloWorld.Api.localOnlySpec
-            Encoding.spec
+          if runVolumeTests then Test.Volume.HelloWorld.Api.spec
+          else do
+            describe "pure tests" do
+              Test.HelloWorld.Discovery.Api.spec envRunner
+              Test.HelloWorld.Discovery.Api.localOnlySpec
+              Test.HelloWorld.Signing.spec envRunner
+              Test.HelloWorld.Api.spec envRunner
+              Test.HelloWorld.Api.localOnlySpec
+              Encoding.spec
         Testnet -> do
           describe "pure tests" do
             Encoding.spec
