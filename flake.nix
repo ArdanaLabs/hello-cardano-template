@@ -6,7 +6,6 @@
     };
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     cardano-node.url = "github:input-output-hk/cardano-node?rev=73f9a746362695dc2cb63ba757fbcabb81733d23";
-    # CTL with cardano-wallet fix
     cardano-transaction-lib.url = "github:Plutonomicon/cardano-transaction-lib?rev=1999bb962141ffea09767f299a5759420097d189";
     cardano-ogmios.url = "github:input-output-hk/cardano-ogmios";
     mlabs-ogmios.follows = "cardano-transaction-lib/ogmios";
