@@ -75,7 +75,7 @@
       flake = false;
     };
     treefmt-flake.url = "github:srid/treefmt-flake";
-    yubihsm.url = "github:ArdanaLabs/yubihsm-ed-sign?rev=c4a7c4a44f3104f0cb688d9bc90d1c6c694510b4";
+    yubihsm.url = "github:ArdanaLabs/yubihsm-ed-sign?rev=6fc4b462fc400cc2058df81f760228c2088db8d4";
 
   };
 
