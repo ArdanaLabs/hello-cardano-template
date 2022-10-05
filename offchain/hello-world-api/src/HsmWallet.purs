@@ -2,19 +2,19 @@ module HsmWallet (makeHsmWallet) where
 
 import Contract.Prelude
 
-import Ctl.Internal.BalanceTx.Collateral.Select (selectCollateral) as Collateral
-import Ctl.Internal.Cardano.Types.Transaction (PublicKey(..), UtxoMap)
-import Ctl.Internal.Cardano.Types.TransactionUnspentOutput (TransactionUnspentOutput)
 import Contract.Address (NetworkId)
 import Contract.Config (PrivatePaymentKey(..))
-import Data.Array (fromFoldable)
-import Effect.Exception (throw)
+import Contract.Wallet.Key (KeyWallet(..))
+import Ctl.Internal.BalanceTx.Collateral.Select as Collateral
+import Ctl.Internal.Cardano.Types.Transaction (PublicKey(..), UtxoMap)
+import Ctl.Internal.Cardano.Types.TransactionUnspentOutput (TransactionUnspentOutput)
 import Ctl.Internal.QueryM.Ogmios (CoinsPerUtxoUnit)
 import Ctl.Internal.Serialization (publicKeyFromBech32, publicKeyHash)
 import Ctl.Internal.Serialization.Address (Address, enterpriseAddress, enterpriseAddressToAddress, keyHashCredential)
+import Data.Array (fromFoldable)
+import Effect.Exception (throw)
 import Signing (getCmd, getPubKey, hsmSignTx)
 import Unsafe.Coerce (unsafeCoerce)
-import Ctl.Internal.Wallet.Key (KeyWallet(..))
 
 -- | Returns a KeyWallet which
 -- internally interfaces with the

@@ -7,7 +7,7 @@ import Contract.Prelude
 
 import Aeson (decodeAeson, parseJsonStringToAeson, encodeAeson)
 import Contract.Address (NetworkId(..), PaymentPubKeyHash(..), StakePubKeyHash(..))
-import Contract.Credential (StakingCredential(..))
+import Contract.Credential (Credential(..), StakingCredential(..))
 import Contract.Log (logInfo')
 import Contract.Monad (liftContractM, runContractInEnv)
 import Contract.PlutusData (PlutusData)
@@ -18,8 +18,6 @@ import Contract.Utxos (getWalletBalance, getWalletUtxos)
 import Contract.Value (lovelaceValueOf)
 import Contract.Wallet (KeyWallet, getWalletAddress, withKeyWallet)
 import Contract.Wallet.KeyFile (privatePaymentKeyToFile, privateStakeKeyToFile)
-import Ctl.Internal.Plutus.Types.Address (Address(..))
-import Ctl.Internal.Plutus.Types.Credential (Credential(..))
 import Ctl.Internal.Wallet.Key (keyWalletPrivatePaymentKey, keyWalletPrivateStakeKey)
 import Data.BigInt (BigInt)
 import Data.BigInt as BigInt
@@ -40,8 +38,8 @@ withFundedHsmWalletFile config vals walletDir f = withPlutipContractEnv config v
     logInfo' "starting wallet funding phas"
     hsmWallet <- liftAff $ makeHsmWallet "SIGNING_CMD"
     adr <- withKeyWallet hsmWallet getWalletAddress >>= liftContractM "no wallet"
-    (key /\ skey) <- liftContractM "bad adr" =<< case adr of
-      Address { addressCredential: PubKeyCredential key, addressStakingCredential: mskey } -> do
+    (key /\ skey) <- liftContractM "bad adr" =<< case unwrap adr of
+      { addressCredential: PubKeyCredential key, addressStakingCredential: mskey } -> do
         skey <- case mskey of
           Nothing -> pure Nothing
           Just (StakingHash (PubKeyCredential skey)) -> pure $ Just skey
@@ -56,11 +54,11 @@ withFundedHsmWalletFile config vals walletDir f = withPlutipContractEnv config v
       constraints :: TxConstraints Unit Unit
       constraints = singleton $
         MustPayToPubKeyAddress
-        (PaymentPubKeyHash key)
-        (StakePubKeyHash <$> skey)
-        Nothing
-        Nothing
-        (lovelaceValueOf $ BigInt.fromInt 30_000_000)
+          (PaymentPubKeyHash key)
+          (StakePubKeyHash <$> skey)
+          Nothing
+          Nothing
+          (lovelaceValueOf $ BigInt.fromInt 30_000_000)
     txid <- withKeyWallet wallet $ buildBalanceSignAndSubmitTx lookups constraints
     logInfo' "wallet funding finished"
     res <- waitForTx maxWait adr txid >>= liftContractM "time out"
