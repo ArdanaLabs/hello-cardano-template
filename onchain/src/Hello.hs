@@ -8,20 +8,22 @@ module Hello (
   helloWorldCbor,
   paramHelloCbor,
   trivialCbor,
+  trivialFailCbor,
+  trivialSerialise,
   HelloRedemer (..),
 ) where
 
-import Data.Default (Default (def))
-import Utils (closedTermToHexString, validatorToHexString)
+import Utils (closedTermToHexString, globalConfig, validatorToHexString)
+
+import PlutusLedgerApi.V2 (Validator, ValidatorHash)
 
 import PlutusLedgerApi.V1.Address (Address (..))
 import PlutusLedgerApi.V1.Credential (Credential (..))
-import PlutusLedgerApi.V1.Scripts (Validator, ValidatorHash)
 
 import Plutarch.Prelude
 
-import Plutarch.Api.V1 (PScriptContext, PValidator, mkValidator, validatorHash)
-import Plutarch.Builtin (pforgetData)
+import Plutarch.Api.V2 (PScriptContext, PValidator, mkValidator, validatorHash)
+import Plutarch.Builtin (pforgetData, pserialiseData)
 import Plutarch.Extensions.Api (passert, pgetContinuingDatum)
 import Plutarch.Unsafe (punsafeCoerce)
 
@@ -44,14 +46,23 @@ paramHelloCbor = closedTermToHexString paramValidator
 trivialCbor :: Maybe String
 trivialCbor = closedTermToHexString trivial
 
+trivialFailCbor :: Maybe String
+trivialFailCbor = closedTermToHexString trivialFail
+
+trivialSerialise :: Maybe String
+trivialSerialise = closedTermToHexString $ plam $ \a _ _ -> pserialiseData # a
+
 helloValidator :: Validator
-helloValidator = mkValidator def (paramValidator #$ pforgetData (pdata (1 :: Term _ PInteger)))
+helloValidator = mkValidator globalConfig (paramValidator #$ pforgetData (pdata (1 :: Term _ PInteger)))
 
 helloValidatorHash :: ValidatorHash
 helloValidatorHash = validatorHash helloValidator
 
 helloAddress :: Address
 helloAddress = Address (ScriptCredential helloValidatorHash) Nothing
+
+trivialFail :: ClosedTerm PValidator
+trivialFail = perror
 
 trivial :: ClosedTerm (PData :--> PValidator)
 trivial = plam $ \_ _ _ _ -> popaque $ pcon PUnit
@@ -71,7 +82,7 @@ paramValidator' = plam $ \countBy n r sc -> unTermCont $ do
   pmatchC r >>= \case
     Inc _ -> do
       datum <- pgetContinuingDatum @PInteger sc
-      pure $ helloLogic # countBy # n # pfromData datum
+      pure $ helloLogic # countBy # n # datum
     Spend _ -> pure $ popaque $ pcon PUnit
 
 helloLogic :: ClosedTerm (PInteger :--> PInteger :--> PInteger :--> POpaque)

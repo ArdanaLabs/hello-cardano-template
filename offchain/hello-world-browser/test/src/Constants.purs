@@ -1,6 +1,7 @@
 module HelloWorld.Test.Constants where
 
 import Contract.Test.E2E (WalletPassword)
+import Contract.Test.E2E.Helpers (ExtensionId(..))
 import Data.Newtype (class Newtype, wrap)
 import Node.Express.Types (Port)
 
@@ -12,6 +13,9 @@ localhost = "http://127.0.0.1"
 
 namiWalletPassword :: WalletPassword
 namiWalletPassword = wrap "ctlctlctl"
+
+namiExtensionId :: ExtensionId
+namiExtensionId = ExtensionId "lpfcbjknijpeeillifnkikgncikgfhdo"
 
 timeoutMs :: Int
 timeoutMs = 240_000_000
@@ -30,10 +34,10 @@ newtype PaymentAddress = PaymentAddress String
 derive instance Newtype PaymentAddress _
 
 paymentAddressForTestWallet1 :: PaymentAddress
-paymentAddressForTestWallet1 = PaymentAddress "addr_test1qrgzwhfw2w63m7up7swqpcg5r52c05sgwatn4697kgle009akzxrh366l0rqsvjm3q9pyd9fm6t4cegfm286r5lvwh6sa94d5d"
+paymentAddressForTestWallet1 = PaymentAddress "addr_test1qqp9ffn9mesc3gy5hg7a8c2zz8djwj5a24u75t3ms0xfqtfufkwuw83y6fwmwpxuvkftcv4rlu9h3x5csvuseajezw3qghtejp"
 
 paymentAddressForTestWallet2 :: PaymentAddress
-paymentAddressForTestWallet2 = PaymentAddress "addr_test1qp7h5urcrtq67nl2tcz473lzfw29kpl7kn5xxmyxm6yjxk0u6prmwvzm4s48m6v5u4fyfcddaxz27g96880rh03248zsy38gnr"
+paymentAddressForTestWallet2 = PaymentAddress "addr_test1qqxvm2aedwujv6yc8mq3pr530xt3kejgzv6vduea50symvvzlqxmnpk5qkpfdhtf5u00sxspg32adwvcsdmz7w49tm0sfh9ksx"
 
 paymentAddressForTestWallet3 :: PaymentAddress
-paymentAddressForTestWallet3 = PaymentAddress "addr_test1qpe8yzu8g9pdqq6xxyv2gm3rn39fwcp44pnx6mmng7nqhz3apa7n8svjgrag8vjn9v5juf2wgzfzh0wzxyezlachfx2san47c2"
+paymentAddressForTestWallet3 = PaymentAddress "addr_test1qqjq62y800h374h48dn7zwscuugepsadkfh7xh658zxnts3n6j8pzskwwugnyfstukrskwmc9np92lhc0rmr359aqpgswqay7j"

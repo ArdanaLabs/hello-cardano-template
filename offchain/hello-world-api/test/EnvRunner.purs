@@ -5,6 +5,7 @@ module Test.HelloWorld.EnvRunner
   , Mode(..)
   , plutipConfig
   , runEnvSpec
+  , defaultWallet
   ) where
 
 import Prelude
@@ -31,8 +32,11 @@ type EnvSpec = SpecT Aff EnvRunner Identity Unit
 runEnvSpec :: EnvSpec -> EnvRunner -> Spec Unit
 runEnvSpec s r = before (pure r) s
 
+defaultWallet :: Array BigInt.BigInt
+defaultWallet = [ BigInt.fromInt 40_000_000, BigInt.fromInt 40_000_000 ]
+
 getEnvRunner :: Mode -> Aff EnvRunner
-getEnvRunner Local = pure $ withPlutipContractEnv plutipConfig [ BigInt.fromInt 20_000_000 ]
+getEnvRunner Local = pure $ withPlutipContractEnv plutipConfig $ defaultWallet
 getEnvRunner Testnet = do
   testResourcesDir <- liftEffect $ fromMaybe "./fixtures/" <$> lookupEnv "TEST_RESOURCES"
   key <- privatePaymentKeyFromFile $ testResourcesDir <> "/wallet.skey"
@@ -59,7 +63,7 @@ plutipConfig =
       , secure: false
       , path: Nothing
       }
-  , ctlServerConfig:
+  , ctlServerConfig: Just
       { port: UInt.fromInt 8083
       , host: "127.0.0.1"
       , secure: false
@@ -72,4 +76,6 @@ plutipConfig =
       , password: "ctxlib"
       , dbname: "ctxlib"
       }
+  , customLogger: Nothing -- TODO api logger here
+  , suppressLogs: false
   }

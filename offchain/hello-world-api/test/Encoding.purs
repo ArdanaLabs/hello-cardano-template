@@ -7,8 +7,7 @@ import Contract.Prelude
 import CBOR as CBOR
 import Test.Spec (Spec, it, describe)
 import Test.Spec.Assertions (shouldNotEqual, shouldEqual)
-import Contract.Aeson (decodeAeson, fromString)
-import Contract.Scripts (Validator)
+import Util (decodeCbor)
 
 spec :: Spec Unit
 spec = describe "decodeCbor" $ do
@@ -21,6 +20,3 @@ spec = describe "decodeCbor" $ do
 -- as it wouldn't needlesly require (Eq a)
 -- and imo is more readable
 -- but shouldSatisify fails to import for some reason
-
-decodeCbor :: String -> Maybe Validator
-decodeCbor = fromString >>> decodeAeson >>> hush >>> map wrap
