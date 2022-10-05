@@ -2,24 +2,23 @@ module Test.Wallet
   ( withPlutipWalletFile
   ) where
 
-import Aeson (decodeAeson, parseJsonStringToAeson, encodeAeson)
-import Contract.Prelude
-import Contract.Test.Plutip (PlutipConfig, withPlutipContractEnv)
-import Contract.Wallet.KeyFile (privatePaymentKeyToFile, privateStakeKeyToFile)
-import Data.BigInt (BigInt)
-import Data.UInt as UInt
-import Data.String (take, lastIndexOf, Pattern(Pattern))
-import Effect.Exception (throw)
-import Node.Encoding (Encoding(UTF8))
-import Node.FS.Aff
-  ( readTextFile
-  , writeTextFile
-  , unlink
-  )
-import Ctl.Internal.Serialization.Address (NetworkId(TestnetId, MainnetId))
-import Ctl.Internal.Wallet.Key (KeyWallet, keyWalletPrivatePaymentKey, keyWalletPrivateStakeKey)
+-- TODO: The Ctl.Internal.Wallet.Key seems unavoidable
 
+import Contract.Prelude
+
+import Aeson (decodeAeson, parseJsonStringToAeson, encodeAeson)
+import Contract.Address (NetworkId(..))
+import Contract.Test.Plutip (PlutipConfig, withPlutipContractEnv)
+import Contract.Wallet (KeyWallet)
+import Contract.Wallet.KeyFile (privatePaymentKeyToFile, privateStakeKeyToFile)
+import Ctl.Internal.Wallet.Key (keyWalletPrivatePaymentKey, keyWalletPrivateStakeKey)
+import Data.BigInt (BigInt)
+import Data.String (take, lastIndexOf, Pattern(Pattern))
+import Data.UInt as UInt
+import Effect.Exception (throw)
 import HelloWorld.Cli.Types (ParsedConf)
+import Node.Encoding (Encoding(UTF8))
+import Node.FS.Aff (readTextFile, writeTextFile, unlink)
 
 -- TODO if it becomes usefull this could be made to work with optionally many wallets
 -- but that's non-trivial and we don't need it yet
