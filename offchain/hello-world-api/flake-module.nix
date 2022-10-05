@@ -6,7 +6,7 @@
       purs-nix = config.ps.purs-nix;
       inherit (purs-nix) ps-pkgs;
       inherit (config.ps) ctl-pkgs;
-      inherit (config) dusd-lib offchain-lib;
+      inherit (config) cat-lib offchain-lib;
 
       hello-world-api = {
         dependencies =
@@ -69,8 +69,8 @@
     in
     {
       apps = {
-        "offchain:hello-world-api:test:testnet" = dusd-lib.mkApp (hello-world-api-tests { mode = "testnet"; });
-        "offchain:hello-world-api:test:local" = dusd-lib.mkApp (hello-world-api-tests { mode = "local"; });
+        "offchain:hello-world-api:test:testnet" = cat-lib.mkApp (hello-world-api-tests { mode = "testnet"; });
+        "offchain:hello-world-api:test:local" = cat-lib.mkApp (hello-world-api-tests { mode = "local"; });
       };
       checks = {
         run-hello-world-api-tests =

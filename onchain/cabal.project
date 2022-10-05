@@ -1,4 +1,4 @@
-packages: ./dUSD-onchain.cabal
+packages: ./onchain.cabal
 
 -- Always build tests and benchmarks.
 tests: true

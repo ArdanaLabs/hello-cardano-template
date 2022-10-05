@@ -1,6 +1,6 @@
-# dUSD
+# Cardano App Templates (CAT)
 
-The Ardana Dollar Stablecoin
+A template for starting an application on Cardano.
 
 ## Using the Nix Binary Cache via Cachix
 
@@ -73,7 +73,6 @@ You can ensure that the Cachix is being used by trying to build one of the outpu
 
 When editing any documents within ./docs/test-plan you can set up a latex pdf rendering feedback loop by running
 ```
-# Or, if you are already inside nix-shell, run: `dusd-feedback-loop`
 nix run .#docs:feedback-loop
 ```
 
