@@ -162,7 +162,7 @@
       };
       checks = {
         "offchain:hello-world-browser:lighthouse" =
-          pkgs.callPackage ../../nixos/tests/hello-world-browser-lighthouse.nix {
+          pkgs.callPackage ../nixos/tests/hello-world-browser-lighthouse.nix {
             lighthouse =
               (dream2nix.lib.makeOutputs { source = self.inputs.lighthouse-src; }).packages.lighthouse;
             hello-world-browser = self'.packages."offchain:hello-world-browser";
