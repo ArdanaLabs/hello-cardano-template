@@ -15,11 +15,11 @@
         };
       compiler-nix-name = "ghc923";
 
-      # dusd-lib contains helper functions for dealing with haskell.nix. From it,
+      # cat-lib contains helper functions for dealing with haskell.nix. From it,
       # we inherit fixHaskellDotNix and some common attributes to give to
       # cabalProject'
-      inherit (config) dusd-lib;
-      inherit (dusd-lib.haskell) fixHaskellDotNix mkCommonPlutusShell;
+      inherit (config) cat-lib;
+      inherit (cat-lib.haskell) fixHaskellDotNix mkCommonPlutusShell;
 
       commonPlutusShell = mkCommonPlutusShell compiler-nix-name pkgs;
 
@@ -58,13 +58,13 @@
       );
 
       haskellNixFlake =
-        fixHaskellDotNix (project.flake { }) [ ./dUSD-onchain.cabal ];
+        fixHaskellDotNix (project.flake { }) [ ./onchain.cabal ];
     in
     {
       apps = {
         "onchain:docs:serve" =
           let s = self'.devShells.onchain; in
-          dusd-lib.mkApp
+          cat-lib.mkApp
             (
               pkgs.writeShellApplication {
                 name = "onchain-docs-serve";
@@ -77,13 +77,13 @@
             );
 
         "onchain:test" =
-          dusd-lib.mkApp
+          cat-lib.mkApp
             (
               pkgs.writeShellApplication
                 {
                   name = "run-onchain-tests";
                   text = ''
-                    nix build -L ${self}#checks.\"${system}\".\"dUSD-onchain:test:tests\"
+                    nix build -L ${self}#checks.\"${system}\".\"onchain:test:tests\"
                     cat result/test-stdout
                   '';
                 }
@@ -102,17 +102,17 @@
               '';
           "onchain:scripts" =
             pkgs.runCommand "onchain-scripts"
-              { buildInputs = [ haskellNixFlake.packages."dUSD-onchain:exe:scripts" ]; }
+              { buildInputs = [ haskellNixFlake.packages."onchain:exe:scripts" ]; }
               ''mkdir -p $out && scripts $out'';
           "onchain:hello-world-cbor-purs" =
             pkgs.runCommand "hello-world-cbor-purs" { } ''
               mkdir -p $out/src
-              ${haskellNixFlake.packages."dUSD-onchain:exe:hello-world"}/bin/hello-world $out/src
+              ${haskellNixFlake.packages."onchain:exe:hello-world"}/bin/hello-world $out/src
             '';
         };
       checks = haskellNixFlake.checks // {
-        "dUSD-onchain:test:tests" =
-          haskellNixFlake.checks."dUSD-onchain:test:tests".overrideAttrs (old: {
+        "onchain:test:tests" =
+          haskellNixFlake.checks."onchain:test:tests".overrideAttrs (old: {
             GOLDEN_FILES = "${./goldens}/";
           });
       };
