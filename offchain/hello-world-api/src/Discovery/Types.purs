@@ -10,7 +10,7 @@ module HelloWorld.Discovery.Types
 import Contract.Prelude
 
 import Contract.Address (PubKeyHash)
-import Contract.PlutusData (class ToData,class FromData, PlutusData(..), fromData, toData)
+import Contract.PlutusData (class ToData, class FromData, PlutusData(..), fromData, toData)
 import Contract.Scripts (MintingPolicy, Validator)
 import Contract.Transaction (TransactionInput)
 import Contract.Value (TokenName)
