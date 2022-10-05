@@ -58,8 +58,8 @@ import Mote (test)
 import Node.Buffer as Buffer
 import Node.ChildProcess (defaultExecSyncOptions, execSync)
 import Node.Encoding (Encoding(UTF8))
+import Node.Path(FilePath)
 import Node.Process (lookupEnv)
-import Ctl.Internal.Plutip.Types (FilePath)
 import TestM (TestPlanM)
 import Toppokki as T
 

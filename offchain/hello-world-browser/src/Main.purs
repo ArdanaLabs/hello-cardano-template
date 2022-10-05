@@ -4,8 +4,9 @@ module Main
 
 import Contract.Prelude
 
-import Ctl.Internal.Cardano.TextEnvelope (TextEnvelopeType(..), printTextEnvelopeDecodeError, textEnvelopeBytes)
 import Contract.Config (NetworkId(..), PrivatePaymentKey(..), PrivatePaymentKeySource(..), PrivateStakeKey(..), PrivateStakeKeySource(..), privateKeyFromBytes, testnetConfig, testnetNamiConfig)
+import Contract.Wallet (WalletSpec(..))
+import Ctl.Internal.Cardano.TextEnvelope (TextEnvelopeType(..), printTextEnvelopeDecodeError, textEnvelopeBytes)
 import Data.Bifunctor (lmap)
 import Effect (Effect)
 import Effect.Exception (error, throw)
@@ -14,7 +15,6 @@ import Halogen.VDom.Driver (runUI)
 import HelloWorld.AppM (runAppM)
 import HelloWorld.Page.Home as Home
 import KeyWallet.Cookie (getCookie)
-import Ctl.Internal.Wallet.Spec (WalletSpec(UseKeys))
 
 main :: Effect Unit
 main =
