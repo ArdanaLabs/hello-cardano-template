@@ -34,7 +34,7 @@ import Util (buildBalanceSignAndSubmitTx, maxWait, waitForTx)
 import Wallet.Key (KeyWallet, keyWalletPrivatePaymentKey, keyWalletPrivateStakeKey)
 
 withFundedServerWalletFile :: forall a. PlutipConfig -> Array BigInt -> String -> (String -> String -> Aff a) -> Aff a
-withFundedServerWalletFile config vals fixturesDir f = withPlutipContractEnv config vals \env wallet -> do
+withFundedServerWalletFile config vals walletDir f = withPlutipContractEnv config vals \env wallet -> do
   runContractInEnv env $ do
     logInfo' "starting wallet funding phas"
     serverWallet <- liftAff $ makeServerWallet "SIGNING_CMD"
@@ -71,7 +71,14 @@ withFundedServerWalletFile config vals fixturesDir f = withPlutipContractEnv con
         <> " --odc-port "
         <> show (UInt.toInt (unwrap env).config.datumCacheConfig.port)
         <> " "
-  f portArgs (" " <> fixturesDir <> "serverWalletCfg.json ")
+  let walletPath = walletDir <> "/serverWalletCfg.json"
+  writeTextFile UTF8 walletPath $ encodeAeson >>> show $
+    { wallet : { cmdEnv : "SIGNING_CMD" }
+    , network : case (unwrap env).config.networkId of
+        MainnetId -> "Mainnet"
+        TestnetId -> "Testnet"
+    }
+  f portArgs (" " <> walletPath <> " ") <* unlink walletPath
 
 -- TODO if it becomes usefull this could be made to work with optionally many wallets
 -- but that's non-trivial and we don't need it yet
@@ -86,9 +93,8 @@ withPlutipWalletFile config vals walletDir f = withPlutipContractEnv config vals
         <> " --odc-port "
         <> show (UInt.toInt (unwrap env).config.datumCacheConfig.port)
         <> " "
-  res <- f portArgs (" " <> w <> " ") -- spaces are convenient for passing it as an argument
-  rmWallet w
-  pure res
+  f portArgs (" " <> w <> " ")  <* rmWallet res
+  -- spaces are convenient for passing it as an argument
 
 makeWallet :: NetworkId -> String -> String -> KeyWallet -> Aff String
 makeWallet network dir name wallet = do

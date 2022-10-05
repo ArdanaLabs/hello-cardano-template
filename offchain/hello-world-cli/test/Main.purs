@@ -143,7 +143,7 @@ main = do
               "[Error: ENOENT: no such file or directory, open 'bad_path']"
       describe "integration test" do
         when usePlutip $ it "server wallet works"
-          $ withFundedServerWalletFile config [ initialAdaAmount ] jsonDir
+          $ withFundedServerWalletFile config [ initialAdaAmount ] plutipWalletDir
           $ \ports wallet -> do
               passesSaying
                 (cli <> ports <> "-c" <> wallet <> "-s" <> state <> "lock -i 0 -p 1")
@@ -258,7 +258,7 @@ config :: PlutipConfig
 config =
   { host: "127.0.0.1"
   , port: UInt.fromInt 8086
-  , logLevel: Info
+  , logLevel: Warn
   -- Server configs are used to deploy the corresponding services.
   , ogmiosConfig:
       { port: UInt.fromInt 1339
