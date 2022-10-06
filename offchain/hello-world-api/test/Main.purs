@@ -8,7 +8,6 @@ import Data.Maybe (Maybe(Just, Nothing))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Exception (throw)
-import Faucet (topup)
 import Node.Process (lookupEnv)
 import Test.HelloWorld.Api as Test.HelloWorld.Api
 import Test.HelloWorld.Discovery.Api as Test.HelloWorld.Discovery.Api
@@ -29,6 +28,7 @@ main = do
   mode <- lookupEnv "MODE" >>= case _ of
     Just "local" -> pure Local
     Just "testnet" -> do
+      -- TODO add this back when we have an API key again
       -- topup "addr_test1qqevfdhu80jsmjhzkf8lkkv5rza9h6k0u6hmwwr0r7vyjt9j3f374a2all0hc6vzxa6v7sax7du2lk5fu5q592d5fhqswar4hc"
       pure Testnet
     Just e -> throw $ "expected local or testnet got: " <> e

@@ -11,7 +11,6 @@ import Data.String (trim)
 import Data.UInt as UInt
 import Effect.Aff (launchAff_)
 import Effect.Exception (throw)
-import Faucet (topup)
 import Node.FS.Aff (unlink, exists)
 import Node.Process (lookupEnv)
 import Test.Spec (describe, it)
@@ -28,6 +27,7 @@ main = do
   usePlutip <- lookupEnv "MODE" >>= case _ of
     Just "local" -> pure true
     Just "testnet" -> do
+      -- TODO add this back when we have an API key again
       -- topup "addr_test1qrwdtldyjseyn3k978de87renmp2kt3vcajk65nk543tw865kp7y0evgnnne7ukzhqsmdmyefhpevpepl9p7xpe8zqpsag6004"
       pure false
     Just e -> throw $ "expected local or testnet got: " <> e
