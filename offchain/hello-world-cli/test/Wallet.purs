@@ -130,7 +130,7 @@ rmWallet path = do
   (conf :: ParsedConf) <- throwE =<< decodeAeson <$> throwE (parseJsonStringToAeson confTxt)
   unlink path
   case conf.wallet of
-    Files { walletPath, stakingPath } -> do
+    KeyWalletFiles { walletPath, stakingPath } -> do
       unlink $ dir <> walletPath
       void $ traverse unlink ((dir <> _) <$> stakingPath)
     _ -> pure unit
