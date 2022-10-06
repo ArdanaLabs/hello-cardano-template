@@ -48,3 +48,7 @@ tfoot tr td button {
 	font-size: 20px;
 	font-weight: bold;
 }
+
+.error {
+	color: red;
+}

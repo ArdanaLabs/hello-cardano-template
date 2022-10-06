@@ -3,15 +3,14 @@ module HelloWorld.Page.Home where
 import Prelude
 
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..))
 import Effect.Aff.Class (class MonadAff)
-import Effect.Exception (Error)
+import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked, HelloWorldIncrement(..), increment, lock, redeem, unlock)
-import HelloWorld.Error (HelloWorldBrowserError(..), timeoutErrorMessage)
+import HelloWorld.Error (HelloWorldBrowserError)
 
 data Action
   = Lock
@@ -21,14 +20,13 @@ data Action
 data State
   = Unlocked
   | Locking
-  | LockFailed Error
+  | LockFailed HelloWorldBrowserError
   | Locked Int FundsLocked
   | Incrementing Int Int
-  | IncrementFailed Int FundsLocked Error
+  | IncrementFailed Int FundsLocked HelloWorldBrowserError
   | Redeeming FundsLocked
-  | RedeemFailed Int FundsLocked Error
+  | RedeemFailed Int FundsLocked HelloWorldBrowserError
   | Unlocking
-  | TransactionTimeout
 
 helloWorldIncrement :: HelloWorldIncrement
 helloWorldIncrement = HelloWorldIncrement 2
@@ -44,9 +42,7 @@ _doIncrement datum fundsLocked = do
   H.modify_ $ const (Incrementing datum (datum + 2))
   result <- increment helloWorldIncrement
   case result of
-    Left err -> case err of
-      TimeoutError -> H.modify_ $ const TransactionTimeout
-      OtherError err' -> H.modify_ $ const (IncrementFailed datum fundsLocked err')
+    Left err -> H.modify_ $ const (IncrementFailed datum fundsLocked err)
     Right _ -> H.modify_ $ const (Locked (datum + 2) fundsLocked)
 
 _doRedeem
@@ -68,9 +64,7 @@ _doRedeem datum fundsLocked = do
         Left err -> handleError err
         Right _ -> H.modify_ $ const Unlocked
   where
-  handleError = case _ of
-    TimeoutError -> H.modify_ $ const TransactionTimeout
-    OtherError err -> H.modify_ $ const (RedeemFailed datum fundsLocked err)
+  handleError err = H.modify_ $ const (RedeemFailed datum fundsLocked err)
 
 component
   :: forall q o m
@@ -95,9 +89,7 @@ component =
       H.modify_ $ const Locking
       result <- lock helloWorldIncrement 1
       case result of
-        Left err -> case err of
-          TimeoutError -> H.modify_ $ const TransactionTimeout
-          OtherError err' -> H.modify_ $ const (LockFailed err')
+        Left err -> H.modify_ $ const (LockFailed err)
         Right fundsLocked -> H.modify_ $ const (Locked 3 fundsLocked)
     Increment ->
       H.get >>= case _ of
@@ -114,9 +106,6 @@ component =
 
   render :: forall slots. State -> H.ComponentHTML Action slots m
   render = case _ of
-    TransactionTimeout ->
-      HH.main_
-        [ HH.text timeoutErrorMessage ]
     Unlocked ->
       HH.main_
         [ HH.button
@@ -128,9 +117,12 @@ component =
         ]
     Locking ->
       HH.main_ [ HH.text "Initializing ..." ]
-    LockFailed _ ->
+    LockFailed err -> do
       HH.main_
-        [ HH.button
+        [ HH.p
+            [ HP.class_ $ ClassName "error" ]
+            [ HH.text (show err) ]
+        , HH.button
             [ HP.id "lock"
             , HE.onClick \_ -> Lock
             ]
@@ -138,17 +130,25 @@ component =
             ]
         ]
     Locked datum fundsLocked ->
-      lockedView datum fundsLocked Nothing
+      HH.main_
+        [ lockedView datum fundsLocked
+        ]
     Incrementing from to ->
       HH.main_
         [ HH.text $ "Incrementing from " <> show from <> " to " <> show to <> " ..." ]
     IncrementFailed datum fundsLocked err ->
-      lockedView datum fundsLocked (Just err)
+      HH.main_
+        [ HH.text $ show err
+        , lockedView datum fundsLocked
+        ]
     Redeeming funds ->
       HH.main_
         [ HH.text $ "Redeeming " <> show funds <> " ADA ..." ]
     RedeemFailed datum fundsLocked err ->
-      lockedView datum fundsLocked (Just err)
+      HH.main_
+        [ HH.text $ show err
+        , lockedView datum fundsLocked
+        ]
     Unlocking ->
       HH.main_
         [ HH.div
@@ -156,26 +156,25 @@ component =
             [ HH.text $ "Unlocking funds ..." ]
         ]
     where
-    lockedView datum fundsLocked _ =
-      HH.main_
-        [ HH.table_
-            [ HH.thead_
-                [ HH.tr_
-                    [ HH.td [ HP.id "current-value-header" ] [ HH.text "Current Value" ]
-                    , HH.td [ HP.id "funds-locked-header" ] [ HH.text "Funds Locked" ]
-                    ]
+    lockedView datum fundsLocked =
+      HH.table_
+        [ HH.thead_
+            [ HH.tr_
+                [ HH.td [ HP.id "current-value-header" ] [ HH.text "Current Value" ]
+                , HH.td [ HP.id "funds-locked-header" ] [ HH.text "Funds Locked" ]
                 ]
-            , HH.tbody_
-                [ HH.tr_
-                    [ HH.td [ HP.id "current-value-body" ] [ HH.text $ show datum ]
-                    , HH.td [ HP.id "funds-locked-body" ] [ HH.text $ show fundsLocked <> " ADA" ]
-                    ]
+            ]
+        , HH.tbody_
+            [ HH.tr_
+                [ HH.td [ HP.id "current-value-body" ] [ HH.text $ show datum ]
+                , HH.td [ HP.id "funds-locked-body" ] [ HH.text $ show fundsLocked <> " ADA" ]
                 ]
-            , HH.tfoot_
-                [ HH.tr_
-                    [ HH.td_ [ HH.button [ HP.id "increment", HE.onClick \_ -> Increment ] [ HH.text "+" ] ]
-                    , HH.td_ [ HH.button [ HP.id "redeem", HE.onClick \_ -> Redeem ] [ HH.text "Redeem" ] ]
-                    ]
+            ]
+        , HH.tfoot_
+            [ HH.tr_
+                [ HH.td_ [ HH.button [ HP.id "increment", HE.onClick \_ -> Increment ] [ HH.text "+" ] ]
+                , HH.td_ [ HH.button [ HP.id "redeem", HE.onClick \_ -> Redeem ] [ HH.text "Redeem" ] ]
                 ]
             ]
         ]
+
