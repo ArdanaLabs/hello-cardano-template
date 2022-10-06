@@ -164,8 +164,6 @@ Another example of equivalence is as follows:
 
 ## Built by
 
-<style>img{background-color:#080e42; padding: 1rem;}</style>
-
 <img atl="Platonic.Systems Logo" src="https://ardana.org/assets/logos/platonic-systems.svg" height="30px">
 
 <img atl="Ardana Logo" src="https://ardana.org/assets/logo_text.png" height="30px">
