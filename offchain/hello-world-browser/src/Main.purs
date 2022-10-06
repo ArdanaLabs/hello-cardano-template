@@ -11,6 +11,7 @@ import Affjax.StatusCode (StatusCode(StatusCode))
 import Aeson (printJsonDecodeError, JsonDecodeError, decodeJsonString)
 
 import Contract.Config (NetworkId(..), PrivatePaymentKey(..), PrivatePaymentKeySource(..), PrivateStakeKey(..), PrivateStakeKeySource(..), privateKeyFromBytes, testnetConfig, testnetNamiConfig)
+import Contract.Monad (ConfigParams, ServerConfig)
 import Contract.Wallet (WalletSpec(..))
 import Ctl.Internal.Cardano.TextEnvelope (TextEnvelopeType(..), printTextEnvelopeDecodeError, textEnvelopeBytes)
 import Data.Bifunctor (lmap)
