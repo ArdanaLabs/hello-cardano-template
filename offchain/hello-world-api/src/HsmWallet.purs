@@ -21,10 +21,9 @@ import Unsafe.Coerce (unsafeCoerce)
 -- signing cli
 -- since the private key can't be read
 -- the paymentKey method has to throw an error
-makeHsmWallet :: String -> Aff KeyWallet
-makeHsmWallet varName = do
-  cmd <- getCmd varName
-  pubKey@(PublicKey bech32) <- getPubKey cmd
+makeHsmWallet :: Aff KeyWallet
+makeHsmWallet = do
+  pubKey@(PublicKey bech32) <- getPubKey
   pubKey2 <- case publicKeyFromBech32 bech32 of
     Nothing -> do
       liftEffect $ throw $ "pub key conversion error on string: " <> bech32
@@ -48,7 +47,7 @@ makeHsmWallet varName = do
   pure $ KeyWallet
     { address
     , selectCollateral
-    , signTx: hsmSignTx cmd pubKey
+    , signTx: hsmSignTx pubKey
     , paymentKey: PrivatePaymentKey $ unsafeCoerce "tried to use the private key of a yubikey"
     , stakeKey: Nothing
     }

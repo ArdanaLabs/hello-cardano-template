@@ -36,7 +36,7 @@ withFundedHsmWalletFile :: forall a. PlutipConfig -> Array BigInt -> String -> (
 withFundedHsmWalletFile config vals walletDir f = withPlutipContractEnv config vals \env wallet -> do
   runContractInEnv env $ do
     logInfo' "starting wallet funding phas"
-    hsmWallet <- liftAff $ makeHsmWallet "SIGNING_CMD"
+    hsmWallet <- liftAff $ makeHsmWallet
     adr <- withKeyWallet hsmWallet getWalletAddress >>= liftContractM "no wallet"
     (key /\ skey) <- liftContractM "bad adr" =<< case unwrap adr of
       { addressCredential: PubKeyCredential key, addressStakingCredential: mskey } -> do
@@ -78,7 +78,7 @@ withFundedHsmWalletFile config vals walletDir f = withPlutipContractEnv config v
         <> " "
   let walletPath = walletDir <> "/hsmWalletCfg.json"
   writeTextFile UTF8 walletPath $ encodeAeson >>> show $
-    { wallet: { cmdEnv: "SIGNING_CMD" }
+    { wallet: { useYubiHSM: true }
     , network: case (unwrap env).config.networkId of
         MainnetId -> "Mainnet"
         TestnetId -> "Testnet"

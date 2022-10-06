@@ -46,6 +46,7 @@
             runtimeInputs = [
               pkgs.coreutils
               self'.packages."offchain:hello-world-cli"
+              inputs'.yubihsm.packages.default
             ] ++ pkgs.lib.optionals (mode == "local") [
               pkgs.postgresql
               self.inputs.cardano-transaction-lib.inputs.plutip.packages.${pkgs.system}."plutip:exe:plutip-server"
@@ -57,7 +58,6 @@
               export MODE=${mode}
               export NODE_PATH=${config.ctl.nodeModules}/node_modules
               export TEST_RESOURCES=${./fixtures}
-              export SIGNING_CMD=${self.inputs.yubihsm.packages.${pkgs.system}.default}/bin/signer # TODO get this workin for the devshell too
               ${testExe}
             '';
           };

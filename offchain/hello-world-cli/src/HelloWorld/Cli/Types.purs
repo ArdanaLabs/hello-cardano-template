@@ -64,8 +64,8 @@ type ParsedConf =
   }
 
 data WalletConf
-  = Files { walletPath :: String, stakingPath :: Maybe String }
-  | Cmd { cmdEnv :: String }
+  = KeyWalletFiles { walletPath :: String, stakingPath :: Maybe String }
+  | YubiHSM { useYubiHSM :: Boolean }
 
 -- same as Command but the config hasn't been read from a file
 data ParsedOptions = ParsedOptions
@@ -87,7 +87,7 @@ instance Show ParsedOptions where
 
 instance DecodeAeson WalletConf where
   decodeAeson a =
-    (Files <$> decodeAeson a) <|> (Cmd <$> decodeAeson a)
+    (KeyWalletFiles <$> decodeAeson a) <|> (YubiHSM <$> decodeAeson a)
 
 derive instance Generic Conf _
 derive instance Newtype Conf _

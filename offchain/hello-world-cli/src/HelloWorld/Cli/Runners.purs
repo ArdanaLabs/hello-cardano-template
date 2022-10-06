@@ -56,12 +56,11 @@ lookupConf dir p = do
     "Mainnet" -> pure MainnetId
     n -> liftEffect $ throw $ "unknown network:" <> show n
   wallet <- case p.wallet of
-    Files { walletPath, stakingPath } -> do
+    KeyWalletFiles { walletPath, stakingPath } -> do
       key <- privatePaymentKeyFromFile $ dir <> walletPath
       mstake <- traverse privateStakeKeyFromFile $ (dir <> _) <$> stakingPath
       pure $ privateKeysToKeyWallet key mstake
-    Cmd { cmdEnv } -> do
-      makeHsmWallet cmdEnv
+    YubiHSM _ -> makeHsmWallet
   pure $ Conf { wallet, network }
 
 throwE :: forall a b. Show a => Either a b -> Aff b
