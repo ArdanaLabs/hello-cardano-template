@@ -2,55 +2,28 @@ module HelloWorld.Cli.Runners
   ( runCli
   ) where
 
--- Contract
 import Contract.Prelude
+
+import Aeson (decodeAeson, parseJsonStringToAeson, encodeAeson)
+import Contract.Address (NetworkId(..))
 import Contract.Config (testnetConfig)
 import Contract.Monad (ConfigParams, runContract)
-
--- Node
-import Node.FS.Aff
-  ( readTextFile
-  , writeTextFile
-  , unlink
-  )
-import Node.FS.Sync (exists)
-import Node.Encoding (Encoding(UTF8))
-import Effect.Exception (throw)
-import Aeson (decodeAeson, parseJsonStringToAeson, encodeAeson)
-
--- Types
-import Data.UInt as U
+import Contract.Prim.ByteArray (byteArrayToHex, hexToByteArrayUnsafe)
+import Contract.Transaction (TransactionHash(..), TransactionInput(..))
+import Contract.Value (flattenValue)
+import Contract.Wallet (PrivatePaymentKeySource(..), PrivateStakeKeySource(..), WalletSpec(..))
 import Data.BigInt as Big
 import Data.String.CodeUnits (lastIndexOf, take)
 import Data.String.Pattern (Pattern(Pattern))
 import Data.Tuple.Nested ((/\))
-import Types.ByteArray (byteArrayToHex, hexToByteArrayUnsafe)
-import Types.Transaction (TransactionInput(TransactionInput), TransactionHash(TransactionHash))
-import Plutus.Types.Value (flattenValue)
-import Serialization.Address (NetworkId(TestnetId, MainnetId))
-import Wallet.Spec
-  ( WalletSpec(UseKeys)
-  , PrivatePaymentKeySource(PrivatePaymentKeyFile)
-  , PrivateStakeKeySource(PrivateStakeKeyFile)
-  )
-
--- Local
-import HelloWorld.Api
-  ( initialize
-  , increment
-  , redeem
-  , query
-  )
+import Data.UInt as U
+import Effect.Exception (throw)
+import HelloWorld.Api (initialize, increment, redeem, query)
+import HelloWorld.Cli.Types (Command(..), Conf(..), CliState(..), Options(..), ParsedOptions(..), ParsedConf, FileState)
+import Node.Encoding (Encoding(UTF8))
+import Node.FS.Aff (readTextFile, writeTextFile, unlink)
+import Node.FS.Sync (exists)
 import Util (getTxScanUrl)
-import HelloWorld.Cli.Types
-  ( Command(..)
-  , Conf(..)
-  , CliState(..)
-  , Options(..)
-  , ParsedOptions(..)
-  , ParsedConf
-  , FileState
-  )
 
 runCli :: ParsedOptions -> Aff Unit
 runCli opts = readConfig opts >>= runCmd

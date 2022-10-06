@@ -5,14 +5,13 @@ module Test.Volume.HelloWorld.Api
 import Prelude
 
 import Contract.Monad (runContractInEnv)
+import Contract.Test.Plutip (withPlutipContractEnv)
 import Contract.Wallet (withKeyWallet)
 import Control.Parallel (parTraverse_)
 import Data.Array (replicate, zip, (..))
-import Data.Tuple (Tuple(Tuple))
 import Data.BigInt as BigInt
-import Effect.Aff (Aff)
+import Data.Tuple (Tuple(Tuple))
 import HelloWorld.Api (initialize, increment, redeem)
-import Plutip.Server (withPlutipContractEnv)
 import Test.HelloWorld.EnvRunner (plutipConfig)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldReturn)
