@@ -142,7 +142,7 @@ main = do
               (cli <> "-c bad_path -s" <> state <> "query")
               "[Error: ENOENT: no such file or directory, open 'bad_path']"
       describe "integration test" do
-        when usePlutip $ it "server wallet works"
+        when usePlutip $ it "HSM wallet works"
           $ withFundedHsmWalletFile config [ initialAdaAmount ] plutipWalletDir
           $ \ports wallet -> do
               passesSaying
