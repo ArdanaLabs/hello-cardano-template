@@ -29,18 +29,18 @@ getCmd varName = liftEffect $ do
     Just cmd -> pure cmd
     Nothing -> throw $ "expected " <> varName <> " to be set"
 
-getPubKey :: String -> Aff PublicKey
-getPubKey cmd = do
-  (res :: ExecResult) <- execAff cmd [ "getPubKey" ]
+getPubKey :: Aff PublicKey
+getPubKey = do
+  (res :: ExecResult) <- execAff "signer" [ "getPubKey" ]
   PublicKey <<< trim <$> (liftEffect $ toString UTF8 res.stdout)
 
-hsmSignTx :: String -> PublicKey -> Transaction -> Aff TransactionWitnessSet
-hsmSignTx cmd = signTx (cmdSigner cmd)
+hsmSignTx :: PublicKey -> Transaction -> Aff TransactionWitnessSet
+hsmSignTx = signTx cmdSigner
 
-cmdSigner :: String -> Signer
-cmdSigner cmd a = do
+cmdSigner :: Signer
+cmdSigner a = do
   let args = [ "sign", byteArrayToHex a ]
-  (res :: ExecResult) <- execAff cmd args
+  (res :: ExecResult) <- execAff "signer" args
   liftEffect $ trim <$> toString UTF8 res.stdout
 
 execAff :: String -> Array String -> Aff ExecResult

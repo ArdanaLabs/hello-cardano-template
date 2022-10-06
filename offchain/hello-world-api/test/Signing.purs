@@ -36,7 +36,7 @@ useRunnerSimple contract runner = do
 
 signingTest :: EnvRunner -> Spec Unit
 signingTest = it "basic signing test" <$> useRunnerSimple do
-  hsmWallet <- liftAff $ makeHsmWallet "SIGNING_CMD"
+  hsmWallet <- liftAff $ makeHsmWallet
   adr <- withKeyWallet hsmWallet getWalletAddress >>= liftContractM "no wallet"
   (key /\ skey) <- liftContractM "bad adr" =<< case unwrap adr of
     { addressCredential: PubKeyCredential key, addressStakingCredential: mskey } -> do
