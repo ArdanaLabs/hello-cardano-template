@@ -85,7 +85,7 @@
             "${test}/bin/${test.meta.mainProgram} | tee $out";
       };
       devShells."offchain:hello-world-api" =
-        offchain-lib.makeProjectShell hello-world-api { };
+        offchain-lib.makeProjectShell { project = hello-world-api; extraBuildInputs = [ inputs'.yubihsm.packages.default ]; };
       packages = {
         "offchain:hello-world-api" = hello-world-api.package;
         "offchain:hello-world-api:docs" =

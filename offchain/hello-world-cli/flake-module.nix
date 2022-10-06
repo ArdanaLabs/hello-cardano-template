@@ -70,7 +70,7 @@
         pkgs.runCommand test.name { }
           "${test}/bin/${test.meta.mainProgram} | tee $out";
       devShells."offchain:hello-world-cli" =
-        offchain-lib.makeProjectShell hello-world-cli { };
+        offchain-lib.makeProjectShell { project = hello-world-cli; extraBuildInputs = [ inputs'.yubihsm.packages.default ]; };
       packages."offchain:hello-world-cli" = hello-world-cli.package;
     };
   flake = { };

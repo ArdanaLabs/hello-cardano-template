@@ -23,7 +23,7 @@ in
               Helper function to create a devshell without declaring common dependencies.
               If you want to add more dependencies, use `.overrideAttrs (old: { ... })`.
             '';
-            default = project: cmdArgs:
+            default = { project, cmdArgs ? { }, extraBuildInputs ? [ ] }:
               pkgs.mkShell {
                 name = "hello-world";
                 buildInputs = (with pkgs; [
@@ -36,7 +36,7 @@ in
                   self.inputs.cardano-transaction-lib.packages.${pkgs.system}."ctl-server:exe:ctl-server"
                   self.inputs.mlabs-ogmios.defaultPackage.${pkgs.system}
                   self.inputs.ogmios-datum-cache.defaultPackage.${pkgs.system}
-                ]);
+                ] ++ extraBuildInputs);
                 shellHook = "export NODE_PATH=${config.ctl.nodeModules}/node_modules/";
               };
           };

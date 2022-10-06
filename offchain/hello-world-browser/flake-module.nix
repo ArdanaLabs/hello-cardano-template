@@ -177,9 +177,9 @@
       };
       devShells = {
         "offchain:hello-world-browser" =
-          offchain-lib.makeProjectShell hello-world-browser { };
+          offchain-lib.makeProjectShell { project = hello-world-browser; };
         "offchain:hello-world-browser:test" =
-          offchain-lib.makeProjectShell hello-world-browser-test { };
+          offchain-lib.makeProjectShell { project = hello-world-browser-test; };
       };
       packages."offchain:hello-world-browser" = hello-world-browser.package;
     };
