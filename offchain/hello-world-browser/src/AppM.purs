@@ -5,6 +5,7 @@ import Contract.Prelude
 import Contract.Monad (Contract, liftContractM, runContract)
 import Contract.Transaction (TransactionOutput(..))
 import Contract.Utxos (getUtxo, getWalletBalance)
+import Contract.Value (getLovelace, valueToCoin)
 import Control.Alt ((<|>))
 import Control.Parallel (parallel, sequential)
 import Data.BigInt (BigInt, fromInt, toNumber)
@@ -20,7 +21,6 @@ import HelloWorld.Api (increment, initialize, redeem)
 import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked(..), HelloWorldIncrement(..))
 import HelloWorld.Error (HelloWorldBrowserError(..))
 import HelloWorld.Store as S
-import Plutus.Types.Value (getLovelace, valueToCoin)
 import Safe.Coerce (coerce)
 
 newtype AppM a = AppM (StoreT S.Action S.Store Aff a)
