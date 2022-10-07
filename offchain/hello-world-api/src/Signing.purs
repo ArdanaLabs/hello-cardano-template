@@ -18,6 +18,7 @@ import Node.ChildProcess (ExecResult, defaultExecOptions, execFile)
 import Node.Encoding (Encoding(UTF8))
 import Untagged.Union (asOneOf)
 
+-- | This type is intended to represent a generic foreign signing function
 type Signer = ByteArray -> Aff String
 
 getPubKey :: Aff PublicKey
@@ -29,14 +30,14 @@ hsmSignTx :: PublicKey -> Transaction -> Aff TransactionWitnessSet
 hsmSignTx = signTx cmdSigner
 
 cmdSigner :: Signer
-cmdSigner a = do
-  let args = [ "sign", byteArrayToHex a ]
+cmdSigner tx = do
+  let args = [ "sign", byteArrayToHex tx ]
   (res :: ExecResult) <- execAff "signer" args
   liftEffect $ trim <$> toString UTF8 res.stdout
 
 execAff :: String -> Array String -> Aff ExecResult
-execAff file args = makeAff $ \callBack -> do
-  _child <- execFile file args defaultExecOptions (callBack <<< Right)
+execAff cmd args = makeAff $ \callBack -> do
+  _child <- execFile cmd args defaultExecOptions (callBack <<< Right)
   pure mempty
 
 signTx :: Signer -> PublicKey -> Transaction -> Aff TransactionWitnessSet
