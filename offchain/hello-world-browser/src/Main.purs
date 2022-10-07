@@ -62,7 +62,7 @@ getConfigParams = do
   where
   ctlRuntimeConfigFileName = "ctl-runtime-config.json"
   ctlRuntimeConfigFileNotFoundWarning =
-      warn $ "Unable to get the CTL runtime configuration file. \n"
+    warn $ "Unable to get the CTL runtime configuration file. \n"
       <> "Falling back to the default configuration.\n"
       <> "Configure the CTL runtime by adding a "
       <> ctlRuntimeConfigFileName
