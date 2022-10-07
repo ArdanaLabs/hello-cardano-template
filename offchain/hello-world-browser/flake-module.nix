@@ -39,22 +39,27 @@
             # see buildPursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L74
             # see bundlePursProject: https://github.com/Plutonomicon/cardano-transaction-lib/blob/c906ead97563fef3b554320bb321afc31956a17e/nix/default.nix#L149
             ''
-              mkdir $out && cd $out
               export BROWSER_RUNTIME=1
               cp -r ${hello-world-browser.ps.modules.Main.output { }} output
               cp ${./index.js} index.js
               cp ${./index.html} index.html
               cp ${./package.json} package.json
               cp ${./package-lock.json} package-lock.json
-              cp ${./.postcssrc.json} .postcssrc.json
-              cp ${../webpack.config.js} webpack.config.js
               cp -r ${nodeModules}/* .
               export NODE_PATH="node_modules"
               export PATH="bin:$PATH"
-              mkdir dist
-              postcss ${./main.css} --config=.postcssrc.json > dist/main.css
-              webpack --mode=production -c webpack.config.js -o ./dist --entry ./index.js
+              mkdir -p $out/dist
+              cp ${./index.html} $out/index.html
+              postcss ${./main.css} --config=${./.postcssrc.json} > $out/dist/main.css
+              webpack --mode=production -c ${../webpack.config.js} -o $out/dist --entry ./index.js
             '';
+        packageWithCtlRuntimeConfig = config@{ ogmiosConfig, datumCacheConfig, ctlServerConfig }:
+          pkgs.runCommand "package-with-ctl-runtime-config" { } ''
+            mkdir -p $out/dist
+            echo '${builtins.toJSON config}' > $out/dist/ctl-runtime-config.json
+            cp -r ${hello-world-browser.package}/* $out/
+            ls -lisa $out/dist
+          '';
       };
 
       hello-world-browser-test = {
@@ -181,7 +186,10 @@
         "offchain:hello-world-browser:test" =
           offchain-lib.makeProjectShell { project = hello-world-browser-test; };
       };
-      packages."offchain:hello-world-browser" = hello-world-browser.package;
+      packages = {
+        "offchain:hello-world-browser" = hello-world-browser.package;
+        "offchain:hello-world-browser-ctl-rt-config" = hello-world-browser.packageWithCtlRuntimeConfig { ogmiosConfig = { }; datumCacheConfig = { }; ctlServerConfig = { }; };
+      };
     };
   flake = { };
 }
