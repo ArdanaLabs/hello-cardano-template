@@ -23,12 +23,6 @@ import Untagged.Union (asOneOf)
 
 type Signer = ByteArray -> Aff String
 
-getCmd :: String -> Aff String
-getCmd varName = liftEffect $ do
-  lookupEnv varName >>= case _ of
-    Just cmd -> pure cmd
-    Nothing -> throw $ "expected " <> varName <> " to be set"
-
 getPubKey :: Aff PublicKey
 getPubKey = do
   (res :: ExecResult) <- execAff "signer" [ "getPubKey" ]
