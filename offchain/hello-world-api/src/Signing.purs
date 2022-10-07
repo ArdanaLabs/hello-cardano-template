@@ -13,11 +13,9 @@ import Ctl.Internal.Serialization as Serialization
 import Data.Lens (set)
 import Data.String (trim)
 import Effect.Aff (makeAff)
-import Effect.Exception (throw)
 import Node.Buffer.Class (toString)
 import Node.ChildProcess (ExecResult, defaultExecOptions, execFile)
 import Node.Encoding (Encoding(UTF8))
-import Node.Process (lookupEnv)
 import Untagged.Union (asOneOf)
 
 type Signer = ByteArray -> Aff String

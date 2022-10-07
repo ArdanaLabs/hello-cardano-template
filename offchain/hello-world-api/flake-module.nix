@@ -18,7 +18,6 @@
             ctl-pkgs.cardano-transaction-lib
             node-fs-aff
             ordered-collections
-            spec
             aff-retry
             self'.packages."offchain:hello-world-cbor"
           ];
