@@ -5,7 +5,7 @@ module Main
 
 import Contract.Prelude
 
-import Affjax (get)
+import Affjax (get, printError)
 import Affjax.ResponseFormat (string)
 import Affjax.StatusCode (StatusCode(StatusCode))
 import Aeson (printJsonDecodeError, JsonDecodeError, decodeJsonString)
@@ -34,7 +34,10 @@ getConfigParams :: Aff (ConfigParams ())
 getConfigParams = do
   res <- get string $ "/dist/" <> ctlRuntimeConfigFileName
   case res of
-    Left _ -> ctlRuntimeConfigFileNotFoundWarning
+    Left affjaxError -> do
+      warn $ printError affjaxError
+      ctlRuntimeConfigFileNotFoundWarning
+      pure testnetConfig
     Right response -> do
       case response.status of
         StatusCode 200 -> do
@@ -52,15 +55,18 @@ getConfigParams = do
                 , datumCacheConfig = ctlRuntimeConfig.datumCacheConfig
                 , ctlServerConfig = Just ctlRuntimeConfig.ctlServerConfig
                 }
-        StatusCode _ -> ctlRuntimeConfigFileNotFoundWarning
+        StatusCode code -> do
+          warn $ "HTTP status code: " <> show code
+          ctlRuntimeConfigFileNotFoundWarning
+          pure testnetConfig
   where
   ctlRuntimeConfigFileName = "ctl-runtime-config.json"
-  ctlRuntimeConfigFileNotFoundWarning = do
-    warn $ "No CTL runtime configuration file found.\nFalling back to the default configuration.\n"
+  ctlRuntimeConfigFileNotFoundWarning =
+      warn $ "Unable to get the CTL runtime configuration file. \n"
+      <> "Falling back to the default configuration.\n"
       <> "Configure the CTL runtime by adding a "
       <> ctlRuntimeConfigFileName
       <> " to the dist directory."
-    pure testnetConfig
 
 main :: Effect Unit
 main =
