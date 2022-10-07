@@ -13,7 +13,7 @@ import Ctl.Internal.Serialization (publicKeyFromBech32, publicKeyHash)
 import Ctl.Internal.Serialization.Address (Address, enterpriseAddress, enterpriseAddressToAddress, keyHashCredential)
 import Data.Array (fromFoldable)
 import Effect.Exception (throw)
-import Signing (getCmd, getPubKey, hsmSignTx)
+import Signing (getPubKey, hsmSignTx)
 import Unsafe.Coerce (unsafeCoerce)
 
 -- | Returns a KeyWallet which
