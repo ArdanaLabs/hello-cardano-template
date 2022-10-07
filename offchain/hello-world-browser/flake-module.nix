@@ -53,13 +53,6 @@
               postcss ${./main.css} --config=${./.postcssrc.json} > $out/dist/main.css
               webpack --mode=production -c ${../webpack.config.js} -o $out/dist --entry ./index.js
             '';
-        packageWithCtlRuntimeConfig = config@{ ogmiosConfig, datumCacheConfig, ctlServerConfig }:
-          pkgs.runCommand "package-with-ctl-runtime-config" { } ''
-            mkdir -p $out/dist
-            echo '${builtins.toJSON config}' > $out/dist/ctl-runtime-config.json
-            cp -r ${hello-world-browser.package}/* $out/
-            ls -lisa $out/dist
-          '';
       };
 
       hello-world-browser-test = {
@@ -188,7 +181,6 @@
       };
       packages = {
         "offchain:hello-world-browser" = hello-world-browser.package;
-        "offchain:hello-world-browser-ctl-rt-config" = hello-world-browser.packageWithCtlRuntimeConfig { ogmiosConfig = { }; datumCacheConfig = { }; ctlServerConfig = { }; };
       };
     };
   flake = { };
