@@ -12,9 +12,8 @@ import Ctl.Internal.Serialization (toBytes)
 import Ctl.Internal.Serialization as Serialization
 import Data.Lens (set)
 import Data.String (trim)
-import Effect.Aff (makeAff)
 import Node.Buffer.Class (toString)
-import Node.ChildProcess (ExecResult, defaultExecOptions, execFile)
+import Node.ChildProcess (defaultExecSyncOptions, execFileSync)
 import Node.Encoding (Encoding(UTF8))
 import Untagged.Union (asOneOf)
 
@@ -22,9 +21,7 @@ import Untagged.Union (asOneOf)
 type Signer = ByteArray -> Aff String
 
 getPubKey :: Aff PublicKey
-getPubKey = do
-  (res :: ExecResult) <- execAff "signer" [ "getPubKey" ]
-  PublicKey <<< trim <$> (liftEffect $ toString UTF8 res.stdout)
+getPubKey = execAff "signer" [ "getPubKey" ] <#> trim >>> PublicKey
 
 hsmSignTx :: PublicKey -> Transaction -> Aff TransactionWitnessSet
 hsmSignTx = signTx cmdSigner
@@ -32,13 +29,10 @@ hsmSignTx = signTx cmdSigner
 cmdSigner :: Signer
 cmdSigner tx = do
   let args = [ "sign", byteArrayToHex tx ]
-  (res :: ExecResult) <- execAff "signer" args
-  liftEffect $ trim <$> toString UTF8 res.stdout
+  execAff "signer" args <#> trim
 
-execAff :: String -> Array String -> Aff ExecResult
-execAff cmd args = makeAff $ \callBack -> do
-  _child <- execFile cmd args defaultExecOptions (callBack <<< Right)
-  pure mempty
+execAff :: String -> Array String -> Aff String
+execAff cmd args = liftEffect $ execFileSync cmd args defaultExecSyncOptions >>= toString UTF8
 
 signTx :: Signer -> PublicKey -> Transaction -> Aff TransactionWitnessSet
 signTx signer pubKey (Transaction tx) = do
