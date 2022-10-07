@@ -1,30 +1,87 @@
 module Main
-  ( main
+  ( getConfigParams
+  , main
   ) where
 
 import Contract.Prelude
 
-import Cardano.TextEnvelope (TextEnvelopeType(..), printTextEnvelopeDecodeError, textEnvelopeBytes)
+import Affjax (get, printError)
+import Affjax.ResponseFormat (string)
+import Affjax.StatusCode (StatusCode(StatusCode))
+import Aeson (printJsonDecodeError, JsonDecodeError, decodeJsonString)
+
 import Contract.Config (NetworkId(..), PrivatePaymentKey(..), PrivatePaymentKeySource(..), PrivateStakeKey(..), PrivateStakeKeySource(..), privateKeyFromBytes, testnetConfig, testnetNamiConfig)
+import Contract.Monad (ConfigParams, ServerConfig)
+import Contract.Wallet (WalletSpec(..))
+import Ctl.Internal.Cardano.TextEnvelope (TextEnvelopeType(..), printTextEnvelopeDecodeError, textEnvelopeBytes)
 import Data.Bifunctor (lmap)
 import Effect (Effect)
 import Effect.Exception (error, throw)
+import Effect.Class.Console (warn)
 import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
 import HelloWorld.AppM (runAppM)
 import HelloWorld.Page.Home as Home
 import KeyWallet.Cookie (getCookie)
-import Wallet.Spec (WalletSpec(UseKeys))
+
+type CtlRuntimeConfig =
+  { ogmiosConfig :: ServerConfig
+  , datumCacheConfig :: ServerConfig
+  , ctlServerConfig :: ServerConfig
+  }
+
+getConfigParams :: Aff (ConfigParams ())
+getConfigParams = do
+  res <- get string $ "/dist/" <> ctlRuntimeConfigFileName
+  case res of
+    Left affjaxError -> do
+      warn $ printError affjaxError
+      ctlRuntimeConfigFileNotFoundWarning
+      pure testnetConfig
+    Right response -> do
+      case response.status of
+        StatusCode 200 -> do
+          case (decodeJsonString response.body) :: Either JsonDecodeError CtlRuntimeConfig of
+            Left decodeError -> do
+              warn $ "Unable to decode the provided " <> ctlRuntimeConfigFileName <> ":\n"
+                <> printJsonDecodeError decodeError
+                <> "\n"
+                <> "Falling back to the default configuration."
+              warn $ show response
+              pure testnetConfig
+            Right ctlRuntimeConfig ->
+              pure $ testnetConfig
+                { ogmiosConfig = ctlRuntimeConfig.ogmiosConfig
+                , datumCacheConfig = ctlRuntimeConfig.datumCacheConfig
+                , ctlServerConfig = Just ctlRuntimeConfig.ctlServerConfig
+                }
+        StatusCode code -> do
+          warn $ "HTTP status code: " <> show code
+          ctlRuntimeConfigFileNotFoundWarning
+          pure testnetConfig
+  where
+  ctlRuntimeConfigFileName = "ctl-runtime-config.json"
+  ctlRuntimeConfigFileNotFoundWarning =
+    warn $ "Unable to get the CTL runtime configuration file. \n"
+      <> "Falling back to the default configuration.\n"
+      <> "Configure the CTL runtime by adding a "
+      <> ctlRuntimeConfigFileName
+      <> " to the dist directory."
 
 main :: Effect Unit
 main =
   HA.runHalogenAff do
+    configParams <- getConfigParams
     body <- HA.awaitBody
     contractConfig <- useKeyWallet >>= case _ of
       true -> do
         walletSpec <- loadWalletSpec
         networkId <- loadNetworkId
-        pure $ testnetConfig { walletSpec = Just walletSpec, networkId = networkId }
+        -- the mainnetConfig is defined as `testnetConfig { networkId = MainnetId }` in CTL
+        pure $ configParams
+          { walletSpec = Just walletSpec
+          , networkId = networkId
+          }
       false -> do
         pure $ testnetNamiConfig { logLevel = Warn }
     let

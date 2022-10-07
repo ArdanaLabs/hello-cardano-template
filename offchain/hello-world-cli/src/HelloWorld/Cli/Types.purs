@@ -6,15 +6,21 @@ module HelloWorld.Cli.Types
   , ParsedOptions(..)
   , ParsedConf
   , FileState
+  , WalletConf(..)
   ) where
 
 import Prelude
+
+import Aeson (class DecodeAeson, decodeAeson)
+import Contract.Address (NetworkId)
 import Contract.Transaction (TransactionInput)
-import Serialization.Address (NetworkId)
+import Contract.Wallet (KeyWallet)
+import Control.Alt ((<|>))
 import Data.Generic.Rep (class Generic)
-import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe)
+import Data.Show.Generic (genericShow)
 import Data.UInt (UInt)
+import Data.Newtype (class Newtype)
 
 data Options = Options
   { command :: Command
@@ -47,17 +53,19 @@ data CliState = State
   , lastOutput :: TransactionInput
   }
 
-data Conf = Conf
-  { walletPath :: String
-  , stakingPath :: Maybe String
+newtype Conf = Conf
+  { wallet :: KeyWallet
   , network :: NetworkId
   }
 
 type ParsedConf =
-  { walletPath :: String
-  , stakingPath :: Maybe String
+  { wallet :: WalletConf
   , network :: String
   }
+
+data WalletConf
+  = KeyWalletFiles { walletPath :: String, stakingPath :: Maybe String }
+  | YubiHSM { useYubiHSM :: Boolean }
 
 -- same as Command but the config hasn't been read from a file
 data ParsedOptions = ParsedOptions
@@ -77,10 +85,9 @@ derive instance Generic ParsedOptions _
 instance Show ParsedOptions where
   show = genericShow
 
-derive instance Generic Options _
-instance Show Options where
-  show = genericShow
+instance DecodeAeson WalletConf where
+  decodeAeson a =
+    (KeyWalletFiles <$> decodeAeson a) <|> (YubiHSM <$> decodeAeson a)
 
 derive instance Generic Conf _
-instance Show Conf where
-  show = genericShow
+derive instance Newtype Conf _

@@ -5,9 +5,11 @@ import Contract.Prelude
 import Contract.Monad (Contract, liftContractM, runContract)
 import Contract.Transaction (TransactionOutput(..))
 import Contract.Utxos (getUtxo, getWalletBalance)
+import Contract.Value (getLovelace, valueToCoin)
 import Control.Alt ((<|>))
 import Control.Parallel (parallel, sequential)
 import Data.BigInt (BigInt, fromInt, toNumber)
+import Data.String (Pattern(..), contains)
 import Data.Time.Duration (Milliseconds(..), Seconds(..), fromDuration)
 import Effect.Aff (Aff, attempt, delay, message, throwError, try)
 import Effect.Aff.Class (class MonadAff, liftAff)
@@ -17,9 +19,8 @@ import Halogen as H
 import Halogen.Store.Monad (class MonadStore, StoreT, getStore, runStoreT, updateStore)
 import HelloWorld.Api (increment, initialize, redeem)
 import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked(..), HelloWorldIncrement(..))
-import HelloWorld.Error (HelloWorldBrowserError(..), timeoutErrorMessage)
+import HelloWorld.Error (HelloWorldBrowserError(..))
 import HelloWorld.Store as S
-import Plutus.Types.Value (getLovelace, valueToCoin)
 import Safe.Coerce (coerce)
 
 newtype AppM a = AppM (StoreT S.Action S.Store Aff a)
@@ -38,6 +39,9 @@ derive newtype instance monadStoreAppM :: MonadStore S.Action S.Store AppM
 
 timeoutMilliSeconds :: Milliseconds
 timeoutMilliSeconds = Milliseconds 240_000_000.0
+
+timeoutErrorMessage :: String
+timeoutErrorMessage = "timeout"
 
 timeout :: forall (a :: Type). Milliseconds -> Aff a -> Aff a
 timeout ms ma = do
@@ -65,6 +69,8 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
       Left err ->
         if message err == timeoutErrorMessage then
           pure $ Left TimeoutError
+        else if (contains (Pattern "InsufficientTxInputs") (message err)) then
+          pure $ Left InsufficientFunds
         else
           pure $ Left (OtherError err)
       Right (lastOutput /\ fundsLocked) -> do
@@ -81,6 +87,8 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
           Left err ->
             if message err == timeoutErrorMessage then
               pure $ Left TimeoutError
+            else if (contains (Pattern "InsufficientTxInputs") (message err)) then
+              pure $ Left InsufficientFunds
             else
               pure $ Left (OtherError err)
           Right lastOutput'' -> do
@@ -99,6 +107,8 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
           Left err ->
             if message err == timeoutErrorMessage then
               pure $ Left TimeoutError
+            else if (contains (Pattern "InsufficientTxInputs") (message err)) then
+              pure $ Left InsufficientFunds
             else
               pure $ Left (OtherError err)
           Right balanceBeforeRedeem -> do
@@ -112,6 +122,8 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
       Left err ->
         if message err == timeoutErrorMessage then
           pure $ Left TimeoutError
+        else if (contains (Pattern "InsufficientTxInputs") (message err)) then
+          pure $ Left InsufficientFunds
         else
           pure $ Left (OtherError err)
       Right _ -> do
