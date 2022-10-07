@@ -1,7 +1,6 @@
 module Signing
   ( getPubKey
   , hsmSignTx
-  , getCmd
   ) where
 
 import Contract.Prelude
