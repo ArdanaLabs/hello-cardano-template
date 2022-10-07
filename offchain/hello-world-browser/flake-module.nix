@@ -7,7 +7,7 @@
       npmlock2nix = pkgs.callPackages self.inputs.npmlock2nix { };
       inherit (purs-nix) ps-pkgs;
       inherit (config.ps) ctl-pkgs;
-      inherit (config) dusd-lib offchain-lib dream2nix;
+      inherit (config) cat-lib offchain-lib dream2nix;
 
       hello-world-browser = {
         ps =
@@ -157,13 +157,13 @@
     {
       apps = {
         "offchain:hello-world-browser:serve" =
-          dusd-lib.makeServeApp self'.packages."offchain:hello-world-browser";
+          cat-lib.makeServeApp self'.packages."offchain:hello-world-browser";
         "offchain:hello-world-browser:serve-live" =
-          dusd-lib.makeServeLive self'.packages."offchain:hello-world-browser";
+          cat-lib.makeServeLive self'.packages."offchain:hello-world-browser";
         "offchain:hello-world-browser:test:local" =
-          dusd-lib.mkApp hello-world-browser-test-with-local;
+          cat-lib.mkApp hello-world-browser-test-with-local;
         "offchain:hello-world-browser:test:testnet" =
-          dusd-lib.mkApp hello-world-browser-test-with-testnet;
+          cat-lib.mkApp hello-world-browser-test-with-testnet;
       };
       checks = {
         "offchain:hello-world-browser:lighthouse" =

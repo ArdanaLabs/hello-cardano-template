@@ -9,7 +9,7 @@ in
   perSystem = { config, self', inputs', ... }:
     let
       pkgs = inputs'.nixpkgs.legacyPackages;
-      dusd-lib = config.dusd-lib;
+      cat-lib = config.cat-lib;
       ps-tools = inputs'.ps-tools.legacyPackages;
       purs-nix = config.ps.purs-nix;
     in
