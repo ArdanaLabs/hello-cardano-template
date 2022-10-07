@@ -17,7 +17,7 @@ module HelloWorld.Discovery.Api
 import Contract.Prelude
 
 import CBOR as CBOR
-import Contract.Address (Address(..), getWalletAddress, getWalletCollateral, ownPaymentPubKeyHash, ownPubKeyHash)
+import Contract.Address (getWalletAddress, getWalletCollateral, ownPaymentPubKeyHash, ownPubKeyHash)
 import Contract.Credential (Credential(..))
 import Contract.Hashing (datumHash)
 import Contract.Log (logDebug', logInfo')

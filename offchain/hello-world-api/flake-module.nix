@@ -51,6 +51,7 @@
             name = "hello-world-api-tests";
             runtimeInputs = [
               pkgs.nodejs
+              inputs'.yubihsm.packages.default
             ] ++ pkgs.lib.optionals (mode == "local") [
               pkgs.postgresql
               self.inputs.cardano-transaction-lib.inputs.plutip.packages.${pkgs.system}."plutip:exe:plutip-server"
@@ -83,7 +84,7 @@
             "${test}/bin/${test.meta.mainProgram} | tee $out";
       };
       devShells."offchain:hello-world-api" =
-        offchain-lib.makeProjectShell hello-world-api { };
+        offchain-lib.makeProjectShell { project = hello-world-api; extraBuildInputs = [ inputs'.yubihsm.packages.default ]; };
       packages = {
         "offchain:hello-world-api" = hello-world-api.package;
         "offchain:hello-world-api:docs" =

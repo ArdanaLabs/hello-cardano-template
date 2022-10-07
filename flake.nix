@@ -56,6 +56,8 @@
       flake = false;
     };
     treefmt-flake.url = "github:srid/treefmt-flake";
+    yubihsm.url = "github:ArdanaLabs/yubihsm-ed-sign?rev=6fc4b462fc400cc2058df81f760228c2088db8d4";
+
   };
 
   outputs = { self, flake-parts, treefmt-flake, ... }:

@@ -1,4 +1,3 @@
-{ "walletPath" : "wallet.skey"
-, "stakingPath" : "staking.skey"
+{ "wallet" : { "walletPath" : "wallet.skey" , "stakingPath" : "staking.skey" }
 , "network" : "Testnet"
 }

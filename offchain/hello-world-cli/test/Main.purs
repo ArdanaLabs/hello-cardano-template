@@ -2,32 +2,32 @@ module Test.Main
   ( main
   ) where
 
-import CmdUtils (fails, failsSaying, passesSaying)
 import Contract.Prelude
+
+import CmdUtils (fails, failsSaying, passesSaying)
 import Contract.Test.Plutip (PlutipConfig)
+import Data.BigInt as BigInt
 import Data.String (trim)
-import Effect.Exception (throw)
+import Data.UInt as UInt
 import Effect.Aff (launchAff_)
-import Faucet (topup)
-import Node.Process (lookupEnv)
+import Effect.Exception (throw)
 import Node.FS.Aff (unlink, exists)
-import Test.Spec (it, describe)
+import Node.Process (lookupEnv)
+import Test.Spec (describe, it)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec', defaultConfig)
-import Test.Wallet (withPlutipWalletFile)
-
-import Data.BigInt as BigInt
-import Data.UInt as UInt
+import Test.Wallet (withFundedHsmWalletFile, withPlutipWalletFile)
 
 main :: Effect Unit
 main = do
   fixturesDir <- fromMaybe "./fixtures" <$> lookupEnv "TEST_RESOURCES"
-  let initialAdaAmount = BigInt.fromInt 20_000_000
+  let initialAdaAmount = BigInt.fromInt 35_000_000
   let jsonDir = fixturesDir <> "/jsons/"
   let plutipWalletDir = "./" -- TODO get a writeable dir from nix
   usePlutip <- lookupEnv "MODE" >>= case _ of
     Just "local" -> pure true
     Just "testnet" -> do
+      -- TODO add this back when we have an API key again
       -- topup "addr_test1qrwdtldyjseyn3k978de87renmp2kt3vcajk65nk543tw865kp7y0evgnnne7ukzhqsmdmyefhpevpepl9p7xpe8zqpsag6004"
       pure false
     Just e -> throw $ "expected local or testnet got: " <> e
@@ -142,6 +142,16 @@ main = do
               (cli <> "-c bad_path -s" <> state <> "query")
               "[Error: ENOENT: no such file or directory, open 'bad_path']"
       describe "integration test" do
+        when usePlutip $ it "HSM wallet works"
+          $ withFundedHsmWalletFile config [ initialAdaAmount ] plutipWalletDir
+          $ \ports wallet -> do
+              passesSaying
+                (cli <> ports <> "-c" <> wallet <> "-s" <> state <> "lock -i 0 -p 1")
+                "finished"
+              unlink $ trim state
+              failsSaying
+                ("ls" <> state)
+                "No such file"
         -- TODO I'm not sure why they aren't saying finished
         it "locks the value"
           $ withEnv
@@ -248,7 +258,7 @@ config :: PlutipConfig
 config =
   { host: "127.0.0.1"
   , port: UInt.fromInt 8086
-  , logLevel: Error
+  , logLevel: Warn
   -- Server configs are used to deploy the corresponding services.
   , ogmiosConfig:
       { port: UInt.fromInt 1339
