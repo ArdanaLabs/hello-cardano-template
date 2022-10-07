@@ -1,6 +1,5 @@
 { nixosTest
 , cardano-ogmios
-, mlabs-ogmios
 , ogmios-datum-cache
 , cardano-node
 , ctl-server
