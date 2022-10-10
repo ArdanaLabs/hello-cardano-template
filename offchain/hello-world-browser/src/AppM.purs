@@ -183,5 +183,3 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
           Right count -> do
             pure $ Right count
 
-
-
