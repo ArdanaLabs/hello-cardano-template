@@ -99,7 +99,7 @@ in
         '';
       in
       {
-        description = "hello-world-server";
+        description = "hello-world";
         documentation = [ "https://github.com/ArdanaLabs/cardano-app-template" ];
         wantedBy = [ "multi-user.target" ];
         after = [ "ctl-server.service" "networking.target" ];
