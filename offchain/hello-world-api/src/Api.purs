@@ -10,6 +10,7 @@ module HelloWorld.Api
   , enoughForFees
   , datumLookup
   , grabFreeAda
+  , resumeCounter
   ) where
 
 import Contract.Prelude
@@ -29,12 +30,22 @@ import Contract.Value (Value)
 import Contract.Value as Value
 import Data.BigInt as BigInt
 import Data.Foldable (for_)
-import Data.List ((..), List)
+import Data.List (List, (..), fromFoldable, head)
 import Data.Map (keys)
 import Data.Set as Set
 import Data.Time.Duration (Minutes(..))
 import Effect.Exception (throw)
 import Util (buildBalanceSignAndSubmitTx, waitForTx, getUtxos, decodeCbor, getDatum)
+
+-- NOTE the (..) from List is a function named .. not a glob import
+
+resumeCounter :: Int -> Contract () (Maybe TransactionInput)
+resumeCounter param = do
+  logDebug' $ "atempting resume with: " <> show param
+  validator <- helloScript param
+  utxos <- getUtxos (scriptHashAddress $ validatorHash $ validator)
+  logDebug' $ "finished resume with: " <> show param
+  pure $ head $ fromFoldable $ keys utxos
 
 initialize :: Int -> Int -> Contract () TransactionInput
 initialize param initialValue = do
