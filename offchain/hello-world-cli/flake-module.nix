@@ -5,7 +5,7 @@
       pkgs = inputs'.nixpkgs.legacyPackages;
       purs-nix = config.ps.purs-nix;
       inherit (purs-nix) ps-pkgs;
-      inherit (config) dusd-lib offchain-lib;
+      inherit (config) cat-lib offchain-lib;
 
       hello-world-cli = {
         ps =
@@ -63,8 +63,8 @@
           };
     in
     {
-      apps."offchain:hello-world-cli:test:local" = dusd-lib.mkApp (hello-world-cli-tests "local");
-      apps."offchain:hello-world-cli:test:testnet" = dusd-lib.mkApp (hello-world-cli-tests "testnet");
+      apps."offchain:hello-world-cli:test:local" = cat-lib.mkApp (hello-world-cli-tests "local");
+      apps."offchain:hello-world-cli:test:testnet" = cat-lib.mkApp (hello-world-cli-tests "testnet");
       checks.run-hello-world-cli-tests =
         let test = hello-world-cli-tests "local"; in
         pkgs.runCommand test.name { }

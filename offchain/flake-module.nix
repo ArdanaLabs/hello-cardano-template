@@ -5,7 +5,7 @@
       pkgs = inputs'.nixpkgs.legacyPackages;
       purs-nix = config.ps.purs-nix;
       all-ps-pkgs = config.ps.pkgs;
-      inherit (config) dusd-lib offchain-lib;
+      inherit (config) cat-lib offchain-lib;
 
       # Ideally we would just append the CTL overlay to the haskell-nix pkgs
       # we already have at `config.haskell-nix.pkgs`, but our haskell-nix
@@ -57,7 +57,7 @@
               printf "$?" > "$TEST_EXITCODE_FILE"
             '';
         in
-        dusd-lib.mkApp (
+        cat-lib.mkApp (
           pkgs.writeShellApplication
             {
               name = "offchain-test-all";
@@ -112,7 +112,7 @@
       apps = {
         ctl-runtime = ctl-pkgs.launchCtlRuntime ctlRuntimeConfig;
         "offchain:docs:serve" =
-          dusd-lib.makeServeApp
+          cat-lib.makeServeApp
             "${self'.packages."offchain:docs"}/html/";
         "offchain:test:local" = makeTestAllApp "local";
         "offchain:test:testnet" = makeTestAllApp "testnet";

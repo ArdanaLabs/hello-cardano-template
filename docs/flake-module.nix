@@ -37,7 +37,7 @@
           program =
             pkgs.writeShellApplication
               {
-                name = "dusd-feedback-loop";
+                name = "feedback-loop";
                 runtimeInputs = [ pkgs.entr ];
                 text = ''
                   find docs -name "*.tex" | entr nix build .#docs
