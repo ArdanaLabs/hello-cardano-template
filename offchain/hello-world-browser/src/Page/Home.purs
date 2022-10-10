@@ -94,7 +94,7 @@ component =
   handleAction :: forall slots. Action -> H.HalogenM State Action slots o m Unit
   handleAction = case _ of
     Resume -> do
-      _ <- H.modify $ const Resuming
+      H.modify_ $ const Resuming
       result <- resume helloWorldIncrement
       case result of
         Left err -> do
