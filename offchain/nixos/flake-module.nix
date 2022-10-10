@@ -32,12 +32,16 @@
       services.hello-world.package = self.packages.${pkgs.system}."offchain:hello-world-browser";
     };
     nixosConfigurations = {
-      hello-world-server = import ./configurations/hello-world-server.nix {
-        helloWorldServerFlake = self;
-        ctlServerFlake = self;
-        ogmiosDatumCacheFlake = self;
-        cardanoNodeFlake = self.inputs.cardano-node;
-        cardanoOgmiosFlake = self.inputs.cardano-ogmios;
+      hello-world-server = { pkgs, config, ... }: {
+        imports = [
+          (import ./configurations/hello-world-server.nix {
+            helloWorldServerFlake = self;
+            ctlServerFlake = self;
+            ogmiosDatumCacheFlake = self;
+            cardanoNodeFlake = self.inputs.cardano-node;
+            cardanoOgmiosFlake = self.inputs.cardano-ogmios;
+          })
+        ];
       };
     };
   };
