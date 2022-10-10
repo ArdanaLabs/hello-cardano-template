@@ -19,7 +19,11 @@
 
   security.acme = {
     acceptTerms = true;
-    certs = { };
+    defaults.email = "admin@ardana.org";
+    certs."ardana.org" = {
+      domain = "*.ardana.org";
+      listenHTTP = ":80";
+    };
   };
 
   services.nginx = {
@@ -27,8 +31,8 @@
     recommendedProxySettings = true;
     recommendedTlsSettings = true;
     virtualHosts."danaswap.ardana.org" = {
-      forceSSL = false;
-      enableACME = false;
+      forceSSL = true;
+      enableACME = true;
       locations."/".proxyPass = "http://localhost:${toString config.services.hello-world.port}";
     };
   };
