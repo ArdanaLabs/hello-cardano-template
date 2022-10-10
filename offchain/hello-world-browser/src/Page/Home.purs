@@ -104,7 +104,7 @@ component =
           case new of
             Left err -> H.modify_ $ const $ (ResumeFailed err)
             Right new' -> H.modify_ $ const (Locked new' funds)
-      -- TODO actually querry funds locked
+      -- TODO actually query funds locked
       pure unit
     Lock -> do
       H.modify_ $ const Locking
