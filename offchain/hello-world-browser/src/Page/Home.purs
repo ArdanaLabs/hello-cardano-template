@@ -45,13 +45,12 @@ _doIncrement datum fundsLocked = do
   let HelloWorldIncrement inc = helloWorldIncrement
   H.modify_ $ const (Incrementing datum (datum + inc))
   result <- increment helloWorldIncrement
-  new <- getDatum
   case result of
     Left err -> H.modify_ $ const (IncrementFailed datum fundsLocked err)
-    Right _ -> case new of
+    Right _ -> getDatum >>= case _ of
       Left err -> H.modify_ $ const (IncrementFailed datum fundsLocked err)
-      Right new' -> do
-        H.modify_ $ const (Locked new' fundsLocked)
+      Right new -> do
+        H.modify_ $ const (Locked new fundsLocked)
 
 _doRedeem
   :: forall slots o m
@@ -110,13 +109,12 @@ component =
       H.modify_ $ const Locking
       let init = 1
       result <- lock helloWorldIncrement init
-      new <- getDatum
       case result of
         Left err -> H.modify_ $ const (LockFailed err)
         Right fundsLocked ->
-          case new of
+          getDatum >>= case _ of
             Left err -> H.modify_ $ const $ LockFailed err
-            Right new' -> H.modify_ $ const (Locked new' fundsLocked)
+            Right new -> H.modify_ $ const (Locked new fundsLocked)
     Increment ->
       H.get >>= case _ of
         Locked datum fundsLocked -> _doIncrement datum fundsLocked

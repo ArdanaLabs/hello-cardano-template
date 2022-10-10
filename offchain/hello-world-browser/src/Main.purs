@@ -83,7 +83,7 @@ main =
           , networkId = networkId
           }
       false -> do
-        pure $ testnetNamiConfig { logLevel = Debug }
+        pure $ testnetNamiConfig { logLevel = Warn }
     let
       store =
         { contractConfig
