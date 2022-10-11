@@ -1,4 +1,5 @@
 { nixosTest
+, ctl-runtime
 , hello-world-server
 , nixpkgs
 }:
@@ -8,6 +9,7 @@ nixosTest {
   nodes = {
     server = { pkgs, config, ... }: {
       imports = [
+        ctl-runtime
         hello-world-server
       ];
       # disable SSL for the tests

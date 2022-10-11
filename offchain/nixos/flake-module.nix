@@ -6,12 +6,11 @@
         inputs'.nixpkgs.legacyPackages.callPackage
           ./tests/ctl-runtime-modules.nix
           {
-            inherit (self.inputs) cardano-node cardano-ogmios;
-            inherit (self.nixosModules) ctl-server ogmios-datum-cache;
+            inherit (self.nixosConfigurations) ctl-runtime;
           };
       hello-world-server-config-test =
         inputs'.nixpkgs.legacyPackages.callPackage ./tests/hello-world.nix {
-          inherit (self.nixosConfigurations) hello-world-server;
+          inherit (self.nixosConfigurations) ctl-runtime hello-world-server;
           inherit (self.inputs) nixpkgs;
         };
     };
@@ -32,15 +31,19 @@
       services.hello-world.package = self.packages.${pkgs.system}."offchain:hello-world-browser";
     };
     nixosConfigurations = {
+      ctl-runtime = { pkgs, config, ... }: {
+        imports = [
+          self.inputs.cardano-node.nixosModules.cardano-node
+          self.inputs.cardano-ogmios.nixosModules.ogmios
+          self.nixosModules.ogmios-datum-cache
+          self.nixosModules.ctl-server
+          ./configurations/ctl-runtime.nix
+        ];
+      };
       hello-world-server = { pkgs, config, ... }: {
         imports = [
-          (import ./configurations/hello-world-server.nix {
-            helloWorldServerFlake = self;
-            ctlServerFlake = self;
-            ogmiosDatumCacheFlake = self;
-            cardanoNodeFlake = self.inputs.cardano-node;
-            cardanoOgmiosFlake = self.inputs.cardano-ogmios;
-          })
+          self.nixosModules.hello-world
+          ./configurations/hello-world-server.nix
         ];
       };
     };
