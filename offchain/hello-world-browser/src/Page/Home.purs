@@ -99,10 +99,9 @@ component =
         Left err -> do
           H.modify_ $ const (LockFailed err)
         Right funds -> do
-          new <- getDatum
-          case new of
-            Left err -> H.modify_ $ const $ (ResumeFailed err)
-            Right new' -> H.modify_ $ const (Locked new' funds)
+          getDatum >>= case _ of
+            Left err -> H.modify_ $ const (ResumeFailed err)
+            Right new -> H.modify_ $ const (Locked new funds)
       -- TODO actually query funds locked
       pure unit
     Lock -> do
