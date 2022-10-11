@@ -21,7 +21,7 @@ in
     port = mkOption {
       type = types.port;
       default = 9999;
-      example = 80;
+      example = 9999;
       description = ''
         Port to listen on.
       '';
@@ -146,5 +146,38 @@ in
           }
         ];
       };
+
+    services.postgresql = {
+      enable = true;
+      ensureDatabases = [ cfg.postgresql.dbName ];
+      ensureUsers = [
+        {
+          name = cfg.postgresql.user;
+          ensurePermissions = {
+            "DATABASE \"${cfg.postgresql.dbName}\"" = "ALL PRIVILEGES";
+          };
+        }
+      ];
+    };
+
+    services.cardano-node = {
+      enable = true;
+      environment = "testnet";
+      extraServiceConfig = _: {
+        serviceConfig.TimeoutStartSec = "infinity";
+        serviceConfig.ExecStartPost = pkgs.writeShellScript "change-cardano-node-socket-permissions" ''
+          while [ ! -S ${config.services.cardano-node.socketPath} ]; do
+            sleep 1
+          done
+          chmod 0666 ${config.services.cardano-node.socketPath}
+        '';
+      };
+    };
+
+    services.cardano-ogmios = {
+      enable = true;
+      nodeConfig = builtins.toFile "cardano-node-config.json" (builtins.toJSON config.services.cardano-node.nodeConfig);
+      nodeSocket = config.services.cardano-node.socketPath;
+    };
   };
 }

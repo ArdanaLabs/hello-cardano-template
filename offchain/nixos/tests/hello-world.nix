@@ -1,19 +1,23 @@
 { nixosTest
-, ctl-runtime
-, hello-world-server
+, hello-world
 , nixpkgs
 }:
+let
+  helloWorldServerPort = 8080;
+in
 nixosTest {
-  name = "hello-world-server-configuration-test";
+  name = "hello-world-test";
 
   nodes = {
     server = { pkgs, config, ... }: {
       imports = [
-        ctl-runtime
-        hello-world-server
+        hello-world
       ];
-      # disable SSL for the tests
-      services.nginx.virtualHosts."danaswap.ardana.org".forceSSL = pkgs.lib.mkForce false;
+      services.hello-world = {
+        enable = true;
+        port = helloWorldServerPort;
+      };
+      networking.firewall.allowedTCPPorts = [ helloWorldServerPort ];
     };
 
     client = { pkgs, config, ... }: {
@@ -41,11 +45,10 @@ nixosTest {
     server.wait_for_unit("ogmios-datum-cache.service")
     server.wait_for_unit("ctl-server.service")
     server.wait_for_unit("hello-world.service")
-    server.wait_for_unit("nginx")
-    server.wait_for_open_port(80)
+    server.wait_for_open_port(${builtins.toString helloWorldServerPort})
 
     client.wait_for_x()
-    client.succeed("su - alice -c 'ulimit -c unlimited; chromium http://server:80 >&2 & disown'")
+    client.succeed("su - alice -c 'ulimit -c unlimited; chromium http://server:${builtins.toString helloWorldServerPort} >&2 & disown'")
     client.wait_for_window("Hello World")
     # focus the chromium window displaying Hello World
     client.succeed("xdotool search --sync --onlyvisible --name 'Hello World' windowfocus --sync windowactivate --sync")

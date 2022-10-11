@@ -21,8 +21,8 @@ in
 
     port = mkOption {
       type = types.port;
-      default = 8080;
-      example = 8080;
+      default = 80;
+      example = 80;
       description = mdDoc ''
         Port to listen on.
       '';
@@ -102,7 +102,7 @@ in
         description = "hello-world";
         documentation = [ "https://github.com/ArdanaLabs/cardano-app-template" ];
         wantedBy = [ "multi-user.target" ];
-        after = [ "ctl-server.service" "networking.target" ];
+        after = [ "ctl-server.service" "ogmios-datum-cache.service" "networking.target" ];
         serviceConfig = mkMerge [
           {
             ExecStart = ''${pkgs.simple-http-server}/bin/simple-http-server -c=js,css,svg,html -i -p ${toString cfg.port} -- ${packageWithCtlRuntimeConfig}'';
@@ -111,5 +111,7 @@ in
           }
         ];
       };
+
+    services.ctl-runtime.enable = true;
   };
 }
