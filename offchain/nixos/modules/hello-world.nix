@@ -51,7 +51,7 @@ in
         host = mkOption {
           type = types.str;
           default = "127.0.0.0";
-          example = "ogmios-service.com";
+          example = "odt-service.com";
           description = mdDoc ''
             Ogmios datum cache service host address.
           '';
@@ -69,7 +69,7 @@ in
         host = mkOption {
           type = types.str;
           default = "127.0.0.0";
-          example = "ogmios-service.com";
+          example = "ctl-server.com";
           description = mdDoc ''
             CTL server host address.
           '';
