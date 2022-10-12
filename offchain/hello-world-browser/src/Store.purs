@@ -4,8 +4,12 @@ import Contract.Monad (ConfigParams)
 import Contract.Transaction (TransactionInput)
 import Data.Maybe (Maybe(..))
 
+data Wallet
+  = KeyWallet (ConfigParams ())
+  | NamiWallet
+
 type Store =
-  { contractConfig :: ConfigParams ()
+  { wallet :: Wallet
   , lastOutput :: Maybe TransactionInput
   }
 

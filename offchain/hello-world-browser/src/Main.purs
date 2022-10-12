@@ -5,24 +5,24 @@ module Main
 
 import Contract.Prelude
 
+import Aeson (printJsonDecodeError, JsonDecodeError, decodeJsonString)
 import Affjax (get, printError)
 import Affjax.ResponseFormat (string)
 import Affjax.StatusCode (StatusCode(StatusCode))
-import Aeson (printJsonDecodeError, JsonDecodeError, decodeJsonString)
-
-import Contract.Config (NetworkId(..), PrivatePaymentKey(..), PrivatePaymentKeySource(..), PrivateStakeKey(..), PrivateStakeKeySource(..), privateKeyFromBytes, testnetConfig, testnetNamiConfig)
+import Contract.Config (NetworkId(..), PrivatePaymentKey(..), PrivatePaymentKeySource(..), PrivateStakeKey(..), PrivateStakeKeySource(..), privateKeyFromBytes, testnetConfig)
 import Contract.Monad (ConfigParams, ServerConfig)
 import Contract.Wallet (WalletSpec(..))
 import Ctl.Internal.Cardano.TextEnvelope (TextEnvelopeType(..), printTextEnvelopeDecodeError, textEnvelopeBytes)
 import Data.Bifunctor (lmap)
 import Effect (Effect)
-import Effect.Exception (error, throw)
 import Effect.Class.Console (warn)
+import Effect.Exception (error, throw)
 import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
 import HelloWorld.AppM (runAppM)
 import HelloWorld.Page.Home as Home
-import KeyWallet.Cookie (getCookie)
+import HelloWorld.Store (Wallet(..))
+import HelloWorld.Cookie (getCookie)
 
 type CtlRuntimeConfig =
   { ogmiosConfig :: ServerConfig
@@ -73,22 +73,25 @@ main =
   HA.runHalogenAff do
     configParams <- getConfigParams
     body <- HA.awaitBody
-    contractConfig <- useKeyWallet >>= case _ of
+    store <- useKeyWallet >>= case _ of
       true -> do
         walletSpec <- loadWalletSpec
         networkId <- loadNetworkId
         -- the mainnetConfig is defined as `testnetConfig { networkId = MainnetId }` in CTL
-        pure $ configParams
-          { walletSpec = Just walletSpec
-          , networkId = networkId
+        let
+          contractConfig = configParams
+            { walletSpec = Just walletSpec
+            , networkId = networkId
+            }
+        pure
+          { wallet: KeyWallet contractConfig
+          , lastOutput: Nothing
           }
       false -> do
-        pure $ testnetNamiConfig { logLevel = Warn }
-    let
-      store =
-        { contractConfig
-        , lastOutput: Nothing
-        }
+        pure
+          { wallet: NamiWallet
+          , lastOutput: Nothing
+          }
     rootComponent <- runAppM store Home.component
     runUI rootComponent unit body
 
