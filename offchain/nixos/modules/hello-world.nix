@@ -21,8 +21,8 @@ in
 
     port = mkOption {
       type = types.port;
-      default = 80;
-      example = 80;
+      default = 55555;
+      example = 55555;
       description = mdDoc ''
         Port to listen on.
       '';
