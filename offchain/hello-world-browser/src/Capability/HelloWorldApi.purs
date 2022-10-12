@@ -22,9 +22,13 @@ class Monad m <= HelloWorldApi m where
   increment :: HelloWorldIncrement -> m (Either HelloWorldBrowserError Unit)
   redeem :: HelloWorldIncrement -> m (Either HelloWorldBrowserError BigInt)
   unlock :: BigInt -> m (Either HelloWorldBrowserError Unit)
+  getDatum :: m (Either HelloWorldBrowserError Int)
+  resume :: HelloWorldIncrement -> m (Either HelloWorldBrowserError FundsLocked)
 
 instance helloWorldApiHalogenM :: HelloWorldApi m => HelloWorldApi (HalogenM st act slots msg m) where
   lock a = lift <<< lock a
   increment = lift <<< increment
   redeem = lift <<< redeem
   unlock = lift <<< unlock
+  getDatum = lift getDatum
+  resume = lift <<< resume

@@ -9,13 +9,14 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked, HelloWorldIncrement(..), increment, lock, redeem, unlock)
+import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked, HelloWorldIncrement(..), getDatum, increment, lock, redeem, resume, unlock)
 import HelloWorld.Error (HelloWorldBrowserError)
 
 data Action
   = Lock
   | Increment
   | Redeem
+  | Resume
 
 data State
   = Unlocked
@@ -27,6 +28,8 @@ data State
   | Redeeming FundsLocked
   | RedeemFailed Int FundsLocked HelloWorldBrowserError
   | Unlocking
+  | Resuming
+  | ResumeFailed HelloWorldBrowserError
 
 helloWorldIncrement :: HelloWorldIncrement
 helloWorldIncrement = HelloWorldIncrement 2
@@ -39,11 +42,15 @@ _doIncrement
   -> FundsLocked
   -> H.HalogenM State Action slots o m Unit
 _doIncrement datum fundsLocked = do
-  H.modify_ $ const (Incrementing datum (datum + 2))
+  let HelloWorldIncrement inc = helloWorldIncrement
+  H.modify_ $ const (Incrementing datum (datum + inc))
   result <- increment helloWorldIncrement
   case result of
     Left err -> H.modify_ $ const (IncrementFailed datum fundsLocked err)
-    Right _ -> H.modify_ $ const (Locked (datum + 2) fundsLocked)
+    Right _ -> getDatum >>= case _ of
+      Left err -> H.modify_ $ const (IncrementFailed datum fundsLocked err)
+      Right new -> do
+        H.modify_ $ const (Locked new fundsLocked)
 
 _doRedeem
   :: forall slots o m
@@ -85,12 +92,28 @@ component =
 
   handleAction :: forall slots. Action -> H.HalogenM State Action slots o m Unit
   handleAction = case _ of
+    Resume -> do
+      H.modify_ $ const Resuming
+      result <- resume helloWorldIncrement
+      case result of
+        Left err -> do
+          H.modify_ $ const (LockFailed err)
+        Right funds -> do
+          getDatum >>= case _ of
+            Left err -> H.modify_ $ const (ResumeFailed err)
+            Right new -> H.modify_ $ const (Locked new funds)
+      -- TODO actually query funds locked
+      pure unit
     Lock -> do
       H.modify_ $ const Locking
-      result <- lock helloWorldIncrement 1
+      let init = 1
+      result <- lock helloWorldIncrement init
       case result of
         Left err -> H.modify_ $ const (LockFailed err)
-        Right fundsLocked -> H.modify_ $ const (Locked 3 fundsLocked)
+        Right fundsLocked ->
+          getDatum >>= case _ of
+            Left err -> H.modify_ $ const $ LockFailed err
+            Right new -> H.modify_ $ const (Locked new fundsLocked)
     Increment ->
       H.get >>= case _ of
         Locked datum fundsLocked -> _doIncrement datum fundsLocked
@@ -106,6 +129,26 @@ component =
 
   render :: forall slots. State -> H.ComponentHTML Action slots m
   render = case _ of
+    ResumeFailed err ->
+      HH.main_
+        [ HH.p
+            [ HP.class_ $ ClassName "error" ]
+            [ HH.text (show err) ]
+        , HH.button
+            [ HP.id "lock"
+            , HE.onClick \_ -> Lock
+            ]
+            [ HH.text "Initialize"
+            ]
+        , HH.button
+            [ HP.id "resume"
+            , HE.onClick \_ -> Resume
+            ]
+            [ HH.text "Resume"
+            ]
+        ]
+    Resuming ->
+      HH.main_ [ HH.text "Resuming ..." ]
     Unlocked ->
       HH.main_
         [ HH.button
@@ -113,6 +156,12 @@ component =
             , HE.onClick \_ -> Lock
             ]
             [ HH.text "Initialize"
+            ]
+        , HH.button
+            [ HP.id "resume"
+            , HE.onClick \_ -> Resume
+            ]
+            [ HH.text "Resume"
             ]
         ]
     Locking ->
@@ -127,6 +176,12 @@ component =
             , HE.onClick \_ -> Lock
             ]
             [ HH.text "Initialize"
+            ]
+        , HH.button
+            [ HP.id "resume"
+            , HE.onClick \_ -> Resume
+            ]
+            [ HH.text "Resume"
             ]
         ]
     Locked datum fundsLocked ->

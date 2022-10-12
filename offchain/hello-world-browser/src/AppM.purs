@@ -5,7 +5,7 @@ import Contract.Prelude
 import Contract.Monad (Contract, liftContractM, runContract)
 import Contract.Transaction (TransactionOutput(..))
 import Contract.Utxos (getUtxo, getWalletBalance)
-import Contract.Value (getLovelace, valueToCoin)
+import Contract.Value (Value, getLovelace, valueToCoin)
 import Control.Alt ((<|>))
 import Control.Parallel (parallel, sequential)
 import Data.BigInt (BigInt, fromInt, toNumber)
@@ -17,7 +17,7 @@ import Effect.Class (class MonadEffect)
 import Effect.Exception (error)
 import Halogen as H
 import Halogen.Store.Monad (class MonadStore, StoreT, getStore, runStoreT, updateStore)
-import HelloWorld.Api (increment, initialize, redeem)
+import HelloWorld.Api (datumLookup, increment, initialize, redeem, resumeCounter)
 import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked(..), HelloWorldIncrement(..))
 import HelloWorld.Error (HelloWorldBrowserError(..))
 import HelloWorld.Store as S
@@ -52,6 +52,9 @@ timeout ms ma = do
     delay ms
     throwError $ error timeoutErrorMessage
 
+valueToFundsLocked :: Value -> FundsLocked
+valueToFundsLocked val = (FundsLocked (toNumber ((getLovelace $ valueToCoin val) / fromInt 1_000_000)))
+
 getWalletBalance' :: forall (r :: Row Type). Contract r BigInt
 getWalletBalance' = do
   balance <- getWalletBalance >>= liftContractM "Get wallet balance failed"
@@ -64,7 +67,7 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
       lastOutput <- initialize param initialValue
       -- TODO we should probably add an api function thing to get the lovelace at the output
       TransactionOutput utxo <- getUtxo lastOutput >>= liftContractM "couldn't find utxo"
-      pure $ (lastOutput /\ (FundsLocked (toNumber ((getLovelace $ valueToCoin utxo.amount) / fromInt 1_000_000))))
+      pure $ (lastOutput /\ (valueToFundsLocked $ utxo.amount))
     case result of
       Left err ->
         if message err == timeoutErrorMessage then
@@ -137,3 +140,46 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
       else do
         liftAff $ delay $ fromDuration (Seconds 5.0)
         go balanceBeforeRedeem'
+
+  resume (HelloWorldIncrement param) = do
+    { contractConfig } <- getStore
+    result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
+      txIn <- resumeCounter param
+      case txIn of
+        Nothing -> pure Nothing
+        Just txIn' -> do
+          out <- getUtxo txIn' >>= liftContractM "no utxo?"
+          pure $ Just $ txIn' /\ valueToFundsLocked (unwrap out).amount
+    case result of
+      Left err ->
+        if message err == timeoutErrorMessage then
+          pure $ Left TimeoutError
+        else if (contains (Pattern "InsufficientTxInputs") (message err)) then
+          pure $ Left InsufficientFunds
+        else
+          pure $ Left (OtherError err)
+      Right Nothing ->
+        pure $ Left $ OtherError $ error "no utxo to resume"
+      Right (Just (newOutput /\ funds)) -> do
+        updateStore $ S.SetLastOutput newOutput
+        pure $ Right funds
+
+  getDatum = do
+    { contractConfig, lastOutput } <- getStore
+    case lastOutput of
+      Nothing -> pure $ Left (OtherError $ error "Last output not found")
+      Just lastOutput' -> do
+        result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
+          datumLookup lastOutput'
+        case result of
+          Left err ->
+            -- TODO this block seems to be repeated several times it should really be a function
+            if message err == timeoutErrorMessage then
+              pure $ Left TimeoutError
+            else if (contains (Pattern "InsufficientTxInputs") (message err)) then
+              pure $ Left InsufficientFunds
+            else
+              pure $ Left (OtherError err)
+          Right count -> do
+            pure $ Right count
+
