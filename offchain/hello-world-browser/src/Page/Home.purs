@@ -3,12 +3,14 @@ module HelloWorld.Page.Home where
 import Prelude
 
 import Data.Either (Either(..))
+import Data.Maybe (Maybe(..))
 import Effect.Aff.Class (class MonadAff)
 import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import HelloWorld.Capability.CardanoApi (class CardanoApi, enable)
 import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked, HelloWorldIncrement(..), getDatum, increment, lock, redeem, resume, unlock)
 import HelloWorld.Error (HelloWorldBrowserError(..))
 import Web.HTML (window)
@@ -20,9 +22,12 @@ data Action
   | Increment
   | Redeem
   | Resume
+  | Enable
 
 data State
-  = Unlocked
+  = Enabling
+  | EnableFailed HelloWorldBrowserError
+  | Unlocked
   | Locking
   | LockFailed HelloWorldBrowserError
   | Locked Int FundsLocked
@@ -95,22 +100,29 @@ _doRedeem datum fundsLocked = do
 component
   :: forall q o m
    . MonadAff m
+  => CardanoApi m
   => HelloWorldApi m
   => H.Component q Unit o m
 component =
   H.mkComponent
-    { initialState: const Unlocked
+    { initialState: const Enabling
     , render
     , eval:
         H.mkEval
           $ H.defaultEval
               { handleAction = handleAction
+              , initialize = Just Enable
               }
     }
   where
 
   handleAction :: forall slots. Action -> H.HalogenM State Action slots o m Unit
   handleAction = case _ of
+    Enable -> do
+      result <- enable
+      case result of
+        Left err -> H.modify_ $ const (EnableFailed err)
+        Right _ -> H.modify_ $ const Unlocked
     Resume -> do
       H.modify_ $ const Resuming
       result <- resume helloWorldIncrement
@@ -155,6 +167,16 @@ component =
 
   render :: forall slots. State -> H.ComponentHTML Action slots m
   render = case _ of
+    Enabling ->
+      HH.main_
+        [ HH.text "Enabling wallet ..."
+        ]
+    EnableFailed err ->
+      HH.main_
+        [ HH.p
+            [ HP.class_ $ ClassName "error" ]
+            [ HH.text (show err) ]
+        ]
     ResumeFailed err ->
       HH.main_
         [ HH.p
