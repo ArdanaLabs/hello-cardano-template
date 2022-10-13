@@ -23,6 +23,7 @@ import HelloWorld.AppM (runAppM)
 import HelloWorld.Cookie (getCookie)
 import HelloWorld.NamiNetwork (getNetworkId)
 import HelloWorld.Page.Home as Home
+import HelloWorld.Store (Wallet(..))
 
 type CtlRuntimeConfig =
   { ogmiosConfig :: ServerConfig
@@ -84,8 +85,8 @@ main =
             , networkId = networkId
             }
         pure
-          { networkId
-          , contractConfig
+          { contractConfig
+          , wallet: KeyWallet
           , lastOutput: Nothing
           }
       false -> do
@@ -95,9 +96,9 @@ main =
             MainnetId -> mainnetNamiConfig { logLevel = Warn }
             TestnetId -> testnetNamiConfig { logLevel = Warn }
         pure
-          { networkId
-          , contractConfig
+          { contractConfig
           , lastOutput: Nothing
+          , wallet: NamiWallet networkId
           }
     rootComponent <- runAppM store Home.component
     runUI rootComponent unit body
