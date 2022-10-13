@@ -9,7 +9,7 @@ import Aeson (printJsonDecodeError, JsonDecodeError, decodeJsonString)
 import Affjax (get, printError)
 import Affjax.ResponseFormat (string)
 import Affjax.StatusCode (StatusCode(StatusCode))
-import Contract.Config (NetworkId(..), PrivatePaymentKey(..), PrivatePaymentKeySource(..), PrivateStakeKey(..), PrivateStakeKeySource(..), privateKeyFromBytes, testnetConfig)
+import Contract.Config (NetworkId(..), PrivatePaymentKey(..), PrivatePaymentKeySource(..), PrivateStakeKey(..), PrivateStakeKeySource(..), mainnetNamiConfig, privateKeyFromBytes, testnetConfig, testnetNamiConfig)
 import Contract.Monad (ConfigParams, ServerConfig)
 import Contract.Wallet (WalletSpec(..))
 import Ctl.Internal.Cardano.TextEnvelope (TextEnvelopeType(..), printTextEnvelopeDecodeError, textEnvelopeBytes)
@@ -20,9 +20,9 @@ import Effect.Exception (error, throw)
 import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
 import HelloWorld.AppM (runAppM)
-import HelloWorld.Page.Home as Home
-import HelloWorld.Store (Wallet(..))
 import HelloWorld.Cookie (getCookie)
+import HelloWorld.NamiNetwork (getNetworkId)
+import HelloWorld.Page.Home as Home
 
 type CtlRuntimeConfig =
   { ogmiosConfig :: ServerConfig
@@ -71,10 +71,10 @@ getConfigParams = do
 main :: Effect Unit
 main =
   HA.runHalogenAff do
-    configParams <- getConfigParams
     body <- HA.awaitBody
     store <- useKeyWallet >>= case _ of
       true -> do
+        configParams <- getConfigParams
         walletSpec <- loadWalletSpec
         networkId <- loadNetworkId
         -- the mainnetConfig is defined as `testnetConfig { networkId = MainnetId }` in CTL
@@ -84,12 +84,19 @@ main =
             , networkId = networkId
             }
         pure
-          { wallet: KeyWallet contractConfig
+          { networkId
+          , contractConfig
           , lastOutput: Nothing
           }
       false -> do
+        networkId <- getNetworkId
+        let
+          contractConfig = case networkId of
+            MainnetId -> mainnetNamiConfig { logLevel = Warn }
+            TestnetId -> testnetNamiConfig { logLevel = Warn }
         pure
-          { wallet: NamiWallet
+          { networkId
+          , contractConfig
           , lastOutput: Nothing
           }
     rootComponent <- runAppM store Home.component

@@ -10,7 +10,10 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked, HelloWorldIncrement(..), getDatum, increment, lock, redeem, resume, unlock)
-import HelloWorld.Error (HelloWorldBrowserError)
+import HelloWorld.Error (HelloWorldBrowserError(..))
+import Web.HTML (window)
+import Web.HTML.Location (reload)
+import Web.HTML.Window (alert, location)
 
 data Action
   = Lock
@@ -46,8 +49,16 @@ _doIncrement datum fundsLocked = do
   H.modify_ $ const (Incrementing datum (datum + inc))
   result <- increment helloWorldIncrement
   case result of
+    Left NetworkChanged -> H.liftEffect do
+      window >>= \w -> do
+        alert (show NetworkChanged) w
+        location w >>= reload
     Left err -> H.modify_ $ const (IncrementFailed datum fundsLocked err)
     Right _ -> getDatum >>= case _ of
+      Left NetworkChanged -> H.liftEffect do
+        window >>= \w -> do
+          alert (show NetworkChanged) w
+          location w >>= reload
       Left err -> H.modify_ $ const (IncrementFailed datum fundsLocked err)
       Right new -> do
         H.modify_ $ const (Locked new fundsLocked)
@@ -63,11 +74,19 @@ _doRedeem datum fundsLocked = do
   H.modify_ $ const (Redeeming fundsLocked)
   result <- redeem helloWorldIncrement
   case result of
+    Left NetworkChanged -> H.liftEffect do
+      window >>= \w -> do
+        alert (show NetworkChanged) w
+        location w >>= reload
     Left err -> handleError err
     Right balanceBeforeRedeem -> do
       H.modify_ $ const Unlocking
       result' <- unlock balanceBeforeRedeem
       case result' of
+        Left NetworkChanged -> H.liftEffect do
+          window >>= \w -> do
+            alert (show NetworkChanged) w
+            location w >>= reload
         Left err -> handleError err
         Right _ -> H.modify_ $ const Unlocked
   where
@@ -96,8 +115,11 @@ component =
       H.modify_ $ const Resuming
       result <- resume helloWorldIncrement
       case result of
-        Left err -> do
-          H.modify_ $ const (LockFailed err)
+        Left NetworkChanged -> H.liftEffect do
+          window >>= \w -> do
+            alert (show NetworkChanged) w
+            location w >>= reload
+        Left err -> H.modify_ $ const (LockFailed err)
         Right funds -> do
           getDatum >>= case _ of
             Left err -> H.modify_ $ const (ResumeFailed err)
@@ -109,10 +131,14 @@ component =
       let init = 1
       result <- lock helloWorldIncrement init
       case result of
+        Left NetworkChanged -> H.liftEffect do
+          window >>= \w -> do
+            alert (show NetworkChanged) w
+            location w >>= reload
         Left err -> H.modify_ $ const (LockFailed err)
         Right fundsLocked ->
           getDatum >>= case _ of
-            Left err -> H.modify_ $ const $ LockFailed err
+            Left err -> H.modify_ $ const (LockFailed err)
             Right new -> H.modify_ $ const (Locked new fundsLocked)
     Increment ->
       H.get >>= case _ of

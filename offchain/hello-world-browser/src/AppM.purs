@@ -2,7 +2,7 @@ module HelloWorld.AppM where
 
 import Contract.Prelude
 
-import Contract.Config (NetworkId(..), ConfigParams, mainnetNamiConfig, testnetNamiConfig)
+import Contract.Config (NetworkId)
 import Contract.Monad (Contract, liftContractM, runContract)
 import Contract.Transaction (TransactionOutput(..))
 import Contract.Utxos (getUtxo, getWalletBalance)
@@ -22,7 +22,6 @@ import HelloWorld.Api (datumLookup, increment, initialize, redeem, resumeCounter
 import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked(..), HelloWorldIncrement(..))
 import HelloWorld.Error (HelloWorldBrowserError(..))
 import HelloWorld.NamiNetwork (getNetworkId)
-import HelloWorld.Store (Wallet(..))
 import HelloWorld.Store as S
 import Safe.Coerce (coerce)
 
@@ -63,89 +62,89 @@ getWalletBalance' = do
   balance <- getWalletBalance >>= liftContractM "Get wallet balance failed"
   pure $ getLovelace $ valueToCoin balance
 
-getContractConfig :: AppM (ConfigParams ())
-getContractConfig = do
-  { wallet } <- getStore
-  case wallet of
-    KeyWallet contractConfig -> pure contractConfig
-    NamiWallet -> do
-      liftAff getNetworkId >>= case _ of
-        TestnetId -> pure testnetNamiConfig { logLevel = Warn }
-        MainnetId -> pure mainnetNamiConfig { logLevel = Warn }
+ensureNetworkNotChanged :: forall a. NetworkId -> AppM (Either HelloWorldBrowserError a) -> AppM (Either HelloWorldBrowserError a)
+ensureNetworkNotChanged oldNetworkId fa = do
+  newNetworkId <- liftAff getNetworkId
+  if (newNetworkId == oldNetworkId) then
+    fa
+  else
+    pure $ Left NetworkChanged
 
 instance helloWorldApiAppM :: HelloWorldApi AppM where
   lock (HelloWorldIncrement param) initialValue = do
-    contractConfig <- getContractConfig
-    result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
-      lastOutput <- initialize param initialValue
-      -- TODO we should probably add an api function thing to get the lovelace at the output
-      TransactionOutput utxo <- getUtxo lastOutput >>= liftContractM "couldn't find utxo"
-      pure $ (lastOutput /\ (valueToFundsLocked $ utxo.amount))
-    case result of
-      Left err ->
-        if message err == timeoutErrorMessage then
-          pure $ Left TimeoutError
-        else if (contains (Pattern "InsufficientTxInputs") (message err)) then
-          pure $ Left InsufficientFunds
-        else
-          pure $ Left (OtherError err)
-      Right (lastOutput /\ fundsLocked) -> do
-        updateStore $ S.SetLastOutput lastOutput
-        pure $ Right fundsLocked
+    { contractConfig, networkId } <- getStore
+    ensureNetworkNotChanged networkId do
+      result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
+        lastOutput <- initialize param initialValue
+        -- TODO we should probably add an api function thing to get the lovelace at the output
+        TransactionOutput utxo <- getUtxo lastOutput >>= liftContractM "couldn't find utxo"
+        pure $ (lastOutput /\ (valueToFundsLocked $ utxo.amount))
+      case result of
+        Left err ->
+          if message err == timeoutErrorMessage then
+            pure $ Left TimeoutError
+          else if (contains (Pattern "InsufficientTxInputs") (message err)) then
+            pure $ Left InsufficientFunds
+          else
+            pure $ Left (OtherError err)
+        Right (lastOutput /\ fundsLocked) -> do
+          updateStore $ S.SetLastOutput lastOutput
+          pure $ Right fundsLocked
   increment (HelloWorldIncrement param) = do
-    { lastOutput } <- getStore
-    case lastOutput of
-      Nothing -> pure $ Right unit
-      Just lastOutput' -> do
-        contractConfig <- getContractConfig
-        result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
-          increment param lastOutput'
-        case result of
-          Left err ->
-            if message err == timeoutErrorMessage then
-              pure $ Left TimeoutError
-            else if (contains (Pattern "InsufficientTxInputs") (message err)) then
-              pure $ Left InsufficientFunds
-            else
-              pure $ Left (OtherError err)
-          Right lastOutput'' -> do
-            updateStore $ S.SetLastOutput lastOutput''
-            pure $ Right unit
+    { contractConfig, lastOutput, networkId } <- getStore
+    ensureNetworkNotChanged networkId do
+      case lastOutput of
+        Nothing -> pure $ Right unit
+        Just lastOutput' -> do
+          result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
+            increment param lastOutput'
+          case result of
+            Left err ->
+              if message err == timeoutErrorMessage then
+                pure $ Left TimeoutError
+              else if (contains (Pattern "InsufficientTxInputs") (message err)) then
+                pure $ Left InsufficientFunds
+              else
+                pure $ Left (OtherError err)
+            Right lastOutput'' -> do
+              updateStore $ S.SetLastOutput lastOutput''
+              pure $ Right unit
   redeem (HelloWorldIncrement param) = do
-    { lastOutput } <- getStore
-    case lastOutput of
-      Nothing -> pure $ Left (OtherError $ error "Last output not found")
-      Just lastOutput' -> do
-        contractConfig <- getContractConfig
-        result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
-          balanceBeforeRedeem <- getWalletBalance'
-          redeem param lastOutput'
-          pure balanceBeforeRedeem
-        case result of
-          Left err ->
-            if message err == timeoutErrorMessage then
-              pure $ Left TimeoutError
-            else if (contains (Pattern "InsufficientTxInputs") (message err)) then
-              pure $ Left InsufficientFunds
-            else
-              pure $ Left (OtherError err)
-          Right balanceBeforeRedeem -> do
-            updateStore S.ResetLastOutput
-            pure $ Right balanceBeforeRedeem
+    { contractConfig, lastOutput, networkId } <- getStore
+    ensureNetworkNotChanged networkId do
+      case lastOutput of
+        Nothing -> pure $ Left (OtherError $ error "Last output not found")
+        Just lastOutput' -> do
+          result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
+            balanceBeforeRedeem <- getWalletBalance'
+            redeem param lastOutput'
+            pure balanceBeforeRedeem
+          case result of
+            Left err ->
+              if message err == timeoutErrorMessage then
+                pure $ Left TimeoutError
+              else if (contains (Pattern "InsufficientTxInputs") (message err)) then
+                pure $ Left InsufficientFunds
+              else
+                pure $ Left (OtherError err)
+            Right balanceBeforeRedeem -> do
+              updateStore S.ResetLastOutput
+              pure $ Right balanceBeforeRedeem
   unlock balanceBeforeRedeem = do
-    contractConfig <- getContractConfig
-    result <- liftAff $ try $ timeout timeoutMilliSeconds $ ((void <<< _) <<< runContract) contractConfig $ do
-      go balanceBeforeRedeem
-    case result of
-      Left err ->
-        if message err == timeoutErrorMessage then
-          pure $ Left TimeoutError
-        else if (contains (Pattern "InsufficientTxInputs") (message err)) then
-          pure $ Left InsufficientFunds
-        else
-          pure $ Left (OtherError err)
-      Right _ -> do
-        pure $ Right unit
+    { contractConfig, networkId } <- getStore
+    ensureNetworkNotChanged networkId do
+      result <- liftAff $ try $ timeout timeoutMilliSeconds $ ((void <<< _) <<< runContract) contractConfig $ do
+        go balanceBeforeRedeem
+      case result of
+        Left err ->
+          if message err == timeoutErrorMessage then
+            pure $ Left TimeoutError
+          else if (contains (Pattern "InsufficientTxInputs") (message err)) then
+            pure $ Left InsufficientFunds
+          else
+            pure $ Left (OtherError err)
+        Right _ -> do
+          pure $ Right unit
     where
     go balanceBeforeRedeem' = do
       balance <- getWalletBalance'
@@ -157,45 +156,46 @@ instance helloWorldApiAppM :: HelloWorldApi AppM where
         go balanceBeforeRedeem'
 
   resume (HelloWorldIncrement param) = do
-    contractConfig <- getContractConfig
-    result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
-      txIn <- resumeCounter param
-      case txIn of
-        Nothing -> pure Nothing
-        Just txIn' -> do
-          out <- getUtxo txIn' >>= liftContractM "no utxo?"
-          pure $ Just $ txIn' /\ valueToFundsLocked (unwrap out).amount
-    case result of
-      Left err ->
-        if message err == timeoutErrorMessage then
-          pure $ Left TimeoutError
-        else if (contains (Pattern "InsufficientTxInputs") (message err)) then
-          pure $ Left InsufficientFunds
-        else
-          pure $ Left (OtherError err)
-      Right Nothing ->
-        pure $ Left $ OtherError $ error "no utxo to resume"
-      Right (Just (newOutput /\ funds)) -> do
-        updateStore $ S.SetLastOutput newOutput
-        pure $ Right funds
+    { contractConfig, networkId } <- getStore
+    ensureNetworkNotChanged networkId do
+      result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
+        txIn <- resumeCounter param
+        case txIn of
+          Nothing -> pure Nothing
+          Just txIn' -> do
+            out <- getUtxo txIn' >>= liftContractM "no utxo?"
+            pure $ Just $ txIn' /\ valueToFundsLocked (unwrap out).amount
+      case result of
+        Left err ->
+          if message err == timeoutErrorMessage then
+            pure $ Left TimeoutError
+          else if (contains (Pattern "InsufficientTxInputs") (message err)) then
+            pure $ Left InsufficientFunds
+          else
+            pure $ Left (OtherError err)
+        Right Nothing ->
+          pure $ Left $ OtherError $ error "no utxo to resume"
+        Right (Just (newOutput /\ funds)) -> do
+          updateStore $ S.SetLastOutput newOutput
+          pure $ Right funds
 
   getDatum = do
-    { lastOutput } <- getStore
-    case lastOutput of
-      Nothing -> pure $ Left (OtherError $ error "Last output not found")
-      Just lastOutput' -> do
-        contractConfig <- getContractConfig
-        result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
-          datumLookup lastOutput'
-        case result of
-          Left err ->
-            -- TODO this block seems to be repeated several times it should really be a function
-            if message err == timeoutErrorMessage then
-              pure $ Left TimeoutError
-            else if (contains (Pattern "InsufficientTxInputs") (message err)) then
-              pure $ Left InsufficientFunds
-            else
-              pure $ Left (OtherError err)
-          Right count -> do
-            pure $ Right count
+    { contractConfig, lastOutput, networkId } <- getStore
+    ensureNetworkNotChanged networkId do
+      case lastOutput of
+        Nothing -> pure $ Left (OtherError $ error "Last output not found")
+        Just lastOutput' -> do
+          result <- liftAff $ try $ timeout timeoutMilliSeconds $ runContract contractConfig $ do
+            datumLookup lastOutput'
+          case result of
+            Left err ->
+              -- TODO this block seems to be repeated several times it should really be a function
+              if message err == timeoutErrorMessage then
+                pure $ Left TimeoutError
+              else if (contains (Pattern "InsufficientTxInputs") (message err)) then
+                pure $ Left InsufficientFunds
+              else
+                pure $ Left (OtherError err)
+            Right count -> do
+              pure $ Right count
 

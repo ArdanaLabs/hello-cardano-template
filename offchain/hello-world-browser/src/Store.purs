@@ -2,14 +2,12 @@ module HelloWorld.Store where
 
 import Contract.Monad (ConfigParams)
 import Contract.Transaction (TransactionInput)
+import Ctl.Internal.Serialization.Address (NetworkId)
 import Data.Maybe (Maybe(..))
 
-data Wallet
-  = KeyWallet (ConfigParams ())
-  | NamiWallet
-
 type Store =
-  { wallet :: Wallet
+  { networkId :: NetworkId
+  , contractConfig :: ConfigParams ()
   , lastOutput :: Maybe TransactionInput
   }
 
