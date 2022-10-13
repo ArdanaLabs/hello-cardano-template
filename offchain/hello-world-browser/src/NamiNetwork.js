@@ -1,13 +1,11 @@
-exports._getNetworkId = function (onError, onSuccess) {
-  try {
-    window.cardano.getNetworkId().then((networkId) => {
-      onSuccess(networkId);
-    });
-  } catch (e) {
-    onError(e);
-  }
+"use strict";
 
-  return function (cancelError, onCancelerError, onCancelerSuccess) {
-    onCancelerSuccess();
-  };
-};
+exports._getNetworkId = () =>
+  window.cardano
+    .getNetworkId()
+    .then((networkId) => {
+      return networkId;
+    })
+    .catch((e) => {
+      console.log("Error in getNetworkId: ", e);
+    });
