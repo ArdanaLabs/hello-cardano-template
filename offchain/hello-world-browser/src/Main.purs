@@ -5,24 +5,23 @@ module Main
 
 import Contract.Prelude
 
+import Aeson (printJsonDecodeError, JsonDecodeError, decodeJsonString)
 import Affjax (get, printError)
 import Affjax.ResponseFormat (string)
 import Affjax.StatusCode (StatusCode(StatusCode))
-import Aeson (printJsonDecodeError, JsonDecodeError, decodeJsonString)
-
 import Contract.Config (NetworkId(..), PrivatePaymentKey(..), PrivatePaymentKeySource(..), PrivateStakeKey(..), PrivateStakeKeySource(..), privateKeyFromBytes, testnetConfig, testnetNamiConfig)
 import Contract.Monad (ConfigParams, ServerConfig)
 import Contract.Wallet (WalletSpec(..))
 import Ctl.Internal.Cardano.TextEnvelope (TextEnvelopeType(..), printTextEnvelopeDecodeError, textEnvelopeBytes)
 import Data.Bifunctor (lmap)
 import Effect (Effect)
-import Effect.Exception (error, throw)
 import Effect.Class.Console (warn)
+import Effect.Exception (error, throw)
 import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
 import HelloWorld.AppM (runAppM)
+import HelloWorld.Cookie (getCookie)
 import HelloWorld.Page.Home as Home
-import KeyWallet.Cookie (getCookie)
 
 type CtlRuntimeConfig =
   { ogmiosConfig :: ServerConfig
@@ -71,10 +70,10 @@ getConfigParams = do
 main :: Effect Unit
 main =
   HA.runHalogenAff do
-    configParams <- getConfigParams
     body <- HA.awaitBody
     contractConfig <- useKeyWallet >>= case _ of
       true -> do
+        configParams <- getConfigParams
         walletSpec <- loadWalletSpec
         networkId <- loadNetworkId
         -- the mainnetConfig is defined as `testnetConfig { networkId = MainnetId }` in CTL
@@ -82,8 +81,7 @@ main =
           { walletSpec = Just walletSpec
           , networkId = networkId
           }
-      false -> do
-        pure $ testnetNamiConfig { logLevel = Warn }
+      false -> pure $ testnetNamiConfig { logLevel = Warn }
     let
       store =
         { contractConfig
