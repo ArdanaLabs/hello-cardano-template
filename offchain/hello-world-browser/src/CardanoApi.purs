@@ -11,9 +11,8 @@ import Effect.Aff (Aff, error, throwError)
 foreign import _getNetworkId :: Cip30Connection -> Effect (Promise Int)
 foreign import _enable :: String -> Effect (Promise Cip30Connection)
 
-getNetworkId :: String -> Aff NetworkId
-getNetworkId wallet = do
-  conn <- enable wallet
+getNetworkId :: Cip30Connection -> Aff NetworkId
+getNetworkId conn = do
   networkId <- toAffE $ _getNetworkId conn
   case networkId of
     0 -> pure TestnetId

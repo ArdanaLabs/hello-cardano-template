@@ -4,7 +4,6 @@ import Contract.Prelude
 
 import Contract.Test.E2E (TestOptions)
 import Data.String (Pattern(..), contains)
-import HelloWorld.Test.Constants as Constants
 import HelloWorld.Test.Helpers (clickButton, injectJQuery)
 import HelloWorld.Test.KeyWallet (RunningExample(..), runE2ETest)
 import Mote (group)
@@ -19,7 +18,7 @@ testPlan testOptions = group "When redeem button is clicked" do
 
     clickButton "Initialize" page
 
-    void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: Constants.timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: 0 } page
     clickButton "Redeem" page
 
     content <- T.content page
@@ -30,10 +29,10 @@ testPlan testOptions = group "When redeem button is clicked" do
 
     clickButton "Initialize" page
 
-    void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: Constants.timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: 0 } page
     clickButton "Redeem" page
 
-    void $ T.pageWaitForSelector (T.Selector "#unlocking") { timeout: Constants.timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#unlocking") { timeout: 0 } page
 
     content <- T.content page
     Assert.assert "Unlocking funds" (contains (Pattern "Unlocking funds ...") content)
@@ -43,7 +42,7 @@ testPlan testOptions = group "When redeem button is clicked" do
 
     clickButton "Initialize" page
 
-    void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: Constants.timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: 0 } page
     clickButton "Redeem" page
 
-    void $ T.pageWaitForSelector (T.Selector "#lock") { timeout: Constants.timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#lock") { timeout: 0 } page

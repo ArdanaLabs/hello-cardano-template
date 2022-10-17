@@ -4,7 +4,6 @@ import Contract.Prelude
 
 import Contract.Test.E2E (TestOptions)
 import Data.String (Pattern(..), contains)
-import HelloWorld.Test.Constants as Constants
 import HelloWorld.Test.Helpers (clickButton, getCurrentValueBody, injectJQuery, readString)
 import HelloWorld.Test.KeyWallet (RunningExample(..), runE2ETest)
 import Mote (group)
@@ -19,20 +18,20 @@ testPlan testOptions = group "When increment button is clicked" do
 
     clickButton "Initialize" page
 
-    void $ T.pageWaitForSelector (T.Selector "#increment") { timeout: Constants.timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#increment") { timeout: 0 } page
     clickButton "+" page
 
     content <- T.content page
-    Assert.assert "Incrementing" (contains (Pattern "Incrementing from 3 to 5 ...") content)
+    Assert.assert "Incrementing" (contains (Pattern "Incrementing from 1 to 3 ...") content)
 
   runE2ETest "It increments the datum at script address by 2" testOptions $ \(RunningExample { jQuery, page }) -> do
     injectJQuery jQuery page
 
     clickButton "Initialize" page
 
-    void $ T.pageWaitForSelector (T.Selector "#increment") { timeout: Constants.timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#increment") { timeout: 0 } page
     clickButton "+" page
 
-    void $ T.pageWaitForSelector (T.Selector "#current-value-body") { timeout: Constants.timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#current-value-body") { timeout: 0 } page
     currentValueBodyContent <- readString <$> T.unsafeEvaluateStringFunction getCurrentValueBody page
-    Assert.assert "Current value body" (contains (Pattern "5") currentValueBodyContent)
+    Assert.assert "Current value body" (contains (Pattern "3") currentValueBodyContent)

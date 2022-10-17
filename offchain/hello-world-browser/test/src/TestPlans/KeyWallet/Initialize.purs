@@ -4,7 +4,6 @@ import Contract.Prelude
 
 import Contract.Test.E2E (TestOptions)
 import Data.String (Pattern(..), contains)
-import HelloWorld.Test.Constants as Constants
 import HelloWorld.Test.Helpers (clickButton, getCurrentValueBody, getCurrentValueHeader, getFundsLockedBody, getFundsLockedHeader, injectJQuery, readString)
 import HelloWorld.Test.KeyWallet (RunningExample(..), runE2ETest)
 import Mote (group)
@@ -26,18 +25,18 @@ testPlan testOptions = group "When initialize button is clicked" do
 
     clickButton "Initialize" page
 
-    void $ T.pageWaitForSelector (T.Selector "#current-value-header") { timeout: Constants.timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#current-value-header") { timeout: 0 } page
     currentValueHeaderContent <- readString <$> T.unsafeEvaluateStringFunction getCurrentValueHeader page
     Assert.assert "Current value header" (contains (Pattern "Current Value") currentValueHeaderContent)
 
-    void $ T.pageWaitForSelector (T.Selector "#current-value-body") { timeout: Constants.timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#current-value-body") { timeout: 0 } page
     currentValueBodyContent <- readString <$> T.unsafeEvaluateStringFunction getCurrentValueBody page
-    Assert.assert "Current value body" (contains (Pattern "3") currentValueBodyContent)
+    Assert.assert "Current value body" (contains (Pattern "1") currentValueBodyContent)
 
-    void $ T.pageWaitForSelector (T.Selector "#funds-locked-header") { timeout: Constants.timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#funds-locked-header") { timeout: 0 } page
     fundsLockedHeaderContent <- readString <$> T.unsafeEvaluateStringFunction getFundsLockedHeader page
     Assert.assert "Funds locked header" (contains (Pattern "Funds Locked") fundsLockedHeaderContent)
 
-    void $ T.pageWaitForSelector (T.Selector "#funds-locked-body") { timeout: Constants.timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#funds-locked-body") { timeout: 0 } page
     fundsLockedBodyContent <- readString <$> T.unsafeEvaluateStringFunction getFundsLockedBody page
     Assert.assert "Funds locked body" (contains (Pattern "10.0 ADA") fundsLockedBodyContent)
