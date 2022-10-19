@@ -1,4 +1,4 @@
-# Cardano App Template (CAT)
+# Hello Cardano Template
 
 A template for starting an application on Cardano.
 
