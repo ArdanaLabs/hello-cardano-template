@@ -1,4 +1,4 @@
-module KeyWallet.Cookie where
+module HelloWorld.Cookie where
 
 import Prelude
 

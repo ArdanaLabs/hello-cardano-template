@@ -6,11 +6,12 @@ module Test.HelloWorld.Discovery.Api
 import Contract.Prelude
 
 import CBOR as CBOR
-import Contract.Address (getWalletAddress, ownPaymentPubKeyHash, scriptHashAddress)
+import Contract.Address (PubKeyHash, getWalletAddress, ownPaymentPubKeyHash, scriptHashAddress)
+import Contract.Credential (Credential(..))
 import Contract.Hashing (datumHash)
 import Contract.Log (logInfo')
 import Contract.Monad (Contract, liftContractM)
-import Contract.PlutusData (Datum(..), Redeemer(Redeemer), fromData, toData)
+import Contract.PlutusData (Datum(..), PlutusData, Redeemer(Redeemer), fromData, toData)
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (mintingPolicyHash, validatorHash)
 import Contract.Test.Plutip (runContractInEnv, withPlutipContractEnv)
@@ -19,6 +20,7 @@ import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
 import Contract.Utxos (getUtxo, getWalletBalance)
 import Contract.Value (Value, adaToken, mkTokenName, mpsSymbol, scriptCurrencySymbol)
+import Contract.Value as Value
 import Contract.Wallet (withKeyWallet)
 import Data.Array (group, sort)
 import Data.BigInt as BigInt
@@ -29,19 +31,14 @@ import Effect.Exception (throw)
 import HelloWorld.Api (enoughForFees)
 import HelloWorld.Discovery.Api (closeVault, getAllVaults, getMyVaults, getVaultById, incrementVault, incrementVault', makeNftPolicy, mintNft, openVault, openVault', protocolInit, seedTx)
 import HelloWorld.Discovery.Types (HelloAction(..), HelloRedeemer(..), NftRedeemer(..), Vault(..), Protocol)
-import Plutus.Types.Address (Address(..))
-import Plutus.Types.Credential (Credential(..))
-import Plutus.Types.Value as Value
 import Test.HelloWorld.EnvRunner (EnvRunner, defaultWallet, plutipConfig, runEnvSpec)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (expectError, shouldEqual, shouldReturn, shouldSatisfy)
-import Types.PlutusData (PlutusData)
 import Util (buildBalanceSignAndSubmitTx, decodeCbor, getDatum, getUtxos, maxWait, waitForTx, withOurLogger)
 
 spec :: EnvRunner -> Spec Unit
 spec = runEnvSpec do
   describe "HelloWorld.Discovery.Api" do
-
     describe "misc" do
 
       it "script with serialise works" $ useRunnerSimple do
@@ -151,60 +148,60 @@ spec = runEnvSpec do
           $ void
           $ buildBalanceSignAndSubmitTx burnLookups burnConstraints
 
-  describe "protocol" do
+    describe "protocol" do
 
-    it "initialize protocol" $ useRunnerSimple do
-      protocolInit
+      it "initialize protocol" $ useRunnerSimple do
+        protocolInit
 
-    it "initialize protocol but fail to steal the utxo" $ useRunnerSimple do
-      txin <- _.config <$> protocolInit
-      validator <- liftContractM "decoding failed" $ decodeCbor CBOR.configScript
-      let vhash = validatorHash validator
-      utxos <- getUtxos (scriptHashAddress vhash)
-      let
-        lookups :: Lookups.ScriptLookups PlutusData
-        lookups = Lookups.validator validator <> Lookups.unspentOutputs utxos
+      it "initialize protocol but fail to steal the utxo" $ useRunnerSimple do
+        txin <- _.config <$> protocolInit
+        validator <- liftContractM "decoding failed" $ decodeCbor CBOR.configScript
+        let vhash = validatorHash validator
+        utxos <- getUtxos (scriptHashAddress vhash)
+        let
+          lookups :: Lookups.ScriptLookups PlutusData
+          lookups = Lookups.validator validator <> Lookups.unspentOutputs utxos
 
-        constraints :: TxConstraints Unit Unit
-        constraints = Constraints.mustSpendScriptOutput txin (Redeemer (toData unit))
-      expectError $ buildBalanceSignAndSubmitTx lookups constraints
+          constraints :: TxConstraints Unit Unit
+          constraints = Constraints.mustSpendScriptOutput txin (Redeemer (toData unit))
+        expectError $ buildBalanceSignAndSubmitTx lookups constraints
 
-    it "initialize protocol and open a vault" $ useRunnerSimple do
-      protocol <- protocolInit
-      openVault protocol
+      it "initialize protocol and open a vault" $ useRunnerSimple do
+        protocol <- protocolInit
+        openVault protocol
 
-    it "find a vault" $ useRunnerSimple do
-      protocol <- protocolInit
-      vault <- openVault protocol
-      getVaultById protocol vault
+      it "find a vault" $ useRunnerSimple do
+        protocol <- protocolInit
+        vault <- openVault protocol
+        getVaultById protocol vault
 
-    it "increment a vault" $ useRunnerSimple do
-      protocol <- protocolInit
-      vault <- openVault protocol
-      incrementVault protocol vault
+      it "increment a vault" $ useRunnerSimple do
+        protocol <- protocolInit
+        vault <- openVault protocol
+        incrementVault protocol vault
 
-    it "find after inc" $ useRunnerSimple do
-      protocol <- protocolInit
-      vault <- openVault protocol
-      incrementVault protocol vault
-      getVaultById protocol vault
+      it "find after inc" $ useRunnerSimple do
+        protocol <- protocolInit
+        vault <- openVault protocol
+        incrementVault protocol vault
+        getVaultById protocol vault
 
-    it "close a vault" $ useRunnerSimple do
-      protocol <- protocolInit
-      vault <- openVault protocol
-      closeVault protocol vault
+      it "close a vault" $ useRunnerSimple do
+        protocol <- protocolInit
+        vault <- openVault protocol
+        closeVault protocol vault
 
-    it "close after inc" $ useRunnerSimple do
-      protocol <- protocolInit
-      vault <- openVault protocol
-      incrementVault protocol vault
-      closeVault protocol vault
+      it "close after inc" $ useRunnerSimple do
+        protocol <- protocolInit
+        vault <- openVault protocol
+        incrementVault protocol vault
+        closeVault protocol vault
 
-    it "vault gone after close" $ useRunnerSimple do
-      protocol <- protocolInit
-      vault <- openVault protocol
-      closeVault protocol vault
-      expectError $ getVaultById protocol vault
+      it "vault gone after close" $ useRunnerSimple do
+        protocol <- protocolInit
+        vault <- openVault protocol
+        closeVault protocol vault
+        expectError $ getVaultById protocol vault
 
     describe "attacks" do
       it "can't open vault at 1" $ useRunnerSimple do
@@ -224,9 +221,7 @@ spec = runEnvSpec do
         let nftRed = NftRedeemer { tn: nftTn, txId: txOut }
         adr <- liftContractM "no wallet" =<< getWalletAddress
         utxos <- getUtxos adr
-        pkh <- getWalletAddress >>= case _ of
-          Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
-          _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+        pkh <- getWalletPkh
         let
           nft :: Value.Value
           nft = Value.singleton nftCs nftTn $ BigInt.fromInt 1
@@ -260,9 +255,7 @@ spec = runEnvSpec do
         adr <- liftContractM "no wallet" =<< getWalletAddress
         utxos <- getUtxos adr
         let nftRed = NftRedeemer { tn: nftTn, txId: txOut }
-        pkh <- getWalletAddress >>= case _ of
-          Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
-          _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+        pkh <- getWalletPkh
         -- I don't love this but I'm not sure of another way to make sure the tx isn't spent in the minting transaction
         void $ waitForTx maxWait adr
           =<< buildBalanceSignAndSubmitTx (Lookups.unspentOutputs utxos) (Constraints.mustSpendPubKeyOutput txOut)
@@ -338,10 +331,7 @@ spec = runEnvSpec do
           txin <- openInvalidVault protocol
           utxos <- getUtxos (scriptHashAddress $ validatorHash protocol.vaultValidator)
           key <- liftContractM "no wallet" =<< ownPaymentPubKeyHash
-          pkh <- getWalletAddress
-            >>= case _ of
-              Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
-              _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+          pkh <- getWalletPkh
           let
             red :: Redeemer
             red = Redeemer $ toData $ HelloRedeemer { tn: adaToken, action: Inc }
@@ -369,9 +359,7 @@ spec = runEnvSpec do
           adr <- liftContractM "no wallet" =<< getWalletAddress
           utxos <- getUtxos adr
           let nftRed = NftRedeemer { tn: nftTn, txId: txOut }
-          pkh <- getWalletAddress >>= case _ of
-            Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
-            _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+          pkh <- getWalletPkh
           let
             nft :: Value.Value
             nft = Value.singleton nftCs nftTn $ BigInt.fromInt 1
@@ -398,9 +386,7 @@ spec = runEnvSpec do
           adr <- liftContractM "no wallet" =<< getWalletAddress
           utxos <- getUtxos adr
           let nftRed = NftRedeemer { tn: nftTn, txId: txOut }
-          pkh <- getWalletAddress >>= case _ of
-            Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
-            _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+          pkh <- getWalletPkh
           let
             nft :: Value.Value
             nft = Value.singleton nftCs nftTn $ BigInt.fromInt 1
@@ -493,11 +479,7 @@ localOnlySpec = describe "HelloWorld.Discovery.Api" do
           protocol <- protocolInit
           vault <- openVault protocol
           pure $ protocol /\ vault
-        bobKey <- asBob
-          $ getWalletAddress
-          >>= case _ of
-            Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
-            _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+        bobKey <- asBob getWalletPkh
         asAlice $ do
           let vaultId = aliceVault
           txin <- fst <$> getVaultById protocol vaultId
@@ -555,12 +537,16 @@ useRunnerSimple contract runner = do
 waitTime :: Minutes
 waitTime = 5.0 # Minutes
 
+getWalletPkh :: Contract () PubKeyHash
+getWalletPkh = getWalletAddress >>= case _ of
+  Just address -> case unwrap address of
+    { addressCredential: PubKeyCredential pkh } -> pure pkh
+    _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+  _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+
 openInvalidVault :: Protocol -> Contract () TransactionInput
 openInvalidVault protocol = do
-  pkh <- getWalletAddress
-    >>= case _ of
-      Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
-      _ -> liftEffect $ throw "failed to get wallet pubkey hash"
+  pkh <- getWalletPkh
   let
     vault :: Vault
     vault = Vault { owner: pkh, count: BigInt.fromInt 1 }

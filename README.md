@@ -1,4 +1,4 @@
-# Cardano App Template (CAT)
+# Hello Cardano Template
 
 A template for starting an application on Cardano.
 
@@ -167,3 +167,4 @@ Another example of equivalence is as follows:
 <img atl="Platonic.Systems Logo" src="https://ardana.org/assets/logos/platonic-systems.svg" height="30px">
 
 <img atl="Ardana Logo" src="https://ardana.org/assets/logo_text.png" height="30px">
+

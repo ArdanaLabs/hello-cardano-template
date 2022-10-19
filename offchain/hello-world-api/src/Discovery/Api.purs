@@ -18,17 +18,18 @@ import Contract.Prelude
 
 import CBOR as CBOR
 import Contract.Address (getWalletAddress, getWalletCollateral, ownPaymentPubKeyHash, ownPubKeyHash)
+import Contract.Credential (Credential(..))
 import Contract.Hashing (datumHash)
 import Contract.Log (logDebug', logInfo')
 import Contract.Monad (Contract, liftContractM)
-import Contract.PlutusData (Datum(Datum), Redeemer(Redeemer), fromData)
+import Contract.PlutusData (Datum(Datum), PlutusData, Redeemer(Redeemer), fromData, toData)
 import Contract.ScriptLookups as Lookups
-import Contract.Scripts (applyArgsM, mintingPolicyHash, scriptHashAddress, validatorHash)
+import Contract.Scripts (MintingPolicy, applyArgsM, mintingPolicyHash, scriptHashAddress, validatorHash)
 import Contract.Transaction (TransactionInput, TransactionOutputWithRefScript)
 import Contract.TxConstraints (TxConstraints)
 import Contract.TxConstraints as Constraints
 import Contract.Utxos (getUtxo)
-import Contract.Value (Value, scriptCurrencySymbol, mkTokenName, adaToken, valueOf)
+import Contract.Value (CurrencySymbol, Value, adaToken, mkTokenName, mpsSymbol, scriptCurrencySymbol, symbols, valueOf)
 import Contract.Value as Value
 import Data.Array (head)
 import Data.BigInt as BigInt
@@ -37,13 +38,6 @@ import Data.Map as Map
 import Data.Set (toUnfoldable)
 import Effect.Exception (throw)
 import HelloWorld.Discovery.Types (HelloAction(..), HelloRedeemer(HelloRedeemer), NftRedeemer(..), Protocol, Vault(Vault), VaultId)
-import Plutus.Types.Address (Address(Address))
-import Plutus.Types.Credential (Credential(PubKeyCredential))
-import Plutus.Types.CurrencySymbol (CurrencySymbol, mpsSymbol)
-import Plutus.Types.Value (symbols)
-import ToData (toData)
-import Types.PlutusData (PlutusData)
-import Types.Scripts (MintingPolicy)
 import Util (buildBalanceSignAndSubmitTx, decodeCbor, decodeCborMp, getDatum, getUtxos, maxWait, waitForTx)
 
 -- | Given a protocol get a Map of all transaction inputs and outputs coresponding to valid vaults
@@ -173,7 +167,9 @@ openVault' start protocol = do
   utxos <- getUtxos adr
   let nftRed = NftRedeemer { tn: nftTn, txId: txOut }
   pkh <- getWalletAddress >>= case _ of
-    Just (Address { addressCredential: PubKeyCredential pkh }) -> pure pkh
+    Just adress -> case unwrap adress of
+      { addressCredential: PubKeyCredential pkh } -> pure pkh
+      _ -> liftEffect $ throw "failed to get wallet pubkey hash"
     _ -> liftEffect $ throw "failed to get wallet pubkey hash"
   let
     nft :: Value.Value

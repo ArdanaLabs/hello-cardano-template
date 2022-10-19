@@ -8,17 +8,15 @@ module HelloWorld.Discovery.Types
   ) where
 
 import Contract.Prelude
+
+import Contract.Address (PubKeyHash)
+import Contract.PlutusData (class ToData, class FromData, PlutusData(..), fromData, toData)
+import Contract.Scripts (MintingPolicy, Validator)
+import Contract.Transaction (TransactionInput)
+import Contract.Value (TokenName)
+import Control.Alternative (guard)
 import Data.BigInt as BigInt
 import Data.UInt as UInt
-
-import Contract.Scripts (Validator)
-import Control.Alternative (guard)
-import Contract.Transaction (TransactionInput)
-import Contract.PlutusData (PlutusData(..), class FromData, fromData)
-import Contract.Value (TokenName)
-import Types.PubKeyHash (PubKeyHash)
-import Types.Scripts (MintingPolicy)
-import ToData (class ToData, toData)
 
 type Protocol = { config :: TransactionInput, vaultValidator :: Validator, nftMp :: MintingPolicy }
 
