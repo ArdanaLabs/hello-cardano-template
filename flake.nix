@@ -5,7 +5,17 @@
       url = "github:input-output-hk/haskell.nix";
     };
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    cardano-node.url = "github:input-output-hk/cardano-node?rev=73f9a746362695dc2cb63ba757fbcabb81733d23";
+    # Use divnix/blank to fix CI failing due to broken cardano-node flake
+    cardano-node = {
+      url = "github:input-output-hk/cardano-node?ref=1.35.3";
+      inputs.cardano-node-workbench.follows = "cardano-node-workbench";
+      inputs.node-measured.follows = "cardano-node-workbench";
+    };
+    cardano-node-workbench = {
+      url = "github:input-output-hk/cardano-node/ed9932c52aaa535b71f72a5b4cc0cecb3344a5a3";
+      inputs.membench.follows = "empty-flake";
+    };
+    empty-flake.url = "github:input-output-hk/empty-flake?rev=2040a05b67bf9a669ce17eca56beb14b4206a99a";
     cardano-transaction-lib.url = "github:Plutonomicon/cardano-transaction-lib?rev=1999bb962141ffea09767f299a5759420097d189";
     cardano-ogmios.url = "github:input-output-hk/cardano-ogmios";
     mlabs-ogmios.follows = "cardano-transaction-lib/ogmios";
