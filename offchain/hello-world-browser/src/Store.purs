@@ -10,7 +10,8 @@ type Store =
   }
 
 data Action
-  = SetLastOutput TransactionInput
+  = SetContractConfig (ConfigParams ())
+  | SetLastOutput TransactionInput
   | ResetLastOutput
 
 reduce :: Store -> Action -> Store
@@ -19,3 +20,5 @@ reduce store = case _ of
     store { lastOutput = Just lastOutput }
   ResetLastOutput ->
     store { lastOutput = Nothing }
+  SetContractConfig contractConfig ->
+    store { contractConfig = contractConfig }

@@ -3,23 +3,31 @@ module HelloWorld.Page.Home where
 import Prelude
 
 import Data.Either (Either(..))
+import Data.Maybe (Maybe(..))
 import Effect.Aff.Class (class MonadAff)
 import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import HelloWorld.Capability.CardanoApi (class CardanoApi, enable)
 import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked, HelloWorldIncrement(..), getDatum, increment, lock, redeem, resume, unlock)
-import HelloWorld.Error (HelloWorldBrowserError)
+import HelloWorld.Error (HelloWorldBrowserError(..))
+import Web.HTML (window)
+import Web.HTML.Location (reload)
+import Web.HTML.Window (alert, location)
 
 data Action
   = Lock
   | Increment
   | Redeem
   | Resume
+  | Enable
 
 data State
-  = Unlocked
+  = Enabling
+  | EnableFailed HelloWorldBrowserError
+  | Unlocked
   | Locking
   | LockFailed HelloWorldBrowserError
   | Locked Int FundsLocked
@@ -46,8 +54,16 @@ _doIncrement datum fundsLocked = do
   H.modify_ $ const (Incrementing datum (datum + inc))
   result <- increment helloWorldIncrement
   case result of
+    Left NetworkChanged -> H.liftEffect do
+      window >>= \w -> do
+        alert (show NetworkChanged) w
+        location w >>= reload
     Left err -> H.modify_ $ const (IncrementFailed datum fundsLocked err)
     Right _ -> getDatum >>= case _ of
+      Left NetworkChanged -> H.liftEffect do
+        window >>= \w -> do
+          alert (show NetworkChanged) w
+          location w >>= reload
       Left err -> H.modify_ $ const (IncrementFailed datum fundsLocked err)
       Right new -> do
         H.modify_ $ const (Locked new fundsLocked)
@@ -63,11 +79,19 @@ _doRedeem datum fundsLocked = do
   H.modify_ $ const (Redeeming fundsLocked)
   result <- redeem helloWorldIncrement
   case result of
+    Left NetworkChanged -> H.liftEffect do
+      window >>= \w -> do
+        alert (show NetworkChanged) w
+        location w >>= reload
     Left err -> handleError err
     Right balanceBeforeRedeem -> do
       H.modify_ $ const Unlocking
       result' <- unlock balanceBeforeRedeem
       case result' of
+        Left NetworkChanged -> H.liftEffect do
+          window >>= \w -> do
+            alert (show NetworkChanged) w
+            location w >>= reload
         Left err -> handleError err
         Right _ -> H.modify_ $ const Unlocked
   where
@@ -76,28 +100,38 @@ _doRedeem datum fundsLocked = do
 component
   :: forall q o m
    . MonadAff m
+  => CardanoApi m
   => HelloWorldApi m
   => H.Component q Unit o m
 component =
   H.mkComponent
-    { initialState: const Unlocked
+    { initialState: const Enabling
     , render
     , eval:
         H.mkEval
           $ H.defaultEval
               { handleAction = handleAction
+              , initialize = Just Enable
               }
     }
   where
 
   handleAction :: forall slots. Action -> H.HalogenM State Action slots o m Unit
   handleAction = case _ of
+    Enable -> do
+      result <- enable
+      case result of
+        Left err -> H.modify_ $ const (EnableFailed err)
+        Right _ -> H.modify_ $ const Unlocked
     Resume -> do
       H.modify_ $ const Resuming
       result <- resume helloWorldIncrement
       case result of
-        Left err -> do
-          H.modify_ $ const (LockFailed err)
+        Left NetworkChanged -> H.liftEffect do
+          window >>= \w -> do
+            alert (show NetworkChanged) w
+            location w >>= reload
+        Left err -> H.modify_ $ const (LockFailed err)
         Right funds -> do
           getDatum >>= case _ of
             Left err -> H.modify_ $ const (ResumeFailed err)
@@ -109,10 +143,14 @@ component =
       let init = 1
       result <- lock helloWorldIncrement init
       case result of
+        Left NetworkChanged -> H.liftEffect do
+          window >>= \w -> do
+            alert (show NetworkChanged) w
+            location w >>= reload
         Left err -> H.modify_ $ const (LockFailed err)
         Right fundsLocked ->
           getDatum >>= case _ of
-            Left err -> H.modify_ $ const $ LockFailed err
+            Left err -> H.modify_ $ const (LockFailed err)
             Right new -> H.modify_ $ const (Locked new fundsLocked)
     Increment ->
       H.get >>= case _ of
@@ -129,6 +167,16 @@ component =
 
   render :: forall slots. State -> H.ComponentHTML Action slots m
   render = case _ of
+    Enabling ->
+      HH.main_
+        [ HH.text "Enabling wallet ..."
+        ]
+    EnableFailed err ->
+      HH.main_
+        [ HH.p
+            [ HP.class_ $ ClassName "error" ]
+            [ HH.text (show err) ]
+        ]
     ResumeFailed err ->
       HH.main_
         [ HH.p
