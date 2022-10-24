@@ -1,9 +1,8 @@
 module HelloWorld.Page.Home where
 
-import Prelude
+import Contract.Prelude
 
-import Data.Either (Either(..))
-import Data.Maybe (Maybe(..))
+import Contract.Transaction (TransactionInput)
 import Effect.Aff.Class (class MonadAff)
 import Halogen (ClassName(..))
 import Halogen as H
@@ -11,8 +10,9 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import HelloWorld.Capability.CardanoApi (class CardanoApi, enable)
-import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked, HelloWorldIncrement(..), getDatum, increment, lock, redeem, resume, unlock)
+import HelloWorld.Capability.HelloWorldApi (class HelloWorldApi, FundsLocked(..), HelloWorldIncrement(..), getDatum, increment, lock, redeem, resume, unlock)
 import HelloWorld.Error (HelloWorldBrowserError(..))
+import HelloWorld.Types (HelloWorldWallet)
 import Web.HTML (window)
 import Web.HTML.Location (reload)
 import Web.HTML.Window (alert, location)
@@ -22,151 +22,158 @@ data Action
   | Increment
   | Redeem
   | Resume
-  | Enable
+  | Enable HelloWorldWallet
 
-data State
-  = Enabling
+data HelloWorldBrowser
+  = Wallets (Array HelloWorldWallet)
+  | Enabling
   | EnableFailed HelloWorldBrowserError
   | Unlocked
   | Locking
   | LockFailed HelloWorldBrowserError
-  | Locked Int FundsLocked
-  | Incrementing Int Int
-  | IncrementFailed Int FundsLocked HelloWorldBrowserError
-  | Redeeming FundsLocked
-  | RedeemFailed Int FundsLocked HelloWorldBrowserError
+  | Locked
+  | Incrementing
+  | IncrementFailed HelloWorldBrowserError
+  | Redeeming
+  | RedeemFailed HelloWorldBrowserError
   | Unlocking
   | Resuming
   | ResumeFailed HelloWorldBrowserError
 
+type State =
+  { helloWorldBrowser :: HelloWorldBrowser
+  , lastOutput :: Maybe TransactionInput
+  , datum :: Int
+  , value :: FundsLocked
+  }
+
 helloWorldIncrement :: HelloWorldIncrement
 helloWorldIncrement = HelloWorldIncrement 2
+
+alertAndReload :: String -> Effect Unit
+alertAndReload err =
+  window >>= \w -> do
+    alert err w
+    location w >>= reload
 
 _doIncrement
   :: forall slots o m
    . MonadAff m
   => HelloWorldApi m
-  => Int
-  -> FundsLocked
+  => TransactionInput
   -> H.HalogenM State Action slots o m Unit
-_doIncrement datum fundsLocked = do
-  let HelloWorldIncrement inc = helloWorldIncrement
-  H.modify_ $ const (Incrementing datum (datum + inc))
-  result <- increment helloWorldIncrement
-  case result of
-    Left NetworkChanged -> H.liftEffect do
-      window >>= \w -> do
-        alert (show NetworkChanged) w
-        location w >>= reload
-    Left err -> H.modify_ $ const (IncrementFailed datum fundsLocked err)
-    Right _ -> getDatum >>= case _ of
-      Left NetworkChanged -> H.liftEffect do
-        window >>= \w -> do
-          alert (show NetworkChanged) w
-          location w >>= reload
-      Left err -> H.modify_ $ const (IncrementFailed datum fundsLocked err)
-      Right new -> do
-        H.modify_ $ const (Locked new fundsLocked)
+_doIncrement lastOutput = do
+  H.modify_ _ { helloWorldBrowser = Incrementing }
+  increment helloWorldIncrement lastOutput >>= case _ of
+    Left NetworkChanged -> H.liftEffect $ alertAndReload (show NetworkChanged)
+    Left err -> H.modify_ _ { helloWorldBrowser = IncrementFailed err }
+    Right lastOutput' -> getDatum lastOutput' >>= case _ of
+      Left NetworkChanged -> H.liftEffect $ alertAndReload (show NetworkChanged)
+      Left err -> H.modify_ _ { helloWorldBrowser = IncrementFailed err }
+      Right new -> H.modify_ _ { datum = new, lastOutput = Just lastOutput', helloWorldBrowser = Locked }
 
 _doRedeem
   :: forall slots o m
    . MonadAff m
   => HelloWorldApi m
-  => Int
-  -> FundsLocked
+  => TransactionInput
   -> H.HalogenM State Action slots o m Unit
-_doRedeem datum fundsLocked = do
-  H.modify_ $ const (Redeeming fundsLocked)
-  result <- redeem helloWorldIncrement
-  case result of
-    Left NetworkChanged -> H.liftEffect do
-      window >>= \w -> do
-        alert (show NetworkChanged) w
-        location w >>= reload
-    Left err -> handleError err
+_doRedeem lastOutput = do
+  H.modify_ _ { helloWorldBrowser = Redeeming }
+  redeem helloWorldIncrement lastOutput >>= case _ of
+    Left NetworkChanged -> H.liftEffect $ alertAndReload (show NetworkChanged)
+    Left err -> H.modify_ _ { helloWorldBrowser = RedeemFailed err }
     Right balanceBeforeRedeem -> do
-      H.modify_ $ const Unlocking
-      result' <- unlock balanceBeforeRedeem
-      case result' of
-        Left NetworkChanged -> H.liftEffect do
-          window >>= \w -> do
-            alert (show NetworkChanged) w
-            location w >>= reload
-        Left err -> handleError err
-        Right _ -> H.modify_ $ const Unlocked
-  where
-  handleError err = H.modify_ $ const (RedeemFailed datum fundsLocked err)
+      H.modify_ _ { helloWorldBrowser = Unlocking }
+      unlock balanceBeforeRedeem >>= case _ of
+        Left NetworkChanged -> H.liftEffect $ alertAndReload (show NetworkChanged)
+        Left err -> H.modify_ _ { helloWorldBrowser = RedeemFailed err }
+        Right _ -> H.modify_ _ { helloWorldBrowser = Unlocked, lastOutput = Nothing, datum = 0, value = FundsLocked 0.0 }
 
 component
   :: forall q o m
    . MonadAff m
   => CardanoApi m
   => HelloWorldApi m
-  => H.Component q Unit o m
+  => H.Component q HelloWorldBrowser o m
 component =
   H.mkComponent
-    { initialState: const Enabling
+    { initialState: \helloWorldBrowser ->
+        { helloWorldBrowser, lastOutput: Nothing, datum: 0, value: FundsLocked 0.0 }
     , render
     , eval:
         H.mkEval
           $ H.defaultEval
               { handleAction = handleAction
-              , initialize = Just Enable
               }
     }
   where
 
   handleAction :: forall slots. Action -> H.HalogenM State Action slots o m Unit
   handleAction = case _ of
-    Enable -> do
-      result <- enable
-      case result of
-        Left err -> H.modify_ $ const (EnableFailed err)
-        Right _ -> H.modify_ $ const Unlocked
+    Enable wallet -> do
+      H.modify_ _ { helloWorldBrowser = Enabling }
+      enable wallet >>= case _ of
+        Left err -> H.modify_ _ { helloWorldBrowser = EnableFailed err }
+        Right _ -> H.modify_ _ { helloWorldBrowser = Unlocked }
     Resume -> do
-      H.modify_ $ const Resuming
-      result <- resume helloWorldIncrement
-      case result of
-        Left NetworkChanged -> H.liftEffect do
-          window >>= \w -> do
-            alert (show NetworkChanged) w
-            location w >>= reload
-        Left err -> H.modify_ $ const (LockFailed err)
-        Right funds -> do
-          getDatum >>= case _ of
-            Left err -> H.modify_ $ const (ResumeFailed err)
-            Right new -> H.modify_ $ const (Locked new funds)
+      H.modify_ _ { helloWorldBrowser = Resuming }
+      resume helloWorldIncrement >>= case _ of
+        Left NetworkChanged -> H.liftEffect $ alertAndReload (show NetworkChanged)
+        Left err -> H.modify_ _ { helloWorldBrowser = LockFailed err }
+        Right (lastOutput /\ fundsLocked) ->
+          getDatum lastOutput >>= case _ of
+            Left err -> H.modify_ _ { helloWorldBrowser = ResumeFailed err }
+            Right new -> H.modify_ _ { lastOutput = Just lastOutput, helloWorldBrowser = Locked, datum = new, value = fundsLocked }
       -- TODO actually query funds locked
       pure unit
     Lock -> do
-      H.modify_ $ const Locking
-      let init = 1
-      result <- lock helloWorldIncrement init
-      case result of
-        Left NetworkChanged -> H.liftEffect do
-          window >>= \w -> do
-            alert (show NetworkChanged) w
-            location w >>= reload
-        Left err -> H.modify_ $ const (LockFailed err)
-        Right fundsLocked ->
-          getDatum >>= case _ of
-            Left err -> H.modify_ $ const (LockFailed err)
-            Right new -> H.modify_ $ const (Locked new fundsLocked)
-    Increment ->
-      H.get >>= case _ of
-        Locked datum fundsLocked -> _doIncrement datum fundsLocked
-        IncrementFailed datum fundsLocked _ -> _doIncrement datum fundsLocked
-        RedeemFailed datum fundsLocked _ -> _doIncrement datum fundsLocked
-        _ -> pure unit
-    Redeem ->
-      H.get >>= case _ of
-        Locked datum fundsLocked -> _doRedeem datum fundsLocked
-        IncrementFailed datum fundsLocked _ -> _doRedeem datum fundsLocked
-        RedeemFailed datum fundsLocked _ -> _doRedeem datum fundsLocked
-        _ -> pure unit
+      H.modify_ _ { helloWorldBrowser = Locking }
+      lock helloWorldIncrement 1 >>= case _ of
+        Left NetworkChanged -> H.liftEffect $ alertAndReload (show NetworkChanged)
+        Left err -> H.modify_ _ { helloWorldBrowser = LockFailed err }
+        Right (lastOutput /\ fundsLocked) ->
+          getDatum lastOutput >>= case _ of
+            Left err -> H.modify_ _ { helloWorldBrowser = LockFailed err }
+            Right new -> H.modify_ _ { lastOutput = Just lastOutput, helloWorldBrowser = Locked, datum = new, value = fundsLocked }
+    Increment -> do
+      { lastOutput, helloWorldBrowser } <- H.get
+      case lastOutput of
+        Nothing -> pure unit
+        Just lastOutput' -> case helloWorldBrowser of
+          Locked -> _doIncrement lastOutput'
+          IncrementFailed _ -> _doIncrement lastOutput'
+          RedeemFailed _ -> _doIncrement lastOutput'
+          _ -> pure unit
+    Redeem -> do
+      { lastOutput, helloWorldBrowser } <- H.get
+      case lastOutput of
+        Nothing -> pure unit
+        Just lastOutput' -> case helloWorldBrowser of
+          Locked -> _doRedeem lastOutput'
+          IncrementFailed _ -> _doRedeem lastOutput'
+          RedeemFailed _ -> _doRedeem lastOutput'
+          _ -> pure unit
 
   render :: forall slots. State -> H.ComponentHTML Action slots m
-  render = case _ of
+  render { helloWorldBrowser, datum, value } = case helloWorldBrowser of
+    Wallets wallets ->
+      HH.main_
+        [ if (null wallets) then
+            HH.p
+              [ HP.class_ $ ClassName "error"
+              ]
+              [ HH.text "No wallets found, please install at least one wallet and retry." ]
+          else
+            HH.dt_
+              ( wallets <#> \wallet ->
+                  HH.dd_
+                    [ HH.button
+                        [ HE.onClick $ \_ -> Enable wallet ]
+                        [ HH.text $ "Use " <> (show wallet) ]
+                    ]
+              )
+        ]
     Enabling ->
       HH.main_
         [ HH.text "Enabling wallet ..."
@@ -232,25 +239,30 @@ component =
             [ HH.text "Resume"
             ]
         ]
-    Locked datum fundsLocked ->
+    Locked ->
       HH.main_
-        [ lockedView datum fundsLocked
+        [ lockedView
         ]
-    Incrementing from to ->
+    Incrementing -> do
+      let HelloWorldIncrement inc = helloWorldIncrement
       HH.main_
-        [ HH.text $ "Incrementing from " <> show from <> " to " <> show to <> " ..." ]
-    IncrementFailed datum fundsLocked err ->
+        [ HH.text $ "Incrementing from " <> show datum <> " to " <> show (datum + inc) <> " ..." ]
+    IncrementFailed err ->
       HH.main_
-        [ HH.text $ show err
-        , lockedView datum fundsLocked
+        [ HH.p
+            [ HP.class_ $ ClassName "error" ]
+            [ HH.text (show err) ]
+        , lockedView
         ]
-    Redeeming funds ->
+    Redeeming ->
       HH.main_
-        [ HH.text $ "Redeeming " <> show funds <> " ADA ..." ]
-    RedeemFailed datum fundsLocked err ->
+        [ HH.text $ "Redeeming " <> show value <> " ADA ..." ]
+    RedeemFailed err ->
       HH.main_
-        [ HH.text $ show err
-        , lockedView datum fundsLocked
+        [ HH.p
+            [ HP.class_ $ ClassName "error" ]
+            [ HH.text (show err) ]
+        , lockedView
         ]
     Unlocking ->
       HH.main_
@@ -259,7 +271,7 @@ component =
             [ HH.text $ "Unlocking funds ..." ]
         ]
     where
-    lockedView datum fundsLocked =
+    lockedView =
       HH.table_
         [ HH.thead_
             [ HH.tr_
@@ -270,7 +282,7 @@ component =
         , HH.tbody_
             [ HH.tr_
                 [ HH.td [ HP.id "current-value-body" ] [ HH.text $ show datum ]
-                , HH.td [ HP.id "funds-locked-body" ] [ HH.text $ show fundsLocked <> " ADA" ]
+                , HH.td [ HP.id "funds-locked-body" ] [ HH.text $ show value <> " ADA" ]
                 ]
             ]
         , HH.tfoot_

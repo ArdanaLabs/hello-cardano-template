@@ -37,16 +37,16 @@ module HelloWorld.Test.NamiWallet
 
 import Contract.Prelude
 
-import Contract.Test.E2E (Mode(..), RunningExample, TestOptions(..), WalletConfig(..), WalletExt(..), WalletPassword, delaySec, namiConfirmAccess, walletName, withExample)
+import Contract.Test.E2E (Mode(..), RunningExample, TestOptions(..), WalletConfig(..), WalletExt(..), WalletPassword, delaySec, walletName, withExample)
 import Contract.Test.E2E.Helpers (ExtensionId(..))
-import Data.Array (filterA, head)
+import Data.Array (head)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.String (Pattern(..), trim)
 import Data.String as String
 import Effect (Effect)
-import Effect.Aff (bracket, try)
+import Effect.Aff (bracket, catchError, try)
 import Effect.Exception (throw)
 import Faucet as Faucet
 import Foreign (Foreign, unsafeFromForeign)
@@ -204,9 +204,6 @@ jQueryCount selector page = unsafeFromForeign <$> doJQ selector (wrap "length")
 hasSelector :: Selector -> T.Page -> Aff Boolean
 hasSelector selector page = (_ > 0) <$> jQueryCount selector page
 
-button :: Selector
-button = wrap "button"
-
 findWalletPage :: ExtensionId -> T.Browser -> Aff (Maybe T.Page)
 findWalletPage (ExtensionId extId) browser = do
   pages <- T.pages browser
@@ -252,7 +249,7 @@ inWalletPage
   -> (T.Page -> Aff a)
   -> Aff a
 inWalletPage extId { browser, jQuery } cont = do
-  page <- waitForWalletPage extId 10.0 browser
+  page <- waitForWalletPage extId 60.0 browser
   injectJQuery page jQuery
   cont page
 
@@ -280,8 +277,13 @@ reactSetValue selector value page = do
 namiSign' :: RunningExample -> Aff Unit
 namiSign' = namiSign namiExtensionId namiWalletPassword
 
+namiConfirmAccess :: ExtensionId -> RunningExample -> Aff Unit
+namiConfirmAccess extId re =
+  inWalletPage extId re \nami ->
+    clickButton "Access" nami
+
 namiConfirmAccess' :: RunningExample -> Aff Unit
-namiConfirmAccess' = namiConfirmAccess namiExtensionId
+namiConfirmAccess' re = catchError (namiConfirmAccess namiExtensionId re) (const $ pure unit)
 
 -- | Build a primitive jQuery expression like '$("button").click()' and
 -- | out of a selector and action and evaluate it in Toppokki

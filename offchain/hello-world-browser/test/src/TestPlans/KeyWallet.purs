@@ -2,7 +2,6 @@ module HelloWorld.Test.TestPlans.KeyWallet where
 
 import Contract.Prelude
 
-import HelloWorld.Test.Constants as Constants
 import HelloWorld.Test.KeyWallet (mkTestOptions)
 import HelloWorld.Test.TestPlans.KeyWallet.Increment as TestPlanIncrement
 import HelloWorld.Test.TestPlans.KeyWallet.Initialize as TestPlanInitialize
@@ -17,7 +16,7 @@ runTestPlans = do
   testOptions2 <- liftEffect mkTestOptions
   testOptions3 <- liftEffect mkTestOptions
   Utils.interpret'
-    (SpecRunner.defaultConfig { timeout = pure $ wrap Constants.specRunnerTimeoutMs })
+    (SpecRunner.defaultConfig { timeout = Nothing })
     ( group "Key wallet" do
         TestPlanInitialize.testPlan testOptions1
         TestPlanIncrement.testPlan testOptions2

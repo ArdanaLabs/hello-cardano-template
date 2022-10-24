@@ -2,9 +2,8 @@ module HelloWorld.Test.TestPlans.NamiWallet.Redeem where
 
 import Contract.Prelude
 
-import Contract.Test.E2E (TestOptions, WalletExt(..), delaySec)
+import Contract.Test.E2E (TestOptions, WalletExt(..))
 import Data.String (Pattern(..), contains)
-import HelloWorld.Test.Constants as Constants
 import HelloWorld.Test.Helpers (clickButton, injectJQuery)
 import HelloWorld.Test.NamiWallet (namiConfirmAccess', namiSign', runE2ETest)
 import Mote (group)
@@ -20,15 +19,16 @@ testPlan testOptions = group "When redeem button is clicked" do
 
     injectJQuery example.jQuery page
 
-    clickButton "Initialize" page
+    clickButton "Use Nami" page
 
     namiConfirmAccess' example
 
-    delaySec Constants.threeSeconds
+    void $ T.pageWaitForSelector (T.Selector "#lock") { timeout: 0 } page
+    clickButton "Initialize" page
 
     namiSign' example
 
-    void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: Constants.timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: 0 } page
     clickButton "Redeem" page
 
     content <- T.content page
@@ -40,20 +40,21 @@ testPlan testOptions = group "When redeem button is clicked" do
 
     injectJQuery example.jQuery page
 
-    clickButton "Initialize" page
+    clickButton "Use Nami" page
 
     namiConfirmAccess' example
 
-    delaySec Constants.threeSeconds
+    void $ T.pageWaitForSelector (T.Selector "#lock") { timeout: 0 } page
+    clickButton "Initialize" page
 
     namiSign' example
 
-    void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: Constants.timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: 0 } page
     clickButton "Redeem" page
 
     namiSign' example
 
-    void $ T.pageWaitForSelector (T.Selector "#unlocking") { timeout: Constants.timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#unlocking") { timeout: 0 } page
 
     content <- T.content page
     Assert.assert "Unlocking funds" (contains (Pattern "Unlocking funds ...") content)
@@ -64,17 +65,18 @@ testPlan testOptions = group "When redeem button is clicked" do
 
     injectJQuery example.jQuery page
 
-    clickButton "Initialize" page
+    clickButton "Use Nami" page
 
     namiConfirmAccess' example
 
-    delaySec Constants.threeSeconds
+    void $ T.pageWaitForSelector (T.Selector "#lock") { timeout: 0 } page
+    clickButton "Initialize" page
 
     namiSign' example
 
-    void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: Constants.timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#redeem") { timeout: 0 } page
     clickButton "Redeem" page
 
     namiSign' example
 
-    void $ T.pageWaitForSelector (T.Selector "#lock") { timeout: Constants.timeoutMs } page
+    void $ T.pageWaitForSelector (T.Selector "#lock") { timeout: 0 } page

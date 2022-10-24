@@ -1,24 +1,15 @@
 module HelloWorld.Store where
 
-import Contract.Monad (ConfigParams)
-import Contract.Transaction (TransactionInput)
 import Data.Maybe (Maybe(..))
+import HelloWorld.Types (ContractConfig)
 
 type Store =
-  { contractConfig :: ConfigParams ()
-  , lastOutput :: Maybe TransactionInput
+  { contractConfig :: Maybe ContractConfig
   }
 
-data Action
-  = SetContractConfig (ConfigParams ())
-  | SetLastOutput TransactionInput
-  | ResetLastOutput
+data Action = SetContractConfig ContractConfig
 
 reduce :: Store -> Action -> Store
 reduce store = case _ of
-  SetLastOutput lastOutput ->
-    store { lastOutput = Just lastOutput }
-  ResetLastOutput ->
-    store { lastOutput = Nothing }
   SetContractConfig contractConfig ->
-    store { contractConfig = contractConfig }
+    store { contractConfig = Just contractConfig }

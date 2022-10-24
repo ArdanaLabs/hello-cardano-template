@@ -3,7 +3,6 @@ module HelloWorld.Test.TestPlans.NamiWallet where
 import Contract.Prelude
 
 import Control.Parallel (parTraverse_)
-import HelloWorld.Test.Constants as Constants
 import HelloWorld.Test.NamiWallet (mkTestOptions, testWallet1, testWallet2, testWallet3, topup)
 import HelloWorld.Test.TestPlans.NamiWallet.Increment as TestPlanIncrement
 import HelloWorld.Test.TestPlans.NamiWallet.Initialize as TestPlanInitialize
@@ -25,7 +24,7 @@ runTestPlans = do
   testOptions3 <- liftEffect $ mkTestOptions wallet3
 
   Utils.interpret'
-    (SpecRunner.defaultConfig { timeout = pure $ wrap Constants.specRunnerTimeoutMs })
+    (SpecRunner.defaultConfig { timeout = Nothing })
     ( group "Nami wallet" do
         TestPlanInitialize.testPlan testOptions1
         TestPlanIncrement.testPlan testOptions2

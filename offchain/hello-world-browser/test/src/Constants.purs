@@ -17,17 +17,11 @@ namiWalletPassword = wrap "ctlctlctl"
 namiExtensionId :: ExtensionId
 namiExtensionId = ExtensionId "lpfcbjknijpeeillifnkikgncikgfhdo"
 
-timeoutMs :: Int
-timeoutMs = 240_000_000
-
 threeSeconds :: Number
 threeSeconds = 3.0
 
 tenSeconds :: Number
 tenSeconds = 10.0
-
-specRunnerTimeoutMs :: Number
-specRunnerTimeoutMs = 600_000.0
 
 newtype PaymentAddress = PaymentAddress String
 
