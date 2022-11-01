@@ -189,6 +189,10 @@ in
     services.ctl-runtime = {
       enable = true;
     };
-    #TODO propagate ctl runtimeconfig
+    services.cardano-ogmios = {
+      port = cfg.ctlRuntimeConfig.local.ogmiosConfig.port;
+      hostAddr = cfg.ctlRuntimeConfig.local.ogmiosConfig.host;
+    };
+    services.ogmios-datum-cache.port = cfg.ctlRuntimeConfig.local.datumCacheConfig.port;
   };
 }
