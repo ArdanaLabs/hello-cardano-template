@@ -42,7 +42,7 @@ in
               };
               port = mkOption {
                 type = types.port;
-                example = 1337;
+                default = 443;
                 description = mdDoc ''
                   Public ogmios service host port.
                   If not set, only the host URL will be used.
@@ -59,8 +59,7 @@ in
               };
               port = mkOption {
                 type = types.port;
-                default = null;
-                example = 9999;
+                default = 443;
                 description = mdDoc ''
                   Public ogmios datum cache service host port.
                   If not set, only the host URL will be used.
@@ -70,7 +69,6 @@ in
             ctlServerConfig = {
               host = mkOption {
                 type = types.str;
-                default = null;
                 example = "https://ctl.example.com";
                 description = mdDoc ''
                   Public CTL server host address.
@@ -78,8 +76,7 @@ in
               };
               port = mkOption {
                 type = types.port;
-                default = null;
-                example = 8081;
+                default = 443;
                 description = mdDoc ''
                   Public CTL server host port.
                   If not set, only the host URL will be used.
