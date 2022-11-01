@@ -29,58 +29,128 @@ in
     };
 
     ctlRuntimeConfig = {
-      ogmiosConfig = {
-        host = mkOption {
-          type = types.str;
-          default = "127.0.0.0";
-          example = "ogmios-service.com";
-          description = mdDoc ''
-            Ogmios service host address.
-          '';
-        };
-        port = mkOption {
-          type = types.port;
-          default = 1337;
-          example = 1337;
-          description = mdDoc ''
-            Ogmios service host port.
-          '';
-        };
+      public = mkOption {
+        type = types.nullOr (types.submodule {
+          options = {
+            ogmiosConfig = {
+              host = mkOption {
+                type = types.str;
+                example = "https://ogmios.example.com";
+                description = mdDoc ''
+                  Public ogmios service host address.
+                '';
+              };
+              port = mkOption {
+                type = types.port;
+                example = 1337;
+                description = mdDoc ''
+                  Public ogmios service host port.
+                  If not set, only the host URL will be used.
+                '';
+              };
+            };
+            datumCacheConfig = {
+              host = mkOption {
+                type = types.str;
+                example = "https://odt.example.com";
+                description = mdDoc ''
+                  Public ogmios datum cache service host address.
+                '';
+              };
+              port = mkOption {
+                type = types.port;
+                default = null;
+                example = 9999;
+                description = mdDoc ''
+                  Public ogmios datum cache service host port.
+                  If not set, only the host URL will be used.
+                '';
+              };
+            };
+            ctlServerConfig = {
+              host = mkOption {
+                type = types.str;
+                default = null;
+                example = "https://ctl.example.com";
+                description = mdDoc ''
+                  Public CTL server host address.
+                '';
+              };
+              port = mkOption {
+                type = types.port;
+                default = null;
+                example = 8081;
+                description = mdDoc ''
+                  Public CTL server host port.
+                  If not set, only the host URL will be used.
+                '';
+              };
+            };
+          };
+        });
+        default = null;
+        description = mdDoc ''
+          The public options allow specifying the public host and port
+          of the CTL runtime dependencies, if they are deployed behind
+          a reverse proxy. These public options will be used to configure
+          client such that it uses the public addresses. The analogous
+          local options can then then be used to configure the reverse proxy.
+        '';
       };
-      datumCacheConfig = {
-        host = mkOption {
-          type = types.str;
-          default = "127.0.0.0";
-          example = "odt-service.com";
-          description = mdDoc ''
-            Ogmios datum cache service host address.
-          '';
+      local = {
+        ogmiosConfig = {
+          host = mkOption {
+            type = types.str;
+            default = "127.0.0.0";
+            example = "ogmios-service.com";
+            description = mdDoc ''
+              Ogmios service host address.
+            '';
+          };
+          port = mkOption {
+            type = types.port;
+            default = 1337;
+            example = 1337;
+            description = mdDoc ''
+              Ogmios service host port.
+            '';
+          };
         };
-        port = mkOption {
-          type = types.port;
-          default = 9999;
-          example = 9999;
-          description = mdDoc ''
-            Ogmios datum cache service host port.
-          '';
+        datumCacheConfig = {
+          host = mkOption {
+            type = types.str;
+            default = "127.0.0.0";
+            example = "odt-service.com";
+            description = mdDoc ''
+              Ogmios datum cache service host address.
+            '';
+          };
+          port = mkOption {
+            type = types.port;
+            default = 9999;
+            example = 9999;
+            description = mdDoc ''
+              Ogmios datum cache service host port.
+            '';
+          };
         };
-      };
-      ctlServerConfig = {
-        host = mkOption {
-          type = types.str;
-          default = "127.0.0.0";
-          example = "ctl-server.com";
-          description = mdDoc ''
-            CTL server host address.
-          '';
-        };
-        port = mkOption {
-          type = types.port;
-          default = 8081;
-          example = 8081;
-          description = mdDoc ''
-            CTL server host port.
-          '';
+        ctlServerConfig = {
+          host = mkOption {
+            type = types.str;
+            default = "127.0.0.0";
+            example = "ctl-server.com";
+            description = mdDoc ''
+              CTL server host address.
+            '';
+          };
+          port = mkOption {
+            type = types.port;
+            default = 8081;
+            example = 8081;
+            description = mdDoc ''
+              CTL server host port.
+            '';
+          };
         };
       };
     };
@@ -91,12 +161,19 @@ in
 
     systemd.services.hello-world =
       let
-        packageWithCtlRuntimeConfig = pkgs.runCommand "package-with-ctl-runtime-config" { } ''
-          mkdir -p $out/dist
-          echo '${builtins.toJSON cfg.ctlRuntimeConfig}' > $out/dist/ctl-runtime-config.json
-          cp -r ${cfg.package}/* $out/
-          ls -lisa $out/dist
-        '';
+        packageWithCtlRuntimeConfig =
+          let
+            ctlRuntimeConfig =
+              if builtins.isNull cfg.ctlRuntimeConfig.public
+              then cfg.ctlRuntimeConfig.local
+              else cfg.ctlRuntimeConfig.public;
+          in
+          pkgs.runCommand "package-with-ctl-runtime-config" { } ''
+            mkdir -p $out/dist
+            echo '${builtins.toJSON ctlRuntimeConfig}' > $out/dist/ctl-runtime-config.json
+            cp -r ${cfg.package}/* $out/
+            ls -lisa $out/dist
+          '';
       in
       {
         description = "hello-world";
@@ -112,6 +189,9 @@ in
         ];
       };
 
-    services.ctl-runtime.enable = true;
+    services.ctl-runtime = {
+      enable = true;
+    };
+    #TODO propagate ctl runtimeconfig
   };
 }
