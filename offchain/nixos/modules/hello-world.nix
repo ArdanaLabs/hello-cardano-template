@@ -124,8 +124,7 @@ in
           };
           port = mkOption {
             type = types.port;
-            default = 9999;
-            example = 9999;
+            default = 8888;
             description = mdDoc ''
               Ogmios datum cache service host port.
             '';
@@ -169,7 +168,6 @@ in
             mkdir -p $out/dist
             echo '${builtins.toJSON ctlRuntimeConfig}' > $out/dist/ctl-runtime-config.json
             cp -r ${cfg.package}/* $out/
-            cat $out/dist/ctl-runtime-config.json
           '';
       in
       {

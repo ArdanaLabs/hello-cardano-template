@@ -20,8 +20,7 @@ in
 
     port = mkOption {
       type = types.port;
-      default = 9999;
-      example = 9999;
+      default = 8889;
       description = ''
         Port to listen on.
       '';
