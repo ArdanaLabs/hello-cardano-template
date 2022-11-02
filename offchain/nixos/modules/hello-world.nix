@@ -192,5 +192,6 @@ in
       hostAddr = cfg.ctlRuntimeConfig.local.ogmiosConfig.host;
     };
     services.ogmios-datum-cache.port = cfg.ctlRuntimeConfig.local.datumCacheConfig.port;
+    services.ctl-server.port = cfg.ctlRuntimeConfig.local.ctlServerConfig.port;
   };
 }
