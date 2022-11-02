@@ -5,7 +5,7 @@ module Main
 
 import Contract.Prelude
 
-import Aeson (printJsonDecodeError, JsonDecodeError, decodeJsonString)
+import Aeson (printJsonDecodeError, JsonDecodeError, decodeJsonString, encodeAeson)
 import Affjax (get, printError)
 import Affjax.ResponseFormat (string)
 import Affjax.StatusCode (StatusCode(StatusCode))
@@ -15,7 +15,7 @@ import Contract.Wallet (WalletSpec(..))
 import Ctl.Internal.Cardano.TextEnvelope (TextEnvelopeType(..), printTextEnvelopeDecodeError, textEnvelopeBytes)
 import Data.Bifunctor (lmap)
 import Effect (Effect)
-import Effect.Class.Console (warn)
+import Effect.Class.Console (warn, info)
 import Effect.Exception (error, throw)
 import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
@@ -48,7 +48,7 @@ getConfigParams = do
                 <> "Falling back to the default configuration."
               warn $ show response
               pure testnetConfig
-            Right ctlRuntimeConfig ->
+            Right ctlRuntimeConfig -> do
               pure $ testnetConfig
                 { ogmiosConfig = ctlRuntimeConfig.ogmiosConfig
                 , datumCacheConfig = ctlRuntimeConfig.datumCacheConfig
@@ -88,6 +88,9 @@ main =
         { contractConfig
         , lastOutput: Nothing
         }
+    info $ "using the following config params" <> show (encodeAeson contractConfig.ogmiosConfig)
+    info $ "using the following config params" <> show (encodeAeson contractConfig.datumCacheConfig)
+                
     rootComponent <- runAppM store Home.component
     runUI rootComponent unit body
 
