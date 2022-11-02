@@ -15,7 +15,7 @@ import Contract.Wallet (WalletSpec(..))
 import Ctl.Internal.Cardano.TextEnvelope (TextEnvelopeType(..), printTextEnvelopeDecodeError, textEnvelopeBytes)
 import Data.Bifunctor (lmap)
 import Effect (Effect)
-import Effect.Class.Console (warn, info)
+import Effect.Class.Console (warn)
 import Effect.Exception (error, throw)
 import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
@@ -88,8 +88,8 @@ main =
         { contractConfig
         , lastOutput: Nothing
         }
-    info $ "using the following config params" <> show (encodeAeson contractConfig.ogmiosConfig)
-    info $ "using the following config params" <> show (encodeAeson contractConfig.datumCacheConfig)
+    warn $ "using the following config params" <> show (encodeAeson contractConfig.ogmiosConfig)
+    warn $ "using the following config params" <> show (encodeAeson contractConfig.datumCacheConfig)
                 
     rootComponent <- runAppM store Home.component
     runUI rootComponent unit body
