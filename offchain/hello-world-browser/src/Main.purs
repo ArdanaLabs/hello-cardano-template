@@ -9,7 +9,7 @@ import Aeson (printJsonDecodeError, JsonDecodeError, decodeJsonString)
 import Affjax (get, printError)
 import Affjax.ResponseFormat (string)
 import Affjax.StatusCode (StatusCode(StatusCode))
-import Contract.Config (NetworkId(..), PrivatePaymentKey(..), PrivatePaymentKeySource(..), PrivateStakeKey(..), PrivateStakeKeySource(..), privateKeyFromBytes, testnetConfig, testnetNamiConfig)
+import Contract.Config (NetworkId(..), PrivatePaymentKey(..), PrivatePaymentKeySource(..), PrivateStakeKey(..), PrivateStakeKeySource(..), privateKeyFromBytes, testnetConfig)
 import Contract.Monad (ConfigParams, ServerConfig)
 import Contract.Wallet (WalletSpec(..))
 import Ctl.Internal.Cardano.TextEnvelope (TextEnvelopeType(..), printTextEnvelopeDecodeError, textEnvelopeBytes)
@@ -70,18 +70,24 @@ getConfigParams = do
 main :: Effect Unit
 main =
   HA.runHalogenAff do
+    configParams <- getConfigParams
     body <- HA.awaitBody
     contractConfig <- useKeyWallet >>= case _ of
       true -> do
-        configParams <- getConfigParams
         walletSpec <- loadWalletSpec
         networkId <- loadNetworkId
         -- the mainnetConfig is defined as `testnetConfig { networkId = MainnetId }` in CTL
+        -- see https://github.com/Plutonomicon/cardano-transaction-lib/blob/886ac0a08989e5c4928f907f3f86448e8836c799/src/Contract/Config.purs#L86
         pure $ configParams
           { walletSpec = Just walletSpec
           , networkId = networkId
           }
-      false -> pure $ testnetNamiConfig { logLevel = Warn }
+      -- the testnetNamiConfig/ mainnetNamiConfig is defined as `testnetConfig { walletSpec = Just ConnectToNami }` in CTL
+      -- see https://github.com/Plutonomicon/cardano-transaction-lib/blob/886ac0a08989e5c4928f907f3f86448e8836c799/src/Contract/Config.purs#L89
+      false -> pure $ configParams
+        { walletSpec = Just ConnectToNami
+        , logLevel = Warn
+        }
     let
       store =
         { contractConfig
