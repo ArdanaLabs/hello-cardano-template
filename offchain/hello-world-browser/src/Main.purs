@@ -70,25 +70,20 @@ getConfigParams = do
 main :: Effect Unit
 main =
   HA.runHalogenAff do
-    configParams <- getConfigParams
     body <- HA.awaitBody
-    contractConfig <- useKeyWallet >>= case _ of
-      true -> do
-        walletSpec <- loadWalletSpec
-        networkId <- loadNetworkId
-        -- the mainnetConfig is defined as `testnetConfig { networkId = MainnetId }` in CTL
-        -- see https://github.com/Plutonomicon/cardano-transaction-lib/blob/886ac0a08989e5c4928f907f3f86448e8836c799/src/Contract/Config.purs#L86
-        pure $ configParams
-          { walletSpec = Just walletSpec
-          , networkId = networkId
-          }
-      -- the testnetNamiConfig/ mainnetNamiConfig is defined as `testnetConfig { walletSpec = Just ConnectToNami }` in CTL
-      -- see https://github.com/Plutonomicon/cardano-transaction-lib/blob/886ac0a08989e5c4928f907f3f86448e8836c799/src/Contract/Config.purs#L89
-      false -> pure $ configParams
-        { walletSpec = Just ConnectToNami
+
+    -- the mainnetConfig is defined as `testnetConfig { networkId = MainnetId }` in CTL
+    -- see https://github.com/Plutonomicon/cardano-transaction-lib/blob/886ac0a08989e5c4928f907f3f86448e8836c799/src/Contract/Config.purs#L86
+    configParams <- getConfigParams
+    walletSpec <- loadWalletSpec
+    networkId <- loadNetworkId
+
+    let
+      contractConfig = configParams
+        { walletSpec = Just walletSpec
+        , networkId = networkId
         , logLevel = Warn
         }
-    let
       store =
         { contractConfig
         , lastOutput: Nothing
@@ -102,21 +97,24 @@ useKeyWallet =
 
 loadWalletSpec :: Aff WalletSpec
 loadWalletSpec = do
-  mPaymentKeyStr <- getCookie "paymentKey"
-  paymentKeyStr <- liftM (error "payment key not found in the cookie") mPaymentKeyStr
-  paymentKeyBytes <- liftEither $ lmap (error <<< printTextEnvelopeDecodeError) $
-    textEnvelopeBytes paymentKeyStr PaymentSigningKeyShelleyed25519
-  paymentKey <- liftM (error "Unable to decode private payment key")
-    $ PrivatePaymentKey
-    <$> privateKeyFromBytes (wrap paymentKeyBytes)
+  useKeyWallet >>= case _ of
+    false -> pure ConnectToNami
+    true -> do
+      mPaymentKeyStr <- getCookie "paymentKey"
+      paymentKeyStr <- liftM (error "payment key not found in the cookie") mPaymentKeyStr
+      paymentKeyBytes <- liftEither $ lmap (error <<< printTextEnvelopeDecodeError) $
+        textEnvelopeBytes paymentKeyStr PaymentSigningKeyShelleyed25519
+      paymentKey <- liftM (error "Unable to decode private payment key")
+        $ PrivatePaymentKey
+        <$> privateKeyFromBytes (wrap paymentKeyBytes)
 
-  getCookie "stakeKey" >>= case _ of
-    Nothing -> pure $ UseKeys (PrivatePaymentKeyValue paymentKey) Nothing
-    Just stakeKeyStr -> do
-      stakeKeyBytes <- liftEither $ lmap (error <<< printTextEnvelopeDecodeError) $
-        textEnvelopeBytes stakeKeyStr StakeSigningKeyShelleyed25519
-      let stakeKey = PrivateStakeKey <$> privateKeyFromBytes (wrap stakeKeyBytes)
-      pure $ UseKeys (PrivatePaymentKeyValue paymentKey) (PrivateStakeKeyValue <$> stakeKey)
+      getCookie "stakeKey" >>= case _ of
+        Nothing -> pure $ UseKeys (PrivatePaymentKeyValue paymentKey) Nothing
+        Just stakeKeyStr -> do
+          stakeKeyBytes <- liftEither $ lmap (error <<< printTextEnvelopeDecodeError) $
+            textEnvelopeBytes stakeKeyStr StakeSigningKeyShelleyed25519
+          let stakeKey = PrivateStakeKey <$> privateKeyFromBytes (wrap stakeKeyBytes)
+          pure $ UseKeys (PrivatePaymentKeyValue paymentKey) (PrivateStakeKeyValue <$> stakeKey)
 
 loadNetworkId :: Aff NetworkId
 loadNetworkId = do
