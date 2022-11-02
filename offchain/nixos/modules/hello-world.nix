@@ -169,7 +169,7 @@ in
             mkdir -p $out/dist
             echo '${builtins.toJSON ctlRuntimeConfig}' > $out/dist/ctl-runtime-config.json
             cp -r ${cfg.package}/* $out/
-            ls -lisa $out/dist
+            cat $out/dist/ctl-runtime-config.json
           '';
       in
       {
