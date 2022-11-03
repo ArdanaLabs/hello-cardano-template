@@ -28,128 +28,63 @@ in
       '';
     };
 
-    ctlRuntimeConfig = {
-      public = mkOption {
-        type = types.nullOr (types.submodule {
-          options = {
-            ogmiosConfig = {
-              host = mkOption {
-                type = types.str;
-                example = "https://ogmios.example.com";
-                description = mdDoc ''
-                  Public ogmios service host address.
-                '';
-              };
-              port = mkOption {
-                type = types.port;
-                default = 443;
-                description = mdDoc ''
-                  Public ogmios service host port.
-                  If not set, only the host URL will be used.
-                '';
-              };
-            };
-            datumCacheConfig = {
-              host = mkOption {
-                type = types.str;
-                example = "https://odt.example.com";
-                description = mdDoc ''
-                  Public ogmios datum cache service host address.
-                '';
-              };
-              port = mkOption {
-                type = types.port;
-                default = 443;
-                description = mdDoc ''
-                  Public ogmios datum cache service host port.
-                  If not set, only the host URL will be used.
-                '';
-              };
-            };
-            ctlServerConfig = {
-              host = mkOption {
-                type = types.str;
-                example = "https://ctl.example.com";
-                description = mdDoc ''
-                  Public CTL server host address.
-                '';
-              };
-              port = mkOption {
-                type = types.port;
-                default = 443;
-                description = mdDoc ''
-                  Public CTL server host port.
-                  If not set, only the host URL will be used.
-                '';
-              };
-            };
-          };
-        });
-        default = null;
-        description = mdDoc ''
-          The public options allow specifying the public host and port
-          of the CTL runtime dependencies, if they are deployed behind
-          a reverse proxy. These public options will be used to configure
-          client such that it uses the public addresses. The analogous
-          local options can then then be used to configure the reverse proxy.
-        '';
-      };
-      local = {
-        ogmiosConfig = {
+    ctlRuntimeConfig =
+      let
+        serverConfig = {
           host = mkOption {
             type = types.str;
-            default = "127.0.0.0";
-            example = "ogmios-service.com";
+            example = "service.example.com";
             description = mdDoc ''
-              Ogmios service host address.
+              Service host address.
             '';
           };
           port = mkOption {
             type = types.port;
-            default = 1337;
-            example = 1337;
+            default = 443;
             description = mdDoc ''
-              Ogmios service host port.
+              Service port.
+            '';
+          };
+          secure = mkOption {
+            type = types.bool;
+            default = true;
+            description = mdDoc ''
+              Whether to use https or not.
+            '';
+          };
+          path = mkOption {
+            type = types.path;
+            default = "/";
+            description = mdDoc ''
+              Path segment of service URI address.
             '';
           };
         };
-        datumCacheConfig = {
-          host = mkOption {
-            type = types.str;
-            default = "127.0.0.0";
-            example = "odt-service.com";
-            description = mdDoc ''
-              Ogmios datum cache service host address.
-            '';
-          };
-          port = mkOption {
-            type = types.port;
-            default = 8888;
-            description = mdDoc ''
-              Ogmios datum cache service host port.
-            '';
-          };
+        ctlRuntimeOptions = {
+          ogmiosConfig = serverConfig;
+          datumCacheConfig = serverConfig;
+          ctlServerConfig = serverConfig;
         };
-        ctlServerConfig = {
-          host = mkOption {
-            type = types.str;
-            default = "127.0.0.0";
-            example = "ctl-server.com";
-            description = mdDoc ''
-              CTL server host address.
-            '';
-          };
-          port = mkOption {
-            type = types.port;
-            default = 8081;
-            example = 8081;
-            description = mdDoc ''
-              CTL server host port.
-            '';
-          };
+
+      in
+      {
+        public = mkOption {
+          type = types.nullOr (types.submodule { options = ctlRuntimeOptions; });
+          default = null;
+          description = mdDoc ''
+            The `url` options of can be used to configure
+            the hello-world client code such that it uses these public URLs
+            of the runtime services. You want to set these options e.g. 
+            when the CTL runtime is deployed behind a reverse proxy.
+            The analogous local options can then then be used
+            to configure the reverse proxy to point to the actual local
+            location.
+          '';
+        };
+        local = mkOption {
+          type = types.submodule { options = ctlRuntimeOptions; };
         };
       };
-    };
 
   };
 
