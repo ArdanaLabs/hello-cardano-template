@@ -40,7 +40,6 @@ in
           };
           port = mkOption {
             type = types.port;
-            default = 443;
             description = mdDoc ''
               Service port.
             '';

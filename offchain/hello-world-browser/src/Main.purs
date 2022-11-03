@@ -90,7 +90,7 @@ main =
         }
     warn $ "using the following config params" <> show (encodeAeson contractConfig.ogmiosConfig)
     warn $ "using the following config params" <> show (encodeAeson contractConfig.datumCacheConfig)
-                
+
     rootComponent <- runAppM store Home.component
     runUI rootComponent unit body
 
