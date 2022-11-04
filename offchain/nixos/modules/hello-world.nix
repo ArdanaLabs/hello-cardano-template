@@ -52,10 +52,10 @@ in
             '';
           };
           path = mkOption {
-            type = types.path;
-            default = "/";
+            type = types.str;
+            default = "";
             description = mdDoc ''
-              Path segment of service URI address.
+              Path segment of service URI address (relative).
             '';
           };
         };
