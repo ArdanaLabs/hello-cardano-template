@@ -33,22 +33,25 @@ in
     };
 
     blockFetcher = {
-      firstBlock = {
-        slot = mkOption {
-          type = types.ints.positive;
-          default = 61625527;
-          description = ''
-            The first blocks slot.
-          '';
-        };
+      firstBlock = mkOption {
+        type = types.nullOr (types.submodule {
+          slot = mkOption {
+            type = types.ints.positive;
+            default = 61625527;
+            description = ''
+              The first blocks slot.
+            '';
+          };
 
-        blockHash = mkOption {
-          type = types.str;
-          default = "3afd8895c7b270f8250b744ec8d2b3c53ee2859c9d5711d906c47fe51b800988";
-          description = ''
-            The first blocks id hash.
-          '';
-        };
+          blockHash = mkOption {
+            type = types.str;
+            value = "3afd8895c7b270f8250b744ec8d2b3c53ee2859c9d5711d906c47fe51b800988";
+            description = ''
+              The first blocks id hash.
+            '';
+          };
+        });
+        default = null;
       };
 
       filter = mkOption {
@@ -103,7 +106,7 @@ in
 
     systemd.services.ogmios-datum-cache =
       let
-        args = lib.escapeShellArgs [
+        args = lib.escapeShellArgs ([
           "--log-level"
           "warn"
           "--use-latest"
@@ -123,13 +126,15 @@ in
           cfg.postgresql.user
           "--db-name"
           cfg.postgresql.dbName
-          "--block-slot"
-          (toString cfg.blockFetcher.firstBlock.slot)
-          "--block-hash"
-          cfg.blockFetcher.firstBlock.blockHash
           "--block-filter"
           (lib.strings.replaceStrings [ "\"" "\\" ] [ "\\\"" "\\\\" ] (builtins.toJSON cfg.blockFetcher.filter))
-        ];
+        ] ++
+        (lib.optionals (! builtins.isNull cfg.blockFetcher.firstBlock) [
+          "--block-hash"
+          cfg.blockFetcher.firstBlock.blockHash
+          "--block-slot"
+          (toString cfg.blockFetcher.firstBlock.slot)
+        ]));
       in
       {
         description = "ogmios-datum-cache";
