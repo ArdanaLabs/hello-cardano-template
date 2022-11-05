@@ -45,7 +45,7 @@ in
 
           blockHash = mkOption {
             type = types.str;
-            value = "3afd8895c7b270f8250b744ec8d2b3c53ee2859c9d5711d906c47fe51b800988";
+            default = "3afd8895c7b270f8250b744ec8d2b3c53ee2859c9d5711d906c47fe51b800988";
             description = ''
               The first blocks id hash.
             '';
