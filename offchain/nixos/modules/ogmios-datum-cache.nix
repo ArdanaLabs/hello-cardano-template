@@ -35,20 +35,22 @@ in
     blockFetcher = {
       firstBlock = mkOption {
         type = types.nullOr (types.submodule {
-          slot = mkOption {
-            type = types.ints.positive;
-            default = 61625527;
-            description = ''
-              The first blocks slot.
-            '';
-          };
+          options = {
+            slot = mkOption {
+              type = types.ints.positive;
+              default = 61625527;
+              description = ''
+                The first blocks slot.
+              '';
+            };
 
-          blockHash = mkOption {
-            type = types.str;
-            default = "3afd8895c7b270f8250b744ec8d2b3c53ee2859c9d5711d906c47fe51b800988";
-            description = ''
-              The first blocks id hash.
-            '';
+            blockHash = mkOption {
+              type = types.str;
+              default = "3afd8895c7b270f8250b744ec8d2b3c53ee2859c9d5711d906c47fe51b800988";
+              description = ''
+                The first blocks id hash.
+              '';
+            };
           };
         });
         default = null;
