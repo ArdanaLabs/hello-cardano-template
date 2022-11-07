@@ -51,13 +51,13 @@ in
               Whether to use https or not.
             '';
           };
-          #path = mkOption {
-          #  type = types.str;
-          #  default = "";
-          #  description = mdDoc ''
-          #    Path segment of service URI address (relative).
-          #  '';
-          #};
+          path = mkOption {
+            type = types.str;
+            default = "/";
+            description = mdDoc ''
+              Path segment of service URI address (relative).
+            '';
+          };
         };
         ctlRuntimeOptions = {
           ogmiosConfig = serverConfig;
