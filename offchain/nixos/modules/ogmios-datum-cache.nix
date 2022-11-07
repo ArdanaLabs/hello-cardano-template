@@ -38,7 +38,6 @@ in
           options = {
             slot = mkOption {
               type = types.ints.positive;
-              default = 61625527;
               description = ''
                 The first blocks slot.
               '';
@@ -46,14 +45,19 @@ in
 
             blockHash = mkOption {
               type = types.str;
-              default = "3afd8895c7b270f8250b744ec8d2b3c53ee2859c9d5711d906c47fe51b800988";
               description = ''
                 The first blocks id hash.
               '';
             };
           };
         });
-        default = null;
+        default = {
+          slot = 7984046;
+          blockHash = "b353d8b6ec01692a9f2b180e0fcb84b015eac267a581065f223e0033566b3dcb";
+        };
+        description = ''
+          Optionally set the first block. If not set, ODT will start from the chain tip.
+        '';
       };
 
       filter = mkOption {
@@ -131,12 +135,15 @@ in
           "--block-filter"
           (lib.strings.replaceStrings [ "\"" "\\" ] [ "\\\"" "\\\\" ] (builtins.toJSON cfg.blockFetcher.filter))
         ] ++
-        (lib.optionals (! builtins.isNull cfg.blockFetcher.firstBlock) [
+        (if builtins.isNull cfg.blockFetcher.firstBlock
+        then [ "--from-tip" ]
+        else [
           "--block-hash"
           cfg.blockFetcher.firstBlock.blockHash
           "--block-slot"
           (toString cfg.blockFetcher.firstBlock.slot)
-        ]));
+        ]
+        ));
       in
       {
         description = "ogmios-datum-cache";
