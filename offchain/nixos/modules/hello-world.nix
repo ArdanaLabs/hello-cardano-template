@@ -13,7 +13,10 @@ in
 {
   options.services.hello-world = {
 
-    enable = mkEnableOption "enable serving the hello-world application";
+    enable = mkEnableOption ''
+      Enable serving the hello-world application.
+      This will enable the ctl-runtime services.
+    '';
 
     package = mkOption {
       type = types.package;
@@ -25,6 +28,17 @@ in
       example = 55555;
       description = mdDoc ''
         Port to listen on.
+      '';
+    };
+
+    environment = mkOption {
+      type = types.str;
+      default = "mainnet";
+      example = "testnet";
+      description = mdDoc ''
+        The cardano environment we want to deploy to.
+        This option will set the environment parameter
+        for cardano-node.
       '';
     };
 
@@ -53,9 +67,9 @@ in
           };
           path = mkOption {
             type = types.str;
-            default = "/";
+            default = "";
             description = mdDoc ''
-              Path segment of service URI address (relative).
+              Path segment of service URL address.
             '';
           };
         };
@@ -71,9 +85,9 @@ in
           type = types.nullOr (types.submodule { options = ctlRuntimeOptions; });
           default = null;
           description = mdDoc ''
-            The `url` options of can be used to configure
-            the hello-world client code such that it uses these public URLs
-            of the runtime services. You want to set these options e.g. 
+            The public options are used to configure the
+            hello-world client code, such that it uses these public URLs
+            when making requests. You want to set these options e.g. 
             when the CTL runtime is deployed behind a reverse proxy.
             The analogous local options can then then be used
             to configure the reverse proxy to point to the actual local
@@ -95,7 +109,13 @@ in
           let
             ctlRuntimeConfig =
               if builtins.isNull cfg.ctlRuntimeConfig.public
-              then cfg.ctlRuntimeConfig.local
+              then
+              # if we pass an empty string to the ConfigParams of CTLs client-code it will
+              # automatically append a forward slash `/` and we don't want that,
+              # as CTL does not normalize URLs or paths right now.
+                builtins.filterAttrs
+                  (attrName: attrValue: attrName == "path" && attrValue == "")
+                  cfg.ctlRuntimeConfig.local
               else cfg.ctlRuntimeConfig.public;
           in
           pkgs.runCommand "package-with-ctl-runtime-config" { } ''
@@ -106,7 +126,7 @@ in
       in
       {
         description = "hello-world";
-        documentation = [ "https://github.com/ArdanaLabs/cardano-app-template" ];
+        documentation = [ "https://github.com/ArdanaLabs/hello-cardano-template" ];
         wantedBy = [ "multi-user.target" ];
         after = [ "ctl-server.service" "ogmios-datum-cache.service" "networking.target" ];
         serviceConfig = mkMerge [
@@ -118,9 +138,10 @@ in
         ];
       };
 
-    services.ctl-runtime = {
-      enable = true;
-    };
+    services.cardano-node.environment = cfg.environment;
+
+    services.ctl-runtime.enable = true;
+
     services.cardano-ogmios = {
       port = cfg.ctlRuntimeConfig.local.ogmiosConfig.port;
       hostAddr = cfg.ctlRuntimeConfig.local.ogmiosConfig.host;

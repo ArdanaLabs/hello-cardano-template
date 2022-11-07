@@ -3,13 +3,18 @@ let
   inherit (lib)
     mkIf
     mkEnableOption
+    mdDoc
     ;
   cfg = config.services.ctl-runtime;
 in
 {
   options.services.ctl-runtime = {
 
-    enable = mkEnableOption "enable the CTL runtime";
+    enable = mkEnableOption ''
+      Enable the CTL runtime.
+      This will enable the ogmios-datum-cache service and its required dependencies,
+      as well as the ctl-server service.
+    '';
 
   };
 

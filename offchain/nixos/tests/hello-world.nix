@@ -17,6 +17,7 @@ nixosTest {
       services.hello-world = {
         enable = true;
         port = helloWorldServerPort;
+        environment = "testnet";
         ctlRuntimeConfig.local = {
           ctlServerConfig = {
             host = "127.0.0.1";
