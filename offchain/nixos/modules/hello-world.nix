@@ -13,10 +13,10 @@ in
 {
   options.services.hello-world = {
 
-    enable = mkEnableOption ''
-      Enable serving the hello-world application.
-      This will enable the ctl-runtime services.
-    '';
+    enable = mkEnableOption (mdDoc ''
+      hello-world application.
+      This will enable the ctl-runtime services
+    '');
 
     package = mkOption {
       type = types.package;

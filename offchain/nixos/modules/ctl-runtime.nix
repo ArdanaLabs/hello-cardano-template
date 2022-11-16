@@ -10,11 +10,11 @@ in
 {
   options.services.ctl-runtime = {
 
-    enable = mkEnableOption ''
-      Enable the CTL runtime.
+    enable = mkEnableOption (mdDoc ''
+      CTL runtime
       This will enable the ogmios-datum-cache service and its required dependencies,
-      as well as the ctl-server service.
-    '';
+      as well as the ctl-server service
+    '');
 
   };
 

@@ -14,7 +14,7 @@ in
 {
   options.services.ctl-server = {
 
-    enable = mkEnableOption "Enable the ctl-server service";
+    enable = mkEnableOption (mdDoc "ctl-server service");
 
     package = mkOption {
       type = types.package;

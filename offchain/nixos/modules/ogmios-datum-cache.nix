@@ -13,10 +13,10 @@ in
 {
   options.services.ogmios-datum-cache = {
 
-    enable = mkEnableOption ''
-      Enable the ogmios-datum-cache service.
-      This will enable a postgres-database service, cardano-ogmios and cardano-node.
-    '';
+    enable = mkEnableOption (mdDoc ''
+      ogmios-datum-cache service.
+      This will enable a postgres-database service, cardano-ogmios and cardano-node
+    '');
 
     package = mkOption {
       type = types.package;
