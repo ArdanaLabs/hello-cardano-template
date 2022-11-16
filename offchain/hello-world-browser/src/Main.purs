@@ -5,11 +5,11 @@ module Main
 
 import Contract.Prelude
 
-import Aeson (printJsonDecodeError, JsonDecodeError, decodeJsonString)
+import Aeson (printJsonDecodeError, JsonDecodeError, decodeJsonString, encodeAeson)
 import Affjax (get, printError)
 import Affjax.ResponseFormat (string)
 import Affjax.StatusCode (StatusCode(StatusCode))
-import Contract.Config (NetworkId(..), PrivatePaymentKey(..), PrivatePaymentKeySource(..), PrivateStakeKey(..), PrivateStakeKeySource(..), privateKeyFromBytes, testnetConfig, testnetNamiConfig)
+import Contract.Config (NetworkId(..), PrivatePaymentKey(..), PrivatePaymentKeySource(..), PrivateStakeKey(..), PrivateStakeKeySource(..), privateKeyFromBytes, testnetConfig)
 import Contract.Monad (ConfigParams, ServerConfig)
 import Contract.Wallet (WalletSpec(..))
 import Ctl.Internal.Cardano.TextEnvelope (TextEnvelopeType(..), printTextEnvelopeDecodeError, textEnvelopeBytes)
@@ -48,7 +48,7 @@ getConfigParams = do
                 <> "Falling back to the default configuration."
               warn $ show response
               pure testnetConfig
-            Right ctlRuntimeConfig ->
+            Right ctlRuntimeConfig -> do
               pure $ testnetConfig
                 { ogmiosConfig = ctlRuntimeConfig.ogmiosConfig
                 , datumCacheConfig = ctlRuntimeConfig.datumCacheConfig
@@ -71,22 +71,36 @@ main :: Effect Unit
 main =
   HA.runHalogenAff do
     body <- HA.awaitBody
-    contractConfig <- useKeyWallet >>= case _ of
-      true -> do
-        configParams <- getConfigParams
-        walletSpec <- loadWalletSpec
-        networkId <- loadNetworkId
-        -- the mainnetConfig is defined as `testnetConfig { networkId = MainnetId }` in CTL
-        pure $ configParams
-          { walletSpec = Just walletSpec
-          , networkId = networkId
-          }
-      false -> pure $ testnetNamiConfig { logLevel = Warn }
+
+    -- the mainnetConfig is defined as `testnetConfig { networkId = MainnetId }` in CTL
+    -- see https://github.com/Plutonomicon/cardano-transaction-lib/blob/886ac0a08989e5c4928f907f3f86448e8836c799/src/Contract/Config.purs#L86
+    configParams <- getConfigParams
+
+    -- We load the walletspec and network id
+    -- from cookies for testing.
+    -- if we don't use the keyWallet we
+    -- assume we are in production
+    walletSpec <- useKeyWallet >>= case _ of
+      true -> loadWalletSpecFromCookie
+      false -> pure ConnectToNami
+
+    networkId <- useKeyWallet >>= case _ of
+      true -> loadNetworkIdFromCookie
+      false -> pure MainnetId
+
     let
+      contractConfig = configParams
+        { walletSpec = Just walletSpec
+        , networkId = networkId
+        , logLevel = Warn
+        }
       store =
         { contractConfig
         , lastOutput: Nothing
         }
+    warn $ "using the following config params" <> show (encodeAeson contractConfig.ogmiosConfig)
+    warn $ "using the following config params" <> show (encodeAeson contractConfig.datumCacheConfig)
+
     rootComponent <- runAppM store Home.component
     runUI rootComponent unit body
 
@@ -94,8 +108,8 @@ useKeyWallet :: Aff Boolean
 useKeyWallet =
   isJust <$> getCookie "paymentKey"
 
-loadWalletSpec :: Aff WalletSpec
-loadWalletSpec = do
+loadWalletSpecFromCookie :: Aff WalletSpec
+loadWalletSpecFromCookie = do
   mPaymentKeyStr <- getCookie "paymentKey"
   paymentKeyStr <- liftM (error "payment key not found in the cookie") mPaymentKeyStr
   paymentKeyBytes <- liftEither $ lmap (error <<< printTextEnvelopeDecodeError) $
@@ -112,8 +126,8 @@ loadWalletSpec = do
       let stakeKey = PrivateStakeKey <$> privateKeyFromBytes (wrap stakeKeyBytes)
       pure $ UseKeys (PrivatePaymentKeyValue paymentKey) (PrivateStakeKeyValue <$> stakeKey)
 
-loadNetworkId :: Aff NetworkId
-loadNetworkId = do
+loadNetworkIdFromCookie :: Aff NetworkId
+loadNetworkIdFromCookie = do
   mNetworkId <- getCookie "networkId"
   networkId <- liftM (error "network ID not found in the cookie") mNetworkId
   case networkId of

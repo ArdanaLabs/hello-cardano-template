@@ -1,22 +1,30 @@
 { lib, pkgs, config, ... }:
-with lib;
 let
+  inherit (lib)
+    mkIf
+    mkEnableOption
+    mdDoc
+    mkOption
+    types
+    escapeShellArgs
+    mkMerge
+    ;
   cfg = config.services.ctl-server;
 in
 {
   options.services.ctl-server = {
 
-    enable = mkEnableOption "enable the ctl-server service";
+    enable = mkEnableOption (mdDoc "ctl-server service");
 
-    package = lib.mkOption {
-      type = lib.types.package;
+    package = mkOption {
+      type = types.package;
     };
 
     port = mkOption {
       type = types.port;
       default = 8081;
-      example = 80;
-      description = ''
+      example = 8081;
+      description = mdDoc ''
         Port to listen on.
       '';
     };
@@ -44,5 +52,6 @@ in
           }
         ];
       };
+
   };
 }

@@ -2,7 +2,7 @@ module HelloWorld.AppM where
 
 import Contract.Prelude
 
-import Contract.Config (ConfigParams, NetworkId(..), WalletSpec(..), mainnetNamiConfig, testnetNamiConfig)
+import Contract.Config (ConfigParams, NetworkId(..), WalletSpec(..))
 import Contract.Monad (Contract, liftContractM, runContract)
 import Contract.Transaction (TransactionOutput(..))
 import Contract.Utxos (getUtxo, getWalletBalance)
@@ -89,8 +89,8 @@ instance cardanoApiAppM :: CardanoApi AppM where
               Right networkId -> do
                 let
                   contractConfig' = case networkId of
-                    MainnetId -> mainnetNamiConfig { logLevel = Warn }
-                    TestnetId -> testnetNamiConfig { logLevel = Warn }
+                    MainnetId -> contractConfig { networkId = MainnetId }
+                    TestnetId -> contractConfig { networkId = TestnetId }
                 updateStore $ S.SetContractConfig contractConfig'
                 pure $ Right unit
           Left err -> do
