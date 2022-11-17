@@ -16,7 +16,7 @@
       inputs.membench.follows = "empty-flake";
     };
     empty-flake.url = "github:input-output-hk/empty-flake?rev=2040a05b67bf9a669ce17eca56beb14b4206a99a";
-    cardano-transaction-lib.url = "github:Plutonomicon/cardano-transaction-lib?rev=1999bb962141ffea09767f299a5759420097d189";
+    cardano-transaction-lib.url = "github:Plutonomicon/cardano-transaction-lib?rev=67ae3d1a3e7128cb7f58a5b4ba365aae37133045";
     cardano-ogmios.url = "github:input-output-hk/cardano-ogmios";
     mlabs-ogmios.follows = "cardano-transaction-lib/ogmios";
     ogmios-datum-cache.follows = "cardano-transaction-lib/ogmios-datum-cache";
