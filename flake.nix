@@ -7,7 +7,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     # Use divnix/blank to fix CI failing due to broken cardano-node flake
     cardano-node = {
-      url = "github:input-output-hk/cardano-node?ref=1.35.3";
+      url = "github:input-output-hk/cardano-node?ref=1.35.4";
       inputs.cardano-node-workbench.follows = "cardano-node-workbench";
       inputs.node-measured.follows = "cardano-node-workbench";
     };
