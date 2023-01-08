@@ -1,5 +1,22 @@
 {
   "nodes": {
+    "CHaP": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1668591548,
+        "narHash": "sha256-8OaFZJ3tKxFSxbxamf30c95u2OcpP+4FXCaSNiB3kbU=",
+        "owner": "input-output-hk",
+        "repo": "cardano-haskell-packages",
+        "rev": "487cc8ceb9c4ea7f6a6ecde65e43da770d12bc92",
+        "type": "github"
+      },
+      "original": {
+        "owner": "input-output-hk",
+        "ref": "repo",
+        "repo": "cardano-haskell-packages",
+        "type": "github"
+      }
+    },
     "HTTP": {
       "flake": false,
       "locked": {
@@ -1157,6 +1174,7 @@
     },
     "cardano-node": {
       "inputs": {
+        "CHaP": "CHaP",
         "cardano-mainnet-mirror": "cardano-mainnet-mirror",
         "cardano-node-workbench": [
           "cardano-node-workbench"
@@ -1185,16 +1203,16 @@
         "utils": "utils_4"
       },
       "locked": {
-        "lastModified": 1659625017,
-        "narHash": "sha256-4IrheFeoWfvkZQndEk4fGUkOiOjcVhcyXZ6IqmvkDgg=",
+        "lastModified": 1667644902,
+        "narHash": "sha256-WRRzfpDc+YVmTNbN9LNYY4dS8o21p/6NoKxtcZmoAcg=",
         "owner": "input-output-hk",
         "repo": "cardano-node",
-        "rev": "950c4e222086fed5ca53564e642434ce9307b0b9",
+        "rev": "ebc7be471b30e5931b35f9bbc236d21c375b91bb",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "1.35.3",
+        "ref": "1.35.4",
         "repo": "cardano-node",
         "type": "github"
       }
